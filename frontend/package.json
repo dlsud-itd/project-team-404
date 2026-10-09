@@ -3,9 +3,14 @@
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
+    "set-env": "node --env-file-if-exists=.env scripts/set-env.mjs",
+    "prestart": "npm run set-env",
     "start": "ng serve",
+    "prebuild": "npm run set-env",
     "build": "ng build",
+    "prewatch": "npm run set-env",
     "watch": "ng build --watch --configuration development",
+    "pretest": "npm run set-env",
     "test": "ng test",
     "serve:ssr:frontend": "node dist/frontend/server/server.mjs"
   },
