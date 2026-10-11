@@ -1,0 +1,75 @@
+name: "✨ HabitFlow Feature Request"
+description: Propose a new HabitFlow feature
+title: "feat(<scope>): <short description>"
+labels: ["enhancement", "needs-triage"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## ✨ HabitFlow Feature Request
+        Thanks for helping improve HabitFlow. Describe the habit-tracking need and the outcome that would help users build or maintain routines.
+
+  - type: input
+    id: scope
+    attributes:
+      label: Scope / Area
+      description: Which part of HabitFlow does this feature belong to?
+      placeholder: "e.g. habits, routines, goals, reminders, dashboard, reports, project docs"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: sprint
+    attributes:
+      label: Sprint
+      description: Which sprint should this be considered for?
+      options:
+        - Sprint 1
+        - Sprint 2
+        - Sprint 3
+        - Sprint 4
+        - Backlog
+    validations:
+      required: true
+
+  - type: textarea
+    id: user-story
+    attributes:
+      label: User Story
+      description: Describe the feature from the habit tracker user's perspective.
+      placeholder: "As a [type of user], I want [goal] so that [reason]."
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance-criteria
+    attributes:
+      label: Acceptance Criteria
+      description: What conditions must be true for this feature to be considered done?
+      placeholder: |
+        - [ ] Condition 1
+        - [ ] Condition 2
+        - [ ] Condition 3
+    validations:
+      required: true
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional Context
+      description: Include relevant HabitFlow documentation from documents/, mockups, related issues, dependencies, or other context.
+      placeholder: Add links to the HabitFlow project proposal, architecture, database schema, or supporting material here.
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: preflight
+    attributes:
+      label: Pre-submission Checklist
+      options:
+        - label: I searched existing issues and this feature hasn't been requested yet.
+          required: true
+        - label: This feature aligns with HabitFlow's current project scope.
+          required: true

@@ -1,0 +1,268 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Frontend: Dev",
+      "type": "npm",
+      "script": "start",
+      "path": "frontend",
+      "options": {
+        "env": {
+          "NG_APP_API_BASE_URL": "http://localhost:3000",
+          "NG_APP_SUPABASE_URL": "https://placeholder.supabase.co",
+          "NG_APP_SUPABASE_ANON_KEY": "placeholder-anon-key"
+        }
+      },
+      "presentation": {
+        "group": "dev-env",
+        "panel": "dedicated",
+        "reveal": "always"
+      }
+    },
+    {
+      "label": "Backend: Dev",
+      "type": "npm",
+      "script": "dev",
+      "path": "backend",
+      "presentation": {
+        "group": "dev-env",
+        "panel": "dedicated",
+        "reveal": "always"
+      }
+    },
+    {
+      "label": "Dev: Start All",
+      "dependsOn": ["Frontend: Dev", "Backend: Dev"],
+      "dependsOrder": "parallel",
+      "presentation": {
+        "reveal": "silent"
+      }
+    },
+    {
+      "label": "Frontend: Tests (watch)",
+      "type": "npm",
+      "script": "test:watch",
+      "path": "frontend",
+      "options": {
+        "env": {
+          "NG_APP_API_BASE_URL": "http://localhost:3000",
+          "NG_APP_SUPABASE_URL": "https://placeholder.supabase.co",
+          "NG_APP_SUPABASE_ANON_KEY": "placeholder-anon-key"
+        }
+      },
+      "presentation": {
+        "group": "testing",
+        "panel": "dedicated",
+        "reveal": "always"
+      }
+    },
+    {
+      "label": "Frontend: Tests (run once)",
+      "type": "npm",
+      "script": "test:run",
+      "path": "frontend",
+      "options": {
+        "env": {
+          "NG_APP_API_BASE_URL": "http://localhost:3000",
+          "NG_APP_SUPABASE_URL": "https://placeholder.supabase.co",
+          "NG_APP_SUPABASE_ANON_KEY": "placeholder-anon-key"
+        }
+      },
+      "presentation": {
+        "group": "testing",
+        "panel": "dedicated",
+        "reveal": "always"
+      }
+    },
+    {
+      "label": "Backend: Tests (watch)",
+      "type": "npm",
+      "script": "test:watch",
+      "path": "backend",
+      "presentation": {
+        "group": "testing",
+        "panel": "dedicated",
+        "reveal": "always"
+      }
+    },
+    {
+      "label": "Backend: Tests (run once)",
+      "type": "npm",
+      "script": "test",
+      "path": "backend",
+      "options": {
+        "env": {
+          "NODE_ENV": "test",
+          "CORS_ALLOWED_ORIGINS": "http://localhost:4200"
+        }
+      },
+      "presentation": {
+        "group": "testing",
+        "panel": "dedicated",
+        "reveal": "always"
+      }
+    },
+    {
+      "label": "Frontend: Lint",
+      "type": "npm",
+      "script": "lint",
+      "path": "frontend",
+      "problemMatcher": ["$eslint-stylish"],
+      "presentation": {
+        "group": "quality",
+        "panel": "dedicated",
+        "reveal": "always"
+      }
+    },
+    {
+      "label": "Backend: Lint",
+      "type": "npm",
+      "script": "lint",
+      "path": "backend",
+      "problemMatcher": ["$eslint-stylish"],
+      "presentation": {
+        "group": "quality",
+        "panel": "dedicated",
+        "reveal": "always"
+      }
+    },
+    {
+      "label": "Format: Check",
+      "type": "npm",
+      "script": "format:check",
+      "path": ".",
+      "presentation": {
+        "group": "quality",
+        "panel": "dedicated",
+        "reveal": "always"
+      }
+    },
+    {
+      "label": "Format: Fix",
+      "type": "npm",
+      "script": "format",
+      "path": ".",
+      "presentation": {
+        "group": "quality",
+        "panel": "dedicated",
+        "reveal": "always"
+      }
+    },
+    {
+      "label": "Frontend: Build",
+      "type": "npm",
+      "script": "build",
+      "path": "frontend",
+      "options": {
+        "env": {
+          "NG_APP_API_BASE_URL": "http://localhost:3000",
+          "NG_APP_SUPABASE_URL": "https://placeholder.supabase.co",
+          "NG_APP_SUPABASE_ANON_KEY": "placeholder-anon-key"
+        }
+      },
+      "presentation": {
+        "group": "build",
+        "panel": "dedicated",
+        "reveal": "always"
+      }
+    },
+    {
+      "label": "Frontend: Build (watch)",
+      "type": "npm",
+      "script": "watch",
+      "path": "frontend",
+      "options": {
+        "env": {
+          "NG_APP_API_BASE_URL": "http://localhost:3000",
+          "NG_APP_SUPABASE_URL": "https://placeholder.supabase.co",
+          "NG_APP_SUPABASE_ANON_KEY": "placeholder-anon-key"
+        }
+      },
+      "presentation": {
+        "group": "build",
+        "panel": "dedicated",
+        "reveal": "always"
+      }
+    },
+    {
+      "label": "Backend: Build",
+      "type": "npm",
+      "script": "build",
+      "path": "backend",
+      "presentation": {
+        "group": "build",
+        "panel": "dedicated",
+        "reveal": "always"
+      }
+    },
+    {
+      "label": "Backend: Typecheck",
+      "type": "npm",
+      "script": "typecheck",
+      "path": "backend",
+      "presentation": {
+        "group": "quality",
+        "panel": "dedicated",
+        "reveal": "always"
+      }
+    },
+    {
+      "label": "Frontend: Lint (fix)",
+      "type": "npm",
+      "script": "lint:fix",
+      "path": "frontend",
+      "presentation": {
+        "group": "quality",
+        "panel": "dedicated",
+        "reveal": "always"
+      }
+    },
+    {
+      "label": "Backend: Lint (fix)",
+      "type": "npm",
+      "script": "lint:fix",
+      "path": "backend",
+      "presentation": {
+        "group": "quality",
+        "panel": "dedicated",
+        "reveal": "always"
+      }
+    },
+    {
+      "label": "CI: Verify All",
+      "dependsOn": [
+        "Frontend: Tests (run once)",
+        "Backend: Tests (run once)",
+        "Frontend: Lint",
+        "Backend: Lint",
+        "Format: Check",
+        "Frontend: Build",
+        "Backend: Build"
+      ],
+      "dependsOrder": "parallel",
+      "presentation": {
+        "reveal": "silent"
+      }
+    },
+    {
+      "label": "Setup: Install All",
+      "type": "npm",
+      "script": "install:all",
+      "path": ".",
+      "presentation": {
+        "panel": "shared",
+        "reveal": "always"
+      }
+    },
+    {
+      "label": "Clean: Build Artifacts",
+      "type": "npm",
+      "script": "clean",
+      "path": ".",
+      "presentation": {
+        "panel": "shared",
+        "reveal": "always"
+      }
+    }
+  ]
+}

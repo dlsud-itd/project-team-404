@@ -1,0 +1,108 @@
+name: "🐛 HabitFlow Bug Report"
+description: Report a bug or unexpected behavior in HabitFlow
+title: "fix(<scope>): <short description>"
+labels: ["bug", "needs-triage"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## 🐛 HabitFlow Bug Report
+        Thanks for reporting a bug. Include enough detail to help us reproduce it and identify the affected habit-tracking flow.
+
+  - type: input
+    id: scope
+    attributes:
+      label: Scope / Area
+      description: Which part of HabitFlow is affected?
+      placeholder: "e.g. habits, routines, goals, reminders, dashboard, reports, project docs"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severity
+      description: How badly does this affect HabitFlow?
+      options:
+        - "Critical — app crashes or habit data is lost"
+        - "High — a major habit-tracking feature is broken"
+        - "Medium — a feature partially works"
+        - "Low — minor visual or UX issue"
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: Explain what you expected to happen and what actually happened.
+      placeholder: |
+        Expected: ...
+        Actual: ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to Reproduce
+      description: Exact steps to trigger the issue consistently.
+      placeholder: |
+        1. Open HabitFlow or go to '...'
+        2. Select or update a habit...
+        3. See the unexpected result
+    validations:
+      required: true
+
+  - type: dropdown
+    id: browser
+    attributes:
+      label: Browser
+      description: Which browser did this occur in?
+      multiple: true
+      options:
+        - Chrome
+        - Firefox
+        - Edge
+        - Safari
+        - Other
+    validations:
+      required: false
+
+  - type: input
+    id: node-version
+    attributes:
+      label: Node.js Version
+      description: Run `node --version` and paste the output if applicable.
+      placeholder: "e.g. v22.0.0"
+    validations:
+      required: false
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Error Logs / Console Output
+      description: Paste any relevant error messages or stack traces here.
+      render: shell
+    validations:
+      required: false
+
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Screenshots
+      description: Add screenshots if they help explain the HabitFlow issue.
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: preflight
+    attributes:
+      label: Pre-submission Checklist
+      options:
+        - label: I searched existing issues and this bug hasn't been reported yet.
+          required: true
+        - label: I can reproduce this bug consistently.
+          required: true

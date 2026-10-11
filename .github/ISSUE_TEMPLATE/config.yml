@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: HabitFlow Team Discussion
+    url: https://github.com/Raquin-Renz/project-team-404/discussions
+    about: Questions, ideas, or topics that aren't a bug or feature request — use Discussions.

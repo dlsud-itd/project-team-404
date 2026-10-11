@@ -1,0 +1,24 @@
+{
+  "recommendations": [
+    "angular.ng-template",
+    "esbenp.prettier-vscode",
+    "dbaeumer.vscode-eslint",
+    "aaron-bond.better-comments",
+    "DavidAnson.vscode-markdownlint",
+    "christian-kohler.path-intellisense",
+    "Supabase.vscode-supabase-extension",
+    "mikestead.dotenv",
+    "ionutvmi.path-autocomplete",
+    "PKief.material-icon-theme",
+    "ms-azuretools.vscode-containers",
+    "ms-azuretools.vscode-docker",
+    "waderyan.gitblame",
+    "github.vscode-github-actions",
+    "eamodio.gitlens",
+    "shd101wyy.markdown-preview-enhanced",
+    "yzhang.markdown-all-in-one",
+    "vitest.explorer",
+    "yoavbls.pretty-ts-errors",
+    "usernamehw.errorlens"
+  ]
+}
