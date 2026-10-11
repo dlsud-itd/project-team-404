@@ -2,7 +2,7 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "Frontend: Dev",
+      "label": "💻 Frontend: Dev",
       "type": "npm",
       "script": "start",
       "path": "frontend",
@@ -20,7 +20,7 @@
       }
     },
     {
-      "label": "Backend: Dev",
+      "label": "🖥️ Backend: Dev",
       "type": "npm",
       "script": "dev",
       "path": "backend",
@@ -31,15 +31,15 @@
       }
     },
     {
-      "label": "Dev: Start All",
-      "dependsOn": ["Frontend: Dev", "Backend: Dev"],
+      "label": "🚀 Dev: Start All",
+      "dependsOn": ["💻 Frontend: Dev", "🖥️ Backend: Dev"],
       "dependsOrder": "parallel",
       "presentation": {
         "reveal": "silent"
       }
     },
     {
-      "label": "Frontend: Tests (watch)",
+      "label": "🧪 Frontend: Tests (watch)",
       "type": "npm",
       "script": "test:watch",
       "path": "frontend",
@@ -57,7 +57,7 @@
       }
     },
     {
-      "label": "Frontend: Tests (run once)",
+      "label": "🧪 Frontend: Tests (run once)",
       "type": "npm",
       "script": "test:run",
       "path": "frontend",
@@ -75,7 +75,7 @@
       }
     },
     {
-      "label": "Backend: Tests (watch)",
+      "label": "🧪 Backend: Tests (watch)",
       "type": "npm",
       "script": "test:watch",
       "path": "backend",
@@ -86,7 +86,7 @@
       }
     },
     {
-      "label": "Backend: Tests (run once)",
+      "label": "🧪 Backend: Tests (run once)",
       "type": "npm",
       "script": "test",
       "path": "backend",
@@ -103,7 +103,7 @@
       }
     },
     {
-      "label": "Frontend: Lint",
+      "label": "🔍 Frontend: Lint",
       "type": "npm",
       "script": "lint",
       "path": "frontend",
@@ -115,7 +115,7 @@
       }
     },
     {
-      "label": "Backend: Lint",
+      "label": "🔍 Backend: Lint",
       "type": "npm",
       "script": "lint",
       "path": "backend",
@@ -127,7 +127,7 @@
       }
     },
     {
-      "label": "Format: Check",
+      "label": "🎨 Format: Check",
       "type": "npm",
       "script": "format:check",
       "path": ".",
@@ -138,7 +138,7 @@
       }
     },
     {
-      "label": "Format: Fix",
+      "label": "🎨 Format: Fix",
       "type": "npm",
       "script": "format",
       "path": ".",
@@ -149,7 +149,7 @@
       }
     },
     {
-      "label": "Frontend: Build",
+      "label": "🏗️ Frontend: Build",
       "type": "npm",
       "script": "build",
       "path": "frontend",
@@ -167,7 +167,7 @@
       }
     },
     {
-      "label": "Frontend: Build (watch)",
+      "label": "🏗️ Frontend: Build (watch)",
       "type": "npm",
       "script": "watch",
       "path": "frontend",
@@ -185,7 +185,7 @@
       }
     },
     {
-      "label": "Backend: Build",
+      "label": "🏗️ Backend: Build",
       "type": "npm",
       "script": "build",
       "path": "backend",
@@ -196,7 +196,7 @@
       }
     },
     {
-      "label": "Backend: Typecheck",
+      "label": "🔎 Backend: Typecheck",
       "type": "npm",
       "script": "typecheck",
       "path": "backend",
@@ -207,7 +207,7 @@
       }
     },
     {
-      "label": "Frontend: Lint (fix)",
+      "label": "🔧 Frontend: Lint (fix)",
       "type": "npm",
       "script": "lint:fix",
       "path": "frontend",
@@ -218,7 +218,7 @@
       }
     },
     {
-      "label": "Backend: Lint (fix)",
+      "label": "🔧 Backend: Lint (fix)",
       "type": "npm",
       "script": "lint:fix",
       "path": "backend",
@@ -229,15 +229,15 @@
       }
     },
     {
-      "label": "CI: Verify All",
+      "label": "✅ CI: Verify All",
       "dependsOn": [
-        "Frontend: Tests (run once)",
-        "Backend: Tests (run once)",
-        "Frontend: Lint",
-        "Backend: Lint",
-        "Format: Check",
-        "Frontend: Build",
-        "Backend: Build"
+        "🧪 Frontend: Tests (run once)",
+        "🧪 Backend: Tests (run once)",
+        "🔍 Frontend: Lint",
+        "🔍 Backend: Lint",
+        "🎨 Format: Check",
+        "🏗️ Frontend: Build",
+        "🏗️ Backend: Build"
       ],
       "dependsOrder": "parallel",
       "presentation": {
@@ -245,7 +245,7 @@
       }
     },
     {
-      "label": "Setup: Install All",
+      "label": "📦 Install All Dependencies",
       "type": "npm",
       "script": "install:all",
       "path": ".",
@@ -255,7 +255,7 @@
       }
     },
     {
-      "label": "Clean: Build Artifacts",
+      "label": "🧹 Clean: Build Artifacts",
       "type": "npm",
       "script": "clean",
       "path": ".",
@@ -263,6 +263,121 @@
         "panel": "shared",
         "reveal": "always"
       }
+    },
+    {
+      "label": "🔐 Supabase: Login",
+      "type": "npm",
+      "script": "supabase:login",
+      "path": ".",
+      "presentation": {
+        "group": "supabase",
+        "panel": "shared",
+        "reveal": "always"
+      }
+    },
+    {
+      "label": "🔗 Supabase: Link Project",
+      "type": "npm",
+      "script": "supabase:link",
+      "path": ".",
+      "presentation": {
+        "group": "supabase",
+        "panel": "shared",
+        "reveal": "always"
+      }
+    },
+    {
+      "label": "📤 Supabase: Push Migrations",
+      "type": "npm",
+      "script": "supabase:push",
+      "path": ".",
+      "presentation": {
+        "group": "supabase",
+        "panel": "shared",
+        "reveal": "always"
+      }
+    },
+    {
+      "label": "📥 Supabase: Pull Remote State",
+      "type": "npm",
+      "script": "supabase:pull",
+      "path": ".",
+      "presentation": {
+        "group": "supabase",
+        "panel": "shared",
+        "reveal": "always"
+      }
+    },
+    {
+      "label": "📊 Supabase: Check Migration Status",
+      "type": "npm",
+      "script": "supabase:status",
+      "path": ".",
+      "presentation": {
+        "group": "supabase",
+        "panel": "shared",
+        "reveal": "always"
+      }
+    },
+    {
+      "label": "🔄 Supabase: Reset Local DB",
+      "type": "npm",
+      "script": "supabase:reset",
+      "path": ".",
+      "detail": "Recreates the local Supabase database, applies migrations, and runs configured seed SQL. This removes local database data.",
+      "presentation": {
+        "group": "supabase",
+        "panel": "shared",
+        "reveal": "always"
+      }
+    },
+    {
+      "label": "⚠️ Supabase: Reset REMOTE DB (destructive)",
+      "type": "npm",
+      "script": "supabase:reset:remote",
+      "path": ".",
+      "detail": "Destructively resets the linked remote database and runs configured seeds. Confirm the linked project before running.",
+      "presentation": {
+        "group": "supabase",
+        "panel": "shared",
+        "reveal": "always"
+      }
+    },
+    {
+      "label": "🩹 Supabase: Repair Migration History",
+      "type": "shell",
+      "command": "npm run supabase:repair -- --status ${input:supabaseMigrationStatus} ${input:supabaseMigrationVersion} --linked",
+      "presentation": {
+        "group": "supabase",
+        "panel": "shared",
+        "reveal": "always"
+      }
+    },
+    {
+      "label": "🌱 Supabase: Seed All (local reset)",
+      "type": "npm",
+      "script": "supabase:seed:all",
+      "path": ".",
+      "detail": "Resets only the local database and runs configured Supabase seed SQL. This deletes local database data; seed files/configuration must exist.",
+      "presentation": {
+        "group": "seed",
+        "panel": "shared",
+        "reveal": "always"
+      }
+    }
+  ],
+  "inputs": [
+    {
+      "id": "supabaseMigrationStatus",
+      "type": "pickString",
+      "description": "Mark this migration as applied (already run remotely) or reverted (never ran)?",
+      "options": ["applied", "reverted"],
+      "default": "applied"
+    },
+    {
+      "id": "supabaseMigrationVersion",
+      "type": "promptString",
+      "description": "Migration version to repair (the digits before the first underscore in its filename)"
     }
   ]
 }
