@@ -1,0 +1,49 @@
+# Build folders
+dist/
+build/
+coverage/
+.angular/
+
+# Dependencies
+node_modules/
+
+# Environmental secrets and logs
+.env
+.env.*
+*.log
+
+# Lock files
+package-lock.json
+
+# Existing source files not yet formatted to the shared baseline; new files remain checked.
+backend/src/app.ts
+backend/src/config/env.ts
+backend/src/server.ts
+backend/src/testing/helpers/app.ts
+backend/src/testing/helpers/index.ts
+backend/src/testing/helpers/mock-request.ts
+backend/src/testing/helpers/request.ts
+frontend/src/app/app.config.server.ts
+frontend/src/app/app.config.ts
+frontend/src/app/app.html
+frontend/src/app/app.routes.server.ts
+frontend/src/app/app.routes.ts
+frontend/src/app/app.spec.ts
+frontend/src/app/app.ts
+frontend/src/environments/environment.ts
+frontend/src/environments/environment.generated.ts
+frontend/src/index.html
+frontend/src/main.server.ts
+frontend/src/main.ts
+frontend/src/server.ts
+frontend/src/styles.scss
+frontend/src/testing/integration/helpers/index.ts
+frontend/src/testing/integration/helpers/test-harness.ts
+frontend/src/testing/integration/mocks/http-client.mock.ts
+frontend/src/testing/integration/mocks/index.ts
+
+# Generated Angular scaffold files outside the application source tree
+frontend/.vscode/
+frontend/README.md
+frontend/scripts/set-env.mjs
+README.md
