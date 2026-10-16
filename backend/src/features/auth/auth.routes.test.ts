@@ -98,7 +98,7 @@ describe('auth routes', () => {
       }
     );
 
-    expect(response.status).toBe(400);
+    expect(response.status).toBe(409);
     expect(response.body).toEqual({ error: 'Username is already in use' });
     expect(repository.isEmailAvailable).not.toHaveBeenCalled();
     expect(repository.createUser).not.toHaveBeenCalled();
@@ -120,7 +120,7 @@ describe('auth routes', () => {
       }
     );
 
-    expect(response.status).toBe(400);
+    expect(response.status).toBe(409);
     expect(response.body).toEqual({ error: 'Email is already in use' });
     expect(repository.createUser).not.toHaveBeenCalled();
   });

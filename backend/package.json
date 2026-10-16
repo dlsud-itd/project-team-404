@@ -12,6 +12,7 @@
     "start": "node dist/server.js",
     "clean": "rimraf dist",
     "test": "vitest run --passWithNoTests",
+    "test:integration": "vitest run src/testing/integration",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",

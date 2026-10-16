@@ -1,12 +1,14 @@
 # Sprint 1 Backend Test Matrix
 
-Last Updated: October 14, 2026 | Version 1.0.0
+Last Updated: October 16, 2026 | Version 1.1.0
 
 ## Overview
 
-Backend test cases for Sprint 1 (User Authentication), written before any backend code exists. Every case starts as `Failing` and is updated to `Passing` as each task is completed.
+Backend test cases for Sprint 1 (User Authentication). Cases are updated to `Passing` as their expected behavior is implemented and verified.
 
 Covers: Registration, Login & Session, Password Recovery, and Profile Management.
+
+Registration integration tests are in `backend/src/testing/integration`. Run them with `npm run test:integration` from `backend`, setting `SUPABASE_TEST_URL` and `SUPABASE_TEST_SERVICE_ROLE_KEY` to an isolated Supabase test project. The suite skips when neither variable is set and refuses to run if only one is set or if the test URL matches `SUPABASE_URL`.
 
 Test IDs use the format `BE-<DELIVERABLE>-<NN>`:
 
@@ -44,8 +46,8 @@ Status values: `Failing` (default, written before code), `Passing`, `Blocked`.
 | BE-REG-10 | Check availability of an existing username        | 200 OK; available: false.                                                  | Failing |
 | BE-REG-11 | Check availability of an existing email           | 200 OK; available: false.                                                  | Failing |
 | BE-REG-12 | Email check is case-insensitive                   | `User@Example.com` is reported unavailable when `user@example.com` exists. | Failing |
-| BE-REG-13 | Register with a `username` that is already taken  | 409 Conflict; no new user row created in `tbl_user`.                       | Failing |
-| BE-REG-14 | Register with an email that is already registered | 409 Conflict; no new user row created in `auth.users`.                     | Failing |
+| BE-REG-13 | Register with a `username` that is already taken  | 409 Conflict; no new user row created in `tbl_user`.                       | Passing |
+| BE-REG-14 | Register with an email that is already registered | 409 Conflict; no new user row created in `auth.users`.                     | Passing |
 
 ### 1.3 Default Inbox Project Creation
 
@@ -60,8 +62,10 @@ Status values: `Failing` (default, written before code), `Passing`, `Blocked`.
 
 | ID        | Test Case                                      | Expected Result                                              | Status  |
 | --------- | ---------------------------------------------- | ------------------------------------------------------------ | ------- |
-| BE-REG-19 | Register against a real Supabase test database | User row and Inbox project row both exist after the request. | Failing |
-| BE-REG-20 | Two simultaneous registrations with same email | One returns 201, the other 409; only one user row exists.    | Failing |
+| BE-REG-19 | Register against a real Supabase test database | User row and Inbox project row both exist after the request. | Blocked |
+| BE-REG-20 | Two simultaneous registrations with same email | One returns 201, the other 409; only one user row exists.    | Blocked |
+
+The integration cases are `Blocked` until credentials for a dedicated test project are supplied; the configured backend `.env` project is not assumed to be safe for test writes.
 
 ---
 
@@ -165,8 +169,8 @@ Status values: `Failing` (default, written before code), `Passing`, `Blocked`.
 
 | Deliverable        | Cases  | Failing | Passing | Blocked |
 | ------------------ | ------ | ------- | ------- | ------- |
-| Registration       | 20     | 20      | 0       | 0       |
+| Registration       | 20     | 16      | 2       | 2       |
 | Login & Session    | 17     | 17      | 0       | 0       |
 | Password Recovery  | 17     | 17      | 0       | 0       |
 | Profile Management | 10     | 10      | 0       | 0       |
-| **Total**          | **64** | **64**  | **0**   | **0**   |
+| **Total**          | **64** | **60**  | **2**   | **2**   |

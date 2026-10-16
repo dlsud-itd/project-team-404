@@ -25,11 +25,11 @@ export function createAuthRouter(repository: AuthRepository): Router {
 
     const input = parsed.data;
     if (!(await repository.isUsernameAvailable(input.username))) {
-      res.status(400).json({ error: 'Username is already in use' });
+      res.status(409).json({ error: 'Username is already in use' });
       return;
     }
     if (!(await repository.isEmailAvailable(input.email))) {
-      res.status(400).json({ error: 'Email is already in use' });
+      res.status(409).json({ error: 'Email is already in use' });
       return;
     }
 
@@ -38,7 +38,7 @@ export function createAuthRouter(repository: AuthRepository): Router {
       res.status(201).json(result);
     } catch (error) {
       if (error instanceof AuthConflictError) {
-        res.status(400).json({ error: error.message });
+        res.status(409).json({ error: error.message });
         return;
       }
       throw error;
