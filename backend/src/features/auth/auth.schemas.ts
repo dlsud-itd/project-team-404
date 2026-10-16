@@ -12,7 +12,10 @@ const isIanaTimezone = (timezone: string): boolean => {
 export const signupSchema = z
   .object({
     username: z.string().trim().min(1).max(50),
-    email: z.email().max(255).transform((email) => email.toLowerCase()),
+    email: z
+      .email()
+      .max(255)
+      .transform((email) => email.toLowerCase()),
     password: z.string().min(8),
     confirmPassword: z.string(),
     timezone: z.string().min(1).max(64).refine(isIanaTimezone, {
@@ -25,6 +28,9 @@ export const signupSchema = z
   });
 
 export const usernameParamSchema = z.string().trim().min(1).max(50);
-export const emailParamSchema = z.email().max(255).transform((email) => email.toLowerCase());
+export const emailParamSchema = z
+  .email()
+  .max(255)
+  .transform((email) => email.toLowerCase());
 
 export type SignupInput = z.infer<typeof signupSchema>;

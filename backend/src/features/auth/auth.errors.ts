@@ -16,7 +16,7 @@ export class SupabaseAuthRequestError extends Error {
   constructor(
     message: string,
     readonly status: number,
-    readonly details: unknown,
+    readonly details: unknown
   ) {
     super(message);
     this.name = 'SupabaseAuthRequestError';

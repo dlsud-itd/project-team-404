@@ -1,7 +1,11 @@
 import { Router } from 'express';
 import { AuthConflictError } from './auth.errors';
 import type { AuthRepository } from './auth.repository';
-import { emailParamSchema, signupSchema, usernameParamSchema } from './auth.schemas';
+import {
+  emailParamSchema,
+  signupSchema,
+  usernameParamSchema,
+} from './auth.schemas';
 
 export function createAuthRouter(repository: AuthRepository): Router {
   const router = Router();
@@ -44,7 +48,9 @@ export function createAuthRouter(repository: AuthRepository): Router {
   router.get('/check-username/:username', async (req, res) => {
     const parsed = usernameParamSchema.safeParse(req.params.username);
     if (!parsed.success) {
-      res.status(400).json({ error: 'Username must be between 1 and 50 characters' });
+      res
+        .status(400)
+        .json({ error: 'Username must be between 1 and 50 characters' });
       return;
     }
     res.json({ available: await repository.isUsernameAvailable(parsed.data) });
@@ -53,7 +59,9 @@ export function createAuthRouter(repository: AuthRepository): Router {
   router.get('/check-email/:email', async (req, res) => {
     const parsed = emailParamSchema.safeParse(req.params.email);
     if (!parsed.success) {
-      res.status(400).json({ error: 'Email must be valid and no longer than 255 characters' });
+      res.status(400).json({
+        error: 'Email must be valid and no longer than 255 characters',
+      });
       return;
     }
     res.json({ available: await repository.isEmailAvailable(parsed.data) });

@@ -2,10 +2,7 @@ import express from 'express';
 import { describe, expect, it, vi } from 'vitest';
 import { request } from '../../testing/helpers/request';
 import { createAuthRouter } from './auth.routes';
-import {
-  SupabaseAuthRepository,
-  type AuthRepository,
-} from './auth.repository';
+import { SupabaseAuthRepository, type AuthRepository } from './auth.repository';
 
 const createTestApp = (repository: AuthRepository) => {
   const app = express();
@@ -33,10 +30,14 @@ describe('auth routes', () => {
       }),
     };
 
-    const response = await request(createTestApp(repository), '/api/auth/signup', {
-      method: 'POST',
-      body: validSignup,
-    });
+    const response = await request(
+      createTestApp(repository),
+      '/api/auth/signup',
+      {
+        method: 'POST',
+        body: validSignup,
+      }
+    );
 
     expect(response.status).toBe(201);
     expect(response.body).toEqual({ userId: 'user-123', inboxProjectId: 42 });
@@ -49,8 +50,14 @@ describe('auth routes', () => {
   it.each([
     [{ ...validSignup, username: 'x'.repeat(51) }, 'username'],
     [{ ...validSignup, email: 'not-an-email' }, 'email'],
-    [{ ...validSignup, password: 'short', confirmPassword: 'short' }, 'password'],
-    [{ ...validSignup, confirmPassword: 'different-password' }, 'confirmPassword'],
+    [
+      { ...validSignup, password: 'short', confirmPassword: 'short' },
+      'password',
+    ],
+    [
+      { ...validSignup, confirmPassword: 'different-password' },
+      'confirmPassword',
+    ],
     [{ ...validSignup, timezone: 'Mars/Olympus' }, 'timezone'],
   ])('returns 400 for invalid signup input (%s)', async (body, field) => {
     const repository: AuthRepository = {
@@ -59,10 +66,14 @@ describe('auth routes', () => {
       createUser: vi.fn(),
     };
 
-    const response = await request(createTestApp(repository), '/api/auth/signup', {
-      method: 'POST',
-      body,
-    });
+    const response = await request(
+      createTestApp(repository),
+      '/api/auth/signup',
+      {
+        method: 'POST',
+        body,
+      }
+    );
 
     expect(response.status).toBe(400);
     expect(repository.createUser).not.toHaveBeenCalled();
@@ -78,10 +89,14 @@ describe('auth routes', () => {
       createUser: vi.fn(),
     };
 
-    const response = await request(createTestApp(repository), '/api/auth/signup', {
-      method: 'POST',
-      body: validSignup,
-    });
+    const response = await request(
+      createTestApp(repository),
+      '/api/auth/signup',
+      {
+        method: 'POST',
+        body: validSignup,
+      }
+    );
 
     expect(response.status).toBe(400);
     expect(response.body).toEqual({ error: 'Username is already in use' });
@@ -96,10 +111,14 @@ describe('auth routes', () => {
       createUser: vi.fn(),
     };
 
-    const response = await request(createTestApp(repository), '/api/auth/signup', {
-      method: 'POST',
-      body: validSignup,
-    });
+    const response = await request(
+      createTestApp(repository),
+      '/api/auth/signup',
+      {
+        method: 'POST',
+        body: validSignup,
+      }
+    );
 
     expect(response.status).toBe(400);
     expect(response.body).toEqual({ error: 'Email is already in use' });
@@ -115,40 +134,46 @@ describe('auth routes', () => {
     const app = createTestApp(repository);
 
     const username = await request(app, '/api/auth/check-username/harvey');
-    const email = await request(app, '/api/auth/check-email/Harvey%40example.com');
+    const email = await request(
+      app,
+      '/api/auth/check-email/Harvey%40example.com'
+    );
 
     expect(username).toMatchObject({ status: 200, body: { available: true } });
     expect(email).toMatchObject({ status: 200, body: { available: false } });
-    expect(repository.isEmailAvailable).toHaveBeenCalledWith('harvey@example.com');
+    expect(repository.isEmailAvailable).toHaveBeenCalledWith(
+      'harvey@example.com'
+    );
   });
 });
 
 describe('SupabaseAuthRepository', () => {
   it('creates a Supabase Auth user, profile, and exactly one Inbox project', async () => {
     const calls: Array<{ url: string; init: RequestInit }> = [];
-    vi.stubGlobal(
-      'fetch',
-      async (input: URL, init: RequestInit = {}) => {
-        const url = String(input);
-        calls.push({ url, init });
+    vi.stubGlobal('fetch', async (input: URL, init: RequestInit = {}) => {
+      const url = String(input);
+      calls.push({ url, init });
 
-        if (url.endsWith('/auth/v1/admin/users')) {
-          return new Response(JSON.stringify({ id: 'user-123' }), { status: 200 });
-        }
-        if (url.endsWith('/rest/v1/tbl_user')) {
-          return new Response(null, { status: 201 });
-        }
-        if (url.endsWith('/rest/v1/tbl_project')) {
-          return new Response(JSON.stringify([{ project_id: 42 }]), { status: 201 });
-        }
-        throw new Error(`Unexpected request: ${url}`);
-      },
-    );
+      if (url.endsWith('/auth/v1/admin/users')) {
+        return new Response(JSON.stringify({ id: 'user-123' }), {
+          status: 200,
+        });
+      }
+      if (url.endsWith('/rest/v1/tbl_user')) {
+        return new Response(null, { status: 201 });
+      }
+      if (url.endsWith('/rest/v1/tbl_project')) {
+        return new Response(JSON.stringify([{ project_id: 42 }]), {
+          status: 201,
+        });
+      }
+      throw new Error(`Unexpected request: ${url}`);
+    });
 
     try {
       const repository = new SupabaseAuthRepository(
         'https://project.example',
-        'service-role-key',
+        'service-role-key'
       );
       const result = await repository.createUser({
         ...validSignup,
@@ -187,20 +212,20 @@ describe('SupabaseAuthRepository', () => {
             code: 'email_exists',
             msg: 'A user with this email address has already been registered',
           }),
-          { status: 422 },
-        ),
+          { status: 422 }
+        )
     );
 
     try {
       const repository = new SupabaseAuthRepository(
         'https://project.example',
-        'service-role-key',
+        'service-role-key'
       );
       await expect(
         repository.createUser({
           ...validSignup,
           email: 'harvey@example.com',
-        }),
+        })
       ).rejects.toMatchObject({
         name: 'AuthConflictError',
         message: 'Email is already in use',

@@ -27,7 +27,7 @@ type ProjectRecord = {
 export class SupabaseAuthRepository implements AuthRepository {
   constructor(
     private readonly supabaseUrl?: string,
-    private readonly serviceRoleKey?: string,
+    private readonly serviceRoleKey?: string
   ) {}
 
   async isUsernameAvailable(username: string): Promise<boolean> {
@@ -61,7 +61,10 @@ export class SupabaseAuthRepository implements AuthRepository {
         }),
       });
     } catch (error) {
-      if (error instanceof SupabaseAuthRequestError && this.isEmailConflict(error)) {
+      if (
+        error instanceof SupabaseAuthRequestError &&
+        this.isEmailConflict(error)
+      ) {
         throw new AuthConflictError('Email is already in use');
       }
       throw error;
@@ -79,15 +82,19 @@ export class SupabaseAuthRepository implements AuthRepository {
         headers: { Prefer: 'return=minimal' },
       });
 
-      const [inbox] = await this.restRequest<ProjectRecord[]>('tbl_project', undefined, {
-        method: 'POST',
-        body: JSON.stringify({
-          user_id: user.id,
-          name: 'Inbox',
-          is_inbox: true,
-        }),
-        headers: { Prefer: 'return=representation' },
-      });
+      const [inbox] = await this.restRequest<ProjectRecord[]>(
+        'tbl_project',
+        undefined,
+        {
+          method: 'POST',
+          body: JSON.stringify({
+            user_id: user.id,
+            name: 'Inbox',
+            is_inbox: true,
+          }),
+          headers: { Prefer: 'return=representation' },
+        }
+      );
 
       if (!inbox) {
         throw new Error('Supabase did not return the created Inbox project');
@@ -102,11 +109,14 @@ export class SupabaseAuthRepository implements AuthRepository {
       } catch (cleanupError) {
         throw new AggregateError(
           [error, cleanupError],
-          'Signup failed and the created Supabase Auth user could not be removed',
+          'Signup failed and the created Supabase Auth user could not be removed'
         );
       }
 
-      if (error instanceof SupabaseAuthRequestError && this.isUniqueConflict(error)) {
+      if (
+        error instanceof SupabaseAuthRequestError &&
+        this.isUniqueConflict(error)
+      ) {
         const message = this.conflictMessage(error);
         throw new AuthConflictError(message);
       }
@@ -117,7 +127,7 @@ export class SupabaseAuthRepository implements AuthRepository {
   private async restRequest<T = unknown>(
     table: string,
     query?: Record<string, string>,
-    init: RequestInit = {},
+    init: RequestInit = {}
   ): Promise<T> {
     const url = this.endpoint(`rest/v1/${table}`);
     for (const [key, value] of Object.entries(query ?? {})) {
@@ -129,19 +139,19 @@ export class SupabaseAuthRepository implements AuthRepository {
 
   private async authRequest<T = unknown>(
     path: string,
-    init: RequestInit,
+    init: RequestInit
   ): Promise<T> {
     return this.request<T>(
       this.endpoint(`auth/v1/${path}`),
       init,
-      'Supabase Auth request',
+      'Supabase Auth request'
     );
   }
 
   private async request<T>(
     url: URL,
     init: RequestInit,
-    operation: string,
+    operation: string
   ): Promise<T> {
     const key = this.getServiceRoleKey();
     const response = await fetch(url, {
@@ -163,7 +173,7 @@ export class SupabaseAuthRepository implements AuthRepository {
         throw new SupabaseAuthRequestError(
           `${operation} returned an invalid JSON response`,
           response.status,
-          text,
+          text
         );
       }
     }
@@ -172,7 +182,7 @@ export class SupabaseAuthRepository implements AuthRepository {
       throw new SupabaseAuthRequestError(
         `${operation} failed with status ${response.status}`,
         response.status,
-        payload,
+        payload
       );
     }
     return payload as T;
@@ -215,7 +225,8 @@ export class SupabaseAuthRepository implements AuthRepository {
     }
     return (
       ('code' in details &&
-        (details.code === 'email_exists' || details.code === 'user_already_exists')) ||
+        (details.code === 'email_exists' ||
+          details.code === 'user_already_exists')) ||
       ('msg' in details &&
         typeof details.msg === 'string' &&
         details.msg.toLowerCase().includes('already been registered'))
