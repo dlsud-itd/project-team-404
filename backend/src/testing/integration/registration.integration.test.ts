@@ -82,7 +82,10 @@ async function getRows<T>(
     throw new Error('Supabase test credentials are not configured');
   }
 
-  const url = new URL(`rest/v1/${table}`, `${supabaseUrl.replace(/\/+$/, '')}/`);
+  const url = new URL(
+    `rest/v1/${table}`,
+    `${supabaseUrl.replace(/\/+$/, '')}/`
+  );
   for (const [key, value] of Object.entries(query)) {
     url.searchParams.set(key, value);
   }
@@ -94,7 +97,9 @@ async function getRows<T>(
     },
   });
   if (!response.ok) {
-    throw new Error(`Supabase test database query failed with status ${response.status}`);
+    throw new Error(
+      `Supabase test database query failed with status ${response.status}`
+    );
   }
   return (await response.json()) as T[];
 }
@@ -118,7 +123,9 @@ async function deleteAuthUser(userId: string): Promise<void> {
     }
   );
   if (!response.ok) {
-    throw new Error(`Supabase test user cleanup failed with status ${response.status}`);
+    throw new Error(
+      `Supabase test user cleanup failed with status ${response.status}`
+    );
   }
 }
 
