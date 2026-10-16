@@ -71,58 +71,55 @@ Test groups map to WBS tasks: UI groups map to the UI tasks (2.3.1, 3.3.1 to 3.3
 
 ### 2.1 Login UI (3.3.1)
 
-| ID        | Test Case                                        | Expected Result                                                                                                    | Status  |
-| --------- | ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------ | ------- |
-| FE-LOG-01 | Login page renders at /login                     | Identifier (email or username) and password fields, submit button, forgot password link and sign-up link are shown | Failing |
-| FE-LOG-02 | Submit with empty fields                         | Required-field errors shown; no API call made                                                                      | Failing |
-| FE-LOG-03 | Submit valid email and password                  | Session stored; router navigates to the Inbox/dashboard                                                            | Failing |
-| FE-LOG-04 | Submit valid username and password               | Session stored; router navigates to the Inbox/dashboard                                                            | Failing |
-| FE-LOG-05 | Submit wrong password or unknown account         | Same generic "Invalid credentials" message for both (no account enumeration); password field cleared               | Failing |
-| FE-LOG-06 | Submit button disabled while the request runs    | Loading state shown; duplicate submits prevented                                                                   | Failing |
-| FE-LOG-07 | Link to "Forgot password?"                       | Navigates to /forgot-password                                                                                      | Failing |
-| FE-LOG-08 | Link to the sign-up page                         | Navigates to /register                                                                                             | Failing |
-| FE-LOG-09 | Network or server error on login                 | Generic error shown; user can retry                                                                                | Failing |
-| FE-LOG-10 | Redirected to /login because the session expired | "Session expired" notice shown above the form                                                                      | Failing |
-| FE-LOG-11 | Form fields are keyboard accessible              | Tab order is logical; Enter submits the form; fields have labels                                                   | Failing |
+| ID        | Test Case                                     | Expected Result                                                                                                    | Status  |
+| --------- | --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ | ------- |
+| FE-LOG-01 | Login page renders at /login                  | Identifier (email or username) and password fields, submit button, forgot password link and sign-up link are shown | Failing |
+| FE-LOG-02 | Submit with empty fields                      | Required-field errors shown; no API call made                                                                      | Failing |
+| FE-LOG-03 | Submit valid email and password               | Session stored; router navigates to the Inbox/dashboard                                                            | Failing |
+| FE-LOG-04 | Submit valid username and password            | Session stored; router navigates to the Inbox/dashboard                                                            | Failing |
+| FE-LOG-05 | Submit wrong password or unknown account      | Same generic "Invalid credentials" message for both (no account enumeration); password field cleared               | Failing |
+| FE-LOG-06 | Submit button disabled while the request runs | Loading state shown; duplicate submits prevented                                                                   | Failing |
+| FE-LOG-07 | Link to "Forgot password?"                    | Navigates to /forgot-password                                                                                      | Failing |
+| FE-LOG-08 | Link to the sign-up page                      | Navigates to /register                                                                                             | Failing |
+| FE-LOG-09 | Network or server error on login              | Generic error shown; user can retry                                                                                | Failing |
+| FE-LOG-10 | Form fields are keyboard accessible           | Tab order is logical; Enter submits the form; fields have labels                                                   | Failing |
 
 ### 2.2 Session Restore (3.3.2)
 
-| ID        | Test Case                                           | Expected Result                                                                                      | Status  |
-| --------- | --------------------------------------------------- | ---------------------------------------------------------------------------------------------------- | ------- |
-| FE-LOG-12 | Page refresh with a valid stored session            | GET /auth/me succeeds; user remains logged in; no redirect to /login                                 | Failing |
-| FE-LOG-13 | Page load with an expired stored token              | GET /auth/me returns 401; stored session cleared; redirected to /login with a session expired notice | Failing |
-| FE-LOG-14 | Page load with a malformed or tampered stored token | Stored session cleared; redirected to /login                                                         | Failing |
-| FE-LOG-15 | Unauthenticated visit to a protected route          | Redirected to /login                                                                                 | Failing |
-| FE-LOG-16 | Authenticated visit to /login or /register          | Redirected to the Inbox/dashboard                                                                    | Failing |
-| FE-LOG-17 | Session restore runs correctly under SSR            | No errors from browser-only storage access during server render                                      | Failing |
-| FE-LOG-18 | Session restore in progress                         | Loading state shown; neither the login page nor protected content flashes before the result          | Failing |
+| ID        | Test Case                                           | Expected Result                                                                             | Status  |
+| --------- | --------------------------------------------------- | ------------------------------------------------------------------------------------------- | ------- |
+| FE-LOG-11 | Page refresh with a valid stored session            | GET /auth/me succeeds; user remains logged in; no redirect to /login                        | Failing |
+| FE-LOG-12 | Page load with a malformed or tampered stored token | Stored session cleared; redirected to /login                                                | Failing |
+| FE-LOG-13 | Unauthenticated visit to a protected route          | Redirected to /login                                                                        | Failing |
+| FE-LOG-14 | Authenticated visit to /login or /register          | Redirected to the Inbox/dashboard                                                           | Failing |
+| FE-LOG-15 | Session restore runs correctly under SSR            | No errors from browser-only storage access during server render                             | Failing |
+| FE-LOG-16 | Session restore in progress                         | Loading state shown; neither the login page nor protected content flashes before the result | Failing |
 
 ### 2.3 Logout (3.3.3)
 
-| ID        | Test Case                                                   | Expected Result                                           | Status  |
-| --------- | ----------------------------------------------------------- | --------------------------------------------------------- | ------- |
-| FE-LOG-19 | Click logout                                                | Stored session cleared; redirected to /login              | Failing |
-| FE-LOG-20 | Back button after logout                                    | Protected pages are not shown; user stays on /login       | Failing |
-| FE-LOG-21 | Logout request fails or returns 401 (token already invalid) | Local session is still cleared; user redirected to /login | Failing |
+| ID        | Test Case                                                         | Expected Result                                           | Status  |
+| --------- | ----------------------------------------------------------------- | --------------------------------------------------------- | ------- |
+| FE-LOG-17 | Click logout                                                      | Stored session cleared; redirected to /login              | Failing |
+| FE-LOG-18 | Back button after logout                                          | Protected pages are not shown; user stays on /login       | Failing |
+| FE-LOG-19 | Logout request fails or returns 401 (token is invalid or revoked) | Local session is still cleared; user redirected to /login | Failing |
 
 ### 2.4 Login \& Session Frontend Integration Tests (3.3.4, Login, Session Restore, Logout + API)
 
-| ID        | Test Case                                             | Expected Result                                                                             | Status  |
-| --------- | ----------------------------------------------------- | ------------------------------------------------------------------------------------------- | ------- |
-| FE-LOG-22 | Login calls POST /auth/login                          | Request body carries the entered identifier and password; token from the response is stored | Failing |
-| FE-LOG-23 | Login response is handled safely                      | User details (id, username, email, timezone) held in app state; password is never stored    | Failing |
-| FE-LOG-24 | Authenticated requests carry the session token        | Outgoing API calls include Authorization: Bearer <token>                                    | Failing |
-| FE-LOG-25 | API returns 401 on an authenticated request           | Session cleared; user redirected to /login with a session expired notice                    | Failing |
-| FE-LOG-26 | Logout calls POST /auth/logout                        | Request sent with the token; local session cleared after the response                       | Failing |
-| FE-LOG-27 | Requests after logout                                 | The old token is never sent again; no protected API calls are made                          | Failing |
-| FE-LOG-28 | Session restore populates app state from GET /auth/me | User details and inboxProjectId are available to the app after refresh                      | Failing |
+| ID        | Test Case                                                 | Expected Result                                                                             | Status  |
+| --------- | --------------------------------------------------------- | ------------------------------------------------------------------------------------------- | ------- |
+| FE-LOG-20 | Login calls POST /auth/login                              | Request body carries the entered identifier and password; token from the response is stored | Failing |
+| FE-LOG-21 | Login response is handled safely                          | User details (id, username, email, timezone) held in app state; password is never stored    | Failing |
+| FE-LOG-22 | Authenticated requests carry the session token            | Outgoing API calls include Authorization: Bearer <token>                                    | Failing |
+| FE-LOG-23 | API returns 401 because the session is invalid or revoked | Session cleared; user redirected to /login with a sign-in-required notice                   | Failing |
+| FE-LOG-24 | Logout calls POST /auth/logout                            | Request sent with the token; local session cleared after the response                       | Failing |
+| FE-LOG-25 | Requests after logout                                     | The old token is never sent again; no protected API calls are made                          | Failing |
+| FE-LOG-26 | Session restore populates app state from GET /auth/me     | User details and inboxProjectId are available to the app after refresh                      | Failing |
 
 ### 2.5 Login \& Session End-to-End (3.4.1)
 
-| ID        | Test Case                                                                   | Expected Result                                                                 | Status  |
-| --------- | --------------------------------------------------------------------------- | ------------------------------------------------------------------------------- | ------- |
-| FE-LOG-29 | Login, refresh the page, then logout, in one flow                           | User stays logged in after refresh and is returned to /login after logout       | Failing |
-| FE-LOG-30 | Session expires while the app is open, then user logs in again, in one flow | User is sent to /login with a session expired notice; logging in again succeeds | Failing |
+| ID        | Test Case                                         | Expected Result                                                           | Status  |
+| --------- | ------------------------------------------------- | ------------------------------------------------------------------------- | ------- |
+| FE-LOG-27 | Login, refresh the page, then logout, in one flow | User stays logged in after refresh and is returned to /login after logout | Failing |
 
 ## 3\. Password Recovery (WBS 4.3)
 
@@ -212,7 +209,7 @@ Test groups map to WBS tasks: UI groups map to the UI tasks (2.3.1, 3.3.1 to 3.3
 | Deliverable        | Cases | Failing | Passing | Blocked |
 | ------------------ | ----- | ------- | ------- | ------- |
 | Registration       | 29    | 29      | 0       | 0       |
-| Login \& Session   | 30    | 30      | 0       | 0       |
+| Login \& Session   | 27    | 27      | 0       | 0       |
 | Password Recovery  | 25    | 25      | 0       | 0       |
 | Profile Management | 19    | 19      | 0       | 0       |
-| Total              | 103   | 103     | 0       | 0       |
+| Total              | 100   | 100     | 0       | 0       |
