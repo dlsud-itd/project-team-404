@@ -336,7 +336,7 @@
       "type": "npm",
       "script": "supabase:reset:remote",
       "path": ".",
-      "detail": "Destructively resets the linked remote database and runs configured seeds. Confirm the linked project before running.",
+      "detail": "Destructively resets the linked remote database without automatic seeds, then runs each remote seed and reports SUCCEEDED, SKIPPED, or ERROR. Confirm the linked project before running.",
       "presentation": {
         "group": "supabase",
         "panel": "shared",
@@ -354,11 +354,11 @@
       }
     },
     {
-      "label": "🌱 Supabase: Seed All (local reset)",
+      "label": "🌱 Supabase: Seed Remote (no reset)",
       "type": "npm",
-      "script": "supabase:seed:all",
+      "script": "supabase:seed:remote",
       "path": ".",
-      "detail": "Resets only the local database and runs configured Supabase seed SQL. This deletes local database data; seed files/configuration must exist.",
+      "detail": "Runs SQL files from supabase/seeds against the linked remote database without resetting it. Each file reports SUCCEEDED, SKIPPED, or ERROR. Confirm the linked project before running.",
       "presentation": {
         "group": "seed",
         "panel": "shared",
