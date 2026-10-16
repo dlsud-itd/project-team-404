@@ -2,6 +2,9 @@
 /* To learn more about Angular compiler options: https://angular.dev/reference/configs/angular-compiler-options. */
 {
   "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "types": []
+  },
   "include": ["src/**/*.ts"],
   "exclude": ["src/**/*.spec.ts"]
 }
