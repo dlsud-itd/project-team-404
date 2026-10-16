@@ -4,7 +4,10 @@ import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { routes } from '../../app/app.routes';
-import { AVAILABILITY_DEBOUNCE_MS, DEFAULT_TIMEZONE } from '../../app/features/auth/register/register';
+import {
+  AVAILABILITY_DEBOUNCE_MS,
+  DEFAULT_TIMEZONE,
+} from '../../app/features/auth/register/register';
 import { environment } from '../../environments/environment';
 
 /**
@@ -159,9 +162,7 @@ describe('Registration integration (Sign-Up UI + API)', () => {
   it('shows the account-created confirmation after a 201', () => {
     fillValidForm();
     submit();
-    http
-      .expectOne(`${API}/signup`)
-      .flush(SIGNUP_CREATED, { status: 201, statusText: 'Created' });
+    http.expectOne(`${API}/signup`).flush(SIGNUP_CREATED, { status: 201, statusText: 'Created' });
     harness.detectChanges();
 
     expect(el('[role="status"]').textContent).toContain('Account created');

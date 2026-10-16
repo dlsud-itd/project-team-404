@@ -51,16 +51,16 @@ Test groups map to WBS tasks: UI groups map to the UI tasks (2.3.1, 3.3.1 to 3.3
 
 ### 1.2 Registration Frontend Integration Tests (2.3.2, Sign-Up UI + API)
 
-| ID        | Test Case                                                                                      | Expected Result                                                                                                                  | Status  |
-| --------- | ---------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- | ------- |
-| FE-REG-20 | Valid submit calls POST /api/auth/signup                                                         | Request body contains only username, email, password and timezone (if set); confirm password and other extra fields are not sent | Blocked |
-| FE-REG-21 | Password handling after submit                                                                 | Password is sent only in the request body; it is never placed in the URL or saved in browser storage                             | Passing |
-| FE-REG-22 | Registration returns 201 Created                                                               | Frontend signs the user in with POST /auth/login using the same credentials and stores the returned token                        | Blocked |
-| FE-REG-23 | Successful registration lands in the default Inbox                                             | Router navigates to the Inbox project view using the inboxProjectId returned by GET /auth/me                                     | Blocked |
+| ID        | Test Case                                                                                              | Expected Result                                                                                                                  | Status  |
+| --------- | ------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------- | ------- |
+| FE-REG-20 | Valid submit calls POST /api/auth/signup                                                               | Request body contains only username, email, password and timezone (if set); confirm password and other extra fields are not sent | Blocked |
+| FE-REG-21 | Password handling after submit                                                                         | Password is sent only in the request body; it is never placed in the URL or saved in browser storage                             | Passing |
+| FE-REG-22 | Registration returns 201 Created                                                                       | Frontend signs the user in with POST /auth/login using the same credentials and stores the returned token                        | Blocked |
+| FE-REG-23 | Successful registration lands in the default Inbox                                                     | Router navigates to the Inbox project view using the inboxProjectId returned by GET /auth/me                                     | Blocked |
 | FE-REG-24 | Availability checks call GET /api/auth/check-username/{username} and GET /api/auth/check-email/{email} | Correct endpoint called; values are URL-encoded (e.g. emails containing @ or +)                                                  | Passing |
-| FE-REG-25 | Availability checks are debounced                                                              | One request per settled input, not one per keystroke                                                                             | Passing |
-| FE-REG-26 | Email availability is case-insensitive                                                         | Entering User@Example.com when user@example.com exists shows "Email already registered"                                          | Passing |
-| FE-REG-27 | Rejected registration (400 or 409)                                                             | No session or token stored; user stays on /register                                                                              | Passing |
+| FE-REG-25 | Availability checks are debounced                                                                      | One request per settled input, not one per keystroke                                                                             | Passing |
+| FE-REG-26 | Email availability is case-insensitive                                                                 | Entering User@Example.com when user@example.com exists shows "Email already registered"                                          | Passing |
+| FE-REG-27 | Rejected registration (400 or 409)                                                                     | No session or token stored; user stays on /register                                                                              | Passing |
 
 Tests: `frontend/src/testing/integration/registration.integration.spec.ts`.
 
