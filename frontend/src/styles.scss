@@ -1,1 +1,41 @@
 /* You can add global styles to this file, and also import other style files */
+:root {
+  --orange: #d9531e;
+  --orange-light: #f0a07c;
+  --purple: #d98cf0;
+  --purple-strong: #c46fe0;
+  --cream: #fdece4;
+  --ink: #1d1714;
+  --ink-muted: #6b5b54;
+  --brown: #6a2a10;
+  --error: #b42318;
+  --success: #1f7a3d;
+  --field-border: #3a2f2a;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family:
+    'Archivo',
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    Roboto,
+    sans-serif;
+  color: var(--ink);
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
