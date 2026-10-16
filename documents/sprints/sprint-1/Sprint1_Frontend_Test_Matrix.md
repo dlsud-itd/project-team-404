@@ -1,12 +1,14 @@
 # Sprint 1 Frontend Test Matrix
 
-Last Updated: October 15, 2026 | Version 1.1.0
+Last Updated: October 16, 2026 | Version 1.2.0
 
 ## Overview
 
 Frontend test cases for Sprint 1 (User Authentication), written before any frontend code exists. Every case starts as Failing and is updated to Passing as each task from the Sprint 1 WBS (v1.1.0) is completed. This version is aligned to the Sprint 1 Backend Test Matrix (v1.0.0, October 14, 2026, which takes priority), the HabitFlow API Specification (v1.1), the Sprint 1 PERT Timeline (v1.1.0) and the Sprint 1 WBS (v1.1.0).
 
 Covers: Registration, Login \& Session, Password Recovery, Profile Management.
+
+Frontend integration tests are in `frontend/src/testing/integration`. They run with the rest of the frontend suite (`npm test` from `frontend`). Each test opens the page through the app's real routes and calls the API through the real `AuthService` and `HttpClient`; only the network is faked, using `HttpTestingController` with the status codes and response bodies the backend returns.
 
 Test IDs use the format FE-<DELIVERABLE>-<NN>:
 
@@ -51,14 +53,19 @@ Test groups map to WBS tasks: UI groups map to the UI tasks (2.3.1, 3.3.1 to 3.3
 
 | ID        | Test Case                                                                                      | Expected Result                                                                                                                  | Status  |
 | --------- | ---------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- | ------- |
-| FE-REG-20 | Valid submit calls POST /auth/register                                                         | Request body contains only username, email, password and timezone (if set); confirm password and other extra fields are not sent | Failing |
-| FE-REG-21 | Password handling after submit                                                                 | Password is sent only in the request body; it is never placed in the URL or saved in browser storage                             | Failing |
-| FE-REG-22 | Registration returns 201 Created                                                               | Frontend signs the user in with POST /auth/login using the same credentials and stores the returned token                        | Failing |
-| FE-REG-23 | Successful registration lands in the default Inbox                                             | Router navigates to the Inbox project view using the inboxProjectId returned by GET /auth/me                                     | Failing |
-| FE-REG-24 | Availability checks call GET /auth/check-username/{username} and GET /auth/check-email/{email} | Correct endpoint called; values are URL-encoded (e.g. emails containing @ or +)                                                  | Failing |
-| FE-REG-25 | Availability checks are debounced                                                              | One request per settled input, not one per keystroke                                                                             | Failing |
-| FE-REG-26 | Email availability is case-insensitive                                                         | Entering User@Example.com when user@example.com exists shows "Email already registered"                                          | Failing |
-| FE-REG-27 | Rejected registration (400 or 409)                                                             | No session or token stored; user stays on /register                                                                              | Failing |
+| FE-REG-20 | Valid submit calls POST /api/auth/signup                                                         | Request body contains only username, email, password and timezone (if set); confirm password and other extra fields are not sent | Blocked |
+| FE-REG-21 | Password handling after submit                                                                 | Password is sent only in the request body; it is never placed in the URL or saved in browser storage                             | Passing |
+| FE-REG-22 | Registration returns 201 Created                                                               | Frontend signs the user in with POST /auth/login using the same credentials and stores the returned token                        | Blocked |
+| FE-REG-23 | Successful registration lands in the default Inbox                                             | Router navigates to the Inbox project view using the inboxProjectId returned by GET /auth/me                                     | Blocked |
+| FE-REG-24 | Availability checks call GET /api/auth/check-username/{username} and GET /api/auth/check-email/{email} | Correct endpoint called; values are URL-encoded (e.g. emails containing @ or +)                                                  | Passing |
+| FE-REG-25 | Availability checks are debounced                                                              | One request per settled input, not one per keystroke                                                                             | Passing |
+| FE-REG-26 | Email availability is case-insensitive                                                         | Entering User@Example.com when user@example.com exists shows "Email already registered"                                          | Passing |
+| FE-REG-27 | Rejected registration (400 or 409)                                                             | No session or token stored; user stays on /register                                                                              | Passing |
+
+Tests: `frontend/src/testing/integration/registration.integration.spec.ts`.
+
+- FE-REG-20 is Blocked by a contract conflict. API Specification v1.1 lists username, email, password and timezone for signup, but the backend `signupSchema` also requires `confirmPassword` and returns 400 without it. The frontend sends `confirmPassword` so that registration works against the real API, and the test checks the five fields the backend accepts with no extras. The team needs to decide whether the backend drops `confirmPassword` or the spec adds it.
+- FE-REG-22 and FE-REG-23 are Blocked by Login \& Session (WBS 3.x). POST /auth/login and GET /auth/me do not exist yet, so after a 201 the page shows an "Account created" confirmation with a link to /login instead of signing the user in.
 
 ### 1.3 Registration End-to-End (2.4.1)
 
@@ -208,8 +215,8 @@ Test groups map to WBS tasks: UI groups map to the UI tasks (2.3.1, 3.3.1 to 3.3
 
 | Deliverable        | Cases | Failing | Passing | Blocked |
 | ------------------ | ----- | ------- | ------- | ------- |
-| Registration       | 29    | 29      | 0       | 0       |
+| Registration       | 29    | 21      | 5       | 3       |
 | Login \& Session   | 27    | 27      | 0       | 0       |
 | Password Recovery  | 25    | 25      | 0       | 0       |
 | Profile Management | 19    | 19      | 0       | 0       |
-| Total              | 100   | 100     | 0       | 0       |
+| Total              | 100   | 92      | 5       | 3       |
