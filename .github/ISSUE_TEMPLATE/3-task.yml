@@ -1,0 +1,79 @@
+name: "📋 HabitFlow Task / Chore"
+description: Sprint task, refactor, dependency update, or non-feature work
+title: "<type>(<scope>): <short description>"
+labels: ["task"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## 📋 HabitFlow Task
+        Use this for sprint tasks, refactors, configuration changes, dependency updates, tests, and documentation work that isn't a new feature or bug fix.
+
+  - type: dropdown
+    id: type
+    attributes:
+      label: Task Type
+      options:
+        - "refactor — code restructuring without a feature or fix"
+        - "chore — dependencies, configuration, or tooling"
+        - "docs — HabitFlow project documentation only"
+        - "test — adding or fixing tests"
+        - "ci — CI/CD pipeline changes"
+        - "style — formatting or whitespace"
+        - "perf — performance improvement"
+    validations:
+      required: true
+
+  - type: input
+    id: scope
+    attributes:
+      label: Scope / Area
+      description: Which part of HabitFlow or its documentation does this task belong to?
+      placeholder: "e.g. habits, reminders, frontend, backend, ci, project docs, architecture, database schema"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: sprint
+    attributes:
+      label: Sprint
+      options:
+        - Sprint 1
+        - Sprint 2
+        - Sprint 3
+        - Sprint 4
+        - Backlog
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: What needs to be done and why?
+      placeholder: Describe the task clearly enough that any team member can pick it up.
+    validations:
+      required: true
+
+  - type: textarea
+    id: definition-of-done
+    attributes:
+      label: Definition of Done
+      description: How will we know this task is complete?
+      placeholder: |
+        - [ ] ...
+        - [ ] ...
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: preflight
+    attributes:
+      label: Pre-submission Checklist
+      options:
+        - label: This task is small enough to complete within one sprint.
+          required: false
+        - label: I've confirmed no existing issue already covers this work.
+          required: true

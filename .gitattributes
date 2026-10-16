@@ -1,0 +1,18 @@
+# Normalize text files to LF on every platform.
+* text=auto eol=lf
+
+# Keep shell scripts as LF.
+*.sh text eol=lf
+
+# Binary assets must not be normalized or diffed as text.
+*.png binary
+*.gif binary
+*.jpg binary
+*.jpeg binary
+*.ico binary
+*.webp binary
+*.pdf binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.eot binary

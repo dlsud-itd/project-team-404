@@ -1,0 +1,35 @@
+{
+  "name": "habitflow",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "concurrently \"npm --prefix frontend run start\" \"npm --prefix backend run dev\"",
+    "frontend": "npm --prefix frontend run start",
+    "backend": "npm --prefix backend run dev",
+    "clean": "npm --prefix frontend run clean && npm --prefix backend run clean",
+    "install:all": "npm install && npm --prefix frontend install && npm --prefix backend install",
+    "test": "npm --prefix frontend run test:run && npm --prefix backend test",
+    "lint": "npm --prefix frontend run lint && npm --prefix backend run lint",
+    "build": "npm --prefix frontend run build && npm --prefix backend run build",
+    "format": "prettier --write \"**/*.{js,jsx,mjs,cjs,ts,tsx,css,scss,less,html,json,md,mdx,yaml,yml}\"",
+    "format:check": "prettier --check \"**/*.{js,jsx,mjs,cjs,ts,tsx,css,scss,less,html,json,md,mdx,yaml,yml}\"",
+    "supabase:login": "supabase login",
+    "supabase:link": "supabase link",
+    "supabase:push": "supabase db push",
+    "supabase:pull": "supabase db pull",
+    "supabase:status": "supabase migration list",
+    "supabase:reset": "supabase db reset",
+    "supabase:reset:remote": "node scripts/supabase-seed.mjs --reset",
+    "supabase:repair": "supabase migration repair",
+    "supabase:seed:remote": "node scripts/supabase-seed.mjs"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.3",
+    "prettier": "^3.8.1",
+    "supabase": "^2.48.3"
+  }
+}
