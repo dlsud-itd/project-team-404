@@ -1,0 +1,161 @@
+<div class="register">
+  <section class="intro" aria-labelledby="intro-heading">
+    <a class="brand" routerLink="/">
+      <span class="brand-mark" aria-hidden="true"></span>
+      HabitTracker
+    </a>
+
+    <h2 id="intro-heading" class="intro-heading">
+      Build better habits. Start your <span class="accent">streak</span>.
+    </h2>
+
+    <ul class="features" aria-label="What you get">
+      <li>Daily check-ins</li>
+      <li>Reminders and notifications</li>
+      <li>Streaks and statistics</li>
+    </ul>
+
+    <p class="credit">Team 404 Project</p>
+  </section>
+
+  <main class="panel">
+    <div class="panel-inner">
+      @if (registered()) {
+        <div class="success" role="status">
+          <p class="eyebrow">You're all set</p>
+          <h1 class="title">Account created</h1>
+          <p class="success-copy">
+            Your account and your Inbox are ready. Log in to start tracking your habits.
+          </p>
+          <a class="submit" routerLink="/login">Log in</a>
+        </div>
+      } @else {
+        <p class="eyebrow">Register an account</p>
+        <h1 class="title">Join HabitTracker</h1>
+
+        @if (formError(); as message) {
+          <p class="form-error" role="alert">{{ message }}</p>
+        }
+
+        <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+          <div class="field">
+            <label for="username">Username</label>
+            <input
+              id="username"
+              type="text"
+              formControlName="username"
+              autocomplete="username"
+              placeholder="jamessaluta"
+              [attr.aria-invalid]="!!fieldError('username')"
+              aria-describedby="username-status"
+            />
+            <p id="username-status" class="field-message" aria-live="polite">
+              @if (fieldError('username'); as error) {
+                <span class="is-error">{{ error }}</span>
+              } @else if (usernameAvailability() === 'checking') {
+                <span class="is-muted">Checking availability…</span>
+              } @else if (usernameAvailability() === 'available' && form.controls.username.valid) {
+                <span class="is-success">Username is available</span>
+              }
+            </p>
+          </div>
+
+          <div class="field">
+            <label for="email">Email</label>
+            <input
+              id="email"
+              type="email"
+              formControlName="email"
+              autocomplete="email"
+              placeholder="you@example.com"
+              [attr.aria-invalid]="!!fieldError('email')"
+              aria-describedby="email-status"
+            />
+            <p id="email-status" class="field-message" aria-live="polite">
+              @if (fieldError('email'); as error) {
+                <span class="is-error">{{ error }}</span>
+              } @else if (emailAvailability() === 'checking') {
+                <span class="is-muted">Checking availability…</span>
+              } @else if (emailAvailability() === 'available' && form.controls.email.valid) {
+                <span class="is-success">Email is available</span>
+              }
+            </p>
+          </div>
+
+          <div class="field">
+            <label for="password">Password</label>
+            <div class="password">
+              <input
+                id="password"
+                [type]="showPassword() ? 'text' : 'password'"
+                formControlName="password"
+                autocomplete="new-password"
+                placeholder="At least 8 characters"
+                [attr.aria-invalid]="!!fieldError('password')"
+                aria-describedby="password-status"
+              />
+              <button
+                type="button"
+                class="toggle"
+                [attr.aria-pressed]="showPassword()"
+                (click)="showPassword.set(!showPassword())"
+              >
+                {{ showPassword() ? 'Hide' : 'Show' }}
+                <span class="visually-hidden">password</span>
+              </button>
+            </div>
+            <p id="password-status" class="field-message" aria-live="polite">
+              @if (fieldError('password'); as error) {
+                <span class="is-error">{{ error }}</span>
+              }
+            </p>
+          </div>
+
+          <div class="field">
+            <label for="confirmPassword">Confirm password</label>
+            <div class="password">
+              <input
+                id="confirmPassword"
+                [type]="showConfirmPassword() ? 'text' : 'password'"
+                formControlName="confirmPassword"
+                autocomplete="new-password"
+                placeholder="Type password again"
+                [attr.aria-invalid]="!!fieldError('confirmPassword')"
+                aria-describedby="confirmPassword-status"
+              />
+              <button
+                type="button"
+                class="toggle"
+                [attr.aria-pressed]="showConfirmPassword()"
+                (click)="showConfirmPassword.set(!showConfirmPassword())"
+              >
+                {{ showConfirmPassword() ? 'Hide' : 'Show' }}
+                <span class="visually-hidden">confirm password</span>
+              </button>
+            </div>
+            <p id="confirmPassword-status" class="field-message" aria-live="polite">
+              @if (fieldError('confirmPassword'); as error) {
+                <span class="is-error">{{ error }}</span>
+              }
+            </p>
+          </div>
+
+          <div class="field">
+            <label for="timezone">Timezone <span class="optional">(optional)</span></label>
+            <select id="timezone" formControlName="timezone">
+              @for (zone of timezones; track zone) {
+                <option [value]="zone">{{ zone }}</option>
+              }
+            </select>
+          </div>
+
+          <button class="submit" type="submit" [disabled]="submitting()">
+            {{ submitting() ? 'Creating account…' : 'Create account' }}
+          </button>
+        </form>
+
+        <p class="switch">Already have an account? <a routerLink="/login">Log in</a></p>
+      }
+    </div>
+  </main>
+</div>
