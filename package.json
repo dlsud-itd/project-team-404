@@ -23,9 +23,9 @@
     "supabase:pull": "supabase db pull",
     "supabase:status": "supabase migration list",
     "supabase:reset": "supabase db reset",
-    "supabase:reset:remote": "supabase db reset --linked",
+    "supabase:reset:remote": "node scripts/supabase-seed.mjs --reset",
     "supabase:repair": "supabase migration repair",
-    "supabase:seed:all": "supabase db reset --local"
+    "supabase:seed:remote": "node scripts/supabase-seed.mjs"
   },
   "devDependencies": {
     "concurrently": "^9.2.3",
