@@ -1,6 +1,10 @@
 # Frontend
 
 This Angular application runs at `http://localhost:4200`.
+It is built as a browser-only single-page application. For Vercel, use
+`frontend` as the project root and `dist/frontend/browser` as the output
+directory; `vercel.json` serves the app shell for client-side routes such as
+`/register`.
 
 ## Local setup
 
