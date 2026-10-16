@@ -6,13 +6,6 @@
       "type": "npm",
       "script": "start",
       "path": "frontend",
-      "options": {
-        "env": {
-          "NG_APP_API_BASE_URL": "http://localhost:3000",
-          "NG_APP_SUPABASE_URL": "https://placeholder.supabase.co",
-          "NG_APP_SUPABASE_ANON_KEY": "placeholder-anon-key"
-        }
-      },
       "presentation": {
         "group": "dev-env",
         "panel": "dedicated",
@@ -43,13 +36,6 @@
       "type": "npm",
       "script": "test:watch",
       "path": "frontend",
-      "options": {
-        "env": {
-          "NG_APP_API_BASE_URL": "http://localhost:3000",
-          "NG_APP_SUPABASE_URL": "https://placeholder.supabase.co",
-          "NG_APP_SUPABASE_ANON_KEY": "placeholder-anon-key"
-        }
-      },
       "presentation": {
         "group": "testing",
         "panel": "dedicated",
@@ -61,13 +47,6 @@
       "type": "npm",
       "script": "test:run",
       "path": "frontend",
-      "options": {
-        "env": {
-          "NG_APP_API_BASE_URL": "http://localhost:3000",
-          "NG_APP_SUPABASE_URL": "https://placeholder.supabase.co",
-          "NG_APP_SUPABASE_ANON_KEY": "placeholder-anon-key"
-        }
-      },
       "presentation": {
         "group": "testing",
         "panel": "dedicated",
@@ -153,13 +132,6 @@
       "type": "npm",
       "script": "build",
       "path": "frontend",
-      "options": {
-        "env": {
-          "NG_APP_API_BASE_URL": "http://localhost:3000",
-          "NG_APP_SUPABASE_URL": "https://placeholder.supabase.co",
-          "NG_APP_SUPABASE_ANON_KEY": "placeholder-anon-key"
-        }
-      },
       "presentation": {
         "group": "build",
         "panel": "dedicated",
@@ -171,13 +143,6 @@
       "type": "npm",
       "script": "watch",
       "path": "frontend",
-      "options": {
-        "env": {
-          "NG_APP_API_BASE_URL": "http://localhost:3000",
-          "NG_APP_SUPABASE_URL": "https://placeholder.supabase.co",
-          "NG_APP_SUPABASE_ANON_KEY": "placeholder-anon-key"
-        }
-      },
       "presentation": {
         "group": "build",
         "panel": "dedicated",
@@ -249,6 +214,16 @@
       "type": "npm",
       "script": "install:all",
       "path": ".",
+      "presentation": {
+        "panel": "shared",
+        "reveal": "always"
+      }
+    },
+    {
+      "label": "🛠️ Setup: Create Environment Files",
+      "type": "process",
+      "command": "node",
+      "args": ["scripts/setup-env.mjs"],
       "presentation": {
         "panel": "shared",
         "reveal": "always"
