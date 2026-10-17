@@ -91,8 +91,14 @@ The current API includes:
 | --- | --- | --- |
 | `GET` | `/health` | Check API health |
 | `POST` | `/api/auth/signup` | Register an account and create its Inbox |
+| `POST` | `/api/auth/login` | Log in with an email or username and receive a bearer token |
+| `GET` | `/api/auth/me` | Fetch the current authenticated user |
+| `POST` | `/api/auth/logout` | Invalidate the current bearer token |
 | `GET` | `/api/auth/check-username/:username` | Check username availability |
 | `GET` | `/api/auth/check-email/:email` | Check email availability |
+| `POST` | `/api/auth/forgot-password` | Request a password recovery email |
+| `GET` | `/api/auth/validate-reset-token` | Validate a valid password reset token |
+| `POST` | `/api/auth/reset-password` | Reset a password with a valid token |
 
 ## Deployment configuration
 

@@ -11,6 +11,11 @@ export type SignupResult = {
   inboxProjectId: number;
 };
 
+export type PasswordResetInput = {
+  token: string;
+  password: string;
+};
+
 export type AuthUser = {
   id: string;
   username: string;
@@ -26,6 +31,9 @@ export interface AuthRepository {
   login(input: LoginInput): Promise<{ token: string; user: AuthUser }>;
   getCurrentUser(token: string): Promise<AuthUser>;
   logout(token: string): Promise<void>;
+  requestPasswordReset?(email: string): Promise<void>;
+  validateResetToken?(token: string): Promise<boolean>;
+  resetPassword?(input: PasswordResetInput): Promise<void>;
 }
 
 type SupabaseUser = {
@@ -58,6 +66,28 @@ export class SupabaseAuthRepository implements AuthRepository {
       limit: '1',
     });
     return rows.length === 0;
+  }
+
+  async requestPasswordReset(email: string): Promise<void> {
+    await this.authRequest('recover', {
+      method: 'POST',
+      body: JSON.stringify({ email }),
+    });
+  }
+
+  async validateResetToken(token: string): Promise<boolean> {
+    const result = await this.authRequest<{ valid?: boolean }>('verifyOTP', {
+      method: 'POST',
+      body: JSON.stringify({ token, type: 'recovery' }),
+    });
+    return result.valid ?? true;
+  }
+
+  async resetPassword(input: PasswordResetInput): Promise<void> {
+    await this.authRequest('reset', {
+      method: 'POST',
+      body: JSON.stringify({ token: input.token, password: input.password }),
+    });
   }
 
   async login(input: LoginInput): Promise<{ token: string; user: AuthUser }> {
