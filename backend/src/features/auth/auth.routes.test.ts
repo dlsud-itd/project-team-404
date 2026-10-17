@@ -260,4 +260,64 @@ describe('auth routes', () => {
       'harvey@example.com'
     );
   });
+
+  it('requests a password reset email for a valid account', async () => {
+    const repository: AuthRepository = {
+      isUsernameAvailable: vi.fn(),
+      isEmailAvailable: vi.fn(),
+      createUser: vi.fn(),
+      login: vi.fn(),
+      getCurrentUser: vi.fn(),
+      logout: vi.fn(),
+      requestPasswordReset: vi.fn().mockResolvedValue(undefined),
+    };
+
+    const response = await request(createTestApp(repository), '/api/auth/forgot-password', {
+      method: 'POST',
+      body: { email: 'Harvey@example.com' },
+    });
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({
+      message: 'If an account exists for that email, a reset link has been sent.',
+    });
+    expect(repository.requestPasswordReset).toHaveBeenCalledWith('harvey@example.com');
+  });
+
+  it('validates and resets a password with a valid token', async () => {
+    const repository: AuthRepository = {
+      isUsernameAvailable: vi.fn(),
+      isEmailAvailable: vi.fn(),
+      createUser: vi.fn(),
+      login: vi.fn(),
+      getCurrentUser: vi.fn(),
+      logout: vi.fn(),
+      validateResetToken: vi.fn().mockResolvedValue(true),
+      resetPassword: vi.fn().mockResolvedValue(undefined),
+    };
+
+    const app = createTestApp(repository);
+
+    const tokenCheck = await request(
+      app,
+      '/api/auth/validate-reset-token?token=token-123'
+    );
+    const reset = await request(app, '/api/auth/reset-password', {
+      method: 'POST',
+      body: {
+        token: 'token-123',
+        newPassword: 'new-secure-password',
+        confirmPassword: 'new-secure-password',
+      },
+    });
+
+    expect(tokenCheck.status).toBe(200);
+    expect(tokenCheck.body).toEqual({ valid: true });
+    expect(reset.status).toBe(200);
+    expect(reset.body).toEqual({ message: 'Password updated successfully.' });
+    expect(repository.resetPassword).toHaveBeenCalledWith({
+      token: 'token-123',
+      password: 'new-secure-password',
+    });
+  });
 });
