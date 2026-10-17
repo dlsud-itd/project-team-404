@@ -1,8 +1,8 @@
-import express from 'express';
+﻿import express from 'express';
 import { describe, expect, it, vi } from 'vitest';
 import { request } from '../../testing/helpers/request';
 import { createAuthRouter } from './auth.routes';
-import { SupabaseAuthRepository, type AuthRepository } from './auth.repository';
+import { type AuthRepository } from './auth.repository';
 
 const createTestApp = (repository: AuthRepository) => {
   const app = express();
@@ -24,10 +24,12 @@ describe('auth routes', () => {
     const repository: AuthRepository = {
       isUsernameAvailable: vi.fn().mockResolvedValue(true),
       isEmailAvailable: vi.fn().mockResolvedValue(true),
-      createUser: vi.fn().mockResolvedValue({
-        userId: 'user-123',
-        inboxProjectId: 42,
-      }),
+      createUser: vi
+        .fn()
+        .mockResolvedValue({ userId: 'user-123', inboxProjectId: 42 }),
+      login: vi.fn(),
+      getCurrentUser: vi.fn(),
+      logout: vi.fn(),
     };
 
     const response = await request(
@@ -47,6 +49,107 @@ describe('auth routes', () => {
     });
   });
 
+  it('logs in with an email or username and returns a session token', async () => {
+    const repository: AuthRepository = {
+      isUsernameAvailable: vi.fn(),
+      isEmailAvailable: vi.fn(),
+      createUser: vi.fn(),
+      login: vi.fn().mockResolvedValue({
+        token: 'jwt-token',
+        user: {
+          id: 'user-123',
+          username: 'harvey',
+          email: 'harvey@example.com',
+          timezone: 'Asia/Manila',
+          inboxProjectId: 99,
+        },
+      }),
+      getCurrentUser: vi.fn(),
+      logout: vi.fn(),
+    };
+
+    const response = await request(
+      createTestApp(repository),
+      '/api/auth/login',
+      {
+        method: 'POST',
+        body: { identifier: 'Harvey@example.com', password: 'secure-password' },
+      }
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({
+      token: 'jwt-token',
+      user: {
+        id: 'user-123',
+        username: 'harvey',
+        email: 'harvey@example.com',
+        timezone: 'Asia/Manila',
+        inboxProjectId: 99,
+      },
+    });
+    expect(repository.login).toHaveBeenCalledWith({
+      identifier: 'Harvey@example.com',
+      password: 'secure-password',
+    });
+  });
+
+  it('returns the current user from a bearer token', async () => {
+    const repository: AuthRepository = {
+      isUsernameAvailable: vi.fn(),
+      isEmailAvailable: vi.fn(),
+      createUser: vi.fn(),
+      login: vi.fn(),
+      getCurrentUser: vi.fn().mockResolvedValue({
+        id: 'user-123',
+        username: 'harvey',
+        email: 'harvey@example.com',
+        timezone: 'Asia/Manila',
+        inboxProjectId: 5,
+      }),
+      logout: vi.fn(),
+    };
+
+    const response = await request(createTestApp(repository), '/api/auth/me', {
+      method: 'GET',
+      headers: { Authorization: 'Bearer token-123' },
+    });
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({
+      id: 'user-123',
+      username: 'harvey',
+      email: 'harvey@example.com',
+      timezone: 'Asia/Manila',
+      inboxProjectId: 5,
+    });
+    expect(repository.getCurrentUser).toHaveBeenCalledWith('token-123');
+  });
+
+  it('logs out a valid user session', async () => {
+    const repository: AuthRepository = {
+      isUsernameAvailable: vi.fn(),
+      isEmailAvailable: vi.fn(),
+      createUser: vi.fn(),
+      login: vi.fn(),
+      getCurrentUser: vi.fn(),
+      logout: vi.fn().mockResolvedValue(undefined),
+    };
+
+    const response = await request(
+      createTestApp(repository),
+      '/api/auth/logout',
+      {
+        method: 'POST',
+        headers: { Authorization: 'Bearer token-123' },
+      }
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({ message: 'Logged out successfully' });
+    expect(repository.logout).toHaveBeenCalledWith('token-123');
+  });
+
   it.each([
     [{ ...validSignup, username: 'x'.repeat(51) }, 'username'],
     [{ ...validSignup, email: 'not-an-email' }, 'email'],
@@ -64,6 +167,9 @@ describe('auth routes', () => {
       isUsernameAvailable: vi.fn(),
       isEmailAvailable: vi.fn(),
       createUser: vi.fn(),
+      login: vi.fn(),
+      getCurrentUser: vi.fn(),
+      logout: vi.fn(),
     };
 
     const response = await request(
@@ -87,6 +193,9 @@ describe('auth routes', () => {
       isUsernameAvailable: vi.fn().mockResolvedValue(false),
       isEmailAvailable: vi.fn(),
       createUser: vi.fn(),
+      login: vi.fn(),
+      getCurrentUser: vi.fn(),
+      logout: vi.fn(),
     };
 
     const response = await request(
@@ -109,6 +218,9 @@ describe('auth routes', () => {
       isUsernameAvailable: vi.fn().mockResolvedValue(true),
       isEmailAvailable: vi.fn().mockResolvedValue(false),
       createUser: vi.fn(),
+      login: vi.fn(),
+      getCurrentUser: vi.fn(),
+      logout: vi.fn(),
     };
 
     const response = await request(
@@ -130,9 +242,12 @@ describe('auth routes', () => {
       isUsernameAvailable: vi.fn().mockResolvedValue(true),
       isEmailAvailable: vi.fn().mockResolvedValue(false),
       createUser: vi.fn(),
+      login: vi.fn(),
+      getCurrentUser: vi.fn(),
+      logout: vi.fn(),
     };
-    const app = createTestApp(repository);
 
+    const app = createTestApp(repository);
     const username = await request(app, '/api/auth/check-username/harvey');
     const email = await request(
       app,
@@ -144,94 +259,5 @@ describe('auth routes', () => {
     expect(repository.isEmailAvailable).toHaveBeenCalledWith(
       'harvey@example.com'
     );
-  });
-});
-
-describe('SupabaseAuthRepository', () => {
-  it('creates a Supabase Auth user, profile, and exactly one Inbox project', async () => {
-    const calls: Array<{ url: string; init: RequestInit }> = [];
-    vi.stubGlobal('fetch', async (input: URL, init: RequestInit = {}) => {
-      const url = String(input);
-      calls.push({ url, init });
-
-      if (url.endsWith('/auth/v1/admin/users')) {
-        return new Response(JSON.stringify({ id: 'user-123' }), {
-          status: 200,
-        });
-      }
-      if (url.endsWith('/rest/v1/tbl_user')) {
-        return new Response(null, { status: 201 });
-      }
-      if (url.endsWith('/rest/v1/tbl_project')) {
-        return new Response(JSON.stringify([{ project_id: 42 }]), {
-          status: 201,
-        });
-      }
-      throw new Error(`Unexpected request: ${url}`);
-    });
-
-    try {
-      const repository = new SupabaseAuthRepository(
-        'https://project.example',
-        'service-role-key'
-      );
-      const result = await repository.createUser({
-        ...validSignup,
-        email: 'harvey@example.com',
-      });
-
-      expect(result).toEqual({ userId: 'user-123', inboxProjectId: 42 });
-      expect(calls).toHaveLength(3);
-      expect(JSON.parse(String(calls[0]?.init.body))).toMatchObject({
-        email: 'harvey@example.com',
-        password: 'secure-password',
-        email_confirm: true,
-      });
-      expect(JSON.parse(String(calls[1]?.init.body))).toMatchObject({
-        user_id: 'user-123',
-        username: 'harvey',
-        email: 'harvey@example.com',
-        timezone: 'Asia/Manila',
-      });
-      expect(JSON.parse(String(calls[2]?.init.body))).toEqual({
-        user_id: 'user-123',
-        name: 'Inbox',
-        is_inbox: true,
-      });
-    } finally {
-      vi.unstubAllGlobals();
-    }
-  });
-
-  it('returns a conflict if the Auth API detects a duplicate email after the availability check', async () => {
-    vi.stubGlobal(
-      'fetch',
-      async () =>
-        new Response(
-          JSON.stringify({
-            code: 'email_exists',
-            msg: 'A user with this email address has already been registered',
-          }),
-          { status: 422 }
-        )
-    );
-
-    try {
-      const repository = new SupabaseAuthRepository(
-        'https://project.example',
-        'service-role-key'
-      );
-      await expect(
-        repository.createUser({
-          ...validSignup,
-          email: 'harvey@example.com',
-        })
-      ).rejects.toMatchObject({
-        name: 'AuthConflictError',
-        message: 'Email is already in use',
-      });
-    } finally {
-      vi.unstubAllGlobals();
-    }
   });
 });

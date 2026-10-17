@@ -1,12 +1,21 @@
-import {
+﻿import {
   AuthConflictError,
+  AuthUnauthorizedError,
   SupabaseAuthConfigurationError,
   SupabaseAuthRequestError,
 } from './auth.errors';
-import type { SignupInput } from './auth.schemas';
+import type { LoginInput, SignupInput } from './auth.schemas';
 
 export type SignupResult = {
   userId: string;
+  inboxProjectId: number;
+};
+
+export type AuthUser = {
+  id: string;
+  username: string;
+  email: string;
+  timezone: string;
   inboxProjectId: number;
 };
 
@@ -14,6 +23,9 @@ export interface AuthRepository {
   isUsernameAvailable(username: string): Promise<boolean>;
   isEmailAvailable(email: string): Promise<boolean>;
   createUser(input: SignupInput): Promise<SignupResult>;
+  login(input: LoginInput): Promise<{ token: string; user: AuthUser }>;
+  getCurrentUser(token: string): Promise<AuthUser>;
+  logout(token: string): Promise<void>;
 }
 
 type SupabaseUser = {
@@ -46,6 +58,112 @@ export class SupabaseAuthRepository implements AuthRepository {
       limit: '1',
     });
     return rows.length === 0;
+  }
+
+  async login(input: LoginInput): Promise<{ token: string; user: AuthUser }> {
+    const identifier = input.identifier.trim();
+    const match = await this.findUserByIdentifier(identifier);
+
+    if (!match) {
+      throw new AuthUnauthorizedError('Invalid email or password');
+    }
+
+    try {
+      const response = await this.authRequest<{
+        access_token?: string;
+        user?: { id?: string };
+      }>('token', {
+        method: 'POST',
+        body: JSON.stringify({
+          email: match.email,
+          password: input.password,
+        }),
+      });
+
+      if (!response.access_token || !response.user?.id) {
+        throw new AuthUnauthorizedError('Invalid email or password');
+      }
+
+      return {
+        token: response.access_token,
+        user: await this.getCurrentUser(response.access_token),
+      };
+    } catch (error) {
+      if (error instanceof AuthUnauthorizedError) {
+        throw error;
+      }
+      if (error instanceof SupabaseAuthRequestError) {
+        throw new AuthUnauthorizedError('Invalid email or password');
+      }
+      throw error;
+    }
+  }
+
+  async getCurrentUser(token: string): Promise<AuthUser> {
+    const sessionUser = await this.authRequest<{
+      id?: string;
+      user_metadata?: { username?: string };
+    }>('user', {
+      method: 'GET',
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    if (!sessionUser.id) {
+      throw new AuthUnauthorizedError('Token invalid or expired');
+    }
+
+    const rows = await this.restRequest<
+      { user_id: string; username: string; email: string; timezone: string }[]
+    >(
+      'tbl_user',
+      {
+        select: 'user_id,username,email,timezone',
+        user_id: `eq.${sessionUser.id}`,
+        limit: '1',
+      },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+
+    const row = rows[0];
+    if (!row) {
+      throw new AuthUnauthorizedError('Token invalid or expired');
+    }
+
+    const [inbox] = await this.restRequest<{ project_id: number }[]>(
+      'tbl_project',
+      {
+        select: 'project_id',
+        user_id: `eq.${row.user_id}`,
+        is_inbox: 'eq.true',
+        limit: '1',
+      },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+
+    return {
+      id: row.user_id,
+      username:
+        row.username ??
+        sessionUser.user_metadata?.username ??
+        row.email.split('@')[0],
+      email: row.email,
+      timezone: row.timezone,
+      inboxProjectId: inbox?.project_id ?? 0,
+    };
+  }
+
+  async logout(token: string): Promise<void> {
+    try {
+      await this.authRequest('logout', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+    } catch (error) {
+      if (error instanceof SupabaseAuthRequestError && error.status === 401) {
+        throw new AuthUnauthorizedError('Unauthorized');
+      }
+      throw error;
+    }
   }
 
   async createUser(input: SignupInput): Promise<SignupResult> {
@@ -124,6 +242,31 @@ export class SupabaseAuthRepository implements AuthRepository {
     }
   }
 
+  private async findUserByIdentifier(
+    identifier: string
+  ): Promise<{ email: string } | null> {
+    const normalized = identifier.trim();
+    const lower = normalized.toLowerCase();
+
+    const byEmail = await this.restRequest<{ email: string }[]>('tbl_user', {
+      select: 'email',
+      email: `eq.${lower}`,
+      limit: '1',
+    });
+
+    if (byEmail[0]) {
+      return { email: byEmail[0].email };
+    }
+
+    const byUsername = await this.restRequest<{ email: string }[]>('tbl_user', {
+      select: 'email',
+      username: `eq.${normalized}`,
+      limit: '1',
+    });
+
+    return byUsername[0] ? { email: byUsername[0].email } : null;
+  }
+
   private async restRequest<T = unknown>(
     table: string,
     query?: Record<string, string>,
@@ -139,7 +282,7 @@ export class SupabaseAuthRepository implements AuthRepository {
 
   private async authRequest<T = unknown>(
     path: string,
-    init: RequestInit
+    init: RequestInit = {}
   ): Promise<T> {
     return this.request<T>(
       this.endpoint(`auth/v1/${path}`),
@@ -154,15 +297,21 @@ export class SupabaseAuthRepository implements AuthRepository {
     operation: string
   ): Promise<T> {
     const key = this.getServiceRoleKey();
+    const headers: Record<string, string> = {
+      apikey: key,
+      'Content-Type': 'application/json',
+      ...((init.headers as Record<string, string> | undefined) ?? {}),
+    };
+
+    if (!headers.Authorization && !headers.authorization) {
+      headers.Authorization = `Bearer ${key}`;
+    }
+
     const response = await fetch(url, {
       ...init,
-      headers: {
-        apikey: key,
-        Authorization: `Bearer ${key}`,
-        'Content-Type': 'application/json',
-        ...init.headers,
-      },
+      headers,
     });
+
     const text = await response.text();
     let payload: unknown = null;
 
@@ -185,6 +334,7 @@ export class SupabaseAuthRepository implements AuthRepository {
         payload
       );
     }
+
     return payload as T;
   }
 

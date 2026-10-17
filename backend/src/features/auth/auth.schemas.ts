@@ -27,6 +27,11 @@ export const signupSchema = z
     message: 'Passwords do not match',
   });
 
+export const loginSchema = z.object({
+  identifier: z.string().trim().min(1).max(255),
+  password: z.string().min(1).max(1000),
+});
+
 export const usernameParamSchema = z.string().trim().min(1).max(50);
 export const emailParamSchema = z
   .email()
@@ -34,3 +39,4 @@ export const emailParamSchema = z
   .transform((email) => email.toLowerCase());
 
 export type SignupInput = z.infer<typeof signupSchema>;
+export type LoginInput = z.infer<typeof loginSchema>;
