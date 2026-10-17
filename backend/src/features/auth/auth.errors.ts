@@ -22,3 +22,10 @@ export class SupabaseAuthRequestError extends Error {
     this.name = 'SupabaseAuthRequestError';
   }
 }
+
+export class AuthUnauthorizedError extends Error {
+  constructor(message = 'Unauthorized') {
+    super(message);
+    this.name = 'AuthUnauthorizedError';
+  }
+}
