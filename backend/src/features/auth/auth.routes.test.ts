@@ -24,16 +24,22 @@ describe('auth routes', () => {
     const repository: AuthRepository = {
       isUsernameAvailable: vi.fn().mockResolvedValue(true),
       isEmailAvailable: vi.fn().mockResolvedValue(true),
-      createUser: vi.fn().mockResolvedValue({ userId: 'user-123', inboxProjectId: 42 }),
+      createUser: vi
+        .fn()
+        .mockResolvedValue({ userId: 'user-123', inboxProjectId: 42 }),
       login: vi.fn(),
       getCurrentUser: vi.fn(),
       logout: vi.fn(),
     };
 
-    const response = await request(createTestApp(repository), '/api/auth/signup', {
-      method: 'POST',
-      body: validSignup,
-    });
+    const response = await request(
+      createTestApp(repository),
+      '/api/auth/signup',
+      {
+        method: 'POST',
+        body: validSignup,
+      }
+    );
 
     expect(response.status).toBe(201);
     expect(response.body).toEqual({ userId: 'user-123', inboxProjectId: 42 });
@@ -62,10 +68,14 @@ describe('auth routes', () => {
       logout: vi.fn(),
     };
 
-    const response = await request(createTestApp(repository), '/api/auth/login', {
-      method: 'POST',
-      body: { identifier: 'Harvey@example.com', password: 'secure-password' },
-    });
+    const response = await request(
+      createTestApp(repository),
+      '/api/auth/login',
+      {
+        method: 'POST',
+        body: { identifier: 'Harvey@example.com', password: 'secure-password' },
+      }
+    );
 
     expect(response.status).toBe(200);
     expect(response.body).toEqual({
@@ -126,10 +136,14 @@ describe('auth routes', () => {
       logout: vi.fn().mockResolvedValue(undefined),
     };
 
-    const response = await request(createTestApp(repository), '/api/auth/logout', {
-      method: 'POST',
-      headers: { Authorization: 'Bearer token-123' },
-    });
+    const response = await request(
+      createTestApp(repository),
+      '/api/auth/logout',
+      {
+        method: 'POST',
+        headers: { Authorization: 'Bearer token-123' },
+      }
+    );
 
     expect(response.status).toBe(200);
     expect(response.body).toEqual({ message: 'Logged out successfully' });
@@ -139,8 +153,14 @@ describe('auth routes', () => {
   it.each([
     [{ ...validSignup, username: 'x'.repeat(51) }, 'username'],
     [{ ...validSignup, email: 'not-an-email' }, 'email'],
-    [{ ...validSignup, password: 'short', confirmPassword: 'short' }, 'password'],
-    [{ ...validSignup, confirmPassword: 'different-password' }, 'confirmPassword'],
+    [
+      { ...validSignup, password: 'short', confirmPassword: 'short' },
+      'password',
+    ],
+    [
+      { ...validSignup, confirmPassword: 'different-password' },
+      'confirmPassword',
+    ],
     [{ ...validSignup, timezone: 'Mars/Olympus' }, 'timezone'],
   ])('returns 400 for invalid signup input (%s)', async (body, field) => {
     const repository: AuthRepository = {
@@ -152,10 +172,14 @@ describe('auth routes', () => {
       logout: vi.fn(),
     };
 
-    const response = await request(createTestApp(repository), '/api/auth/signup', {
-      method: 'POST',
-      body,
-    });
+    const response = await request(
+      createTestApp(repository),
+      '/api/auth/signup',
+      {
+        method: 'POST',
+        body,
+      }
+    );
 
     expect(response.status).toBe(400);
     expect(repository.createUser).not.toHaveBeenCalled();
@@ -174,10 +198,14 @@ describe('auth routes', () => {
       logout: vi.fn(),
     };
 
-    const response = await request(createTestApp(repository), '/api/auth/signup', {
-      method: 'POST',
-      body: validSignup,
-    });
+    const response = await request(
+      createTestApp(repository),
+      '/api/auth/signup',
+      {
+        method: 'POST',
+        body: validSignup,
+      }
+    );
 
     expect(response.status).toBe(409);
     expect(response.body).toEqual({ error: 'Username is already in use' });
@@ -195,10 +223,14 @@ describe('auth routes', () => {
       logout: vi.fn(),
     };
 
-    const response = await request(createTestApp(repository), '/api/auth/signup', {
-      method: 'POST',
-      body: validSignup,
-    });
+    const response = await request(
+      createTestApp(repository),
+      '/api/auth/signup',
+      {
+        method: 'POST',
+        body: validSignup,
+      }
+    );
 
     expect(response.status).toBe(409);
     expect(response.body).toEqual({ error: 'Email is already in use' });
@@ -217,10 +249,15 @@ describe('auth routes', () => {
 
     const app = createTestApp(repository);
     const username = await request(app, '/api/auth/check-username/harvey');
-    const email = await request(app, '/api/auth/check-email/Harvey%40example.com');
+    const email = await request(
+      app,
+      '/api/auth/check-email/Harvey%40example.com'
+    );
 
     expect(username).toMatchObject({ status: 200, body: { available: true } });
     expect(email).toMatchObject({ status: 200, body: { available: false } });
-    expect(repository.isEmailAvailable).toHaveBeenCalledWith('harvey@example.com');
+    expect(repository.isEmailAvailable).toHaveBeenCalledWith(
+      'harvey@example.com'
+    );
   });
 });

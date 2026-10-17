@@ -1,8 +1,5 @@
 ﻿import { Router } from 'express';
-import {
-  AuthConflictError,
-  AuthUnauthorizedError,
-} from './auth.errors';
+import { AuthConflictError, AuthUnauthorizedError } from './auth.errors';
 import type { AuthRepository } from './auth.repository';
 import {
   emailParamSchema,
@@ -11,7 +8,9 @@ import {
   usernameParamSchema,
 } from './auth.schemas';
 
-function getBearerToken(req: { header: (name: string) => string | undefined }): string | undefined {
+function getBearerToken(req: {
+  header: (name: string) => string | undefined;
+}): string | undefined {
   const authorization = req.header('Authorization');
   if (!authorization) {
     return undefined;
@@ -134,7 +133,9 @@ export function createAuthRouter(repository: AuthRepository): Router {
   router.get('/check-username/:username', async (req, res) => {
     const parsed = usernameParamSchema.safeParse(req.params.username);
     if (!parsed.success) {
-      res.status(400).json({ error: 'Username must be between 1 and 50 characters' });
+      res
+        .status(400)
+        .json({ error: 'Username must be between 1 and 50 characters' });
       return;
     }
     res.json({ available: await repository.isUsernameAvailable(parsed.data) });

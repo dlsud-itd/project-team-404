@@ -39,7 +39,7 @@ type ProjectRecord = {
 export class SupabaseAuthRepository implements AuthRepository {
   constructor(
     private readonly supabaseUrl?: string,
-    private readonly serviceRoleKey?: string,
+    private readonly serviceRoleKey?: string
   ) {}
 
   async isUsernameAvailable(username: string): Promise<boolean> {
@@ -69,7 +69,10 @@ export class SupabaseAuthRepository implements AuthRepository {
     }
 
     try {
-      const response = await this.authRequest<{ access_token?: string; user?: { id?: string } }>('token', {
+      const response = await this.authRequest<{
+        access_token?: string;
+        user?: { id?: string };
+      }>('token', {
         method: 'POST',
         body: JSON.stringify({
           email: match.email,
@@ -97,7 +100,10 @@ export class SupabaseAuthRepository implements AuthRepository {
   }
 
   async getCurrentUser(token: string): Promise<AuthUser> {
-    const sessionUser = await this.authRequest<{ id?: string; user_metadata?: { username?: string } }>('user', {
+    const sessionUser = await this.authRequest<{
+      id?: string;
+      user_metadata?: { username?: string };
+    }>('user', {
       method: 'GET',
       headers: { Authorization: `Bearer ${token}` },
     });
@@ -106,14 +112,16 @@ export class SupabaseAuthRepository implements AuthRepository {
       throw new AuthUnauthorizedError('Token invalid or expired');
     }
 
-    const rows = await this.restRequest<{ user_id: string; username: string; email: string; timezone: string }[]>(
+    const rows = await this.restRequest<
+      { user_id: string; username: string; email: string; timezone: string }[]
+    >(
       'tbl_user',
       {
         select: 'user_id,username,email,timezone',
         user_id: `eq.${sessionUser.id}`,
         limit: '1',
       },
-      { headers: { Authorization: `Bearer ${token}` } },
+      { headers: { Authorization: `Bearer ${token}` } }
     );
 
     const row = rows[0];
@@ -129,12 +137,15 @@ export class SupabaseAuthRepository implements AuthRepository {
         is_inbox: 'eq.true',
         limit: '1',
       },
-      { headers: { Authorization: `Bearer ${token}` } },
+      { headers: { Authorization: `Bearer ${token}` } }
     );
 
     return {
       id: row.user_id,
-      username: row.username ?? sessionUser.user_metadata?.username ?? row.email.split('@')[0],
+      username:
+        row.username ??
+        sessionUser.user_metadata?.username ??
+        row.email.split('@')[0],
       email: row.email,
       timezone: row.timezone,
       inboxProjectId: inbox?.project_id ?? 0,
@@ -168,7 +179,10 @@ export class SupabaseAuthRepository implements AuthRepository {
         }),
       });
     } catch (error) {
-      if (error instanceof SupabaseAuthRequestError && this.isEmailConflict(error)) {
+      if (
+        error instanceof SupabaseAuthRequestError &&
+        this.isEmailConflict(error)
+      ) {
         throw new AuthConflictError('Email is already in use');
       }
       throw error;
@@ -186,15 +200,19 @@ export class SupabaseAuthRepository implements AuthRepository {
         headers: { Prefer: 'return=minimal' },
       });
 
-      const [inbox] = await this.restRequest<ProjectRecord[]>('tbl_project', undefined, {
-        method: 'POST',
-        body: JSON.stringify({
-          user_id: user.id,
-          name: 'Inbox',
-          is_inbox: true,
-        }),
-        headers: { Prefer: 'return=representation' },
-      });
+      const [inbox] = await this.restRequest<ProjectRecord[]>(
+        'tbl_project',
+        undefined,
+        {
+          method: 'POST',
+          body: JSON.stringify({
+            user_id: user.id,
+            name: 'Inbox',
+            is_inbox: true,
+          }),
+          headers: { Prefer: 'return=representation' },
+        }
+      );
 
       if (!inbox) {
         throw new Error('Supabase did not return the created Inbox project');
@@ -209,11 +227,14 @@ export class SupabaseAuthRepository implements AuthRepository {
       } catch (cleanupError) {
         throw new AggregateError(
           [error, cleanupError],
-          'Signup failed and the created Supabase Auth user could not be removed',
+          'Signup failed and the created Supabase Auth user could not be removed'
         );
       }
 
-      if (error instanceof SupabaseAuthRequestError && this.isUniqueConflict(error)) {
+      if (
+        error instanceof SupabaseAuthRequestError &&
+        this.isUniqueConflict(error)
+      ) {
         const message = this.conflictMessage(error);
         throw new AuthConflictError(message);
       }
@@ -221,7 +242,9 @@ export class SupabaseAuthRepository implements AuthRepository {
     }
   }
 
-  private async findUserByIdentifier(identifier: string): Promise<{ email: string } | null> {
+  private async findUserByIdentifier(
+    identifier: string
+  ): Promise<{ email: string } | null> {
     const normalized = identifier.trim();
     const lower = normalized.toLowerCase();
 
@@ -247,7 +270,7 @@ export class SupabaseAuthRepository implements AuthRepository {
   private async restRequest<T = unknown>(
     table: string,
     query?: Record<string, string>,
-    init: RequestInit = {},
+    init: RequestInit = {}
   ): Promise<T> {
     const url = this.endpoint(`rest/v1/${table}`);
     for (const [key, value] of Object.entries(query ?? {})) {
@@ -259,15 +282,19 @@ export class SupabaseAuthRepository implements AuthRepository {
 
   private async authRequest<T = unknown>(
     path: string,
-    init: RequestInit = {},
+    init: RequestInit = {}
   ): Promise<T> {
-    return this.request<T>(this.endpoint(`auth/v1/${path}`), init, 'Supabase Auth request');
+    return this.request<T>(
+      this.endpoint(`auth/v1/${path}`),
+      init,
+      'Supabase Auth request'
+    );
   }
 
   private async request<T>(
     url: URL,
     init: RequestInit,
-    operation: string,
+    operation: string
   ): Promise<T> {
     const key = this.getServiceRoleKey();
     const headers: Record<string, string> = {
@@ -295,7 +322,7 @@ export class SupabaseAuthRepository implements AuthRepository {
         throw new SupabaseAuthRequestError(
           `${operation} returned an invalid JSON response`,
           response.status,
-          text,
+          text
         );
       }
     }
@@ -304,7 +331,7 @@ export class SupabaseAuthRepository implements AuthRepository {
       throw new SupabaseAuthRequestError(
         `${operation} failed with status ${response.status}`,
         response.status,
-        payload,
+        payload
       );
     }
 
@@ -347,8 +374,12 @@ export class SupabaseAuthRepository implements AuthRepository {
       return false;
     }
     return (
-      ('code' in details && (details.code === 'email_exists' || details.code === 'user_already_exists')) ||
-      ('msg' in details && typeof details.msg === 'string' && details.msg.toLowerCase().includes('already been registered'))
+      ('code' in details &&
+        (details.code === 'email_exists' ||
+          details.code === 'user_already_exists')) ||
+      ('msg' in details &&
+        typeof details.msg === 'string' &&
+        details.msg.toLowerCase().includes('already been registered'))
     );
   }
 
