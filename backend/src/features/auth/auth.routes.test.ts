@@ -272,16 +272,23 @@ describe('auth routes', () => {
       requestPasswordReset: vi.fn().mockResolvedValue(undefined),
     };
 
-    const response = await request(createTestApp(repository), '/api/auth/forgot-password', {
-      method: 'POST',
-      body: { email: 'Harvey@example.com' },
-    });
+    const response = await request(
+      createTestApp(repository),
+      '/api/auth/forgot-password',
+      {
+        method: 'POST',
+        body: { email: 'Harvey@example.com' },
+      }
+    );
 
     expect(response.status).toBe(200);
     expect(response.body).toEqual({
-      message: 'If an account exists for that email, a reset link has been sent.',
+      message:
+        'If an account exists for that email, a reset link has been sent.',
     });
-    expect(repository.requestPasswordReset).toHaveBeenCalledWith('harvey@example.com');
+    expect(repository.requestPasswordReset).toHaveBeenCalledWith(
+      'harvey@example.com'
+    );
   });
 
   it('validates and resets a password with a valid token', async () => {

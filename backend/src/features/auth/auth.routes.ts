@@ -150,7 +150,8 @@ export function createAuthRouter(repository: AuthRepository): Router {
 
     await service.requestPasswordReset(parsed.data.email);
     res.status(200).json({
-      message: 'If an account exists for that email, a reset link has been sent.',
+      message:
+        'If an account exists for that email, a reset link has been sent.',
     });
   });
 
@@ -195,7 +196,10 @@ export function createAuthRouter(repository: AuthRepository): Router {
         message: 'Password updated successfully.',
       });
     } catch (error) {
-      if (error instanceof Error && /invalid|expired|used/i.test(error.message)) {
+      if (
+        error instanceof Error &&
+        /invalid|expired|used/i.test(error.message)
+      ) {
         res.status(400).json({
           error: 'This reset link is invalid or has expired.',
         });

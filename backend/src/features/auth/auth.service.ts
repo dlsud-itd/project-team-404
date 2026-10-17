@@ -20,7 +20,10 @@ export class AuthService {
 
   async resetPassword(token: string, password: string): Promise<void> {
     if (typeof this.repository.resetPassword === 'function') {
-      await this.repository.resetPassword({ token, password } satisfies PasswordResetInput);
+      await this.repository.resetPassword({
+        token,
+        password,
+      } satisfies PasswordResetInput);
       return;
     }
 
