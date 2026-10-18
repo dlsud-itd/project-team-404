@@ -110,9 +110,14 @@ services:
   `NG_APP_SUPABASE_ANON_KEY`, and `NG_APP_API_BASE_URL` (the public Render API
   URL, without a trailing slash).
 - **Render backend:** `SUPABASE_URL`,
-  `SUPABASE_SERVICE_ROLE_KEY`, and `CORS_ALLOWED_ORIGINS` set to the deployed
-  frontend origin, `https://project-team-404.vercel.app`. Render supplies
-  `PORT` automatically.
+  `SUPABASE_SERVICE_ROLE_KEY`, `DATABASE_URL`, `DIRECT_URL`, `WEB_APP_URL`,
+  `SMTP_HOST`, `SMTP_FROM`, and `CORS_ALLOWED_ORIGINS` set to the deployed
+  frontend origin, `https://project-team-404.vercel.app`. Configure the remaining
+  SMTP credentials when required. Render supplies `PORT` automatically.
+
+The backend Prisma client is generated from `backend/prisma/schema` as part of
+lint, typecheck, and build. Supabase SQL migrations remain the database source
+of truth; do not use Prisma migrations for deployment.
 
 ## Project documents
 
