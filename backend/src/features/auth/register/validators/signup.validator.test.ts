@@ -19,10 +19,10 @@ describe('signupValidator', () => {
       signupValidator.safeParse({
         ...valid,
         confirmPassword: 'different-password',
-      }).success,
+      }).success
     ).toBe(false);
     expect(
-      signupValidator.safeParse({ ...valid, timezone: 'Mars/Olympus' }).success,
+      signupValidator.safeParse({ ...valid, timezone: 'Mars/Olympus' }).success
     ).toBe(false);
   });
 });

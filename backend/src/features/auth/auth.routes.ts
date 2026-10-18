@@ -72,15 +72,12 @@ export function createAuthRouter(): Router {
   const resetTokenValidator = new ValidateResetTokenService({
     findResetTokenByHash,
   });
-  const resetPassword = new ResetPasswordService(
-    resetTokenValidator,
-    {
-      updatePassword: (userId, password) =>
-        supabaseAdmin.updatePassword(userId, password),
-      markResetTokenUsed,
-      revokeUserSessions,
-    },
-  );
+  const resetPassword = new ResetPasswordService(resetTokenValidator, {
+    updatePassword: (userId, password) =>
+      supabaseAdmin.updatePassword(userId, password),
+    markResetTokenUsed,
+    revokeUserSessions,
+  });
 
   router.use(createRegisterRouter(registration));
   router.use(createLoginRouter(login));

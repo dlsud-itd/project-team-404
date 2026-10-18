@@ -6,9 +6,9 @@ export type SessionRecord = {
 
 export function isSessionUsable(
   session: SessionRecord | null,
-  now = new Date(),
+  now = new Date()
 ): session is SessionRecord {
   return Boolean(
-    session && !session.revokedAt && session.expiresAt.getTime() > now.getTime(),
+    session && !session.revokedAt && session.expiresAt.getTime() > now.getTime()
   );
 }

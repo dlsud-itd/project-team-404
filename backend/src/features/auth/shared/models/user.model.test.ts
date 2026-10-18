@@ -34,7 +34,7 @@ describe('user model mapping', () => {
         email: null,
         timezone: null,
         deletedAt: null,
-      }),
+      })
     ).toBeNull();
   });
 });

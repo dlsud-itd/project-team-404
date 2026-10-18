@@ -57,7 +57,7 @@ describe('RegisterService', () => {
     const service = new RegisterService(deps);
 
     await expect(service.register(input)).rejects.toThrow(
-      new AuthConflictError(message),
+      new AuthConflictError(message)
     );
     expect(deps.createAuthUser).not.toHaveBeenCalled();
   });
@@ -65,11 +65,13 @@ describe('RegisterService', () => {
   it('deletes the Auth user when profile or Inbox creation fails', async () => {
     const deps = dependencies();
     vi.mocked(deps.createInboxProject).mockRejectedValue(
-      new Error('project insert failed'),
+      new Error('project insert failed')
     );
     const service = new RegisterService(deps);
 
-    await expect(service.register(input)).rejects.toThrow('project insert failed');
+    await expect(service.register(input)).rejects.toThrow(
+      'project insert failed'
+    );
     expect(deps.deleteAuthUser).toHaveBeenCalledWith('user-123');
   });
 
@@ -78,10 +80,12 @@ describe('RegisterService', () => {
     const createError = new Error('profile insert failed');
     vi.mocked(deps.createUserProfile).mockRejectedValue(createError);
     vi.mocked(deps.deleteAuthUser).mockRejectedValue(
-      new Error('Auth cleanup failed'),
+      new Error('Auth cleanup failed')
     );
     const service = new RegisterService(deps);
 
-    await expect(service.register(input)).rejects.toBeInstanceOf(AggregateError);
+    await expect(service.register(input)).rejects.toBeInstanceOf(
+      AggregateError
+    );
   });
 });

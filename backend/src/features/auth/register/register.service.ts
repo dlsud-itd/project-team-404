@@ -61,7 +61,9 @@ export class RegisterService {
         email,
         timezone: input.timezone,
       });
-      const inboxProjectId = await this.dependencies.createInboxProject(user.id);
+      const inboxProjectId = await this.dependencies.createInboxProject(
+        user.id
+      );
       return { userId: user.id, inboxProjectId };
     } catch (error) {
       try {
@@ -69,7 +71,7 @@ export class RegisterService {
       } catch (cleanupError) {
         throw new AggregateError(
           [error, cleanupError],
-          'Registration failed and the created Auth user could not be removed',
+          'Registration failed and the created Auth user could not be removed'
         );
       }
       if (isUniqueConflict(error)) {
@@ -81,7 +83,7 @@ export class RegisterService {
 }
 
 export function createRegisterService(
-  dependencies: RegisterDependencies,
+  dependencies: RegisterDependencies
 ): RegisterService {
   return new RegisterService(dependencies);
 }

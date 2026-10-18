@@ -31,7 +31,7 @@ const SESSION_LIFETIME_MS = 30 * 24 * 60 * 60 * 1000;
 export class SessionService {
   constructor(
     private readonly dependencies: SessionDependencies,
-    private readonly now: () => Date = () => new Date(),
+    private readonly now: () => Date = () => new Date()
   ) {}
 
   async issue(userId: string): Promise<string> {
@@ -45,7 +45,9 @@ export class SessionService {
   }
 
   async verify(token: string): Promise<{ userId: string; expiresAt: Date }> {
-    const session = await this.dependencies.findSessionByTokenHash(hashToken(token));
+    const session = await this.dependencies.findSessionByTokenHash(
+      hashToken(token)
+    );
     if (!isSessionUsable(session, this.now())) {
       throw new AuthUnauthorizedError('Token invalid or expired');
     }
@@ -61,7 +63,9 @@ export class SessionService {
   }
 
   async revoke(token: string): Promise<void> {
-    const session = await this.dependencies.findSessionByTokenHash(hashToken(token));
+    const session = await this.dependencies.findSessionByTokenHash(
+      hashToken(token)
+    );
     if (!isSessionUsable(session, this.now())) {
       throw new AuthUnauthorizedError('Unauthorized');
     }

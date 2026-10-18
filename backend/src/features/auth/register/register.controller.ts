@@ -14,7 +14,9 @@ export function createRegisterController(service: RegisterService): {
   return {
     register: async (_req, res, next) => {
       try {
-        const result = await service.register(res.locals.validated as SignupInput);
+        const result = await service.register(
+          res.locals.validated as SignupInput
+        );
         res.status(201).json(result);
       } catch (error) {
         if (error instanceof AuthConflictError) {
@@ -36,7 +38,9 @@ export function createRegisterController(service: RegisterService): {
     },
     checkEmail: async (_req, res, next) => {
       try {
-        const email = res.locals.validated as z.infer<typeof checkEmailValidator>;
+        const email = res.locals.validated as z.infer<
+          typeof checkEmailValidator
+        >;
         res.json({ available: await service.checkEmail(email) });
       } catch (error) {
         next(error);

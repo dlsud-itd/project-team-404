@@ -5,7 +5,10 @@ import type { ValidateResetTokenService } from './services/validate-reset-token.
 import type { ResetPasswordInput } from './validators/reset-password.validator';
 import type { ValidateTokenQuery } from './validators/validate-token-query.validator';
 
-function sendTokenError(error: ResetTokenError, res: Parameters<RequestHandler>[1]) {
+function sendTokenError(
+  error: ResetTokenError,
+  res: Parameters<RequestHandler>[1]
+) {
   res.status(400).json({
     error: 'Reset token is invalid',
     reason: error.reason,
@@ -14,13 +17,13 @@ function sendTokenError(error: ResetTokenError, res: Parameters<RequestHandler>[
 
 export function createResetPasswordController(
   validator: ValidateResetTokenService,
-  resetter: ResetPasswordService,
+  resetter: ResetPasswordService
 ): { validate: RequestHandler; reset: RequestHandler } {
   return {
     validate: async (_req, res, next) => {
       try {
         await validator.validate(
-          (res.locals.validated as ValidateTokenQuery).token,
+          (res.locals.validated as ValidateTokenQuery).token
         );
         res.status(200).json({ valid: true });
       } catch (error) {

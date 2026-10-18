@@ -1,12 +1,7 @@
 import type { ErrorRequestHandler } from 'express';
 import { SupabaseAuthConfigurationError } from '../features/auth/shared/errors/auth.error';
 
-export const errorHandler: ErrorRequestHandler = (
-  error,
-  _req,
-  res,
-  next,
-) => {
+export const errorHandler: ErrorRequestHandler = (error, _req, res, next) => {
   if (res.headersSent) {
     next(error);
     return;

@@ -45,7 +45,7 @@ export class SupabaseAdminClient {
 
   private async authRequest<T = unknown>(
     path: string,
-    init: RequestInit,
+    init: RequestInit
   ): Promise<T> {
     const { SUPABASE_URL: url, SUPABASE_SERVICE_ROLE_KEY: key } = env;
     if (!url || !key) {
@@ -61,7 +61,7 @@ export class SupabaseAdminClient {
           'Content-Type': 'application/json',
           ...init.headers,
         },
-      },
+      }
     );
     const text = await response.text();
     let payload: unknown = null;
@@ -72,7 +72,7 @@ export class SupabaseAdminClient {
         throw new SupabaseAuthRequestError(
           'Supabase Auth returned invalid JSON',
           response.status,
-          text,
+          text
         );
       }
     }
@@ -80,7 +80,7 @@ export class SupabaseAdminClient {
       throw new SupabaseAuthRequestError(
         `Supabase Auth failed with status ${response.status}`,
         response.status,
-        payload,
+        payload
       );
     }
     return payload as T;

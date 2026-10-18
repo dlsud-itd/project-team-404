@@ -4,7 +4,7 @@ import { emailValidator } from './email.validator';
 describe('emailValidator', () => {
   it('normalizes valid email addresses', () => {
     expect(emailValidator.parse('Harvey@Example.COM')).toBe(
-      'harvey@example.com',
+      'harvey@example.com'
     );
   });
 

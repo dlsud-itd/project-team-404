@@ -13,5 +13,5 @@ export const timezoneValidator = z
         return false;
       }
     },
-    { message: 'Must be a valid IANA timezone' },
+    { message: 'Must be a valid IANA timezone' }
   );

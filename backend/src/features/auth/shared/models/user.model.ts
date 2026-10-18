@@ -22,13 +22,14 @@ export function toUser(record: UserRecord): User | null {
   if (!record.email || !record.timezone) {
     return null;
   }
-  return { ...record, email: record.email.toLowerCase(), timezone: record.timezone };
+  return {
+    ...record,
+    email: record.email.toLowerCase(),
+    timezone: record.timezone,
+  };
 }
 
-export function toPublicUser(
-  user: User,
-  inboxProjectId: number,
-): PublicUser {
+export function toPublicUser(user: User, inboxProjectId: number): PublicUser {
   return {
     id: user.id,
     username: user.username,

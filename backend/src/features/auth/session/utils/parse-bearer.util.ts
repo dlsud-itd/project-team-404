@@ -1,4 +1,6 @@
-export function parseBearerToken(authorization: string | undefined): string | null {
+export function parseBearerToken(
+  authorization: string | undefined
+): string | null {
   if (!authorization) {
     return null;
   }

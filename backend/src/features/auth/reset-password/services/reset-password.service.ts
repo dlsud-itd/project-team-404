@@ -12,14 +12,14 @@ export class ResetPasswordService {
   constructor(
     private readonly tokens: ValidateResetTokenService,
     private readonly dependencies: ResetPasswordDependencies,
-    private readonly now: () => Date = () => new Date(),
+    private readonly now: () => Date = () => new Date()
   ) {}
 
   async reset(token: string, password: string): Promise<void> {
     const record = await this.tokens.validate(token);
     const marked = await this.dependencies.markResetTokenUsed(
       hashToken(token),
-      this.now(),
+      this.now()
     );
     if (!marked) {
       throw new ResetTokenError('used');

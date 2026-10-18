@@ -5,7 +5,9 @@ import { generateToken } from '../session/utils/generate-token.util';
 import { hashToken } from '../session/utils/hash-token.util';
 
 export type ForgotPasswordDependencies = {
-  findUserByEmail(email: string): Promise<{ id: string; email: string | null } | null>;
+  findUserByEmail(
+    email: string
+  ): Promise<{ id: string; email: string | null } | null>;
   invalidateResetTokens(userId: string): Promise<void>;
   createResetToken(input: {
     userId: string;
@@ -19,7 +21,7 @@ export type ForgotPasswordDependencies = {
 export class ForgotPasswordService {
   constructor(
     private readonly dependencies: ForgotPasswordDependencies,
-    private readonly now: () => Date = () => new Date(),
+    private readonly now: () => Date = () => new Date()
   ) {}
 
   async request(email: string): Promise<void> {
@@ -35,7 +37,7 @@ export class ForgotPasswordService {
       expiresAt: new Date(this.now().getTime() + 60 * 60 * 1000),
     });
     const emailContent = resetLinkEmail(
-      buildResetLink(this.dependencies.webBaseUrl, token),
+      buildResetLink(this.dependencies.webBaseUrl, token)
     );
     await this.dependencies.mailer.send({
       to: user.email,

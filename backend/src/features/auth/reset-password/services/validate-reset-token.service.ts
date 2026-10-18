@@ -12,11 +12,13 @@ export type ResetTokenDependencies = {
 export class ValidateResetTokenService {
   constructor(
     private readonly dependencies: ResetTokenDependencies,
-    private readonly now: () => Date = () => new Date(),
+    private readonly now: () => Date = () => new Date()
   ) {}
 
   async validate(token: string) {
-    const record = await this.dependencies.findResetTokenByHash(hashToken(token));
+    const record = await this.dependencies.findResetTokenByHash(
+      hashToken(token)
+    );
     if (!record) {
       throw new ResetTokenError('invalid');
     }

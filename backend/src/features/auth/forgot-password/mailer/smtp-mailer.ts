@@ -15,7 +15,9 @@ export class SmtpMailer implements Mailer {
   async send(message: MailMessage): Promise<void> {
     const from = process.env.SMTP_FROM;
     if (!from) {
-      throw new Error('SMTP_FROM must be configured to send password reset email');
+      throw new Error(
+        'SMTP_FROM must be configured to send password reset email'
+      );
     }
     await this.transport.sendMail({ from, ...message });
   }
