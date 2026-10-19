@@ -1,0 +1,13 @@
+model Project {
+  id        Int       @id @default(autoincrement()) @map("project_id")
+  userId    String    @db.Uuid @map("user_id")
+  name      String    @db.VarChar(150)
+  isInbox   Boolean   @default(false) @map("is_inbox")
+  createdAt DateTime  @default(now()) @db.Timestamptz(6) @map("created_at")
+  updatedAt DateTime  @default(now()) @db.Timestamptz(6) @map("updated_at")
+  deletedAt DateTime? @db.Timestamptz(6) @map("deleted_at")
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId], map: "tbl_project_user_id_idx")
+  @@map("tbl_project")
+}

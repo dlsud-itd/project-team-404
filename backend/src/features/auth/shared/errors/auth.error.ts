@@ -5,6 +5,13 @@ export class AuthConflictError extends Error {
   }
 }
 
+export class AuthUnauthorizedError extends Error {
+  constructor(message = 'Unauthorized') {
+    super(message);
+    this.name = 'AuthUnauthorizedError';
+  }
+}
+
 export class SupabaseAuthConfigurationError extends Error {
   constructor() {
     super('SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be configured');
@@ -20,12 +27,5 @@ export class SupabaseAuthRequestError extends Error {
   ) {
     super(message);
     this.name = 'SupabaseAuthRequestError';
-  }
-}
-
-export class AuthUnauthorizedError extends Error {
-  constructor(message = 'Unauthorized') {
-    super(message);
-    this.name = 'AuthUnauthorizedError';
   }
 }

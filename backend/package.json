@@ -7,6 +7,8 @@
     "node": ">=22"
   },
   "scripts": {
+    "prisma:generate": "prisma generate --schema prisma/schema",
+    "prebuild": "npm run prisma:generate",
     "dev": "tsx watch --env-file-if-exists=.env src/server.ts",
     "build": "tsup src/server.ts --format esm --target node22 --clean --sourcemap",
     "start": "node dist/server.js",
@@ -14,13 +16,17 @@
     "test": "vitest run --passWithNoTests",
     "test:integration": "vitest run src/testing/integration",
     "test:watch": "vitest",
+    "pretypecheck": "npm run prisma:generate",
     "typecheck": "tsc --noEmit",
+    "prelint": "npm run prisma:generate",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix"
   },
   "dependencies": {
+    "@prisma/client": "^6.19.0",
     "cors": "^2.8.6",
     "express": "^5.1.0",
+    "nodemailer": "^10.1.2",
     "tsup": "^8.5.1",
     "zod": "^4.1.12"
   },
@@ -29,8 +35,10 @@
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.1",
     "@types/node": "^22.19.0",
+    "@types/nodemailer": "^8.0.2",
     "eslint": "^9.39.1",
     "globals": "^17.6.0",
+    "prisma": "^6.19.0",
     "rimraf": "^6.0.1",
     "tsx": "^4.20.6",
     "typescript": "^6.0.2",
