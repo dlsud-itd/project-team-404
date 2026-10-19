@@ -56,6 +56,40 @@ inbox_seed_status as (
     ) as passed
   from expected_users as expected
   left join auth.users as auth_user on auth_user.email = expected.email
+),
+expected_reset_tokens(email, token_kind) as (
+  select expected.email, token_kind.kind
+  from (values
+    ('james@example.com'),
+    ('harvey@example.com'),
+    ('alex@example.com')
+  ) as expected(email)
+  cross join (values ('valid'), ('expired'), ('used')) as token_kind(kind)
+),
+reset_token_seed_status as (
+  select bool_and(
+    auth_user.id is not null
+    and reset_token.id is not null
+    and reset_token.user_id = auth_user.id
+    and case expected.token_kind
+      when 'valid' then reset_token.expires_at > now()
+        and reset_token.used_at is null
+      when 'expired' then reset_token.expires_at <= now()
+        and reset_token.used_at is null
+      when 'used' then reset_token.used_at is not null
+      else false
+    end
+  ) as passed
+  from expected_reset_tokens as expected
+  left join auth.users as auth_user on auth_user.email = expected.email
+  left join public.password_reset_token as reset_token
+    on reset_token.token_hash = encode(
+      extensions.digest(
+        'seed-reset-' || split_part(expected.email, '@', 1) || '-' || expected.token_kind,
+        'sha256'
+      ),
+      'hex'
+    )
 )
 select
   '001_users.sql' as seed_file,
@@ -74,4 +108,13 @@ select
     else 'One or more seeded users do not have exactly one active Inbox.'
   end as details
 from inbox_seed_status
+union all
+select
+  '003_password_reset_tokens.sql' as seed_file,
+  case when passed then 'PASS' else 'FAIL' end as status,
+  case
+    when passed then 'Each seeded user has a hashed valid token, an expired token, and a used token.'
+    else 'One or more seeded users are missing a correctly hashed valid, expired, or used reset token.'
+  end as details
+from reset_token_seed_status
 order by seed_file;
