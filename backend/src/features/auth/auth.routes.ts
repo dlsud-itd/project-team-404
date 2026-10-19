@@ -32,8 +32,13 @@ import { ResetPasswordService } from './reset-password/services/reset-password.s
 import { findResetTokenByHash } from './reset-password/db/queries/find-reset-token-by-hash.query';
 import { markResetTokenUsed } from './reset-password/db/queries/mark-reset-token-used.query';
 import { revokeUserSessions } from './reset-password/db/queries/revoke-user-sessions.query';
+import type { Mailer } from './forgot-password/mailer/mailer';
 
-export function createAuthRouter(): Router {
+export type AuthRouterOptions = {
+  mailer?: Mailer;
+};
+
+export function createAuthRouter(options: AuthRouterOptions = {}): Router {
   const router = Router();
   const sessions = new SessionService({
     createSession,
@@ -58,8 +63,11 @@ export function createAuthRouter(): Router {
     issueSession: (userId) => sessions.issue(userId),
     getInboxProjectId,
   });
-  const mailer = env.BREVO_SMTP_HOST ? new SmtpMailer() : new ConsoleMailer();
+  const mailer =
+    options.mailer ??
+    (env.BREVO_SMTP_HOST ? new SmtpMailer() : new ConsoleMailer());
   if (
+    !options.mailer &&
     env.NODE_ENV === 'production' &&
     (!env.BREVO_SMTP_HOST || !env.BREVO_SMTP_FROM)
   ) {

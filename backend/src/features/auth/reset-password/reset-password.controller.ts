@@ -7,12 +7,13 @@ import type { ValidateTokenQuery } from './validators/validate-token-query.valid
 
 function sendTokenError(
   error: ResetTokenError,
-  res: Parameters<RequestHandler>[1]
+  res: Parameters<RequestHandler>[1],
+  includeReason = true
 ) {
-  res.status(400).json({
-    error: 'Reset token is invalid',
-    reason: error.reason,
-  });
+  const response = includeReason
+    ? { error: 'Reset token is invalid', reason: error.reason }
+    : { error: 'This reset link is invalid or has expired.' };
+  res.status(400).json(response);
 }
 
 export function createResetPasswordController(
@@ -41,7 +42,7 @@ export function createResetPasswordController(
         res.status(200).json({ message: 'Password updated successfully.' });
       } catch (error) {
         if (error instanceof ResetTokenError) {
-          sendTokenError(error, res);
+          sendTokenError(error, res, false);
           return;
         }
         next(error);
