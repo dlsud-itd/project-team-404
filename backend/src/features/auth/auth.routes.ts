@@ -58,9 +58,14 @@ export function createAuthRouter(): Router {
     issueSession: (userId) => sessions.issue(userId),
     getInboxProjectId,
   });
-  const mailer = env.SMTP_HOST ? new SmtpMailer() : new ConsoleMailer();
-  if (env.NODE_ENV === 'production' && (!env.SMTP_HOST || !env.SMTP_FROM)) {
-    throw new Error('SMTP_HOST and SMTP_FROM must be configured in production');
+  const mailer = env.BREVO_SMTP_HOST ? new SmtpMailer() : new ConsoleMailer();
+  if (
+    env.NODE_ENV === 'production' &&
+    (!env.BREVO_SMTP_HOST || !env.BREVO_SMTP_FROM)
+  ) {
+    throw new Error(
+      'BREVO_SMTP_HOST and BREVO_SMTP_FROM must be configured in production'
+    );
   }
   const forgotPassword = new ForgotPasswordService({
     findUserByEmail,

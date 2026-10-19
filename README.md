@@ -109,11 +109,12 @@ services:
 - **Vercel frontend:** `NG_APP_SUPABASE_URL`,
   `NG_APP_SUPABASE_ANON_KEY`, and `NG_APP_API_BASE_URL` (the public Render API
   URL, without a trailing slash).
-- **Render backend:** `SUPABASE_URL`,
-  `SUPABASE_SERVICE_ROLE_KEY`, `DATABASE_URL`, `DIRECT_URL`, `WEB_APP_URL`,
-  `SMTP_HOST`, `SMTP_FROM`, and `CORS_ALLOWED_ORIGINS` set to the deployed
-  frontend origin, `https://project-team-404.vercel.app`. Configure the remaining
-  SMTP credentials when required. Render supplies `PORT` automatically.
+- **Render backend:** configure `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `DATABASE_URL`, `DIRECT_URL`, `WEB_APP_URL`, and `CORS_ALLOWED_ORIGINS` for `https://project-team-404.vercel.app`. Render supplies `PORT` automatically.
+
+Password recovery emails are sent through Brevo SMTP. Configure
+`BREVO_SMTP_HOST`, `BREVO_SMTP_PORT`, `BREVO_SMTP_USER`,
+`BREVO_SMTP_PASSWORD`, and `BREVO_SMTP_FROM` in the backend environment. Use
+the Brevo SMTP key (not an API key) and a verified sender address.
 
 The backend Prisma client is generated from `backend/prisma/schema` as part of
 lint, typecheck, and build. Supabase SQL migrations remain the database source
