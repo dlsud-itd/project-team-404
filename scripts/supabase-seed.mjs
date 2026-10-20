@@ -15,6 +15,7 @@ const seedFiles = [
   'supabase/seeds/001_users.sql',
   'supabase/seeds/002_inbox_projects.sql',
   'supabase/seeds/003_password_reset_tokens.sql',
+  'supabase/seeds/004_projects.sql',
 ];
 const verificationFile = 'supabase/verify_seeds.sql';
 
