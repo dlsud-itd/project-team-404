@@ -13,6 +13,7 @@
     "clean": "npm --prefix frontend run clean && npm --prefix backend run clean",
     "install:all": "npm install && npm --prefix frontend install && npm --prefix backend install",
     "test": "npm --prefix frontend run test:run && npm --prefix backend test",
+    "test:report": "npm --prefix backend run test:report && npm --prefix frontend run test -- --coverage && node scripts/collect-reports.mjs",
     "lint": "npm --prefix frontend run lint && npm --prefix backend run lint",
     "build": "npm --prefix frontend run build && npm --prefix backend run build",
     "format": "prettier --write \"**/*.{js,jsx,mjs,cjs,ts,tsx,css,scss,less,html,json,md,mdx,yaml,yml}\"",
