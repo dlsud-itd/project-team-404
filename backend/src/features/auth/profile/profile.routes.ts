@@ -17,11 +17,7 @@ export function createProfileRouter(
   router.patch(
     '/profile',
     requireAuth(sessionService),
-    validateRequest(
-      profileUpdateValidator,
-      'body',
-      'Invalid profile details'
-    ),
+    validateRequest(profileUpdateValidator, 'body', 'Invalid profile details'),
     controller.updateProfile
   );
 
