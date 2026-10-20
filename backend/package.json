@@ -26,7 +26,6 @@
     "@prisma/client": "^6.19.0",
     "cors": "^2.8.6",
     "express": "^5.1.0",
-    "nodemailer": "^10.1.2",
     "tsup": "^8.5.1",
     "zod": "^4.1.12"
   },
@@ -35,7 +34,6 @@
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.1",
     "@types/node": "^22.19.0",
-    "@types/nodemailer": "^8.0.2",
     "eslint": "^9.39.1",
     "globals": "^17.6.0",
     "prisma": "^6.19.0",

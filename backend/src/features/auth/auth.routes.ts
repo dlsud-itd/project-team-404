@@ -23,7 +23,7 @@ import { createInboxProject } from './register/db/queries/create-inbox-project.q
 import { createForgotPasswordRouter } from './forgot-password/forgot-password.routes';
 import { ForgotPasswordService } from './forgot-password/forgot-password.service';
 import { ConsoleMailer } from './forgot-password/mailer/console-mailer';
-import { SmtpMailer } from './forgot-password/mailer/smtp-mailer';
+import { BrevoApiMailer } from './forgot-password/mailer/brevo-api-mailer';
 import { invalidateResetTokens } from './forgot-password/db/queries/invalidate-reset-tokens.query';
 import { createResetToken } from './forgot-password/db/queries/create-reset-token.query';
 import { createResetPasswordRouter } from './reset-password/reset-password.routes';
@@ -69,14 +69,16 @@ export function createAuthRouter(options: AuthRouterOptions = {}): Router {
   });
   const mailer =
     options.mailer ??
-    (env.BREVO_SMTP_HOST ? new SmtpMailer() : new ConsoleMailer());
+    (env.BREVO_API_KEY && env.BREVO_SENDER_EMAIL
+      ? new BrevoApiMailer()
+      : new ConsoleMailer());
   if (
     !options.mailer &&
     env.NODE_ENV === 'production' &&
-    (!env.BREVO_SMTP_HOST || !env.BREVO_SMTP_FROM)
+    (!env.BREVO_API_KEY || !env.BREVO_SENDER_EMAIL)
   ) {
     throw new Error(
-      'BREVO_SMTP_HOST and BREVO_SMTP_FROM must be configured in production'
+      'BREVO_API_KEY and BREVO_SENDER_EMAIL must be configured in production'
     );
   }
   const forgotPassword = new ForgotPasswordService({

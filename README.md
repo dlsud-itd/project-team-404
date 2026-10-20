@@ -111,10 +111,10 @@ services:
   URL, without a trailing slash).
 - **Render backend:** configure `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `DATABASE_URL`, `DIRECT_URL`, `WEB_APP_URL`, and `CORS_ALLOWED_ORIGINS` for `https://project-team-404.vercel.app`. Render supplies `PORT` automatically.
 
-Password recovery emails are sent through Brevo SMTP. Configure
-`BREVO_SMTP_HOST`, `BREVO_SMTP_PORT`, `BREVO_SMTP_USER`,
-`BREVO_SMTP_PASSWORD`, and `BREVO_SMTP_FROM` in the backend environment. Use
-the Brevo SMTP key (not an API key) and a verified sender address.
+Password recovery emails are sent through the Brevo API. Configure
+`BREVO_API_KEY`, `BREVO_SENDER_EMAIL`, and optionally `BREVO_SENDER_NAME` in the
+backend environment. The sender email must be verified in Brevo. Keep the API
+key private and only configure it on the backend.
 
 The backend Prisma client is generated from `backend/prisma/schema` as part of
 lint, typecheck, and build. Supabase SQL migrations remain the database source
