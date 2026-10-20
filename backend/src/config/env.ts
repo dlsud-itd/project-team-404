@@ -8,15 +8,9 @@ const schema = z.object({
   DATABASE_URL: z.string().min(1).optional(),
   DIRECT_URL: z.string().min(1).optional(),
   WEB_APP_URL: z.string().url().default('http://localhost:4200'),
-  BREVO_SMTP_HOST: z.string().min(1).optional(),
-  BREVO_SMTP_PORT: z.coerce.number().int().positive().default(587),
-  BREVO_SMTP_SECURE: z
-    .string()
-    .default('false')
-    .transform((value) => value === 'true'),
-  BREVO_SMTP_USER: z.string().min(1).optional(),
-  BREVO_SMTP_PASSWORD: z.string().min(1).optional(),
-  BREVO_SMTP_FROM: z.string().min(1).optional(),
+  BREVO_API_KEY: z.string().min(1).optional(),
+  BREVO_SENDER_EMAIL: z.string().email().optional(),
+  BREVO_SENDER_NAME: z.string().min(1).default('HabitTracker'),
   CORS_ALLOWED_ORIGINS: z
   .string()
   .default('http://localhost:4200')
