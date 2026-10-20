@@ -32,6 +32,10 @@ import { ResetPasswordService } from './reset-password/services/reset-password.s
 import { findResetTokenByHash } from './reset-password/db/queries/find-reset-token-by-hash.query';
 import { markResetTokenUsed } from './reset-password/db/queries/mark-reset-token-used.query';
 import { revokeUserSessions } from './reset-password/db/queries/revoke-user-sessions.query';
+import { createProfileRouter } from './profile/profile.routes';
+import { ProfileService } from './profile/profile.service';
+import { findProfileByUserId } from './profile/db/queries/find-profile.query';
+import { updateProfileByUserId } from './profile/db/queries/update-profile.query';
 import type { Mailer } from './forgot-password/mailer/mailer';
 
 export type AuthRouterOptions = {
@@ -91,10 +95,15 @@ export function createAuthRouter(options: AuthRouterOptions = {}): Router {
     markResetTokenUsed,
     revokeUserSessions,
   });
+  const profile = new ProfileService({
+    findProfile: findProfileByUserId,
+    updateProfile: updateProfileByUserId,
+  });
 
   router.use(createRegisterRouter(registration));
   router.use(createLoginRouter(login));
   router.use(createSessionRouter(sessions));
+  router.use(createProfileRouter(sessions, profile));
   router.use(createForgotPasswordRouter(forgotPassword));
   router.use(createResetPasswordRouter(resetTokenValidator, resetPassword));
   return router;
