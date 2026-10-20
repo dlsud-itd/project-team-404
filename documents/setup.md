@@ -27,14 +27,15 @@ Open the repository root folder in VS Code. Open the Command Palette with
      `SUPABASE_SERVICE_ROLE_KEY`. Set `CORS_ALLOWED_ORIGINS` to
      `http://localhost:4200` for local development. Set `WEB_APP_URL` to
      `http://localhost:4200` locally and to the deployed frontend origin in
-     production. Set `BREVO_SMTP_USER` and `BREVO_SMTP_PASSWORD` to the SMTP
-     login and SMTP key from Brevo. Set `BREVO_SMTP_FROM` to a verified sender.
-     The example preconfigures the SMTP host and port.
+     production. Set `BREVO_API_KEY` to a Brevo API key and
+     `BREVO_SENDER_EMAIL` to an email address verified in Brevo. Optionally set
+     `BREVO_SENDER_NAME` (defaults to `HabitTracker`).
 
    - The `NG_APP_` values are bundled into the browser application and must not
      contain secrets. The backend service-role key is privileged and must
      remain private; never put it in `frontend/.env`.
-   - To use the local console mailer instead, leave `BREVO_SMTP_HOST` blank.
+   - To use the local console mailer instead, leave `BREVO_API_KEY` and
+     `BREVO_SENDER_EMAIL` blank.
 
 4. In the Command Palette, run **`🔐 Supabase: Login`** and then
    **`🔗 Supabase: Link Project`**. Follow the Supabase CLI prompts to select or
