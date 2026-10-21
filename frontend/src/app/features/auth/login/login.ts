@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
 import { mapLoginError } from './mappers/login-error.mapper';
 import { POST_LOGIN_REDIRECT } from '../session/auth.guards';
@@ -26,6 +26,9 @@ export class Login {
   protected readonly showPassword = signal(false);
   protected readonly submitting = signal(false);
   protected readonly formError = signal<string | null>(null);
+  /** Set when the reset-password page sends the user here after a successful reset. */
+  protected readonly passwordReset =
+    inject(ActivatedRoute).snapshot.queryParamMap.get('reset') === 'success';
 
   protected readonly form = inject(FormBuilder).nonNullable.group({
     identifier: ['', [Validators.required, Validators.maxLength(255)]],

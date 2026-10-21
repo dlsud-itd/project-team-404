@@ -42,9 +42,12 @@ export class ForgotPassword {
         next: () => this.sent.set(true),
         error: (error: unknown) => {
           this.error.set(
-            error instanceof HttpErrorResponse
-              ? 'We could not send the reset email. Please try again shortly.'
-              : 'Something went wrong. Please try again shortly.',
+            error instanceof HttpErrorResponse && error.status === 400
+              ? ((error.error as { error?: string } | null)?.error ??
+                  'Enter a valid email address.')
+              : error instanceof HttpErrorResponse
+                ? 'We could not send the reset email. Please try again shortly.'
+                : 'Something went wrong. Please try again shortly.',
           );
         },
       });

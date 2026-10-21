@@ -1,5 +1,12 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   AbstractControl,
@@ -9,11 +16,19 @@ import {
   ValidatorFn,
   Validators,
 } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
 import { AuthService } from '../auth.service';
+import { SessionService } from '../session/session.service';
+import {
+  type ResetTokenStatus,
+  readTokenStatus,
+  tokenStatusMessage,
+} from './token-status-message.util';
 
-type ResetStatus = 'checking' | 'ready' | 'invalid' | 'complete';
+type ResetStatus = 'checking' | 'ready' | ResetTokenStatus;
+
+export const RESET_SUCCESS_REDIRECT = '/login?reset=success';
 
 const passwordsMatch: ValidatorFn = (control: AbstractControl): ValidationErrors | null => {
   const password = control.get('password')?.value;
@@ -30,10 +45,16 @@ const passwordsMatch: ValidatorFn = (control: AbstractControl): ValidationErrors
 })
 export class ResetPassword {
   private readonly auth = inject(AuthService);
+  private readonly session = inject(SessionService);
+  private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
-  private readonly token = signal<string | null>(null);
+  private readonly token: string | null;
 
   protected readonly status = signal<ResetStatus>('checking');
+  protected readonly tokenProblem = computed(() => {
+    const status = this.status();
+    return status === 'checking' || status === 'ready' ? null : tokenStatusMessage(status);
+  });
   protected readonly submitting = signal(false);
   protected readonly error = signal<string | null>(null);
   protected readonly form = inject(FormBuilder).nonNullable.group(
@@ -45,27 +66,29 @@ export class ResetPassword {
   );
 
   constructor() {
-    const url = new URL(window.location.href);
-    const resetToken = url.searchParams.get('token');
-    if (!resetToken) {
-      this.status.set('invalid');
+    this.token = inject(ActivatedRoute).snapshot.queryParamMap.get('token');
+    if (!this.token) {
+      this.status.set('missing');
       return;
     }
 
-    this.token.set(resetToken);
-    url.searchParams.delete('token');
-    window.history.replaceState(null, '', `${url.pathname}${url.search}`);
+    // Keep the token out of the address bar and browser history.
+    void this.router.navigate([], {
+      queryParams: { token: null },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
     this.auth
-      .validateResetToken(resetToken)
+      .validateResetToken(this.token)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: ({ valid }) => this.status.set(valid ? 'ready' : 'invalid'),
-        error: () => this.status.set('invalid'),
+        error: (error: unknown) => this.status.set(readTokenStatus(error)),
       });
   }
 
   protected submit(): void {
-    const token = this.token();
+    const token = this.token;
     if (!token || this.status() !== 'ready' || this.submitting()) return;
     this.error.set(null);
     if (this.form.invalid) {
@@ -81,13 +104,18 @@ export class ResetPassword {
         takeUntilDestroyed(this.destroyRef),
       )
       .subscribe({
-        next: () => this.status.set('complete'),
+        next: () => {
+          // The backend revokes every session on reset, so sign out here too.
+          this.session.clear();
+          void this.router.navigateByUrl(RESET_SUCCESS_REDIRECT);
+        },
         error: (error: unknown) => {
-          this.error.set(
-            error instanceof HttpErrorResponse && error.status === 400
-              ? 'This reset link is invalid or has expired. Request a new one.'
-              : 'We could not update your password. Please try again.',
-          );
+          // A 400 here means the token stopped working; the backend gives no reason.
+          if (error instanceof HttpErrorResponse && error.status === 400) {
+            this.status.set('expired');
+            return;
+          }
+          this.error.set('We could not update your password. Please try again.');
         },
       });
   }

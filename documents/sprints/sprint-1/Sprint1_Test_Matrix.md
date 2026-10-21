@@ -233,32 +233,39 @@ Password-recovery integration coverage is in `backend/src/testing/integration/pa
 | ID        | Test Case                                                   | Expected Result                                                               | Status  |
 | --------- | ----------------------------------------------------------- | ----------------------------------------------------------------------------- | ------- |
 | FE-REC-01 | Open forgot-password page at `/forgot-password`             | Email field and submit button are shown.                                      | Failing |
-| FE-REC-02 | Submit forgot-password form with empty email                | Required-field error is shown; no API call is made.                           | Failing |
-| FE-REC-03 | Submit forgot-password form with malformed email            | Inline invalid-email error is shown; no API call is made.                     | Failing |
-| FE-REC-04 | Submit a valid email                                        | Confirmation tells user to check their inbox.                                 | Failing |
-| FE-REC-05 | Submit an unregistered email                                | Same confirmation is shown as for a registered email.                         | Failing |
+| FE-REC-02 | Submit forgot-password form with empty email                | Required-field error is shown; no API call is made.                           | Passing |
+| FE-REC-03 | Submit forgot-password form with malformed email            | Inline invalid-email error is shown; no API call is made.                     | Passing |
+| FE-REC-04 | Submit a valid email                                        | Confirmation tells user to check their inbox.                                 | Passing |
+| FE-REC-05 | Submit an unregistered email                                | Same confirmation is shown as for a registered email.                         | Passing |
 | FE-REC-06 | Submit forgot-password request                              | Button is disabled and loading state shown; duplicate submits are prevented.  | Failing |
 | FE-REC-07 | Follow login link from forgot-password page                 | Navigates to `/login`.                                                        | Failing |
-| FE-REC-08 | Forgot-password request returns 400, 500, or network error  | Error message is displayed; user can retry.                                   | Failing |
-| FE-REC-09 | Open reset link with a valid token                          | Reset form with new password and confirmation is shown.                       | Failing |
-| FE-REC-10 | Open reset link with an invalid or expired token            | Error and link to request a new reset are shown; form is hidden.              | Failing |
-| FE-REC-11 | Open reset link whose token was used or replaced            | Used/expired error and link to request a new reset are shown; form is hidden. | Failing |
-| FE-REC-12 | Open `/reset-password` without a token                      | Error is shown; reset form is not displayed.                                  | Failing |
-| FE-REC-13 | Enter password below 8 characters                           | Inline error states the 8-character minimum.                                  | Failing |
-| FE-REC-14 | Enter mismatched new password and confirmation              | Inline passwords-do-not-match error is shown; submit is blocked.              | Failing |
-| FE-REC-15 | Submit a valid new password                                 | Success message is shown; user is redirected to `/login`.                     | Failing |
-| FE-REC-16 | Server rejects reset token on submit                        | Error message is shown; user can request a new link.                          | Failing |
+| FE-REC-08 | Forgot-password request returns 400, 500, or network error  | Error message is displayed; user can retry.                                   | Passing |
+| FE-REC-09 | Open reset link with a valid token                          | Reset form with new password and confirmation is shown.                       | Passing |
+| FE-REC-10 | Open reset link with an invalid or expired token            | Error and link to request a new reset are shown; form is hidden.              | Passing |
+| FE-REC-11 | Open reset link whose token was used or replaced            | Used/expired error and link to request a new reset are shown; form is hidden. | Passing |
+| FE-REC-12 | Open `/reset-password` without a token                      | Error is shown; reset form is not displayed.                                  | Passing |
+| FE-REC-13 | Enter password below 8 characters                           | Inline error states the 8-character minimum.                                  | Passing |
+| FE-REC-14 | Enter mismatched new password and confirmation              | Inline passwords-do-not-match error is shown; submit is blocked.              | Passing |
+| FE-REC-15 | Submit a valid new password                                 | Success message is shown; user is redirected to `/login`.                     | Passing |
+| FE-REC-16 | Server rejects reset token on submit                        | Error message is shown; user can request a new link.                          | Passing |
 | FE-REC-17 | Submit reset-password form                                  | Button is disabled and loading state shown; duplicate submits are prevented.  | Failing |
-| FE-REC-18 | Successfully reset password while session is stored locally | Local session is cleared; user must log in again.                             | Failing |
+| FE-REC-18 | Successfully reset password while session is stored locally | Local session is cleared; user must log in again.                             | Passing |
 
 ### 3.5 Password Recovery Frontend Integration Tests
 
 | ID        | Test Case                        | Expected Result                                                                                         | Status  |
 | --------- | -------------------------------- | ------------------------------------------------------------------------------------------------------- | ------- |
-| FE-REC-19 | Submit forgot-password form      | Calls `/auth/forgot-password` with only the entered email.                                              | Failing |
-| FE-REC-20 | Load reset page with URL token   | Calls token validation endpoint; loading state is shown until response.                                 | Failing |
-| FE-REC-21 | Submit reset-password form       | Calls `/auth/reset-password` with token, newPassword, and confirmPassword.                              | Failing |
-| FE-REC-22 | Handle token validation response | `valid: true` shows form; 400/410 with `valid: false` shows matching expired, used, or invalid message. | Failing |
+| FE-REC-19 | Submit forgot-password form      | Calls `/auth/forgot-password` with only the entered email.                                              | Passing |
+| FE-REC-20 | Load reset page with URL token   | Calls token validation endpoint; loading state is shown until response.                                 | Passing |
+| FE-REC-21 | Submit reset-password form       | Calls `/auth/reset-password` with token, newPassword, and confirmPassword.                              | Passing |
+| FE-REC-22 | Handle token validation response | `valid: true` shows form; 400/410 with `valid: false` shows matching expired, used, or invalid message. | Passing |
+
+Tests: `frontend/src/testing/integration/password-recovery.integration.spec.ts`. They run through the real `/forgot-password` and `/reset-password` routes, `AuthService`, `SessionService` and `authInterceptor`, with response bodies from `backend/src/features/auth`.
+
+- FE-REC-22: the backend rejects a token with `400 {"error": "Reset token is invalid", "reason": "expired" | "used" | "invalid"}`, not `valid: false`. The page shows the message for that `reason` (from `token-status-message.util.ts`).
+- FE-REC-16: `POST /auth/reset-password` returns `400 {"error": "This reset link is invalid or has expired."}` with no reason, so the page shows the expired message and the "Request a new link" link.
+- FE-REC-15: after a successful reset the user is sent to `/login?reset=success`, where the login page shows the password-updated message.
+- FE-REC-01, FE-REC-06, FE-REC-07 and FE-REC-17 are not covered by tests yet. FE-REC-07 also fails as written: the forgot-password page links to `/register`, not `/login`.
 
 ### 3.6 Password Recovery End-to-End
 
@@ -330,6 +337,6 @@ Password-recovery integration coverage is in `backend/src/testing/integration/pa
 | ------------------ | ------------- | -------------- | ------- | ------- | ------- | ------- |
 | Registration       | 20            | 29             | 49      | 37      | 7       | 5       |
 | Login & Session    | 17            | 27             | 44      | 27      | 15      | 2       |
-| Password Recovery  | 17            | 25             | 42      | 27      | 0       | 15      |
+| Password Recovery  | 17            | 25             | 42      | 9       | 18      | 15      |
 | Profile Management | 10            | 19             | 29      | 29      | 0       | 0       |
-| **Total**          | **64**        | **100**        | **164** | **120** | **22**  | **22**  |
+| **Total**          | **64**        | **100**        | **164** | **102** | **40**  | **22**  |

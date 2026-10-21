@@ -23,6 +23,12 @@
       <p class="eyebrow">Log in to your account</p>
       <h1 class="title">Good to see you</h1>
 
+      @if (passwordReset) {
+        <p class="form-notice" role="status">
+          Your password has been updated. Log in with your new password.
+        </p>
+      }
+
       @if (formError(); as message) {
         <p class="form-error" role="alert">{{ message }}</p>
       }
