@@ -28,6 +28,12 @@ export type ResetTokenResponse = {
   valid: boolean;
 };
 
+/** 400 body from GET /api/auth/validate-reset-token. */
+export type ResetTokenErrorResponse = {
+  error: string;
+  reason: 'invalid' | 'expired' | 'used';
+};
+
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly http = inject(HttpClient);

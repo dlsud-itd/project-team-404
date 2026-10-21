@@ -39,3 +39,13 @@ body {
   clip: rect(0 0 0 0);
   white-space: nowrap;
 }
+
+/* Confirmation shown above a form, e.g. after a password reset. */
+.form-notice {
+  margin: 0 0 1.25rem;
+  padding: 0.75rem 1rem;
+  border-left: 3px solid var(--success);
+  background: #fff;
+  color: var(--success);
+  font-size: 0.875rem;
+}

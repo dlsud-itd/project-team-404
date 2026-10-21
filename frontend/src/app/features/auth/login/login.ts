@@ -1,13 +1,13 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
 import { mapLoginError } from './mappers/login-error.mapper';
-import { LoginService } from './services/login.service';
+import { POST_LOGIN_REDIRECT } from '../session/auth.guards';
+import { SessionService } from '../session/session.service';
 
-// TODO(Sprint 2): navigate to the user's Inbox once that page exists.
-export const POST_LOGIN_REDIRECT = '/register';
+export { POST_LOGIN_REDIRECT };
 
 type FieldName = 'identifier' | 'password';
 
@@ -19,13 +19,16 @@ type FieldName = 'identifier' | 'password';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class Login {
-  private readonly loginService = inject(LoginService);
+  private readonly session = inject(SessionService);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
 
   protected readonly showPassword = signal(false);
   protected readonly submitting = signal(false);
   protected readonly formError = signal<string | null>(null);
+  /** Set when the reset-password page sends the user here after a successful reset. */
+  protected readonly passwordReset =
+    inject(ActivatedRoute).snapshot.queryParamMap.get('reset') === 'success';
 
   protected readonly form = inject(FormBuilder).nonNullable.group({
     identifier: ['', [Validators.required, Validators.maxLength(255)]],
@@ -45,7 +48,7 @@ export class Login {
     const { identifier, password, remember } = this.form.getRawValue();
     this.submitting.set(true);
 
-    this.loginService
+    this.session
       .login({ identifier: identifier.trim(), password }, remember)
       .pipe(
         finalize(() => this.submitting.set(false)),

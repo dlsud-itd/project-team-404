@@ -4,7 +4,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { environment } from '../../../../environments/environment';
 import { Login, POST_LOGIN_REDIRECT } from './login';
-import { TOKEN_STORAGE_KEY } from './services/login.service';
+import { TOKEN_STORAGE_KEY } from '../session/token-storage.service';
 
 const LOGIN_URL = `${environment.apiBaseUrl}/api/auth/login`;
 const LOGIN_RESPONSE = {
