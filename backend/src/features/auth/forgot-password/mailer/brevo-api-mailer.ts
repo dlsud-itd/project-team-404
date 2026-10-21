@@ -32,7 +32,22 @@ export class BrevoApiMailer implements Mailer {
     });
 
     if (!response.ok) {
-      throw new Error(`Brevo API request failed (HTTP ${response.status})`);
+      let details: unknown;
+      try {
+        details = await response.json();
+      } catch {
+        details = undefined;
+      }
+      const message =
+        typeof details === 'object' &&
+        details !== null &&
+        'message' in details &&
+        typeof details.message === 'string'
+          ? `: ${details.message.replace(/\s+/g, ' ').slice(0, 300)}`
+          : '';
+      throw new Error(
+        `Brevo API request failed (HTTP ${response.status})${message}`
+      );
     }
   }
 }

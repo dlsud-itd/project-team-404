@@ -45,7 +45,11 @@ describe('BrevoApiMailer', () => {
   it('rejects when Brevo returns an error', async () => {
     vi.stubGlobal(
       'fetch',
-      vi.fn().mockResolvedValue({ ok: false, status: 401 })
+      vi.fn().mockResolvedValue({
+        ok: false,
+        status: 401,
+        json: vi.fn().mockResolvedValue({ message: 'Invalid API key' }),
+      })
     );
     const mailer = new BrevoApiMailer(
       'test-api-key',
@@ -60,6 +64,6 @@ describe('BrevoApiMailer', () => {
         text: '',
         html: '',
       })
-    ).rejects.toThrow('Brevo API request failed (HTTP 401)');
+    ).rejects.toThrow('Brevo API request failed (HTTP 401): Invalid API key');
   });
 });
