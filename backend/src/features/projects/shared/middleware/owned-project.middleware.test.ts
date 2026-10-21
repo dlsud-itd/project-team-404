@@ -58,9 +58,11 @@ describe('ownedProjectMiddleware', () => {
     const error = new Error('database unavailable');
     const { req, res, next } = mockContext();
 
-    await ownedProjectMiddleware(
-      vi.fn().mockRejectedValue(error)
-    )(req, res, next);
+    await ownedProjectMiddleware(vi.fn().mockRejectedValue(error))(
+      req,
+      res,
+      next
+    );
 
     expect(next).toHaveBeenCalledWith(error);
   });

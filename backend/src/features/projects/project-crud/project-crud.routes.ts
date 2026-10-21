@@ -65,11 +65,7 @@ export function createProjectCrudRouter(
     auth,
     validateProjectId,
     requireOwnedProject,
-    validateRequest(
-      updateProjectValidator,
-      'body',
-      'Invalid project update'
-    ),
+    validateRequest(updateProjectValidator, 'body', 'Invalid project update'),
     controller.update
   );
   router.delete(
