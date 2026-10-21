@@ -40,17 +40,22 @@ import type { Mailer } from './forgot-password/mailer/mailer';
 
 export type AuthRouterOptions = {
   mailer?: Mailer;
+  sessionService?: SessionService;
 };
 
-export function createAuthRouter(options: AuthRouterOptions = {}): Router {
-  const router = Router();
-  const sessions = new SessionService({
+export function createSessionService(): SessionService {
+  return new SessionService({
     createSession,
     findSessionByTokenHash,
     revokeSession,
     findUserById,
     findMeWithInbox,
   });
+}
+
+export function createAuthRouter(options: AuthRouterOptions = {}): Router {
+  const router = Router();
+  const sessions = options.sessionService ?? createSessionService();
   const registration = new RegisterService({
     isUsernameAvailable,
     isEmailAvailable,
