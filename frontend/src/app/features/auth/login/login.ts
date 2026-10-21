@@ -4,10 +4,10 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
 import { mapLoginError } from './mappers/login-error.mapper';
-import { LoginService } from './services/login.service';
+import { POST_LOGIN_REDIRECT } from '../session/auth.guards';
+import { SessionService } from '../session/session.service';
 
-// TODO(Sprint 2): navigate to the user's Inbox once that page exists.
-export const POST_LOGIN_REDIRECT = '/register';
+export { POST_LOGIN_REDIRECT };
 
 type FieldName = 'identifier' | 'password';
 
@@ -19,7 +19,7 @@ type FieldName = 'identifier' | 'password';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class Login {
-  private readonly loginService = inject(LoginService);
+  private readonly session = inject(SessionService);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
 
@@ -45,7 +45,7 @@ export class Login {
     const { identifier, password, remember } = this.form.getRawValue();
     this.submitting.set(true);
 
-    this.loginService
+    this.session
       .login({ identifier: identifier.trim(), password }, remember)
       .pipe(
         finalize(() => this.submitting.set(false)),

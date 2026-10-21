@@ -3,7 +3,8 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed } from '@angular/core/testing';
 import { environment } from '../../../../../environments/environment';
 import type { LoginResponse } from '../types/login.types';
-import { LoginService, TOKEN_STORAGE_KEY } from './login.service';
+import { TOKEN_STORAGE_KEY } from '../../session/token-storage.service';
+import { LoginService } from './login.service';
 
 const LOGIN_URL = `${environment.apiBaseUrl}/api/auth/login`;
 const RESPONSE: LoginResponse = {

@@ -1,6 +1,14 @@
 import { Routes } from '@angular/router';
+import { authGuard, guestGuard } from './features/auth/session/auth.guards';
 
 export const routes: Routes = [
+  { path: '', pathMatch: 'full', redirectTo: 'home' },
+  {
+    path: 'home',
+    title: 'Home · HabitTracker',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/home/home').then((m) => m.Home),
+  },
   {
     path: 'forgot-password',
     title: 'Forgot password · HabitTracker',
@@ -16,11 +24,13 @@ export const routes: Routes = [
   {
     path: 'login',
     title: 'Log in · HabitTracker',
+    canActivate: [guestGuard],
     loadComponent: () => import('./features/auth/login/login').then((m) => m.Login),
   },
   {
     path: 'register',
     title: 'Sign up · HabitTracker',
+    canActivate: [guestGuard],
     loadComponent: () => import('./features/auth/register/register').then((m) => m.Register),
   },
 ];
