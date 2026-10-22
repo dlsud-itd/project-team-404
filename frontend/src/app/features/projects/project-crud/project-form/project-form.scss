@@ -1,0 +1,195 @@
+:host {
+  display: block;
+  min-height: 100dvh;
+  background: #fcebe3;
+}
+
+.page {
+  max-width: 36rem;
+  margin: 0 auto;
+  padding: 2rem 1rem 4rem;
+}
+
+.back {
+  color: var(--orange);
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+h1 {
+  margin: 0.75rem 0 1.5rem;
+  font-size: clamp(1.75rem, 4vw, 2.25rem);
+  font-weight: 800;
+}
+
+.status {
+  color: var(--ink-muted);
+  font-size: 0.875rem;
+}
+
+.message,
+.card {
+  padding: 1.5rem;
+  border: 1px solid var(--orange-light);
+  border-radius: 1rem;
+  background: #fff;
+}
+
+.message p {
+  margin: 0 0 0.75rem;
+}
+
+.message a {
+  color: #7b23a8;
+  font-weight: 600;
+}
+
+.form-error {
+  margin: 0 0 1.25rem;
+  padding: 0.75rem 1rem;
+  border-left: 3px solid var(--error);
+  background: #fff;
+  color: var(--error);
+  font-size: 0.875rem;
+}
+
+.field {
+  margin: 0 0 0.5rem;
+  padding: 0;
+  border: 0;
+}
+
+label,
+legend {
+  display: block;
+  margin-bottom: 0.375rem;
+  padding: 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+
+  span {
+    color: var(--ink-muted);
+    font-weight: 400;
+  }
+}
+
+.label-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.count {
+  color: var(--ink-muted);
+  font-size: 0.75rem;
+
+  &.over {
+    color: var(--error);
+    font-weight: 600;
+  }
+}
+
+input[type='text'],
+textarea {
+  width: 100%;
+  padding: 0.625rem 0.75rem;
+  border: 1px solid var(--field-border);
+  border-radius: 0.5rem;
+  font: inherit;
+  font-size: 0.9375rem;
+  resize: vertical;
+
+  &[aria-invalid='true'] {
+    border-color: var(--error);
+  }
+}
+
+.field-message {
+  min-height: 1.125rem;
+  margin: 0.25rem 0 0;
+  color: var(--error);
+  font-size: 0.8125rem;
+}
+
+.swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.swatch {
+  position: relative;
+  margin: 0;
+  cursor: pointer;
+
+  input {
+    position: absolute;
+    opacity: 0;
+  }
+}
+
+.chip {
+  display: block;
+  width: 1.75rem;
+  height: 1.75rem;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px rgb(0 0 0 / 0.2);
+}
+
+.none .chip {
+  background: linear-gradient(135deg, #fff 45%, var(--error) 45% 55%, #fff 55%);
+}
+
+.swatch input:checked + .chip {
+  box-shadow: 0 0 0 2px var(--ink);
+}
+
+.swatch input:focus-visible + .chip {
+  outline: 2px solid #7b23a8;
+  outline-offset: 3px;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.primary,
+.secondary {
+  padding: 0.625rem 1.25rem;
+  border-radius: 999px;
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--ink);
+    outline-offset: 2px;
+  }
+}
+
+.primary {
+  border: 0;
+  background: #7b23a8;
+  color: #fff;
+}
+
+.secondary {
+  border: 1px solid var(--field-border);
+  background: #fff;
+  color: var(--ink);
+}

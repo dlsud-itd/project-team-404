@@ -1,0 +1,70 @@
+<div class="landing">
+  <header class="topbar">
+    <a class="brand" routerLink="/">HabitTracker</a>
+
+    <nav class="nav" aria-label="Main">
+      @for (link of navLinks; track link.fragment) {
+        <a routerLink="/" [fragment]="link.fragment">{{ link.label }}</a>
+      }
+    </nav>
+
+    <div class="actions">
+      <a class="login" routerLink="/login">Log in</a>
+      <a class="cta cta--small" routerLink="/register">Get Started</a>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero" aria-labelledby="hero-heading">
+      <div class="hero-copy">
+        <span class="decor-circle" aria-hidden="true"></span>
+        <span class="decor-ring" aria-hidden="true"></span>
+
+        <p class="badge">Keep track of everything</p>
+
+        <h1 id="hero-heading" class="headline">
+          Build <span class="accent-orange">habits</span><br />
+          that last,<br />
+          <span class="accent-purple">forever</span>
+        </h1>
+
+        <a class="cta cta--large" routerLink="/register">
+          Create free account
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M7 17 17 7M9 7h8v8" />
+          </svg>
+        </a>
+
+        <div class="showcase">
+          <ul class="showcase-cards">
+            @for (item of showcases; track item.label) {
+              <li class="showcase-card">
+                <img [src]="item.image" [alt]="item.label + ' illustration'" loading="lazy" />
+              </li>
+            }
+          </ul>
+          <ul class="showcase-tags" aria-label="What HabitTracker helps with">
+            @for (item of showcases; track item.label) {
+              <li class="tag" [class.tag--peach]="item.tone === 'peach'">{{ item.label }}</li>
+            }
+          </ul>
+        </div>
+      </div>
+
+      <figure class="hero-art">
+        <img
+          src="landing/hero.png"
+          alt="A person sitting on a cushion, checking off a habit list on their phone"
+        />
+      </figure>
+    </section>
+
+    <hr class="divider" />
+
+    <app-landing-features id="features" />
+  </main>
+
+  <app-landing-steps id="how-it-works" />
+  <app-landing-closing />
+  <app-landing-footer id="about" />
+</div>
