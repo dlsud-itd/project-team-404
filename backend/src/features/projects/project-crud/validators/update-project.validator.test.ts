@@ -6,9 +6,8 @@ describe('updateProjectValidator', () => {
     expect(
       updateProjectValidator.parse({
         description: null,
-        isArchived: true,
       })
-    ).toEqual({ description: null, isArchived: true });
+    ).toEqual({ description: null });
   });
 
   it('rejects empty updates and protected fields', () => {
@@ -16,5 +15,14 @@ describe('updateProjectValidator', () => {
     expect(
       updateProjectValidator.safeParse({ userId: 'other-user' }).success
     ).toBe(false);
+    expect(updateProjectValidator.safeParse({ isFavorite: true }).success).toBe(
+      false
+    );
+    expect(updateProjectValidator.safeParse({ isArchived: true }).success).toBe(
+      false
+    );
+    expect(updateProjectValidator.safeParse({ sortOrder: 1 }).success).toBe(
+      false
+    );
   });
 });
