@@ -100,6 +100,20 @@ The current API includes:
 | `GET` | `/api/auth/validate-reset-token` | Validate a valid password reset token |
 | `POST` | `/api/auth/reset-password` | Reset a password with a valid token |
 
+### Project organization
+
+These authenticated endpoints organize projects in the existing `tbl_project`
+table. Favorite and archive requests accept `isFavorite` and `isArchived`
+boolean fields respectively. Sort-order requests accept a non-negative
+`sortOrder`.
+
+| Method | Endpoint | Purpose |
+| --- | --- | --- |
+| `PUT` | `/api/projects/:projectId/favorite` | Favorite or unfavorite a project |
+| `PUT` | `/api/projects/:projectId/archive` | Archive or restore a project; the Inbox cannot be archived |
+| `PUT` | `/api/projects/:projectId/sort-order` | Set one project's sort order |
+| `PUT` | `/api/projects/reorder` | Reorder owned projects with `{ "projectIds": [12, 4, 9] }`; updates are applied in one transaction |
+
 ## Deployment configuration
 
 The frontend is deployed to Vercel and the Express API is intended to run on

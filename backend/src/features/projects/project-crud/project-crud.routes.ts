@@ -15,6 +15,7 @@ import { createProjectValidator } from './validators/create-project.validator';
 import { listProjectsQueryValidator } from './validators/list-projects-query.validator';
 import { projectIdParamValidator } from './validators/project-id-param.validator';
 import { updateProjectValidator } from './validators/update-project.validator';
+import { createProjectOrganizationRouter } from '../project-organization/project-organization.routes';
 
 export function createProjectCrudRouter(
   sessionService: SessionService,
@@ -36,6 +37,10 @@ export function createProjectCrudRouter(
     'Project ID must be a positive integer'
   );
   const requireOwnedProject = ownedProjectMiddleware(findOwnedProject);
+
+  router.use(
+    createProjectOrganizationRouter(sessionService, undefined, findOwnedProject)
+  );
 
   router.post(
     '/',

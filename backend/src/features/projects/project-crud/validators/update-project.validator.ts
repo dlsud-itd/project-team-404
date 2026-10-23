@@ -9,9 +9,6 @@ export const updateProjectValidator = z
       .regex(/^#[\da-fA-F]{6}$/)
       .nullable()
       .optional(),
-    isFavorite: z.boolean().optional(),
-    isArchived: z.boolean().optional(),
-    sortOrder: z.number().int().nonnegative().optional(),
   })
   .strict()
   .refine((data) => Object.keys(data).length > 0, {
