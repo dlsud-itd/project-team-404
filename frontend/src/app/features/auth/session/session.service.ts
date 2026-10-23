@@ -45,6 +45,11 @@ export class SessionService {
     );
   }
 
+  /** Applies saved profile changes so every view of the user updates without a reload. */
+  updateUser(changes: Partial<SessionUser>): void {
+    this.user.update((user) => (user ? { ...user, ...changes } : user));
+  }
+
   clear(): void {
     this.tokens.clear();
     this.user.set(null);

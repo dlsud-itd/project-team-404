@@ -22,6 +22,15 @@ export const routes: Routes = [
       import('./features/projects/projects.routes').then((m) => m.PROJECTS_ROUTES),
   },
   {
+    path: 'settings/profile',
+    title: 'Profile · HabitTracker',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/auth/profile/profile-settings/profile-settings').then(
+        (m) => m.ProfileSettings,
+      ),
+  },
+  {
     path: 'forgot-password',
     title: 'Forgot password · HabitTracker',
     loadComponent: () =>
