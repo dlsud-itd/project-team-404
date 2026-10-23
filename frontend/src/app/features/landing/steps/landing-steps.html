@@ -1,0 +1,12 @@
+<section class="steps" aria-labelledby="steps-heading">
+  <h2 id="steps-heading" class="visually-hidden">How it works</h2>
+  <ol class="list">
+    @for (step of steps; track step.number) {
+      <li>
+        <span class="number" aria-hidden="true">{{ step.number }}</span>
+        <h3 class="title">{{ step.title }}</h3>
+        <p class="description">{{ step.description }}</p>
+      </li>
+    }
+  </ol>
+</section>

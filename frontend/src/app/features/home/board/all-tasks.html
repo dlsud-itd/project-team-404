@@ -1,0 +1,63 @@
+<section class="panel" aria-labelledby="all-tasks-heading">
+  <h2 id="all-tasks-heading" class="heading">All Tasks</h2>
+
+  @if (composing()) {
+    <form class="composer" [formGroup]="form" (ngSubmit)="create()" novalidate>
+      <input
+        class="title-input"
+        formControlName="title"
+        aria-label="Task title"
+        placeholder="What needs doing?"
+        [attr.aria-invalid]="form.controls.title.touched && form.controls.title.invalid"
+      />
+      <select formControlName="projectId" aria-label="Project">
+        <option value="">No project</option>
+        @for (project of store.projects(); track project.id) {
+          <option [value]="project.id">{{ project.name }}</option>
+        }
+      </select>
+      <select formControlName="priority" aria-label="Priority">
+        @for (p of priorities; track p.value) {
+          <option [value]="p.value">{{ p.label }}</option>
+        }
+      </select>
+      <input type="date" formControlName="due" aria-label="Due date" />
+      <button type="submit" class="save">Add task</button>
+      <button type="button" class="cancel" (click)="composing.set(false)">Cancel</button>
+    </form>
+  }
+
+  <ul class="list">
+    @for (task of store.filteredTasks(); track task.id) {
+      <li class="task" [class.done]="task.done">
+        <label class="check">
+          <input type="checkbox" [checked]="task.done" (change)="store.toggleTask(task.id)" />
+          <span class="title">{{ task.title }}</span>
+        </label>
+        @if (store.projectById(task.projectId); as project) {
+          <span class="project">
+            <span class="swatch" [style.background]="project.color"></span>{{ project.name }}
+          </span>
+        }
+        <span class="priority" [class]="'priority priority--' + task.priority">{{
+          task.priority
+        }}</span>
+        <span class="due" [class.overdue]="store.statusOf(task) === 'overdue'">
+          {{ shortDate(task.due) }}
+        </span>
+        <button
+          type="button"
+          class="delete"
+          [attr.aria-label]="'Delete ' + task.title"
+          (click)="store.deleteTask(task.id)"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6" />
+          </svg>
+        </button>
+      </li>
+    } @empty {
+      <li class="empty">No tasks match. Add one with “+ New Task”.</li>
+    }
+  </ul>
+</section>

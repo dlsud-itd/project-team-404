@@ -1,0 +1,92 @@
+<div class="dashboard">
+  <header class="topbar">
+    <a class="brand" routerLink="/home">Habit Tracker</a>
+
+    <nav class="tabs" aria-label="Main">
+      <a class="tab active" routerLink="/home" aria-current="page">Dashboard</a>
+      <a class="tab" routerLink="/home" fragment="all-tasks">Tasks</a>
+      <a class="tab" routerLink="/projects">Projects</a>
+    </nav>
+
+    <div class="actions">
+      <span class="streak">Streak <span aria-hidden="true">🔥</span></span>
+      <button type="button" class="new-task" (click)="composing.set(true)">+ New Task</button>
+
+      <div class="account">
+        <button
+          type="button"
+          class="avatar"
+          aria-haspopup="menu"
+          [attr.aria-expanded]="menuOpen()"
+          (click)="menuOpen.set(!menuOpen())"
+        >
+          <span aria-hidden="true">{{ initial() }}</span>
+          <span class="visually-hidden">Account menu</span>
+        </button>
+        @if (menuOpen()) {
+          <div class="menu" role="menu">
+            <p class="menu-user">{{ session.currentUser()?.username }}</p>
+            <button
+              type="button"
+              class="logout"
+              role="menuitem"
+              [disabled]="loggingOut()"
+              (click)="logout()"
+            >
+              {{ loggingOut() ? 'Logging out…' : 'Log out' }}
+            </button>
+          </div>
+        }
+      </div>
+    </div>
+  </header>
+
+  <div class="layout">
+    <aside class="sidebar" aria-label="Filters">
+      <app-project-list id="projects" />
+      <app-priority-list />
+      <app-mini-calendar />
+
+      <div class="mascot">
+        <img src="home/streak-mascot.png" alt="" />
+        <p class="streak-badge">
+          <span aria-hidden="true">🔥</span> {{ store.streakDays() }} day streak!
+        </p>
+      </div>
+    </aside>
+
+    <main class="main">
+      <div class="intro">
+        <div>
+          <h1 class="greeting">{{ greeting() }}, {{ session.currentUser()?.username }}</h1>
+          <p class="overdue-note">
+            @switch (store.overdueCount()) {
+              @case (0) {
+                You're all caught up.
+              }
+              @case (1) {
+                You have 1 overdue task.
+              }
+              @default {
+                You have {{ store.overdueCount() }} overdue tasks.
+              }
+            }
+          </p>
+        </div>
+        <dl class="stats">
+          <div class="stat">
+            <dd>{{ store.openTasks().length }}</dd>
+            <dt>Open tasks</dt>
+          </div>
+          <div class="stat">
+            <dd>{{ store.doneToday() }}</dd>
+            <dt>Done today</dt>
+          </div>
+        </dl>
+      </div>
+
+      <app-status-columns />
+      <app-all-tasks id="all-tasks" [(composing)]="composing" />
+    </main>
+  </div>
+</div>

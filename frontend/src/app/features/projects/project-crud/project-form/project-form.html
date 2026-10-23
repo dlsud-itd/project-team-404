@@ -1,0 +1,132 @@
+<main class="page">
+  <a class="back" routerLink="/projects">← Projects</a>
+  <h1>{{ mode === 'create' ? 'New project' : 'Edit project' }}</h1>
+
+  @switch (loadState()) {
+    @case ('loading') {
+      <p class="status" role="status">Loading project…</p>
+    }
+    @case ('not-found') {
+      <div class="message" role="alert">
+        <p>Project not found.</p>
+        <a routerLink="/projects">Back to your projects</a>
+      </div>
+    }
+    @case ('error') {
+      <div class="message" role="alert">
+        <p>Couldn't load this project. Something went wrong. Please try again.</p>
+        <button type="button" class="secondary" (click)="load()">Try again</button>
+      </div>
+    }
+    @default {
+      @if (readOnly()) {
+        <div class="message" role="status">
+          <p>Your Inbox is read-only, so it can't be renamed or changed.</p>
+          <a routerLink="/projects">Back to your projects</a>
+        </div>
+      } @else {
+        @if (saved(); as message) {
+          <p class="form-notice" role="status">{{ message }}</p>
+        }
+        @if (formError(); as message) {
+          <p class="form-error" role="alert">{{ message }}</p>
+        }
+
+        <form
+          class="card"
+          [formGroup]="form"
+          (ngSubmit)="submit()"
+          (keydown.escape)="cancel()"
+          novalidate
+        >
+          <div class="field">
+            <label for="project-name">Name</label>
+            <input
+              id="project-name"
+              type="text"
+              formControlName="name"
+              autocomplete="off"
+              placeholder="e.g. Capstone"
+              [attr.aria-invalid]="!!fieldError('name')"
+              aria-describedby="project-name-status"
+              (input)="clearServerError('name')"
+            />
+            <p id="project-name-status" class="field-message" aria-live="polite">
+              {{ fieldError('name') }}
+            </p>
+          </div>
+
+          <div class="field">
+            <div class="label-row">
+              <label for="project-description">Description <span>(optional)</span></label>
+              <span
+                class="count"
+                [class.over]="form.controls.description.value.length > descriptionMax"
+              >
+                {{ form.controls.description.value.length }}/{{ descriptionMax }}
+              </span>
+            </div>
+            <textarea
+              id="project-description"
+              formControlName="description"
+              rows="4"
+              placeholder="What is this project for?"
+              [attr.aria-invalid]="!!fieldError('description')"
+              aria-describedby="project-description-status"
+              (input)="clearServerError('description')"
+            ></textarea>
+            <p id="project-description-status" class="field-message" aria-live="polite">
+              {{ fieldError('description') }}
+            </p>
+          </div>
+
+          <fieldset class="field colors" aria-describedby="project-color-status">
+            <legend>Color <span>(optional)</span></legend>
+            <div class="swatches">
+              <label class="swatch none">
+                <input
+                  type="radio"
+                  formControlName="color"
+                  value=""
+                  data-color=""
+                  (change)="clearServerError('color')"
+                />
+                <span class="chip" aria-hidden="true"></span>
+                <span class="visually-hidden">No color</span>
+              </label>
+              @for (color of colors(); track color.value) {
+                <label class="swatch">
+                  <input
+                    type="radio"
+                    formControlName="color"
+                    [value]="color.value"
+                    [attr.data-color]="color.value"
+                    (change)="clearServerError('color')"
+                  />
+                  <span class="chip" [style.background]="color.value" aria-hidden="true"></span>
+                  <span class="visually-hidden">{{ color.label }}</span>
+                </label>
+              }
+            </div>
+            <p id="project-color-status" class="field-message" aria-live="polite">
+              {{ fieldError('color') }}
+            </p>
+          </fieldset>
+
+          <div class="actions">
+            <button type="button" class="secondary" [disabled]="submitting()" (click)="cancel()">
+              Cancel
+            </button>
+            <button type="submit" class="primary" [disabled]="!canSave()">
+              @if (submitting()) {
+                {{ mode === 'create' ? 'Creating…' : 'Saving…' }}
+              } @else {
+                {{ mode === 'create' ? 'Create project' : 'Save changes' }}
+              }
+            </button>
+          </div>
+        </form>
+      }
+    }
+  }
+</main>

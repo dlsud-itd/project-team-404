@@ -1,0 +1,52 @@
+:host {
+  display: block;
+}
+
+.steps {
+  padding: 4rem var(--landing-gutter) 6rem;
+  background: #f39a7a;
+}
+
+.list {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 2rem 1.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.number {
+  display: block;
+  color: #fff;
+  font-size: clamp(3rem, 6vw, 3.75rem);
+  font-weight: 800;
+  line-height: 1;
+}
+
+.title {
+  margin: 0.5rem 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.description {
+  margin: 0;
+  color: #6a3826;
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1.35;
+}
+
+@media (max-width: 860px) {
+  .list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 480px) {
+  .list {
+    grid-template-columns: 1fr;
+  }
+}

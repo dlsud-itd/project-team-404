@@ -1,34 +1,41 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
-import { Router } from '@angular/router';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { Router, RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
 import { SessionService } from '../auth/session/session.service';
+import { AllTasks } from './board/all-tasks';
+import { StatusColumns } from './board/status-columns';
+import { DashboardStore } from './dashboard.store';
+import { MiniCalendar } from './sidebar/mini-calendar';
+import { PriorityList } from './sidebar/priority-list';
+import { ProjectList } from './sidebar/project-list';
 
-// TODO(Sprint 2): replace with the Inbox page.
+// TODO(Sprint 2): move to the Inbox page once it exists.
 @Component({
   selector: 'app-home',
-  template: `
-    <main class="home">
-      <h1>Welcome, {{ session.currentUser()?.username }}</h1>
-      <p>Your Inbox is coming soon.</p>
-      <button type="button" class="logout" [disabled]="loggingOut()" (click)="logout()">
-        {{ loggingOut() ? 'Logging out…' : 'Log out' }}
-      </button>
-    </main>
-  `,
-  styles: `
-    .home {
-      max-width: 40rem;
-      margin: 0 auto;
-      padding: 3rem 1rem;
-    }
-  `,
+  imports: [RouterLink, ProjectList, PriorityList, MiniCalendar, StatusColumns, AllTasks],
+  providers: [DashboardStore],
+  templateUrl: './home.html',
+  styleUrl: './home.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class Home {
   protected readonly session = inject(SessionService);
+  protected readonly store = inject(DashboardStore);
   private readonly router = inject(Router);
 
   protected readonly loggingOut = signal(false);
+  protected readonly menuOpen = signal(false);
+  protected readonly composing = signal(false);
+
+  protected readonly greeting = computed(() => {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'Good Morning';
+    return hour < 18 ? 'Good Afternoon' : 'Good Evening';
+  });
+
+  protected readonly initial = computed(
+    () => this.session.currentUser()?.username?.charAt(0).toUpperCase() ?? '',
+  );
 
   protected logout(): void {
     if (this.loggingOut()) return;

@@ -1,0 +1,27 @@
+<section class="features" aria-labelledby="features-heading">
+  <h2 id="features-heading" class="heading">Everything you need</h2>
+
+  @for (group of groups; track group.title) {
+    <div class="row">
+      <div class="intro">
+        <svg
+          class="icon"
+          [class.icon--purple]="group.tone === 'purple'"
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+        >
+          <rect x="2" y="2" width="20" height="20" />
+          <path d="m6 8.5 1.5 1.5L10 7.5M6 15l1.5 1.5L10 14M13 9h5M13 15.5h5" />
+        </svg>
+        <h3 class="title">{{ group.title }}</h3>
+        <p class="description">{{ group.description }}</p>
+      </div>
+
+      <ul class="cards" [class.cards--four]="group.items.length === 4">
+        @for (item of group.items; track item) {
+          <li class="card">{{ item }}</li>
+        }
+      </ul>
+    </div>
+  }
+</section>

@@ -70,6 +70,13 @@ describe('Login & Session integration (Login UI, session restore, guards, interc
     harness.detectChanges();
   }
 
+  /** Log out lives in the dashboard's account menu. */
+  async function clickLogOut(): Promise<void> {
+    el<HTMLButtonElement>('button.avatar').click();
+    await settle();
+    el<HTMLButtonElement>('button.logout').click();
+  }
+
   function storedToken(): string | null {
     return sessionStorage.getItem(TOKEN_STORAGE_KEY) ?? localStorage.getItem(TOKEN_STORAGE_KEY);
   }
@@ -140,7 +147,7 @@ describe('Login & Session integration (Login UI, session restore, guards, interc
       expect(storedToken()).toBe(TOKEN);
       expect(session.currentUser()).toEqual(USER);
       expect(router.url).toBe(POST_LOGIN_REDIRECT);
-      expect(page().textContent).toContain('Welcome, james');
+      expect(page().textContent).toMatch(/Good (Morning|Afternoon|Evening), james/);
     });
 
     // FE-LOG-05
@@ -206,7 +213,7 @@ describe('Login & Session integration (Login UI, session restore, guards, interc
       await harness.navigateByUrl('/home');
       expect(session.currentUser()).toEqual(USER);
       expect(router.url).toBe('/home');
-      expect(page().textContent).toContain('Welcome, james');
+      expect(page().textContent).toMatch(/Good (Morning|Afternoon|Evening), james/);
     });
 
     it('clears the token and goes to /login when /me answers 401', async () => {
@@ -291,7 +298,7 @@ describe('Login & Session integration (Login UI, session restore, guards, interc
         await startSignedIn();
         await harness.navigateByUrl('/home');
 
-        el<HTMLButtonElement>('button.logout').click();
+        await clickLogOut();
         const req = http.expectOne(`${API}/logout`);
         expect(req.request.method).toBe('POST');
         expect(req.request.headers.get('Authorization')).toBe(`Bearer ${TOKEN}`);
@@ -317,7 +324,7 @@ describe('Login & Session integration (Login UI, session restore, guards, interc
       await startSignedIn();
       await harness.navigateByUrl('/home');
 
-      el<HTMLButtonElement>('button.logout').click();
+      await clickLogOut();
       http.expectOne(`${API}/logout`).error(new ProgressEvent('error'));
       await settle();
 
@@ -341,9 +348,9 @@ describe('Login & Session integration (Login UI, session restore, guards, interc
     await startApp(saved);
     http.expectOne(`${API}/me`).flush(USER);
     await harness.navigateByUrl('/home');
-    expect(page().textContent).toContain('Welcome, james');
+    expect(page().textContent).toMatch(/Good (Morning|Afternoon|Evening), james/);
 
-    el<HTMLButtonElement>('button.logout').click();
+    await clickLogOut();
     http.expectOne(`${API}/logout`).flush(LOGOUT_OK);
     await settle();
     expect(router.url).toBe('/login');
