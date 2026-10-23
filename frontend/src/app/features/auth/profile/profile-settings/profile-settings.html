@@ -1,0 +1,95 @@
+<main class="page">
+  <a class="back" routerLink="/home">← Home</a>
+  <h1>Profile settings</h1>
+  <p class="intro">Change how your name appears and the timezone your schedule follows.</p>
+
+  @switch (loadState()) {
+    @case ('loading') {
+      <p class="status" role="status">Loading your profile…</p>
+    }
+    @case ('error') {
+      <div class="message" role="alert">
+        <p>Couldn't load your profile. Something went wrong. Please try again.</p>
+        <button type="button" class="secondary" (click)="load()">Try again</button>
+      </div>
+    }
+    @default {
+      @if (saved(); as message) {
+        <p class="form-notice" role="status">{{ message }}</p>
+      }
+      @if (formError(); as message) {
+        <p class="form-error" role="alert">{{ message }}</p>
+      }
+
+      <form class="card" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+        <div class="field">
+          <label for="profile-email">Email</label>
+          <input
+            id="profile-email"
+            type="email"
+            [value]="session.currentUser()?.email ?? ''"
+            readonly
+            aria-describedby="profile-email-hint"
+          />
+          <p id="profile-email-hint" class="hint">Your email can't be changed.</p>
+        </div>
+
+        <div class="field">
+          <div class="label-row">
+            <label for="profile-username">Username</label>
+            <span
+              class="count"
+              [class.over]="form.controls.username.value.length > usernameMax"
+              aria-hidden="true"
+            >
+              {{ form.controls.username.value.length }}/{{ usernameMax }}
+            </span>
+          </div>
+          <input
+            id="profile-username"
+            type="text"
+            formControlName="username"
+            autocomplete="username"
+            spellcheck="false"
+            [attr.aria-invalid]="!!fieldError('username')"
+            aria-describedby="profile-username-status"
+            (input)="clearServerError('username')"
+          />
+          <p id="profile-username-status" class="field-message" aria-live="polite">
+            {{ fieldError('username') }}
+          </p>
+        </div>
+
+        <div class="field">
+          <label for="profile-timezone">Timezone</label>
+          <select
+            id="profile-timezone"
+            formControlName="timezone"
+            [attr.aria-invalid]="!!fieldError('timezone')"
+            aria-describedby="profile-timezone-status"
+            (change)="clearServerError('timezone')"
+          >
+            @for (zone of timezones(); track zone) {
+              <option [value]="zone">{{ zone }}</option>
+            }
+          </select>
+          <p id="profile-timezone-status" class="field-message" aria-live="polite">
+            {{ fieldError('timezone') }}
+          </p>
+        </div>
+
+        <div class="actions">
+          <button type="submit" class="primary" [disabled]="!canSave()">
+            {{ submitting() ? 'Saving…' : 'Save changes' }}
+          </button>
+        </div>
+      </form>
+
+      <section class="section" aria-labelledby="password-heading">
+        <h2 id="password-heading">Password</h2>
+        <p class="section-intro">Changing your password signs you out on your other devices.</p>
+        <app-change-password-form />
+      </section>
+    }
+  }
+</main>

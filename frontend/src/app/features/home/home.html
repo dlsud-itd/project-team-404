@@ -26,6 +26,7 @@
         @if (menuOpen()) {
           <div class="menu" role="menu">
             <p class="menu-user">{{ session.currentUser()?.username }}</p>
+            <a class="menu-link" role="menuitem" routerLink="/settings/profile">Profile settings</a>
             <button
               type="button"
               class="logout"

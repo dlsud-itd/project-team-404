@@ -126,6 +126,24 @@
   }
 }
 
+.menu-link {
+  display: block;
+  padding: 0.5rem;
+  border-radius: 0.375rem;
+  color: var(--ink);
+  font-size: 0.8125rem;
+  text-decoration: none;
+
+  &:hover {
+    background: #fdeee6;
+  }
+
+  &:focus-visible {
+    outline: 2px solid #7b23a8;
+    outline-offset: 2px;
+  }
+}
+
 .menu-user {
   margin: 0 0 0.25rem;
   padding: 0.25rem 0.5rem;

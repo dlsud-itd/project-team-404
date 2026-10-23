@@ -21,12 +21,26 @@ main {
 
 /* Top bar */
 .topbar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
   display: grid;
   grid-template-columns: 1fr auto 1fr;
   align-items: center;
   gap: 1rem;
   padding: 1rem 0;
   border-bottom: 1px solid var(--landing-line);
+  background: #fdeee6;
+  /* Extend the background into the side gutters so content doesn't show beside the bar */
+  box-shadow: 0 0 0 100vmax #fdeee6;
+  clip-path: inset(0 -100vmax);
+}
+
+/* Keep anchor targets from landing underneath the sticky top bar */
+#features,
+#how-it-works,
+#about {
+  scroll-margin-top: 5rem;
 }
 
 .brand {
