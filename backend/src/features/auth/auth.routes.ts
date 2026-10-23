@@ -36,6 +36,8 @@ import { createProfileRouter } from './profile/profile.routes';
 import { ProfileService } from './profile/profile.service';
 import { findProfileByUserId } from './profile/db/queries/find-profile.query';
 import { updateProfileByUserId } from './profile/db/queries/update-profile.query';
+import { revokeOtherSessions } from './profile/db/queries/revoke-other-sessions.query';
+import { ChangePasswordService } from './profile/change-password.service';
 import type { Mailer } from './forgot-password/mailer/mailer';
 
 export type AuthRouterOptions = {
@@ -106,11 +108,19 @@ export function createAuthRouter(options: AuthRouterOptions = {}): Router {
     findProfile: findProfileByUserId,
     updateProfile: updateProfileByUserId,
   });
+  const changePassword = new ChangePasswordService({
+    findUserById,
+    verifyCredentials: (email, password) =>
+      supabaseAdmin.verifyCredentials(email, password),
+    updatePassword: (userId, password) =>
+      supabaseAdmin.updatePassword(userId, password),
+    revokeOtherSessions,
+  });
 
   router.use(createRegisterRouter(registration));
   router.use(createLoginRouter(login));
   router.use(createSessionRouter(sessions));
-  router.use(createProfileRouter(sessions, profile));
+  router.use(createProfileRouter(sessions, profile, changePassword));
   router.use(createForgotPasswordRouter(forgotPassword));
   router.use(createResetPasswordRouter(resetTokenValidator, resetPassword));
   return router;

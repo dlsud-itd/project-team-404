@@ -12,6 +12,13 @@ export class AuthUnauthorizedError extends Error {
   }
 }
 
+export class InvalidCurrentPasswordError extends Error {
+  constructor() {
+    super('Current password is incorrect');
+    this.name = 'InvalidCurrentPasswordError';
+  }
+}
+
 export class SupabaseAuthConfigurationError extends Error {
   constructor() {
     super('SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be configured');

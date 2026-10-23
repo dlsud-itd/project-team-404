@@ -17,11 +17,11 @@ import {
 } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { Observable, catchError, finalize, map, of, switchMap, timer } from 'rxjs';
+import { usernameFormatValidator } from '../../../shared/validators/username-format.validator';
 import { AuthService, AvailabilityResponse } from '../auth.service';
 
 export const DEFAULT_TIMEZONE = 'Asia/Manila';
 export const AVAILABILITY_DEBOUNCE_MS = 400;
-const USERNAME_PATTERN = /^[A-Za-z0-9_.-]+$/;
 
 type Availability = 'idle' | 'checking' | 'available' | 'taken' | 'invalid' | 'unknown';
 type FieldName = 'username' | 'email' | 'password' | 'confirmPassword';
@@ -33,7 +33,7 @@ const passwordsMatch: ValidatorFn = (group) => {
   return confirmPassword && password !== confirmPassword ? { passwordMismatch: true } : null;
 };
 
-function listTimezones(): string[] {
+export function listTimezones(): string[] {
   const zones =
     typeof Intl.supportedValuesOf === 'function' ? Intl.supportedValuesOf('timeZone') : [];
   return zones.includes(DEFAULT_TIMEZONE) ? zones : [DEFAULT_TIMEZONE, ...zones];
@@ -68,11 +68,7 @@ export class Register {
       username: [
         '',
         {
-          validators: [
-            Validators.required,
-            Validators.maxLength(50),
-            Validators.pattern(USERNAME_PATTERN),
-          ],
+          validators: usernameFormatValidator,
           asyncValidators: [
             this.availabilityValidator(
               (value) => this.auth.checkUsername(value),
