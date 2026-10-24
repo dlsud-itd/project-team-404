@@ -1,0 +1,98 @@
+<div class="login">
+  <section class="intro" aria-labelledby="intro-heading">
+    <a class="brand" routerLink="/">
+      <span class="brand-mark" aria-hidden="true"></span>
+      HabitTracker
+    </a>
+
+    <h2 id="intro-heading" class="intro-heading">
+      Welcome back. Keep up your <span class="accent">streak</span>.
+    </h2>
+
+    <ul class="features" aria-label="What you get">
+      <li>Daily check-ins</li>
+      <li>Reminders and notifications</li>
+      <li>Streaks and statistics</li>
+    </ul>
+
+    <p class="credit">Team 404 Project</p>
+  </section>
+
+  <main class="panel">
+    <div class="panel-inner">
+      <p class="eyebrow">Log in to your account</p>
+      <h1 class="title">Good to see you</h1>
+
+      @if (passwordReset) {
+        <p class="form-notice" role="status">
+          Your password has been updated. Log in with your new password.
+        </p>
+      }
+
+      @if (formError(); as message) {
+        <p class="form-error" role="alert">{{ message }}</p>
+      }
+
+      <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+        <div class="field">
+          <label for="identifier">Email or username</label>
+          <input
+            id="identifier"
+            type="text"
+            formControlName="identifier"
+            autocomplete="username"
+            autocapitalize="none"
+            spellcheck="false"
+            placeholder="you@example.com"
+            [attr.aria-invalid]="!!fieldError('identifier')"
+            aria-describedby="identifier-status"
+          />
+          <p id="identifier-status" class="field-message" aria-live="polite">
+            {{ fieldError('identifier') }}
+          </p>
+        </div>
+
+        <div class="field">
+          <div class="label-row">
+            <label for="password">Password</label>
+            <a class="forgot" routerLink="/forgot-password">Forgot password?</a>
+          </div>
+          <div class="password">
+            <input
+              id="password"
+              [type]="showPassword() ? 'text' : 'password'"
+              formControlName="password"
+              autocomplete="current-password"
+              placeholder="Your password"
+              [attr.aria-invalid]="!!fieldError('password')"
+              aria-describedby="password-status"
+            />
+            <button
+              type="button"
+              class="toggle"
+              [attr.aria-pressed]="showPassword()"
+              (click)="showPassword.set(!showPassword())"
+            >
+              {{ showPassword() ? 'Hide' : 'Show' }}
+              <span class="visually-hidden">password</span>
+            </button>
+          </div>
+          <p id="password-status" class="field-message" aria-live="polite">
+            {{ fieldError('password') }}
+          </p>
+        </div>
+
+        <label class="remember">
+          <input id="remember" type="checkbox" formControlName="remember" />
+          Keep me logged in on this device
+        </label>
+
+        <button class="submit" type="submit" [disabled]="submitting()">
+          {{ submitting() ? 'Logging in…' : 'Log in' }}
+        </button>
+      </form>
+
+      <p class="switch">Don't have an account? <a routerLink="/register">Sign up</a></p>
+    </div>
+  </main>
+</div>

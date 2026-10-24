@@ -1,0 +1,18 @@
+model Project {
+  id          Int       @id @default(autoincrement()) @map("project_id")
+  userId      String    @db.Uuid @map("user_id")
+  name        String    @db.VarChar(150)
+  description String?   @db.VarChar(500)
+  color       String?   @db.Char(7)
+  isInbox     Boolean   @default(false) @map("is_inbox")
+  isFavorite  Boolean   @default(false) @map("is_favorite")
+  isArchived  Boolean   @default(false) @map("is_archived")
+  sortOrder   Int       @default(0) @map("sort_order")
+  createdAt   DateTime  @default(now()) @db.Timestamptz(6) @map("created_at")
+  updatedAt   DateTime  @default(now()) @db.Timestamptz(6) @map("updated_at")
+  deletedAt   DateTime? @db.Timestamptz(6) @map("deleted_at")
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId], map: "tbl_project_user_id_idx")
+  @@map("tbl_project")
+}

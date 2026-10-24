@@ -54,6 +54,18 @@
       }
     },
     {
+      "label": "🧪 Frontend: Tests (coverage report)",
+      "type": "npm",
+      "script": "test",
+      "path": "frontend",
+      "args": ["--", "--coverage"],
+      "presentation": {
+        "group": "testing",
+        "panel": "dedicated",
+        "reveal": "always"
+      }
+    },
+    {
       "label": "🧪 Backend: Tests (watch)",
       "type": "npm",
       "script": "test:watch",
@@ -75,6 +87,41 @@
           "CORS_ALLOWED_ORIGINS": "http://localhost:4200"
         }
       },
+      "presentation": {
+        "group": "testing",
+        "panel": "dedicated",
+        "reveal": "always"
+      }
+    },
+    {
+      "label": "🧪 Backend: Tests (coverage report)",
+      "type": "npm",
+      "script": "test:report",
+      "path": "backend",
+      "presentation": {
+        "group": "testing",
+        "panel": "dedicated",
+        "reveal": "always"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "📊 Test Reports: Generate",
+      "type": "shell",
+      "command": "npm --prefix backend run test:report ; npm --prefix frontend run test -- --coverage ; node scripts/collect-reports.mjs",
+      "presentation": {
+        "group": "testing",
+        "panel": "dedicated",
+        "reveal": "always"
+      }
+    },
+    {
+      "label": "🔁 Regression: Run All",
+      "type": "npm",
+      "script": "test:regression",
+      "path": ".",
+      "detail": "Runs backend unit, backend integration, frontend unit and integration, E2E, then the frontend regression specs. Fails on any failed, skipped, or missing suite.",
+      "problemMatcher": [],
       "presentation": {
         "group": "testing",
         "panel": "dedicated",

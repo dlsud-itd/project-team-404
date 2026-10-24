@@ -1,0 +1,75 @@
+<main class="page">
+  <header class="head">
+    <a class="back" routerLink="/home">← Dashboard</a>
+    <div class="title-row">
+      <h1>Projects</h1>
+      <a class="new" routerLink="/projects/new">+ New project</a>
+    </div>
+  </header>
+
+  @if (notice(); as message) {
+    <p class="form-notice" role="status">{{ message }}</p>
+  }
+  @if (actionError(); as message) {
+    <p class="banner-error" role="alert">{{ message }}</p>
+  }
+
+  @if (store.error(); as message) {
+    <div class="load-error" role="alert">
+      <p>Couldn't load your projects. {{ message }}</p>
+      <button type="button" class="retry" [disabled]="store.loading()" (click)="load()">
+        {{ store.loading() ? 'Retrying…' : 'Try again' }}
+      </button>
+    </div>
+  }
+
+  @if (firstLoad()) {
+    <p class="status" role="status">Loading projects…</p>
+  } @else if (store.loaded()) {
+    @if (store.inbox(); as inbox) {
+      <app-project-card class="inbox" [project]="inbox" />
+    }
+
+    @if (favorites().length) {
+      <section class="group" aria-labelledby="favorites-heading">
+        <h2 id="favorites-heading">Favorites</h2>
+        <ul class="list">
+          @for (project of favorites(); track project.projectId) {
+            <li>
+              <app-project-card [project]="project" (deleteRequested)="askDelete($event)" />
+            </li>
+          }
+        </ul>
+      </section>
+    }
+
+    <section class="group" aria-labelledby="projects-heading">
+      <h2 id="projects-heading">My projects</h2>
+      @if (others().length) {
+        <ul class="list">
+          @for (project of others(); track project.projectId) {
+            <li>
+              <app-project-card [project]="project" (deleteRequested)="askDelete($event)" />
+            </li>
+          }
+        </ul>
+      } @else if (!favorites().length) {
+        <div class="empty">
+          <p class="empty-title">You only have your Inbox so far.</p>
+          <p>Create a project to group the tasks for a class, a job or anything else you manage.</p>
+          <a class="new" routerLink="/projects/new">Create your first project</a>
+        </div>
+      }
+    </section>
+  }
+</main>
+
+@if (pendingDelete(); as project) {
+  <app-confirm-delete-dialog
+    [project]="project"
+    [busy]="deleting()"
+    [error]="deleteError()"
+    (confirmed)="confirmDelete()"
+    (cancelled)="cancelDelete()"
+  />
+}

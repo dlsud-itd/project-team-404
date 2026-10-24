@@ -91,8 +91,28 @@ The current API includes:
 | --- | --- | --- |
 | `GET` | `/health` | Check API health |
 | `POST` | `/api/auth/signup` | Register an account and create its Inbox |
+| `POST` | `/api/auth/login` | Log in with an email or username and receive a bearer token |
+| `GET` | `/api/auth/me` | Fetch the current authenticated user |
+| `POST` | `/api/auth/logout` | Invalidate the current bearer token |
 | `GET` | `/api/auth/check-username/:username` | Check username availability |
 | `GET` | `/api/auth/check-email/:email` | Check email availability |
+| `POST` | `/api/auth/forgot-password` | Request a password recovery email |
+| `GET` | `/api/auth/validate-reset-token` | Validate a valid password reset token |
+| `POST` | `/api/auth/reset-password` | Reset a password with a valid token |
+
+### Project organization
+
+These authenticated endpoints organize projects in the existing `tbl_project`
+table. Favorite and archive requests accept `isFavorite` and `isArchived`
+boolean fields respectively. Sort-order requests accept a non-negative
+`sortOrder`.
+
+| Method | Endpoint | Purpose |
+| --- | --- | --- |
+| `PUT` | `/api/projects/:projectId/favorite` | Favorite or unfavorite a project |
+| `PUT` | `/api/projects/:projectId/archive` | Archive or restore a project; the Inbox cannot be archived |
+| `PUT` | `/api/projects/:projectId/sort-order` | Set one project's sort order |
+| `PUT` | `/api/projects/reorder` | Reorder owned projects with `{ "projectIds": [12, 4, 9] }`; updates are applied in one transaction |
 
 ## Deployment configuration
 
@@ -103,10 +123,16 @@ services:
 - **Vercel frontend:** `NG_APP_SUPABASE_URL`,
   `NG_APP_SUPABASE_ANON_KEY`, and `NG_APP_API_BASE_URL` (the public Render API
   URL, without a trailing slash).
-- **Render backend:** `SUPABASE_URL`,
-  `SUPABASE_SERVICE_ROLE_KEY`, and `CORS_ALLOWED_ORIGINS` set to the deployed
-  frontend origin, `https://project-team-404.vercel.app`. Render supplies
-  `PORT` automatically.
+- **Render backend:** configure `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `DATABASE_URL`, `DIRECT_URL`, `WEB_APP_URL`, and `CORS_ALLOWED_ORIGINS` for `https://project-team-404.vercel.app`. Render supplies `PORT` automatically.
+
+Password recovery emails are sent through the Brevo API. Configure
+`BREVO_API_KEY`, `BREVO_SENDER_EMAIL`, and optionally `BREVO_SENDER_NAME` in the
+backend environment. The sender email must be verified in Brevo. Keep the API
+key private and only configure it on the backend.
+
+The backend Prisma client is generated from `backend/prisma/schema` as part of
+lint, typecheck, and build. Supabase SQL migrations remain the database source
+of truth; do not use Prisma migrations for deployment.
 
 ## Project documents
 

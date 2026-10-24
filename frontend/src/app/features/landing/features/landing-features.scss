@@ -1,0 +1,95 @@
+:host {
+  display: block;
+}
+
+.features {
+  padding: 1.5rem 0 5rem;
+  background: radial-gradient(
+    ellipse 45% 40% at 72% 55%,
+    rgba(226, 170, 238, 0.7) 0%,
+    rgba(226, 170, 238, 0) 100%
+  );
+}
+
+.heading {
+  margin: 0 0 1.5rem;
+  font-size: clamp(2rem, 5vw, 2.75rem);
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: minmax(12rem, 15rem) minmax(0, 1fr);
+  gap: 1rem 2rem;
+
+  & + & {
+    margin-top: 2.5rem;
+  }
+}
+
+.icon {
+  width: 1.75rem;
+  height: 1.75rem;
+  fill: none;
+  stroke: var(--orange);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.icon--purple {
+  stroke: var(--landing-purple);
+}
+
+.title {
+  margin: 0.75rem 0;
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+
+.description {
+  margin: 0;
+  color: #a08e86;
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.625rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.cards--four {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  max-width: 36rem;
+}
+
+.card {
+  min-height: 7.25rem;
+  padding: 0.75rem;
+  border: 1px solid var(--landing-orange);
+  border-radius: 0.5rem;
+  background: #fff;
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+@media (max-width: 860px) {
+  .row {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .cards,
+  .cards--four {
+    grid-template-columns: 1fr 1fr;
+  }
+}

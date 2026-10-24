@@ -20,6 +20,20 @@ export type AvailabilityResponse = {
   available: boolean;
 };
 
+export type MessageResponse = {
+  message: string;
+};
+
+export type ResetTokenResponse = {
+  valid: boolean;
+};
+
+/** 400 body from GET /api/auth/validate-reset-token. */
+export type ResetTokenErrorResponse = {
+  error: string;
+  reason: 'invalid' | 'expired' | 'used';
+};
+
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly http = inject(HttpClient);
@@ -39,5 +53,25 @@ export class AuthService {
     return this.http.get<AvailabilityResponse>(
       `${this.baseUrl}/check-email/${encodeURIComponent(email)}`,
     );
+  }
+
+  requestPasswordReset(email: string): Observable<MessageResponse> {
+    return this.http.post<MessageResponse>(`${this.baseUrl}/forgot-password`, {
+      email,
+    });
+  }
+
+  validateResetToken(token: string): Observable<ResetTokenResponse> {
+    return this.http.get<ResetTokenResponse>(`${this.baseUrl}/validate-reset-token`, {
+      params: { token },
+    });
+  }
+
+  resetPassword(token: string, password: string): Observable<MessageResponse> {
+    return this.http.post<MessageResponse>(`${this.baseUrl}/reset-password`, {
+      token,
+      newPassword: password,
+      confirmPassword: password,
+    });
   }
 }

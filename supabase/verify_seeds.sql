@@ -56,6 +56,40 @@ inbox_seed_status as (
     ) as passed
   from expected_users as expected
   left join auth.users as auth_user on auth_user.email = expected.email
+),
+expected_reset_tokens(email, token_kind) as (
+  select expected.email, token_kind.kind
+  from (values
+    ('james@example.com'),
+    ('harvey@example.com'),
+    ('alex@example.com')
+  ) as expected(email)
+  cross join (values ('valid'), ('expired'), ('used')) as token_kind(kind)
+),
+reset_token_seed_status as (
+  select bool_and(
+    auth_user.id is not null
+    and reset_token.id is not null
+    and reset_token.user_id = auth_user.id
+    and case expected.token_kind
+      when 'valid' then reset_token.expires_at > now()
+        and reset_token.used_at is null
+      when 'expired' then reset_token.expires_at <= now()
+        and reset_token.used_at is null
+      when 'used' then reset_token.used_at is not null
+      else false
+    end
+  ) as passed
+  from expected_reset_tokens as expected
+  left join auth.users as auth_user on auth_user.email = expected.email
+  left join public.password_reset_token as reset_token
+    on reset_token.token_hash = encode(
+      extensions.digest(
+        'seed-reset-' || split_part(expected.email, '@', 1) || '-' || expected.token_kind,
+        'sha256'
+      ),
+      'hex'
+    )
 )
 select
   '001_users.sql' as seed_file,
@@ -74,4 +108,52 @@ select
     else 'One or more seeded users do not have exactly one active Inbox.'
   end as details
 from inbox_seed_status
+union all
+select
+  '003_password_reset_tokens.sql' as seed_file,
+  case when passed then 'PASS' else 'FAIL' end as status,
+  case
+    when passed then 'Each seeded user has a hashed valid token, an expired token, and a used token.'
+    else 'One or more seeded users are missing a correctly hashed valid, expired, or used reset token.'
+  end as details
+from reset_token_seed_status
+union all
+select
+  '004_projects.sql' as seed_file,
+  case when passed then 'PASS' else 'FAIL' end as status,
+  case
+    when passed then 'Each seeded user has the expected sample projects with descriptions and colors.'
+    else 'One or more seeded users are missing the expected sample projects, descriptions, or colors.'
+  end as details
+from (
+  with expected_projects(email, name, description, color, is_favorite, sort_order) as (
+    values
+      ('james@example.com', 'Work', 'Current priorities and deadlines', '#f59e0b', true, 0),
+      ('james@example.com', 'Home', 'Weekend errands and household tasks', '#10b981', false, 1),
+      ('harvey@example.com', 'Client Projects', 'Client deliverables and meetings', '#3b82f6', true, 0),
+      ('alex@example.com', 'Learning', 'Courses, notes, and references', '#8b5cf6', false, 0)
+  ),
+  project_seed_status as (
+    select
+      bool_and(
+        auth_user.id is not null
+        and project.project_id is not null
+        and project.user_id = auth_user.id
+        and project.name = expected.name
+        and project.description = expected.description
+        and project.color = expected.color
+        and project.is_inbox = false
+        and project.is_favorite = expected.is_favorite
+        and project.is_archived = false
+        and project.sort_order = expected.sort_order
+        and project.deleted_at is null
+      ) as passed
+    from expected_projects as expected
+    left join auth.users as auth_user on auth_user.email = expected.email
+    left join public.tbl_project as project
+      on project.user_id = auth_user.id
+     and project.name = expected.name
+  )
+  select bool_and(passed) as passed from project_seed_status
+) as project_seed_status
 order by seed_file;
