@@ -116,6 +116,19 @@
       }
     },
     {
+      "label": "🔁 Regression: Run All",
+      "type": "npm",
+      "script": "test:regression",
+      "path": ".",
+      "detail": "Runs backend unit, backend integration, frontend unit and integration, E2E, then the frontend regression specs. Fails on any failed, skipped, or missing suite.",
+      "problemMatcher": [],
+      "presentation": {
+        "group": "testing",
+        "panel": "dedicated",
+        "reveal": "always"
+      }
+    },
+    {
       "label": "🔍 Frontend: Lint",
       "type": "npm",
       "script": "lint",

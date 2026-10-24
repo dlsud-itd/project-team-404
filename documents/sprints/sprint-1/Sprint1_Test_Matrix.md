@@ -364,14 +364,9 @@ These are not browser E2E tests. The End-to-End rows above stay Failing until th
 | FE-RGR-16 | `profile.regression.spec.ts`           | Taken username shows "Username already taken."; profile unchanged.                                               | Passing |
 | FE-RGR-17 | `profile.regression.spec.ts`           | Session ends before saving: save gets 401 and the user is sent to `/login`.                                      | Passing |
 
-### 5.1 Frontend Baseline Run
+### 5.1 Regression Runs
 
-| Date             | Commit                                   | Suite                              | Files | Tests | Result      |
-| ---------------- | ---------------------------------------- | ---------------------------------- | ----- | ----- | ----------- |
-| October 24, 2026 | `44ee561` + uncommitted regression specs | Frontend `npm run test:run` (all)  | 28    | 238   | All passing |
-| October 24, 2026 | `44ee561` + uncommitted regression specs | Frontend `npm run test:regression` | 4     | 17    | All passing |
-
-Frontend coverage in that run: 92.78% statements, 94.77% lines. No tests were skipped. Backend, E2E and CI runs are not part of this entry.
+Full runs of `npm run test:regression` (every suite, from backend unit to these specs) are recorded in [`Sprint1_Regression_Log.md`](Sprint1_Regression_Log.md). The latest entry (October 24, 2026, commit `10f54ad`) is not yet a baseline: frontend unit, integration and regression suites pass (238 and 17 tests), but the backend integration suite needs a Supabase test project and no E2E specs exist yet.
 
 ## Summary
 

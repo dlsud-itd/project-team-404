@@ -45,6 +45,12 @@ jobs:
           CORS_ALLOWED_ORIGINS: http://localhost:4200
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/postgres
           DIRECT_URL: postgresql://postgres:postgres@localhost:5432/postgres
+          # Isolated Supabase test project for src/testing/integration. Without these the
+          # integration suites skip.
+          SUPABASE_TEST_URL: ${{ secrets.SUPABASE_TEST_URL }}
+          SUPABASE_TEST_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_TEST_SERVICE_ROLE_KEY }}
+          SUPABASE_TEST_DATABASE_URL: ${{ secrets.SUPABASE_TEST_DATABASE_URL }}
+          SUPABASE_TEST_DIRECT_URL: ${{ secrets.SUPABASE_TEST_DIRECT_URL }}
 
   lint-frontend:
     name: Frontend Lint
