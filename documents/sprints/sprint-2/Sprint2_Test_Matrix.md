@@ -12,6 +12,8 @@ Frontend integration tests use the app's real routes, services, and `HttpClient`
 
 Backend integration tests belong in `backend/src/testing/integration` and run with `npm run test:integration` from `backend`, against the isolated Supabase test project described in the Sprint 1 matrix (`SUPABASE_TEST_URL`, `SUPABASE_TEST_SERVICE_ROLE_KEY`, `SUPABASE_TEST_DATABASE_URL`).
 
+Project CRUD integration tests use the production app and its real authenticated router. They follow the current backend contract: create returns 201, updates use PATCH, and list filtering uses `isArchived`. The API specification describes different values (200, PUT, and `archived`); reconcile the spec and implementation separately. The current list API has no pagination parameters.
+
 Frontend routes for projects do not exist yet. This matrix assumes `/projects/:projectId` for a single project view; update the routes here once they are implemented.
 
 Status values: `Failing`, `Passing`, `Blocked`.
@@ -20,37 +22,37 @@ Status values: `Failing`, `Passing`, `Blocked`.
 
 ### 1.1 List Projects API
 
-| ID        | Test Case                                        | Expected Result                                                                                                                            | Status  |
-| --------- | ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------ | ------- |
-| BE-LST-01 | GET `/api/projects` with a valid token           | 200 OK; array of the user's projects with `projectId`, `name`, `description`, `color`, `isInbox`, `isFavorite`, `isArchived`, `sortOrder`. | Failing |
-| BE-LST-02 | List projects for any user                       | Inbox is always included and is the first item.                                                                                            | Failing |
-| BE-LST-03 | List several projects with different `sortOrder` | Non-Inbox projects are ordered by `sortOrder`.                                                                                             | Failing |
-| BE-LST-04 | GET `/api/projects?archived=true`                | Only archived projects are returned.                                                                                                       | Failing |
-| BE-LST-05 | GET `/api/projects?archived=false`               | Only active projects are returned (Inbox included).                                                                                        | Failing |
-| BE-LST-06 | GET `/api/projects` without `archived`           | Both active and archived projects are returned.                                                                                            | Failing |
-| BE-LST-07 | List after a project is soft-deleted             | Soft-deleted project is not returned.                                                                                                      | Failing |
-| BE-LST-08 | List while another user has projects             | Only the authenticated user's projects are returned (tenant isolation).                                                                    | Failing |
-| BE-LST-09 | GET `/api/projects` with no token                | 401 Unauthorized; `{"error": "Unauthorized"}`.                                                                                             | Failing |
-| BE-LST-10 | GET `/api/projects?archived=abc`                 | 400 Bad Request; `archived` must be a boolean.                                                                                             | Failing |
+| ID        | Test Case                                        | Expected Result                                                                              | Status  |
+| --------- | ------------------------------------------------ | -------------------------------------------------------------------------------------------- | ------- |
+| BE-LST-01 | GET `/api/projects` with a valid token           | 200 OK; array of the user's projects with `id`, name, description, color, and project flags. | Blocked |
+| BE-LST-02 | List projects for any user                       | The user's Inbox is included and listed first.                                               | Blocked |
+| BE-LST-03 | List several projects with different `sortOrder` | Non-Inbox projects are ordered by `sortOrder`.                                               | Blocked |
+| BE-LST-04 | GET `/api/projects?isArchived=true`              | Only archived projects are returned.                                                         | Blocked |
+| BE-LST-05 | GET `/api/projects?isArchived=false`             | Only active projects are returned.                                                           | Blocked |
+| BE-LST-06 | GET `/api/projects` without `isArchived`         | Both active and archived projects are returned.                                              | Blocked |
+| BE-LST-07 | List after a project is soft-deleted             | Soft-deleted project is not returned.                                                        | Blocked |
+| BE-LST-08 | List while another user has projects             | Only the authenticated user's projects are returned.                                         | Blocked |
+| BE-LST-09 | GET `/api/projects` with no valid token          | 401 Unauthorized.                                                                            | Blocked |
+| BE-LST-10 | GET `/api/projects?isArchived=abc`               | 400 Bad Request; `isArchived` must be `true` or `false`.                                     | Blocked |
 
 ### 1.2 Get Project API
 
-| ID        | Test Case                                       | Expected Result                                                      | Status  |
-| --------- | ----------------------------------------------- | -------------------------------------------------------------------- | ------- |
-| BE-LST-11 | GET `/api/projects/{projectId}` for own project | 200 OK; project record with all fields.                              | Failing |
-| BE-LST-12 | Get own Inbox project                           | 200 OK; `isInbox: true`.                                             | Failing |
-| BE-LST-13 | Get another user's project                      | 404 Not Found; `{"error": "Project not found"}` (no existence leak). | Failing |
-| BE-LST-14 | Get a project ID that does not exist            | 404 Not Found.                                                       | Failing |
-| BE-LST-15 | Get a soft-deleted project                      | 404 Not Found.                                                       | Failing |
-| BE-LST-16 | Get with a non-integer `projectId` (e.g. `abc`) | 400 Bad Request.                                                     | Failing |
-| BE-LST-17 | GET `/api/projects/{projectId}` with no token   | 401 Unauthorized.                                                    | Failing |
+| ID        | Test Case                                       | Expected Result                                   | Status  |
+| --------- | ----------------------------------------------- | ------------------------------------------------- | ------- |
+| BE-LST-11 | GET `/api/projects/{projectId}` for own project | 200 OK; returns the owned project.                | Blocked |
+| BE-LST-12 | Get own Inbox project                           | 200 OK; `isInbox: true`.                          | Blocked |
+| BE-LST-13 | Get another user's project                      | 404 Not Found; project existence is not revealed. | Blocked |
+| BE-LST-14 | Get a project ID that does not exist            | 404 Not Found.                                    | Blocked |
+| BE-LST-15 | Get a soft-deleted project                      | 404 Not Found.                                    | Blocked |
+| BE-LST-16 | Get with a non-numeric `projectId` (e.g. `abc`) | 400 Bad Request.                                  | Blocked |
+| BE-LST-17 | GET `/api/projects/{projectId}` with no token   | 401 Unauthorized.                                 | Blocked |
 
 ### 1.3 Listing & Retrieval Backend Integration Tests
 
-| ID        | Test Case                                                 | Expected Result                                                | Status  |
-| --------- | --------------------------------------------------------- | -------------------------------------------------------------- | ------- |
-| BE-LST-18 | Seed projects for two users in Supabase, then list as one | Only that user's projects are returned; Inbox is listed first. | Failing |
-| BE-LST-19 | Register a new user, then list projects                   | Exactly one project is returned: the Inbox.                    | Failing |
+| ID        | Test Case                                    | Expected Result                                  | Status  |
+| --------- | -------------------------------------------- | ------------------------------------------------ | ------- |
+| BE-LST-18 | List projects for two test users in Supabase | Only the signed-in user's projects are returned. | Blocked |
+| BE-LST-19 | List projects for a new test user            | The user's Inbox is returned.                    | Blocked |
 
 ### 1.4 Project List UI
 
@@ -86,26 +88,26 @@ Status values: `Failing`, `Passing`, `Blocked`.
 
 ### 2.1 Create Project API
 
-| ID        | Test Case                                                     | Expected Result                                                                                            | Status  |
-| --------- | ------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- | ------- |
-| BE-CRT-01 | POST `/api/projects` with only `name`                         | 200 OK; `isInbox`, `isFavorite`, `isArchived` are false; `sortOrder` is 0; `description`/`color` are null. | Failing |
-| BE-CRT-02 | Create with `name`, `description`, `color`, and `sortOrder`   | 200 OK; response echoes all supplied values with a new `projectId`.                                        | Failing |
-| BE-CRT-03 | Create with missing `name`                                    | 400 Bad Request; `{"error": "Project name is required"}`.                                                  | Failing |
-| BE-CRT-04 | Create with empty or whitespace-only `name`                   | 400 Bad Request.                                                                                           | Failing |
-| BE-CRT-05 | Create with a 151-character name                              | 400 Bad Request; a 150-character name is accepted.                                                         | Failing |
-| BE-CRT-06 | Create with a 501-character description                       | 400 Bad Request; a 500-character description is accepted.                                                  | Failing |
-| BE-CRT-07 | Create with invalid color (`blue`, `#12345`, `#GGGGGG`)       | 400 Bad Request; `{"error": "Invalid color format"}`.                                                      | Failing |
-| BE-CRT-08 | Create with negative `sortOrder`                              | 400 Bad Request.                                                                                           | Failing |
-| BE-CRT-09 | Create with `isInbox`, `isFavorite`, or `isArchived` set true | Flags are ignored; created project has all three set to false.                                             | Failing |
-| BE-CRT-10 | Create with `projectId` or `userId` in the body               | Fields are ignored; project is owned by the authenticated user.                                            | Failing |
-| BE-CRT-11 | POST `/api/projects` with no token                            | 401 Unauthorized; no project is created.                                                                   | Failing |
+| ID        | Test Case                                              | Expected Result                                                           | Status  |
+| --------- | ------------------------------------------------------ | ------------------------------------------------------------------------- | ------- |
+| BE-CRT-01 | POST `/api/projects` with name, description, and color | 201 Created; project belongs to the caller and has the supplied details.  | Blocked |
+| BE-CRT-02 | Create with `is_inbox: true`                           | 400 Bad Request; unsupported field is rejected and no project is created. | Blocked |
+| BE-CRT-03 | Create with missing `name`                             | 400 Bad Request; `{"error": "Project name is required"}`.                 | Failing |
+| BE-CRT-04 | Create with an empty `name`                            | 400 Bad Request.                                                          | Blocked |
+| BE-CRT-05 | Create with a 151-character name                       | 400 Bad Request; the project is not created.                              | Blocked |
+| BE-CRT-06 | Create with a 501-character description                | 400 Bad Request; a 500-character description is accepted.                 | Failing |
+| BE-CRT-07 | Create with an invalid color                           | 400 Bad Request; the project is not created.                              | Blocked |
+| BE-CRT-08 | Create with negative `sortOrder`                       | 400 Bad Request.                                                          | Failing |
+| BE-CRT-09 | Check created project defaults                         | In the database, `is_inbox` is false and `deleted_at` is empty.           | Blocked |
+| BE-CRT-10 | Create with `projectId` or `userId` in the body        | Fields are ignored; project is owned by the authenticated user.           | Failing |
+| BE-CRT-11 | POST `/api/projects` with no valid token               | 401 Unauthorized; no project is created.                                  | Blocked |
 
 ### 2.2 Creation Backend Integration Tests
 
-| ID        | Test Case                                 | Expected Result                                                            | Status  |
-| --------- | ----------------------------------------- | -------------------------------------------------------------------------- | ------- |
-| BE-CRT-12 | Create a project, then read `tbl_project` | Row exists with `user_id` of the authenticated user and `deleted_at` null. | Failing |
-| BE-CRT-13 | Create a project, then list projects      | New project appears in `GET /api/projects`.                                | Failing |
+| ID        | Test Case                                   | Expected Result                                                                               | Status  |
+| --------- | ------------------------------------------- | --------------------------------------------------------------------------------------------- | ------- |
+| BE-CRT-12 | Create a project and check its database row | Row belongs to the caller; details are saved, `is_inbox` is false, and `deleted_at` is empty. | Blocked |
+| BE-CRT-13 | Create a project, then list projects        | New project appears in `GET /api/projects`.                                                   | Blocked |
 
 ### 2.3 Create Project UI
 
@@ -139,16 +141,16 @@ Status values: `Failing`, `Passing`, `Blocked`.
 
 ### 3.1 Update Project API
 
-| ID        | Test Case                                                         | Expected Result                                                 | Status  |
-| --------- | ----------------------------------------------------------------- | --------------------------------------------------------------- | ------- |
-| BE-EDT-01 | PUT `/api/projects/{projectId}` with name, description, and color | 200 OK; `{projectId, message}`; all three values are persisted. | Failing |
-| BE-EDT-02 | Update with only `description` in the body                        | Only description changes; name and color are unchanged.         | Failing |
-| BE-EDT-03 | Update with empty `name`                                          | 400 Bad Request; `{"error": "Project name cannot be empty"}`.   | Failing |
-| BE-EDT-04 | Update with name over 150 or description over 500 chars           | 400 Bad Request; project is unchanged.                          | Failing |
-| BE-EDT-05 | Update with invalid color                                         | 400 Bad Request; project is unchanged.                          | Failing |
-| BE-EDT-06 | Update with `isFavorite`, `isArchived`, `sortOrder`, or `isInbox` | Fields are ignored; those values are unchanged.                 | Failing |
-| BE-EDT-07 | Update another user's or a nonexistent project                    | 404 Not Found; no row is changed.                               | Failing |
-| BE-EDT-08 | PUT `/api/projects/{projectId}` with no token                     | 401 Unauthorized.                                               | Failing |
+| ID        | Test Case                                                           | Expected Result                                               | Status  |
+| --------- | ------------------------------------------------------------------- | ------------------------------------------------------------- | ------- |
+| BE-EDT-01 | PATCH `/api/projects/{projectId}` with name, description, and color | 200 OK; all three values are saved.                           | Blocked |
+| BE-EDT-02 | Update with only `description` in the body                          | Only description changes; name and color are unchanged.       | Failing |
+| BE-EDT-03 | Update with empty `name`                                            | 400 Bad Request; `{"error": "Project name cannot be empty"}`. | Failing |
+| BE-EDT-04 | Update with name over 150 or description over 500 chars             | 400 Bad Request; project is unchanged.                        | Failing |
+| BE-EDT-05 | Update with invalid color                                           | 400 Bad Request; project is unchanged.                        | Failing |
+| BE-EDT-06 | Update with `isFavorite`, `isArchived`, `sortOrder`, or `isInbox`   | Fields are ignored; those values are unchanged.               | Failing |
+| BE-EDT-07 | Update another user's or a nonexistent project                      | 404 Not Found; no row is changed.                             | Blocked |
+| BE-EDT-08 | PATCH `/api/projects/{projectId}` with no valid token               | 401 Unauthorized.                                             | Blocked |
 
 ### 3.2 Rename Project API
 
@@ -181,9 +183,9 @@ Status values: `Failing`, `Passing`, `Blocked`.
 
 ### 3.5 Editing Backend Integration Tests
 
-| ID        | Test Case                                     | Expected Result                                               | Status  |
-| --------- | --------------------------------------------- | ------------------------------------------------------------- | ------- |
-| BE-EDT-23 | Update a project, then re-fetch from database | Persisted values match the update; `updated_at` has advanced. | Failing |
+| ID        | Test Case                                     | Expected Result                                                                                                                     | Status  |
+| --------- | --------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- | ------- |
+| BE-EDT-23 | Update a project, then re-fetch from database | Values are saved and `updated_at` advances; another user's project returns 404 unchanged; updating the Inbox is rejected unchanged. | Blocked |
 
 ### 3.6 Edit Project UI
 
@@ -232,7 +234,7 @@ Status values: `Failing`, `Passing`, `Blocked`.
 
 | ID        | Test Case                                                       | Expected Result                                                                       | Status  |
 | --------- | --------------------------------------------------------------- | ------------------------------------------------------------------------------------- | ------- |
-| BE-ORG-06 | PUT `/api/projects/{projectId}/archive` with `isArchived: true` | 200 OK; project appears in `?archived=true` and not in `?archived=false`.             | Failing |
+| BE-ORG-06 | PUT `/api/projects/{projectId}/archive` with `isArchived: true` | 200 OK; project appears in `?isArchived=true` and not in `?isArchived=false`.         | Failing |
 | BE-ORG-07 | Archive request with `isArchived: false`                        | 200 OK; `{"message": "Project restored from archive"}`; project is active again.      | Failing |
 | BE-ORG-08 | Archive the Inbox project                                       | 400 Bad Request; `{"error": "Inbox project cannot be archived"}`; Inbox is unchanged. | Failing |
 | BE-ORG-09 | Archive request with missing or non-boolean `isArchived`        | 400 Bad Request.                                                                      | Failing |
@@ -251,9 +253,15 @@ Status values: `Failing`, `Passing`, `Blocked`.
 
 ### 4.4 Favorite, Archive & Sort Order Backend Integration Tests
 
-| ID        | Test Case                                               | Expected Result                                                                    | Status  |
-| --------- | ------------------------------------------------------- | ---------------------------------------------------------------------------------- | ------- |
-| BE-ORG-17 | Favorite, archive, and reorder a project, then re-fetch | `is_favorite`, `is_archived`, and `sort_order` in `tbl_project` match the updates. | Failing |
+| ID        | Test Case                                                 | Expected Result                                                                                                                     | Status  |
+| --------- | --------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- | ------- |
+| BE-ORG-17 | Favorite and unfavorite a project, then check it again    | `is_favorite` is saved and repeated requests keep the requested value.                                                              | Blocked |
+| BE-ORG-18 | Archive and restore a project, then check the lists       | `is_archived` is saved; the project moves between active and archived lists.                                                        | Blocked |
+| BE-ORG-19 | Try to archive the Inbox or change another user's project | Inbox stays unchanged; another user's project returns 404 and stays unchanged.                                                      | Blocked |
+| BE-ORG-20 | Reorder projects and check the database and list          | `sort_order` is saved and the list matches the requested order.                                                                     | Blocked |
+| BE-ORG-21 | Submit an invalid reorder list                            | Empty or malformed lists return 400; duplicate IDs return 400; unknown or another user's IDs return 404 without changing the order. | Blocked |
+| BE-ORG-22 | Reorder projects at the same time                         | Both requests complete and the final list matches one complete requested order.                                                     | Blocked |
+| BE-ORG-23 | Use organization routes without a token                   | Favorite, archive, reorder, and sort-order requests return 401.                                                                     | Blocked |
 
 ### 4.5 Favorite, Archive & Sort Order UI
 
@@ -285,24 +293,24 @@ Status values: `Failing`, `Passing`, `Blocked`.
 
 ### 5.1 Delete Project API
 
-| ID        | Test Case                                          | Expected Result                                                                          | Status  |
-| --------- | -------------------------------------------------- | ---------------------------------------------------------------------------------------- | ------- |
-| BE-DEL-01 | DELETE `/api/projects/{projectId}` for own project | 200 OK; `{"message": "Project deleted successfully"}`; `deleted_at` is set; row remains. | Failing |
-| BE-DEL-02 | List and get a project after deleting it           | Project is not listed; GET returns 404.                                                  | Failing |
-| BE-DEL-03 | Delete an archived project                         | 200 OK; project is soft-deleted.                                                         | Failing |
-| BE-DEL-04 | Delete the Inbox project                           | 400 Bad Request; `{"error": "Inbox project cannot be deleted"}`; Inbox is unchanged.     | Failing |
-| BE-DEL-05 | Delete another user's or a nonexistent project     | 404 Not Found; no row is changed.                                                        | Failing |
-| BE-DEL-06 | Delete a project that is already soft-deleted      | 404 Not Found.                                                                           | Failing |
-| BE-DEL-07 | DELETE `/api/projects/{projectId}` with no token   | 401 Unauthorized.                                                                        | Failing |
-| BE-DEL-08 | Delete a project that has tasks                    | Tasks are moved to the user's Inbox; `movedTaskCount` equals the number moved.           | Blocked |
-| BE-DEL-09 | Delete a project that has no tasks                 | `movedTaskCount` is 0.                                                                   | Blocked |
-| BE-DEL-10 | Moving tasks to the Inbox fails during delete      | Delete is rolled back; project and tasks are unchanged.                                  | Blocked |
+| ID        | Test Case                                              | Expected Result                                                                | Status  |
+| --------- | ------------------------------------------------------ | ------------------------------------------------------------------------------ | ------- |
+| BE-DEL-01 | DELETE `/api/projects/{projectId}` for own project     | 204 No Content; `deleted_at` is set and the row remains.                       | Blocked |
+| BE-DEL-02 | List and get a project after deleting it               | Project is not listed; GET returns 404.                                        | Blocked |
+| BE-DEL-03 | Delete an archived project                             | 204 No Content; project is soft-deleted.                                       | Blocked |
+| BE-DEL-04 | Delete the Inbox project                               | 403 Forbidden; deletion is rejected and the Inbox is unchanged.                | Blocked |
+| BE-DEL-05 | Delete another user's or a nonexistent project         | 404 Not Found; no row is changed.                                              | Blocked |
+| BE-DEL-06 | Delete a project that is already soft-deleted          | 404 Not Found.                                                                 | Blocked |
+| BE-DEL-07 | DELETE `/api/projects/{projectId}` with no valid token | 401 Unauthorized.                                                              | Blocked |
+| BE-DEL-08 | Delete a project that has tasks                        | Tasks are moved to the user's Inbox; `movedTaskCount` equals the number moved. | Blocked |
+| BE-DEL-09 | Delete a project that has no tasks                     | `movedTaskCount` is 0.                                                         | Blocked |
+| BE-DEL-10 | Moving tasks to the Inbox fails during delete          | Delete is rolled back; project and tasks are unchanged.                        | Blocked |
 
 ### 5.2 Deletion Backend Integration Tests
 
-| ID        | Test Case                                           | Expected Result                                            | Status  |
-| --------- | --------------------------------------------------- | ---------------------------------------------------------- | ------- |
-| BE-DEL-11 | Delete a project against the Supabase test database | `deleted_at` is set; other users' projects are unaffected. | Failing |
+| ID        | Test Case                                           | Expected Result                                                                                 | Status  |
+| --------- | --------------------------------------------------- | ----------------------------------------------------------------------------------------------- | ------- |
+| BE-DEL-11 | Delete a project against the Supabase test database | `deleted_at` is set; the project stays in the database and other users' projects are unchanged. | Blocked |
 
 ### 5.3 Delete Project UI
 
@@ -333,7 +341,7 @@ Status values: `Failing`, `Passing`, `Blocked`.
 
 ## Open Questions
 
-- Create Project returns 200 in API Specification v1.1, while Sprint 1 registration returns 201 Created. The team should confirm which status code Create Project uses; BE-CRT-01 follows the spec (200).
+- The current backend differs from API Specification v1.1 for Project CRUD: create returns 201 rather than 200, updates use PATCH rather than PUT, and the archived-list filter is named `isArchived` rather than `archived`. This matrix and the integration tests follow the current backend contract; align the API spec and implementation in a separate decision.
 - The 404 sample for Update Project (II.D) is `{"error": "Invalid updating project."}`, while every other endpoint uses `{"error": "Project not found"}`. BE-EDT-07 checks only the status code until the message is confirmed.
 - The spec does not say whether the Inbox can be renamed, recolored, favorited, or reordered. Only archive and delete are explicitly blocked. Cases for those will be added once the team decides.
 - The spec does not say whether project names must be unique per user. No duplicate-name case is included.
@@ -342,9 +350,9 @@ Status values: `Failing`, `Passing`, `Blocked`.
 
 | Deliverable                    | Backend Cases | Frontend Cases | Total   | Failing | Passing | Blocked |
 | ------------------------------ | ------------- | -------------- | ------- | ------- | ------- | ------- |
-| Project Listing & Retrieval    | 19            | 15             | 34      | 34      | 0       | 0       |
-| Project Creation               | 13            | 13             | 26      | 26      | 0       | 0       |
-| Project Editing                | 23            | 16             | 39      | 39      | 0       | 0       |
-| Favorite, Archive & Sort Order | 17            | 11             | 28      | 28      | 0       | 0       |
-| Project Deletion               | 11            | 10             | 21      | 17      | 0       | 4       |
-| **Total**                      | **83**        | **65**         | **148** | **144** | **0**   | **4**   |
+| Project Listing & Retrieval    | 19            | 15             | 34      | 15      | 0       | 19      |
+| Project Creation               | 13            | 13             | 26      | 17      | 0       | 9       |
+| Project Editing                | 23            | 16             | 39      | 35      | 0       | 4       |
+| Favorite, Archive & Sort Order | 23            | 11             | 34      | 27      | 0       | 7       |
+| Project Deletion               | 11            | 10             | 21      | 9       | 0       | 12      |
+| **Total**                      | **89**        | **65**         | **154** | **103** | **0**   | **51**  |

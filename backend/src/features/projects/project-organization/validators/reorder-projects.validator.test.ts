@@ -19,5 +19,8 @@ describe('reorderProjectsValidator', () => {
       reorderProjectsValidator.safeParse({ projectIds: [1.5] }).success
     ).toBe(false);
     expect(reorderProjectsValidator.safeParse({}).success).toBe(false);
+    expect(reorderProjectsValidator.safeParse({ projectIds: [] }).success).toBe(
+      false
+    );
   });
 });
