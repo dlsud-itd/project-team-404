@@ -16,8 +16,27 @@ export function createProfileController(
 ): {
   getProfile: RequestHandler;
   updateProfile: RequestHandler;
+  updateMe: RequestHandler;
   changePassword: RequestHandler;
 } {
+  const update =
+    (conflictStatus: number): RequestHandler =>
+    async (req, res, next) => {
+      try {
+        const profile = await service.updateProfile(
+          req.auth!.userId,
+          res.locals.validated as ProfileUpdateInput
+        );
+        res.status(200).json(profile);
+      } catch (error) {
+        if (error instanceof AuthConflictError) {
+          res.status(conflictStatus).json({ error: error.message });
+          return;
+        }
+        next(error);
+      }
+    };
+
   return {
     getProfile: async (req, res, next) => {
       try {
@@ -31,21 +50,8 @@ export function createProfileController(
         next(error);
       }
     },
-    updateProfile: async (req, res, next) => {
-      try {
-        const profile = await service.updateProfile(
-          req.auth!.userId,
-          req.body as ProfileUpdateInput
-        );
-        res.status(200).json(profile);
-      } catch (error) {
-        if (error instanceof AuthConflictError) {
-          res.status(409).json({ error: error.message });
-          return;
-        }
-        next(error);
-      }
-    },
+    updateProfile: update(409),
+    updateMe: update(400),
     changePassword: async (req, res, next) => {
       const input = res.locals.validated as ChangePasswordInput;
       // requireAuth already accepted this token, so it is present here.

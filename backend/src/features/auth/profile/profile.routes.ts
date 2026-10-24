@@ -17,6 +17,12 @@ export function createProfileRouter(
   const controller = createProfileController(service, passwords);
 
   router.get('/profile', requireAuth(sessionService), controller.getProfile);
+  router.put(
+    '/me',
+    requireAuth(sessionService),
+    validateRequest(profileUpdateValidator, 'body', 'Invalid profile details'),
+    controller.updateMe
+  );
   router.patch(
     '/profile',
     requireAuth(sessionService),

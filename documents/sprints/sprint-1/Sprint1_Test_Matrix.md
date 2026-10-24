@@ -281,23 +281,31 @@ Tests: `frontend/src/testing/integration/password-recovery.integration.spec.ts`.
 
 ### 4.1 Update Profile API
 
-| ID        | Test Case                                      | Expected Result                                                 | Status  |
-| --------- | ---------------------------------------------- | --------------------------------------------------------------- | ------- |
-| BE-PRF-01 | GET `/profile` with a valid token              | 200 OK; returns authenticated user's username and timezone.     | Failing |
-| BE-PRF-02 | PATCH `/profile` with a valid timezone         | 200 OK; response reflects updated timezone in `tbl_user`.       | Failing |
-| BE-PRF-03 | PATCH `/profile` with a new unused username    | 200 OK; username is updated in `tbl_user`.                      | Failing |
-| BE-PRF-04 | PATCH `/profile` with a username already taken | 409 Conflict; profile is unchanged.                             | Failing |
-| BE-PRF-05 | PATCH `/profile` with invalid field values     | 400 Bad Request; error identifies each invalid field.           | Failing |
-| BE-PRF-06 | PATCH `/profile` with no token                 | 401 Unauthorized.                                               | Failing |
-| BE-PRF-07 | Attempt to modify `uuid` or `created_at`       | System fields are ignored or rejected; values remain unchanged. | Failing |
-| BE-PRF-08 | Attempt to update another user's profile       | Only authenticated user's row changes (tenant isolation).       | Failing |
+| ID        | Test Case                                        | Expected Result                                                                                    | Status  |
+| --------- | ------------------------------------------------ | -------------------------------------------------------------------------------------------------- | ------- |
+| BE-PRF-01 | GET `/api/auth/me` with a valid token            | 200 OK; returns the authenticated user's profile.                                                  | Failing |
+| BE-PRF-02 | PUT `/api/auth/me` with a valid timezone         | 200 OK; the timezone is saved in `tbl_user`.                                                       | Failing |
+| BE-PRF-03 | PUT `/api/auth/me` with a new unused username    | 200 OK; the username is saved in `tbl_user`.                                                       | Failing |
+| BE-PRF-04 | PUT `/api/auth/me` with a username already taken | 400 Bad Request; the authenticated user's profile remains unchanged.                               | Failing |
+| BE-PRF-05 | PUT `/api/auth/me` with invalid field values     | 400 Bad Request; invalid username or timezone is rejected.                                         | Failing |
+| BE-PRF-06 | PUT `/api/auth/me` with no token                 | 401 Unauthorized.                                                                                  | Failing |
+| BE-PRF-07 | PUT `/api/auth/me` with system fields            | `id`, `user_id`, `email`, and `created_at` are rejected or stripped; no unauthorized data changes. | Failing |
+| BE-PRF-08 | PUT `/api/auth/me` with another user's `user_id` | Only the account identified by the bearer token can change; the other row is unchanged.            | Failing |
 
 ### 4.2 Profile Management Backend Integration Tests
 
-| ID        | Test Case                                        | Expected Result                                   | Status  |
-| --------- | ------------------------------------------------ | ------------------------------------------------- | ------- |
-| BE-PRF-09 | Update profile, then re-fetch from database      | Persisted username and timezone match the update. | Failing |
-| BE-PRF-10 | Update profile, log out, log in, and fetch again | Updated values are returned after a new session.  | Failing |
+| ID        | Test Case                                            | Expected Result                                                               | Status  |
+| --------- | ---------------------------------------------------- | ----------------------------------------------------------------------------- | ------- |
+| BE-PRF-09 | Change username and check the profile again          | The new username is saved and shown by GET `/api/auth/me`.                    | Blocked |
+| BE-PRF-10 | Save a valid timezone and try an invalid one         | The valid timezone is saved; the invalid one is rejected without changing it. | Blocked |
+| BE-PRF-11 | Change the username and timezone separately          | Changing one field does not change the other.                                 | Blocked |
+| BE-PRF-12 | Try another user's username, then your own           | The other user's username is rejected; your own username is accepted.         | Blocked |
+| BE-PRF-13 | Try an empty username and one over 50 characters     | Both are rejected and the profile stays the same.                             | Blocked |
+| BE-PRF-14 | Try changing the account ID, email, or creation date | These details cannot be changed.                                              | Blocked |
+| BE-PRF-15 | Include another user's ID in an update               | Only the signed-in user's profile changes.                                    | Blocked |
+| BE-PRF-16 | Update without a token or with an invalid token      | Both requests return 401 Unauthorized.                                        | Blocked |
+| BE-PRF-17 | Update with an expired or logged-out token           | Both requests return 401 Unauthorized.                                        | Blocked |
+| BE-PRF-18 | Have two users try the same username at once         | Only one user can save that username.                                         | Blocked |
 
 ### 4.3 Profile Settings UI
 
@@ -375,6 +383,6 @@ Full runs of `npm run test:regression` (every suite, from backend unit to these 
 | Registration          | 20            | 29             | 49      | 39      | 7       | 3       |
 | Login & Session       | 17            | 27             | 44      | 25      | 17      | 2       |
 | Password Recovery     | 17            | 25             | 42      | 9       | 18      | 15      |
-| Profile Management    | 10            | 19             | 29      | 20      | 9       | 0       |
+| Profile Management    | 18            | 19             | 37      | 18      | 9       | 10      |
 | Regression (Frontend) | 0             | 17             | 17      | 0       | 17      | 0       |
-| **Total**             | **64**        | **117**        | **181** | **93**  | **68**  | **20**  |
+| **Total**             | **72**        | **117**        | **189** | **91**  | **68**  | **30**  |
