@@ -372,11 +372,10 @@ Full runs of `npm run test:regression` (every suite, from backend unit to these 
 
 ## Summary
 
-| Deliverable           | Backend Cases | Frontend Cases | Total   | Failing | Passing | Blocked |
-| --------------------- | ------------- | -------------- | ------- | ------- | ------- | ------- |
-| Registration          | 20            | 29             | 49      | 39      | 7       | 3       |
-| Login & Session       | 17            | 27             | 44      | 25      | 17      | 2       |
-| Password Recovery     | 17            | 25             | 42      | 8       | 19      | 15      |
-| Profile Management    | 10            | 19             | 29      | 20      | 9       | 0       |
-| Regression (Frontend) | 0             | 17             | 17      | 0       | 17      | 0       |
-| **Total**             | **64**        | **117**        | **181** | **92**  | **69**  | **20**  |
+| Deliverable        | Backend Cases | Frontend Cases | Total   | Failing | Passing | Blocked |
+| ------------------ | ------------- | -------------- | ------- | ------- | ------- | ------- |
+| Registration       | 20            | 29             | 49      | 37      | 7       | 5       |
+| Login & Session    | 17            | 27             | 44      | 27      | 15      | 2       |
+| Password Recovery  | 17            | 25             | 42      | 9       | 18      | 15      |
+| Profile Management | 10            | 19             | 29      | 29      | 0       | 0       |
+| **Total**          | **64**        | **100**        | **164** | **102** | **40**  | **22**  |
