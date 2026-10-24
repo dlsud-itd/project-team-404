@@ -250,7 +250,7 @@ Password-recovery integration coverage is in `backend/src/testing/integration/pa
 | FE-REC-14 | Enter mismatched new password and confirmation              | Inline passwords-do-not-match error is shown; submit is blocked.              | Passing |
 | FE-REC-15 | Submit a valid new password                                 | Success message is shown; user is redirected to `/login`.                     | Passing |
 | FE-REC-16 | Server rejects reset token on submit                        | Error message is shown; user can request a new link.                          | Passing |
-| FE-REC-17 | Submit reset-password form                                  | Button is disabled and loading state shown; duplicate submits are prevented.  | Failing |
+| FE-REC-17 | Submit reset-password form                                  | Button is disabled and loading state shown; duplicate submits are prevented.  | Passing |
 | FE-REC-18 | Successfully reset password while session is stored locally | Local session is cleared; user must log in again.                             | Passing |
 
 ### 3.5 Password Recovery Frontend Integration Tests
@@ -267,7 +267,9 @@ Tests: `frontend/src/testing/integration/password-recovery.integration.spec.ts`.
 - FE-REC-22: the backend rejects a token with `400 {"error": "Reset token is invalid", "reason": "expired" | "used" | "invalid"}`, not `valid: false`. The page shows the message for that `reason` (from `token-status-message.util.ts`).
 - FE-REC-16: `POST /auth/reset-password` returns `400 {"error": "This reset link is invalid or has expired."}` with no reason, so the page shows the expired message and the "Request a new link" link.
 - FE-REC-15: after a successful reset the user is sent to `/login?reset=success`, where the login page shows the password-updated message.
-- FE-REC-01, FE-REC-06, FE-REC-07 and FE-REC-17 are not covered by tests yet. FE-REC-07 also fails as written: the forgot-password page links to `/register`, not `/login`.
+- FE-REC-17: while saving, the button is disabled and reads "Updating…"; a second submit sends no second request, and the button comes back after an error.
+- Reset page (WBS 4.3.4): a 400 from `POST /auth/reset-password` that has `details` is a rejected password, not a dead link, so the page shows the server's message and keeps the form. A 400 without `details` still shows the expired message (FE-REC-16). Submitting empty fields shows "Enter a new password." and "Confirm your new password." and sends nothing. If the token check fails on the network, the page shows the invalid-link message.
+- FE-REC-01, FE-REC-06 and FE-REC-07 are not covered by tests yet. FE-REC-07 also fails as written: the forgot-password page links to `/register`, not `/login`.
 
 ### 3.6 Password Recovery End-to-End
 
@@ -374,7 +376,7 @@ Full runs of `npm run test:regression` (every suite, from backend unit to these 
 | --------------------- | ------------- | -------------- | ------- | ------- | ------- | ------- |
 | Registration          | 20            | 29             | 49      | 39      | 7       | 3       |
 | Login & Session       | 17            | 27             | 44      | 25      | 17      | 2       |
-| Password Recovery     | 17            | 25             | 42      | 9       | 18      | 15      |
+| Password Recovery     | 17            | 25             | 42      | 8       | 19      | 15      |
 | Profile Management    | 10            | 19             | 29      | 20      | 9       | 0       |
 | Regression (Frontend) | 0             | 17             | 17      | 0       | 17      | 0       |
-| **Total**             | **64**        | **117**        | **181** | **93**  | **68**  | **20**  |
+| **Total**             | **64**        | **117**        | **181** | **92**  | **69**  | **20**  |

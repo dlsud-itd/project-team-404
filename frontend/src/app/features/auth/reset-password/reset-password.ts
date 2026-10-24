@@ -27,6 +27,7 @@ import {
 } from './token-status-message.util';
 
 type ResetStatus = 'checking' | 'ready' | ResetTokenStatus;
+type ApiErrorBody = { error?: string; details?: { field: string; message: string }[] };
 
 export const RESET_SUCCESS_REDIRECT = '/login?reset=success';
 
@@ -110,8 +111,14 @@ export class ResetPassword {
           void this.router.navigateByUrl(RESET_SUCCESS_REDIRECT);
         },
         error: (error: unknown) => {
-          // A 400 here means the token stopped working; the backend gives no reason.
           if (error instanceof HttpErrorResponse && error.status === 400) {
+            // A 400 with details means the server rejected the password itself.
+            const detail = (error.error as ApiErrorBody | null)?.details?.[0]?.message;
+            if (detail) {
+              this.error.set(detail);
+              return;
+            }
+            // Otherwise the token stopped working; the backend gives no reason.
             this.status.set('expired');
             return;
           }
