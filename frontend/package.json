@@ -17,6 +17,8 @@
     "test": "ng test --watch=false",
     "test:run": "ng test --watch=false",
     "test:watch": "ng test",
+    "pretest:regression": "npm run set-env",
+    "test:regression": "ng test --watch=false --coverage=false --include \"src/testing/regression/**/*.spec.ts\"",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "clean": "rimraf dist .angular/cache"

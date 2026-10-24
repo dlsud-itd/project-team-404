@@ -63,6 +63,26 @@ The Angular app is available at `http://localhost:4200`; the Express API is at
 Run **`✅ CI: Verify All`** after configuring the environment files. Individual
 frontend test and build tasks also use the values in `frontend/.env`.
 
+## Regression tests
+
+**`🔁 Regression: Run All`** (or `npm run test:regression` from the repository
+root) runs, in order: backend unit tests, backend integration tests, frontend
+unit and integration tests, E2E tests, then the frontend regression specs in
+`frontend/src/testing/regression`. It runs every step, prints a table of pass,
+fail and skip counts, and saves it to `reports/regression/summary.md` for the
+sprint regression log. It exits with an error if any step fails, skips tests,
+or cannot run.
+
+The backend integration tests need an isolated Supabase test project, never the
+development project. Set `SUPABASE_TEST_URL`, `SUPABASE_TEST_SERVICE_ROLE_KEY`
+and `SUPABASE_TEST_DATABASE_URL` (and optionally `SUPABASE_TEST_DIRECT_URL`) in
+your shell or in `backend/.env`. The runner passes only these `SUPABASE_TEST_*`
+values from `backend/.env` to the tests. In CI the same names are repository
+secrets used by the Backend Tests job.
+
+Run only the frontend regression specs with `npm run test:regression` from
+`frontend`.
+
 ## Supabase tasks
 
 The task list also includes tasks to check migration status, pull remote state,
