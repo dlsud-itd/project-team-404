@@ -1,6 +1,6 @@
 # Sprint 1 Test Matrix
 
-Last Updated: October 21, 2026
+Last Updated: October 24, 2026
 
 ## Overview
 
@@ -8,10 +8,11 @@ Combined backend and frontend test cases for Sprint 1 (User Authentication): Reg
 
 Frontend integration tests use the app's real routes, `AuthService`, and `HttpClient`; only network requests are faked with `HttpTestingController`. Run with `npm test` from `frontend`.
 
+Frontend regression tests are in `frontend/src/testing/regression/auth`. They run whole user flows across pages and page refreshes against a stateful fake of the auth API (see section 5). Run with `npm run test:regression` from `frontend`; `npm test` also runs them.
+
 Backend integration tests are in `backend/src/testing/integration`. Run with `npm run test:integration` from `backend`, setting `SUPABASE_TEST_URL`, `SUPABASE_TEST_SERVICE_ROLE_KEY`, and `SUPABASE_TEST_DATABASE_URL` to an isolated Supabase test project; `SUPABASE_TEST_DIRECT_URL` can optionally specify its direct database connection. The suite skips if neither Supabase URL nor service-role key is set, refuses if only one is set, and refuses if the test URL matches `SUPABASE_URL`.
 
 Status values: `Failing`, `Passing`, `Blocked`.
-aa
 
 ## 1. Registration
 
@@ -85,8 +86,8 @@ aa
 | --------- | ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------- | ------- |
 | FE-REG-20 | Submit valid sign-up details                     | Per API Specification v1.1, sends username, email, password, and optional timezone, without confirmation or extra fields. | Blocked |
 | FE-REG-21 | Submit a password                                | Password is sent only in the request body; it is never in the URL or browser storage.                                     | Passing |
-| FE-REG-22 | Handle a 201 registration response               | Frontend signs in with `/auth/login` using the same credentials and stores the returned token.                            | Blocked |
-| FE-REG-23 | Complete registration and open the default Inbox | Router navigates to Inbox using the `inboxProjectId` returned by `/auth/me`.                                              | Blocked |
+| FE-REG-22 | Handle a 201 registration response               | Frontend signs in with `/auth/login` using the same credentials and stores the returned token.                            | Failing |
+| FE-REG-23 | Complete registration and open the default Inbox | Router navigates to Inbox using the `inboxProjectId` returned by `/auth/me`.                                              | Failing |
 | FE-REG-24 | Check username and email availability            | Correct endpoints are called; values are URL-encoded (including `@` and `+`).                                             | Passing |
 | FE-REG-25 | Type into an availability field                  | Checks are debounced; one request is made per settled input.                                                              | Passing |
 | FE-REG-26 | Check email availability with different casing   | `User@Example.com` is reported as registered if `user@example.com` exists.                                                | Passing |
@@ -95,7 +96,7 @@ aa
 Tests: `frontend/src/testing/integration/registration.integration.spec.ts`.
 
 - FE-REG-20 is Blocked by a contract conflict. API Specification v1.1 lists username, email, password and timezone for signup, but the backend `signupSchema` also requires `confirmPassword` and returns 400 without it. The frontend sends `confirmPassword` so that registration works against the real API, and the test checks the five fields the backend accepts with no extras. The team needs to decide whether the backend drops `confirmPassword` or the spec adds it.
-- FE-REG-22 and FE-REG-23 are Blocked by Login \& Session (WBS 3.x). POST /auth/login and GET /auth/me do not exist yet, so after a 201 the page shows an "Account created" confirmation with a link to /login instead of signing the user in.
+- FE-REG-22 and FE-REG-23 are no longer Blocked: POST /auth/login and GET /auth/me now exist. They are Failing because after a 201 the page still shows an "Account created" confirmation with a link to /login instead of signing the user in. `registration.regression.spec.ts` checks the current flow (sign up → log in → `/me` returns `inboxProjectId > 0`).
 
 ### 1.7 Registration End-to-End
 
@@ -147,7 +148,7 @@ Integration coverage is in `backend/src/testing/integration/login.integration.te
 | FE-LOG-01 | Open the login page at `/login`                 | Identifier, password, submit button, forgot-password link, and sign-up link are shown. | Failing |
 | FE-LOG-02 | Submit with empty fields                        | Required-field errors are shown; no API call is made.                                  | Passing |
 | FE-LOG-03 | Submit valid email and password                 | Session is stored; router navigates to Inbox/dashboard.                                | Passing |
-| FE-LOG-04 | Submit valid username and password              | Session is stored; router navigates to Inbox/dashboard.                                | Failing |
+| FE-LOG-04 | Submit valid username and password              | Session is stored; router navigates to Inbox/dashboard.                                | Passing |
 | FE-LOG-05 | Submit wrong password or unknown account        | Same generic invalid-credentials message appears; password field is cleared.           | Passing |
 | FE-LOG-06 | Submit the login form                           | Button is disabled and loading state shown; duplicate submits are prevented.           | Failing |
 | FE-LOG-07 | Follow the "Forgot password?" link              | Navigates to `/forgot-password`.                                                       | Failing |
@@ -166,7 +167,7 @@ Integration coverage is in `backend/src/testing/integration/login.integration.te
 | FE-LOG-15 | Restore session under SSR                         | No browser-only storage access errors occur during server render.         | Failing |
 | FE-LOG-16 | Restore session while request is in progress      | Loading state prevents login page or protected content from flashing.     | Failing |
 | FE-LOG-17 | Click logout                                      | Stored session is cleared; user is redirected to `/login`.                | Passing |
-| FE-LOG-18 | Use browser back after logout                     | Protected pages are not shown; user stays on `/login`.                    | Failing |
+| FE-LOG-18 | Use browser back after logout                     | Protected pages are not shown; user stays on `/login`.                    | Passing |
 | FE-LOG-19 | Logout request fails or returns 401               | Local session is still cleared; user is redirected to `/login`.           | Passing |
 
 ### 2.6 Login & Session Frontend Integration Tests
@@ -184,6 +185,7 @@ Integration coverage is in `backend/src/testing/integration/login.integration.te
 Tests: `frontend/src/testing/integration/login.integration.spec.ts`. They run through the real routes (`/login` and `/register` behind `guestGuard`, `/home` behind `authGuard`), `SessionService`, `TokenStorageService`, `authInterceptor` and the restore-session initializer, with response bodies from `backend/src/features/auth`.
 
 - `/home` is a placeholder signed-in page with the logout button. It stands in for the Inbox/dashboard in FE-LOG-03 and FE-LOG-14 until the Inbox page exists (Sprint 2).
+- FE-LOG-04 and FE-LOG-18 are covered by `login.regression.spec.ts`: logging in with the username, and opening `/home` again after logout lands on `/login`.
 - FE-LOG-23 remains Failing. A 401 from any API call clears the session and redirects to `/login` (tested), but the login page does not yet show a sign-in-required notice.
 
 ### 2.7 Login & Session End-to-End
@@ -301,28 +303,33 @@ Tests: `frontend/src/testing/integration/password-recovery.integration.spec.ts`.
 
 | ID        | Test Case                                    | Expected Result                                                           | Status  |
 | --------- | -------------------------------------------- | ------------------------------------------------------------------------- | ------- |
-| FE-PRF-01 | Open profile settings at `/settings/profile` | Username and timezone fields are pre-filled with current user's details.  | Failing |
+| FE-PRF-01 | Open profile settings at `/settings/profile` | Username and timezone fields are pre-filled with current user's details.  | Passing |
 | FE-PRF-02 | Visit profile settings while unauthenticated | User is redirected to `/login`.                                           | Failing |
 | FE-PRF-03 | Clear username and submit                    | Required-field error is shown; no API call is made.                       | Failing |
 | FE-PRF-04 | Enter invalid or over-50-character username  | Inline format or length error is shown; no API call is made.              | Failing |
 | FE-PRF-05 | Open timezone selector                       | Only valid IANA timezones can be chosen.                                  | Failing |
-| FE-PRF-06 | Change username to one that is taken         | 409 response shows "Username already taken"; profile remains unchanged.   | Failing |
+| FE-PRF-06 | Change username to one that is taken         | 409 response shows "Username already taken"; profile remains unchanged.   | Passing |
 | FE-PRF-07 | Open profile form without changing fields    | Save is enabled only when the form is dirty.                              | Failing |
-| FE-PRF-08 | Save valid profile changes                   | Success message is shown; form displays updated values.                   | Failing |
+| FE-PRF-08 | Save valid profile changes                   | Success message is shown; form displays updated values.                   | Passing |
 | FE-PRF-09 | Server returns 400 for invalid field values  | Each invalid field is marked with its error message.                      | Failing |
 | FE-PRF-10 | Save returns 500 or network error            | Error is shown; unsaved edits remain in the form.                         | Failing |
 | FE-PRF-11 | View email and system fields                 | Email is read-only if shown; id, uuid, and `created_at` are not editable. | Failing |
-| FE-PRF-12 | Profile save returns 401                     | Session is cleared; user is redirected to `/login`.                       | Failing |
+| FE-PRF-12 | Profile save returns 401                     | Session is cleared; user is redirected to `/login`.                       | Passing |
 
 ### 4.4 Profile Management Frontend Integration Tests
 
 | ID        | Test Case             | Expected Result                                                                | Status  |
 | --------- | --------------------- | ------------------------------------------------------------------------------ | ------- |
-| FE-PRF-13 | Load profile settings | Calls `GET /profile` with token; form is populated with username and timezone. | Failing |
-| FE-PRF-14 | Save profile changes  | Calls `PATCH /profile` with only changed fields.                               | Failing |
-| FE-PRF-15 | Submit profile update | Request omits user id; email, uuid, and `created_at` are never sent.           | Failing |
-| FE-PRF-16 | Change only timezone  | Request body contains only timezone.                                           | Failing |
-| FE-PRF-17 | Update username       | Header/user menu shows new username without a reload.                          | Failing |
+| FE-PRF-13 | Load profile settings | Calls `GET /profile` with token; form is populated with username and timezone. | Passing |
+| FE-PRF-14 | Save profile changes  | Calls `PATCH /profile` with only changed fields.                               | Passing |
+| FE-PRF-15 | Submit profile update | Request omits user id; email, uuid, and `created_at` are never sent.           | Passing |
+| FE-PRF-16 | Change only timezone  | Request body contains only timezone.                                           | Passing |
+| FE-PRF-17 | Update username       | Header/user menu shows new username without a reload.                          | Passing |
+
+Tests: `frontend/src/testing/regression/auth/profile.regression.spec.ts` (FE-PRF-01, 06, 08, 12 to 17). The profile page is opened from the account menu and saved against the fake API; the PATCH body is checked exactly, so no id, email, uuid or `created_at` is sent.
+
+- The API is `GET` and `PATCH /api/auth/profile`, not `PUT /me`.
+- The other FE-PRF rows were not re-checked in this run.
 
 ### 4.5 Profile Management End-to-End
 
@@ -331,12 +338,48 @@ Tests: `frontend/src/testing/integration/password-recovery.integration.spec.ts`.
 | FE-PRF-18 | Log in, update profile, refresh, and confirm values | Updated values are still shown after refresh in one browser flow. | Failing |
 | FE-PRF-19 | Update profile, log out, log in, and open profile   | Updated username and timezone are shown in the new session.       | Failing |
 
+## 5. Sprint 1 Regression (Frontend)
+
+Tests: `frontend/src/testing/regression/auth/`. Each spec starts the whole app (real routes, guards, `authInterceptor`, pages and services) and drives it as a user would. `helpers/fake-auth-api.ts` keeps accounts, sessions and reset tokens between requests and answers with the backend's bodies and status codes: a reset revokes every session, logout revokes one, a profile change shows in later `/me` calls, and reset emails go to a stub outbox. `helpers/regression-app.ts` drives the pages; its `restart()` acts as a page refresh. Run with `npm run test:regression` from `frontend`.
+
+These are not browser E2E tests. The End-to-End rows above stay Failing until the specs in `testing/e2e` cover them.
+
+| ID        | Spec                                   | Flow                                                                                                             | Status  |
+| --------- | -------------------------------------- | ---------------------------------------------------------------------------------------------------------------- | ------- |
+| FE-RGR-01 | `registration.regression.spec.ts`      | Sign up → log in → refresh; `/me` returns the new user's `inboxProjectId > 0`.                                   | Passing |
+| FE-RGR-02 | `registration.regression.spec.ts`      | Taken username is rejected before submit; the corrected username signs up and logs in.                           | Passing |
+| FE-RGR-03 | `registration.regression.spec.ts`      | Email taken between check and submit: 409 shows on the email field; values kept; no token stored.                | Passing |
+| FE-RGR-04 | `login.regression.spec.ts`             | Sign up → log in → refresh keeps the session → log out; old token gets 401 from `/me`; refresh stays signed out. | Passing |
+| FE-RGR-05 | `login.regression.spec.ts`             | Log in with the username instead of the email.                                                                   | Passing |
+| FE-RGR-06 | `login.regression.spec.ts`             | Wrong password shows the generic message and clears the field; the right password then logs in.                  | Passing |
+| FE-RGR-07 | `login.regression.spec.ts`             | Session revoked on the server: the next protected page sends the user to `/login`.                               | Passing |
+| FE-RGR-08 | `password-recovery.regression.spec.ts` | Request reset → read stub email → reset; other sessions get 401; old password fails; new one works.              | Passing |
+| FE-RGR-09 | `password-recovery.regression.spec.ts` | A session stored in this browser is cleared when the reset succeeds.                                             | Passing |
+| FE-RGR-10 | `password-recovery.regression.spec.ts` | Reopening a used reset link shows the error and hides the form.                                                  | Passing |
+| FE-RGR-11 | `password-recovery.regression.spec.ts` | Two resets requested: only the newest link shows the form.                                                       | Passing |
+| FE-RGR-12 | `password-recovery.regression.spec.ts` | Unknown email gets the same confirmation and no email is sent.                                                   | Passing |
+| FE-RGR-13 | `password-recovery.regression.spec.ts` | Sign-up and login still work after a reset, for a new user and the reset user.                                   | Passing |
+| FE-RGR-14 | `profile.regression.spec.ts`           | Log in → PATCH username → dashboard updates without reload → refresh, `/me` shows it → log in with it.           | Passing |
+| FE-RGR-15 | `profile.regression.spec.ts`           | Change only the timezone; a new session sees it.                                                                 | Passing |
+| FE-RGR-16 | `profile.regression.spec.ts`           | Taken username shows "Username already taken."; profile unchanged.                                               | Passing |
+| FE-RGR-17 | `profile.regression.spec.ts`           | Session ends before saving: save gets 401 and the user is sent to `/login`.                                      | Passing |
+
+### 5.1 Frontend Baseline Run
+
+| Date             | Commit                                   | Suite                              | Files | Tests | Result      |
+| ---------------- | ---------------------------------------- | ---------------------------------- | ----- | ----- | ----------- |
+| October 24, 2026 | `44ee561` + uncommitted regression specs | Frontend `npm run test:run` (all)  | 28    | 238   | All passing |
+| October 24, 2026 | `44ee561` + uncommitted regression specs | Frontend `npm run test:regression` | 4     | 17    | All passing |
+
+Frontend coverage in that run: 92.78% statements, 94.77% lines. No tests were skipped. Backend, E2E and CI runs are not part of this entry.
+
 ## Summary
 
-| Deliverable        | Backend Cases | Frontend Cases | Total   | Failing | Passing | Blocked |
-| ------------------ | ------------- | -------------- | ------- | ------- | ------- | ------- |
-| Registration       | 20            | 29             | 49      | 37      | 7       | 5       |
-| Login & Session    | 17            | 27             | 44      | 27      | 15      | 2       |
-| Password Recovery  | 17            | 25             | 42      | 9       | 18      | 15      |
-| Profile Management | 10            | 19             | 29      | 29      | 0       | 0       |
-| **Total**          | **64**        | **100**        | **164** | **102** | **40**  | **22**  |
+| Deliverable           | Backend Cases | Frontend Cases | Total   | Failing | Passing | Blocked |
+| --------------------- | ------------- | -------------- | ------- | ------- | ------- | ------- |
+| Registration          | 20            | 29             | 49      | 39      | 7       | 3       |
+| Login & Session       | 17            | 27             | 44      | 25      | 17      | 2       |
+| Password Recovery     | 17            | 25             | 42      | 9       | 18      | 15      |
+| Profile Management    | 10            | 19             | 29      | 20      | 9       | 0       |
+| Regression (Frontend) | 0             | 17             | 17      | 0       | 17      | 0       |
+| **Total**             | **64**        | **117**        | **181** | **93**  | **68**  | **20**  |
