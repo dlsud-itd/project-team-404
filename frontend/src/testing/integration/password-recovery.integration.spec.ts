@@ -42,6 +42,10 @@ const tokenRejected = (reason: 'invalid' | 'expired' | 'used') => ({
 });
 const RESET_OK = { message: 'Password updated successfully.' };
 const RESET_TOKEN_REJECTED = { error: 'This reset link is invalid or has expired.' };
+const RESET_PASSWORD_REJECTED = {
+  error: 'Invalid reset details',
+  details: [{ field: 'newPassword', message: 'Password must be at least 8 characters' }],
+};
 const USER = {
   id: 'user-1',
   username: 'james',
@@ -240,6 +244,14 @@ describe('Password Recovery integration (Forgot / Reset Password UI + API)', () 
       },
     );
 
+    it('treats a token check that fails on the network as an invalid link', async () => {
+      await harness.navigateByUrl(`/reset-password?token=${encodeURIComponent(RESET_TOKEN)}`);
+      http.expectOne(validateRequest(RESET_TOKEN)).error(new ProgressEvent('error'));
+      await settle();
+
+      expectTokenProblem('invalid');
+    });
+
     // FE-REC-12
     it('sends no request and never shows the form when the token is missing', async () => {
       await harness.navigateByUrl('/reset-password');
@@ -359,6 +371,51 @@ describe('Password Recovery integration (Forgot / Reset Password UI + API)', () 
       expect(text('.error[role="alert"]')).toBe(
         'We could not update your password. Please try again.',
       );
+    });
+
+    // FE-REC-17
+    it('disables the button and shows the loading label while saving, sending one request', async () => {
+      await startApp();
+      await openResetLink();
+      fillPasswords(NEW_PASSWORD);
+      submit();
+
+      const button = el<HTMLButtonElement>('button[type="submit"]');
+      expect(button.disabled).toBe(true);
+      expect(button.textContent?.trim()).toBe('Updating…');
+
+      // A second submit while the first is running sends nothing.
+      submit();
+      http
+        .expectOne(`${API}/reset-password`)
+        .flush({ error: 'Internal server error' }, { status: 500, statusText: 'Error' });
+      await settle();
+
+      expect(el<HTMLButtonElement>('button[type="submit"]').disabled).toBe(false);
+      expect(text('button[type="submit"]')).toBe('Update password');
+    });
+
+    it('shows the server message and keeps the form when the server rejects the password', async () => {
+      await startApp();
+      await openResetLink();
+      fillPasswords(NEW_PASSWORD);
+      submit();
+      http.expectOne(`${API}/reset-password`).flush(RESET_PASSWORD_REJECTED, BAD_REQUEST);
+      await settle();
+
+      expect(el('form')).toBeTruthy();
+      expect(el('.token-status')).toBeNull();
+      expect(text('.error[role="alert"]')).toBe('Password must be at least 8 characters');
+    });
+
+    it('shows required messages and sends no request when both fields are empty', async () => {
+      await startApp();
+      await openResetLink();
+      submit();
+
+      http.expectNone(`${API}/reset-password`);
+      const errors = [...page().querySelectorAll('.field-error')].map((e) => e.textContent?.trim());
+      expect(errors).toEqual(['Enter a new password.', 'Confirm your new password.']);
     });
   });
 
