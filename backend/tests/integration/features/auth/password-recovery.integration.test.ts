@@ -4,9 +4,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type {
   Mailer,
   MailMessage,
-} from '../../features/auth/forgot-password/mailer/mailer';
-import { errorHandler } from '../../middleware/error-handler.middleware';
-import { request } from '../helpers/request';
+} from '../../../../src/features/auth/forgot-password/mailer/mailer';
+import { errorHandler } from '../../../../src/middleware/error-handler.middleware';
+import { request } from '../../helpers/request';
 import {
   configureSupabaseTest,
   deleteIntegrationAccounts,
@@ -15,7 +15,7 @@ import {
   setPasswordResetTokenState,
   type IntegrationAccount,
   type TestSupabaseConfig,
-} from './supabase-test-support';
+} from '../../helpers/supabase-test-support';
 
 const testSupabase = configureSupabaseTest();
 vi.setConfig({ testTimeout: 30_000, hookTimeout: 30_000 });
@@ -46,7 +46,7 @@ integrationDescribe('password recovery integration', () => {
     config = testSupabase;
     mailer = new InMemoryMailer();
     const { createAuthRouter } =
-      await import('../../features/auth/auth.routes');
+      await import('../../../../src/features/auth/auth.routes');
     app = express();
     app.use(express.json());
     app.use('/api/auth', createAuthRouter({ mailer }));

@@ -3,12 +3,12 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
-import { routes } from '../../app/app.routes';
+import { routes } from '../../../../src/app/app.routes';
 import {
   AVAILABILITY_DEBOUNCE_MS,
   DEFAULT_TIMEZONE,
-} from '../../app/features/auth/register/register';
-import { environment } from '../../environments/environment';
+} from '../../../../src/app/features/auth/register/register';
+import { environment } from '../../../../src/environments/environment';
 
 /**
  * Registration frontend integration tests (WBS 2.3.2, FE-REG-20 to FE-REG-27).

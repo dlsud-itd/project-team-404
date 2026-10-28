@@ -15,7 +15,7 @@
     "clean": "rimraf dist",
     "test": "vitest run --passWithNoTests",
     "test:report": "vitest run --coverage --passWithNoTests",
-    "test:integration": "vitest run src/testing/integration",
+    "test:integration": "vitest run tests/integration/features",
     "test:watch": "vitest",
     "pretypecheck": "npm run prisma:generate",
     "typecheck": "tsc --noEmit",

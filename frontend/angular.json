@@ -71,10 +71,10 @@
         "test": {
           "builder": "@angular/build:unit-test",
           "options": {
-            "include": ["src/**/*.spec.ts", "tests/integration/**/*.spec.ts"],
+            "include": ["src/**/*.spec.ts", "../tests/integration/features/**/*.spec.ts"],
             "coverage": true,
             "coverageReporters": ["html", "text-summary"],
-            "coverageExclude": ["src/testing/**", "src/**/*.spec.ts"]
+            "coverageExclude": ["src/**/*.spec.ts"]
           }
         }
       }
