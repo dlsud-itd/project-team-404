@@ -1,6 +1,6 @@
 import express from 'express';
 import { describe, expect, it, vi } from 'vitest';
-import { request } from '../../../testing/helpers/request';
+import { request } from '../../../../tests/integration/helpers/request';
 import { RegisterService } from './register.service';
 import { createRegisterRouter } from './register.routes';
 

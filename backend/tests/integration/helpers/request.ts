@@ -16,7 +16,7 @@ export type RequestOptions = {
 export async function request(
   app: Express,
   path: string,
-  options: RequestOptions = {},
+  options: RequestOptions = {}
 ): Promise<TestResponse> {
   const server = app.listen(0);
   const { port } = server.address() as AddressInfo;
@@ -28,7 +28,8 @@ export async function request(
         'Content-Type': 'application/json',
         ...(options.headers ?? {}),
       },
-      body: options.body === undefined ? undefined : JSON.stringify(options.body),
+      body:
+        options.body === undefined ? undefined : JSON.stringify(options.body),
     });
 
     const text = await response.text();

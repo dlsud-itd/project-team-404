@@ -1,5 +1,5 @@
 import type { TestRequest } from '@angular/common/http/testing';
-import { environment } from '../../../environments/environment';
+import { environment } from '../../../../../environments/environment';
 
 export const API = `${environment.apiBaseUrl}/api/auth`;
 

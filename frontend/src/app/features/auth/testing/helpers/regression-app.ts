@@ -4,12 +4,12 @@ import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { firstValueFrom } from 'rxjs';
-import { routes } from '../../../app/app.routes';
-import { AVAILABILITY_DEBOUNCE_MS } from '../../../app/features/auth/register/register';
-import { provideSessionRestore } from '../../../app/features/auth/session/auth.guards';
-import { authInterceptor } from '../../../app/features/auth/session/auth.interceptor';
-import { SessionService } from '../../../app/features/auth/session/session.service';
-import { TOKEN_STORAGE_KEY } from '../../../app/features/auth/session/token-storage.service';
+import { routes } from '../../../../app.routes';
+import { AVAILABILITY_DEBOUNCE_MS } from '../../register/register';
+import { provideSessionRestore } from '../../session/auth.guards';
+import { authInterceptor } from '../../session/auth.interceptor';
+import { SessionService } from '../../session/session.service';
+import { TOKEN_STORAGE_KEY } from '../../session/token-storage.service';
 import { API, type FakeAuthApi } from './fake-auth-api';
 
 /** Whole-app flows run several pages and a page refresh, so they need more than the 5 s default. */

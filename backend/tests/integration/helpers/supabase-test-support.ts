@@ -1,6 +1,6 @@
 import { randomBytes, randomUUID } from 'node:crypto';
 import type { Express } from 'express';
-import { request } from '../helpers/request';
+import { request } from './request';
 
 export type TestSupabaseConfig = {
   url: string;
@@ -79,7 +79,7 @@ export async function loginAs(
   );
   authUserIds.add(authUser.id);
 
-  const { prisma } = await import('../../shared/db/prisma.client');
+  const { prisma } = await import('../../../src/shared/db/prisma.client');
   const user = await prisma.user.create({
     data: {
       id: authUser.id,

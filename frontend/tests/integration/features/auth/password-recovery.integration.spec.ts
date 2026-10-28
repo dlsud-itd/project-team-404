@@ -3,16 +3,16 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
-import { routes } from '../../app/app.routes';
+import { routes } from '../../../../src/app/app.routes';
 import {
   type ResetTokenStatus,
   tokenStatusMessage,
-} from '../../app/features/auth/reset-password/token-status-message.util';
-import { provideSessionRestore } from '../../app/features/auth/session/auth.guards';
-import { authInterceptor } from '../../app/features/auth/session/auth.interceptor';
-import { SessionService } from '../../app/features/auth/session/session.service';
-import { TOKEN_STORAGE_KEY } from '../../app/features/auth/session/token-storage.service';
-import { environment } from '../../environments/environment';
+} from '../../../../src/app/features/auth/reset-password/token-status-message.util';
+import { provideSessionRestore } from '../../../../src/app/features/auth/session/auth.guards';
+import { authInterceptor } from '../../../../src/app/features/auth/session/auth.interceptor';
+import { SessionService } from '../../../../src/app/features/auth/session/session.service';
+import { TOKEN_STORAGE_KEY } from '../../../../src/app/features/auth/session/token-storage.service';
+import { environment } from '../../../../src/environments/environment';
 
 /**
  * Password Recovery frontend integration tests (FE-REC-02 to FE-REC-22).

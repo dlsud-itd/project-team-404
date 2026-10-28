@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 import type { Express } from 'express';
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
-import { request } from '../helpers/request';
+import { request } from '../../helpers/request';
 import {
   configureSupabaseTest,
   deleteIntegrationAccounts,
@@ -9,7 +9,7 @@ import {
   loginAs,
   setSessionExpiry,
   type IntegrationAccount,
-} from './supabase-test-support';
+} from '../../helpers/supabase-test-support';
 
 const testSupabase = configureSupabaseTest();
 
@@ -28,12 +28,12 @@ const integrationDescribe = testSupabase ? describe : describe.skip;
 
 integrationDescribe('login and session integration', () => {
   let app: Express;
-  let prisma: typeof import('../../shared/db/prisma.client').prisma;
+  let prisma: typeof import('../../../../src/shared/db/prisma.client').prisma;
 
   beforeAll(async () => {
     const [{ app: productionApp }, prismaModule] = await Promise.all([
-      import('../../app'),
-      import('../../shared/db/prisma.client'),
+      import('../../../../src/app'),
+      import('../../../../src/shared/db/prisma.client'),
     ]);
     app = productionApp;
     prisma = prismaModule.prisma;
