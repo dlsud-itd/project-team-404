@@ -22,7 +22,9 @@ const project: ProjectRecord = {
 
 function makeApp() {
   const sessionService = {
-    verify: vi.fn().mockResolvedValue({ userId: 'user-123', expiresAt: new Date() }),
+    verify: vi
+      .fn()
+      .mockResolvedValue({ userId: 'user-123', expiresAt: new Date() }),
   } as unknown as SessionService;
   const dependencies = {
     setProjectFavorite: vi.fn().mockResolvedValue({ count: 1 }),
