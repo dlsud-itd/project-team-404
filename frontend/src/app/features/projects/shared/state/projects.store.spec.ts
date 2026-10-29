@@ -92,8 +92,46 @@ describe('ProjectsStore', () => {
     expect(store.projects()).toEqual([INBOX]);
   });
 
+  it('lists archived projects on their own', () => {
+    store.setProjects([INBOX, SCHOOL, OLD]);
+
+    expect(store.archived()).toEqual([OLD]);
+  });
+
+  it('sets many sort orders at once and leaves the others alone', () => {
+    store.setProjects([INBOX, SCHOOL, WORK, OLD]);
+
+    store.applySortOrders([
+      { projectId: 10, sortOrder: 0 },
+      { projectId: 11, sortOrder: 3 },
+    ]);
+
+    expect(store.projects().map((p) => p.name)).toEqual(['Inbox', 'School', 'Old', 'Work']);
+    expect(store.byId(12)?.sortOrder).toBe(1);
+  });
+
+  it('remembers the selected project', () => {
+    store.setProjects([INBOX, SCHOOL]);
+    expect(store.selected()).toBeNull();
+
+    store.select(10);
+
+    expect(store.selectedProjectId()).toBe(10);
+    expect(store.selected()).toEqual(SCHOOL);
+  });
+
+  it('has no selected project once that project is removed', () => {
+    store.setProjects([INBOX, SCHOOL]);
+    store.select(10);
+
+    store.remove(10);
+
+    expect(store.selected()).toBeNull();
+  });
+
   it('resets to the initial state', () => {
     store.setProjects([INBOX]);
+    store.select(1);
     store.fail('Boom');
 
     store.reset();
@@ -101,5 +139,6 @@ describe('ProjectsStore', () => {
     expect(store.projects()).toEqual([]);
     expect(store.loaded()).toBe(false);
     expect(store.error()).toBeNull();
+    expect(store.selectedProjectId()).toBeNull();
   });
 });

@@ -12,6 +12,16 @@ export interface Project {
   sortOrder: number;
 }
 
+/**
+ * A project exactly as the backend sends it: the id is called `id`, and timestamps are
+ * included. ProjectService turns it into a Project before anything else sees it.
+ */
+export interface ApiProject extends Omit<Project, 'projectId'> {
+  id: number;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 /** Body of POST /api/projects. Optional fields are sent as null, never as empty strings. */
 export interface CreateProjectRequest {
   name: string;

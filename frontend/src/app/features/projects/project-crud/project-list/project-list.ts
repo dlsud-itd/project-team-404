@@ -9,6 +9,7 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
+import { ProjectsHeader } from '../../shared/components/projects-header/projects-header';
 import { ProjectsStore } from '../../shared/state/projects.store';
 import type { Project } from '../../shared/types/project.types';
 import { ConfirmDeleteDialog } from '../components/confirm-delete-dialog/confirm-delete-dialog';
@@ -26,7 +27,7 @@ export function deletedNotice(name: string, movedTaskCount: number): string {
 
 @Component({
   selector: 'app-project-list',
-  imports: [RouterLink, ProjectCard, ConfirmDeleteDialog],
+  imports: [RouterLink, ProjectCard, ConfirmDeleteDialog, ProjectsHeader],
   templateUrl: './project-list.html',
   styleUrl: './project-list.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

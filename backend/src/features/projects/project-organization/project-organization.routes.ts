@@ -37,6 +37,8 @@ export function createProjectOrganizationRouter(
     'params',
     'Project ID must be a positive integer'
   );
+  // Runs before the body is validated: it reads the project id from res.locals.validated,
+  // which the body validator then replaces.
   const requireOwnedProject = ownedProjectMiddleware(findProject);
 
   router.put(
@@ -49,28 +51,28 @@ export function createProjectOrganizationRouter(
     '/:projectId/favorite',
     auth,
     validateProjectId,
-    validateRequest(setFavoriteValidator, 'body', 'isFavorite is required'),
     requireOwnedProject,
+    validateRequest(setFavoriteValidator, 'body', 'isFavorite is required'),
     controller.favorite
   );
   router.put(
     '/:projectId/archive',
     auth,
     validateProjectId,
-    validateRequest(setArchivedValidator, 'body', 'isArchived is required'),
     requireOwnedProject,
+    validateRequest(setArchivedValidator, 'body', 'isArchived is required'),
     controller.archive
   );
   router.put(
     '/:projectId/sort-order',
     auth,
     validateProjectId,
+    requireOwnedProject,
     validateRequest(
       setSortOrderValidator,
       'body',
       'Sort order must be 0 or greater'
     ),
-    requireOwnedProject,
     controller.sortOrder
   );
 

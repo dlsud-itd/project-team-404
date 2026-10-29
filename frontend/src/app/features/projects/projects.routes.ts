@@ -16,6 +16,14 @@ export const PROJECTS_ROUTES: Routes = [
       import('./project-crud/project-form/project-form').then((m) => m.ProjectForm),
   },
   {
+    path: 'organize',
+    title: 'Organize projects · HabitTracker',
+    loadComponent: () =>
+      import('./project-organization/project-switcher/project-switcher').then(
+        (m) => m.ProjectSwitcher,
+      ),
+  },
+  {
     path: ':projectId/edit',
     title: 'Edit project · HabitTracker',
     data: { mode: 'edit' },
