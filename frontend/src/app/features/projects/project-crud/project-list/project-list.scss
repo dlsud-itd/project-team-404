@@ -1,5 +1,15 @@
 @use '../../shared/styles/projects-page';
 
+/* Shown inside the home page's Projects tab, which supplies the background. */
+:host {
+  min-height: 0;
+  background: none;
+}
+
+.page {
+  padding-top: 1.25rem;
+}
+
 .new {
   display: inline-block;
   padding: 0.5rem 1.125rem;

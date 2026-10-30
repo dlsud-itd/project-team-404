@@ -2,15 +2,34 @@
   <header class="topbar">
     <a class="brand" routerLink="/home">Habit Tracker</a>
 
-    <nav class="tabs" aria-label="Main">
-      <a class="tab active" routerLink="/home" aria-current="page">Dashboard</a>
-      <a class="tab" routerLink="/home" fragment="all-tasks">Tasks</a>
-      <a class="tab" routerLink="/projects">Projects</a>
-    </nav>
+    <div
+      class="tabs"
+      role="tablist"
+      aria-label="Main"
+      [style.--tab-index]="tabIndex()"
+      (keydown)="onTabKey($event)"
+    >
+      <span class="indicator" aria-hidden="true"></span>
+      @for (item of tabs; track item.id) {
+        <button
+          type="button"
+          class="tab"
+          role="tab"
+          [id]="'tab-' + item.id"
+          [class.active]="tab() === item.id"
+          [attr.aria-selected]="tab() === item.id"
+          [attr.aria-controls]="'panel-' + item.id"
+          [tabIndex]="tab() === item.id ? 0 : -1"
+          (click)="select(item.id)"
+        >
+          {{ item.label }}
+        </button>
+      }
+    </div>
 
     <div class="actions">
       <span class="streak">Streak <span aria-hidden="true">🔥</span></span>
-      <button type="button" class="new-task" (click)="composing.set(true)">+ New Task</button>
+      <button type="button" class="new-task" (click)="newTask()">+ New Task</button>
 
       <div class="account">
         <button
@@ -42,52 +61,86 @@
     </div>
   </header>
 
-  <div class="layout">
-    <aside class="sidebar" aria-label="Filters">
-      <app-project-list id="projects" />
-      <app-priority-list />
-      <app-mini-calendar />
+  <div class="viewport">
+    @switch (tab()) {
+      @case ('tasks') {
+        <section
+          id="panel-tasks"
+          class="panel solo"
+          role="tabpanel"
+          aria-labelledby="tab-tasks"
+          [attr.data-slide]="slideFrom()"
+        >
+          <app-all-tasks [(composing)]="composing" />
+        </section>
+      }
+      @case ('projects') {
+        <section
+          id="panel-projects"
+          class="panel"
+          role="tabpanel"
+          aria-labelledby="tab-projects"
+          [attr.data-slide]="slideFrom()"
+        >
+          <app-projects-page />
+        </section>
+      }
+      @default {
+        <div
+          id="panel-dashboard"
+          class="layout panel"
+          role="tabpanel"
+          aria-labelledby="tab-dashboard"
+          [attr.data-slide]="slideFrom()"
+        >
+          <aside class="sidebar" aria-label="Filters">
+            <app-project-list id="projects" />
+            <app-priority-list />
+            <app-mini-calendar (addTask)="composing.set(true)" />
 
-      <div class="mascot">
-        <img src="home/streak-mascot.png" alt="" />
-        <p class="streak-badge">
-          <span aria-hidden="true">🔥</span> {{ store.streakDays() }} day streak!
-        </p>
-      </div>
-    </aside>
+            <div class="mascot">
+              <img src="home/streak-mascot.png" alt="" />
+              <p class="streak-badge">
+                <span aria-hidden="true">🔥</span> {{ store.streakDays() }} day streak!
+              </p>
+            </div>
+          </aside>
 
-    <main class="main">
-      <div class="intro">
-        <div>
-          <h1 class="greeting">{{ greeting() }}, {{ session.currentUser()?.username }}</h1>
-          <p class="overdue-note">
-            @switch (store.overdueCount()) {
-              @case (0) {
-                You're all caught up.
-              }
-              @case (1) {
-                You have 1 overdue task.
-              }
-              @default {
-                You have {{ store.overdueCount() }} overdue tasks.
-              }
-            }
-          </p>
+          <main class="main">
+            <div class="intro">
+              <div>
+                <h1 class="greeting">{{ greeting() }}, {{ session.currentUser()?.username }}</h1>
+                <p class="overdue-note">
+                  @switch (store.overdueCount()) {
+                    @case (0) {
+                      You're all caught up.
+                    }
+                    @case (1) {
+                      You have 1 overdue task.
+                    }
+                    @default {
+                      You have {{ store.overdueCount() }} overdue tasks.
+                    }
+                  }
+                </p>
+              </div>
+              <dl class="stats">
+                <div class="stat">
+                  <dd>{{ store.openTasks().length }}</dd>
+                  <dt>Open tasks</dt>
+                </div>
+                <div class="stat">
+                  <dd>{{ store.doneToday() }}</dd>
+                  <dt>Done today</dt>
+                </div>
+              </dl>
+            </div>
+
+            <app-status-columns />
+            <app-all-tasks id="all-tasks" [(composing)]="composing" />
+          </main>
         </div>
-        <dl class="stats">
-          <div class="stat">
-            <dd>{{ store.openTasks().length }}</dd>
-            <dt>Open tasks</dt>
-          </div>
-          <div class="stat">
-            <dd>{{ store.doneToday() }}</dd>
-            <dt>Done today</dt>
-          </div>
-        </dl>
-      </div>
-
-      <app-status-columns />
-      <app-all-tasks id="all-tasks" [(composing)]="composing" />
-    </main>
+      }
+    }
   </div>
 </div>

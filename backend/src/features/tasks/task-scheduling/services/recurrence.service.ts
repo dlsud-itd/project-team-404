@@ -14,7 +14,7 @@ export class RecurrenceService {
   }
 
   createNextOccurrence(task: TaskRecord, timeZone = 'UTC') {
-    if (task.recurrence === 'none' || !task.dueDate) {
+    if (!task.recurrence || task.recurrence === 'none' || !task.dueDate) {
       return null;
     }
 

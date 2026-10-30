@@ -180,7 +180,7 @@ from (
         and task.user_id = auth_user.id
         and task.title = expected.title
         and task.description = expected.description
-        and task.priority::text = expected.priority
+        and priority_level.name = expected.priority
         and task.due_date = expected.due_date
         and task.is_done = expected.is_done
         and task.deleted_at is null
@@ -206,6 +206,8 @@ from (
     left join public.tbl_task as task
       on task.user_id = auth_user.id
      and task.title = expected.title
+    left join public.tbl_priority_level as priority_level
+      on priority_level.priority_id = task.priority_id
   )
   select bool_and(passed) as passed from task_seed_status
 ) as task_seed_status

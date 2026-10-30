@@ -1,0 +1,87 @@
+<main class="page">
+  <header class="head">
+    <a class="back" routerLink="/projects">← Projects</a>
+    <div class="title-row">
+      <h1>{{ project()?.name ?? 'Tasks' }}</h1>
+      @if (!projectMissing()) {
+        <a class="new" [routerLink]="['/projects', projectId, 'tasks', 'new']">+ New task</a>
+      }
+    </div>
+    @if (project()?.description; as description) {
+      <p class="subtitle">{{ description }}</p>
+    }
+  </header>
+
+  @if (projectMissing()) {
+    <div class="message" role="alert">
+      <p>Project not found.</p>
+      <a routerLink="/projects">Back to your projects</a>
+    </div>
+  } @else {
+    @if (notice(); as message) {
+      <p class="form-notice" role="status">{{ message }}</p>
+    }
+    @if (actionError(); as message) {
+      <p class="banner-error" role="alert">{{ message }}</p>
+    }
+
+    @if (store.error(); as message) {
+      <div class="load-error" role="alert">
+        <p>Couldn't load your tasks. {{ message }}</p>
+        <button type="button" class="retry" [disabled]="store.loading()" (click)="load()">
+          {{ store.loading() ? 'Retrying…' : 'Try again' }}
+        </button>
+      </div>
+    }
+
+    @if (firstLoad()) {
+      <p class="status" role="status">Loading tasks…</p>
+    } @else if (store.loaded()) {
+      @if (store.tasks().length) {
+        <section class="group" aria-labelledby="open-heading">
+          <h2 id="open-heading">To do · {{ store.open().length }}</h2>
+          @if (store.open().length) {
+            <ul class="list">
+              @for (task of store.open(); track task.taskId) {
+                <li>
+                  <app-task-item [task]="task" (deleteRequested)="askDelete($event)" />
+                </li>
+              }
+            </ul>
+          } @else {
+            <p class="status">Everything here is done.</p>
+          }
+        </section>
+
+        @if (store.completed().length) {
+          <section class="group" aria-labelledby="completed-heading">
+            <h2 id="completed-heading">Completed · {{ store.completed().length }}</h2>
+            <ul class="list">
+              @for (task of store.completed(); track task.taskId) {
+                <li>
+                  <app-task-item [task]="task" (deleteRequested)="askDelete($event)" />
+                </li>
+              }
+            </ul>
+          </section>
+        }
+      } @else {
+        <div class="empty">
+          <p class="empty-title">No tasks here yet.</p>
+          <p>Add the first thing you need to get done in this project.</p>
+          <a class="new" [routerLink]="['/projects', projectId, 'tasks', 'new']">Add a task</a>
+        </div>
+      }
+    }
+  }
+</main>
+
+@if (pendingDelete(); as task) {
+  <app-confirm-delete-task-dialog
+    [task]="task"
+    [busy]="deleting()"
+    [error]="deleteError()"
+    (confirmed)="confirmDelete()"
+    (cancelled)="cancelDelete()"
+  />
+}

@@ -1,0 +1,8 @@
+model PriorityLevel {
+  id        Int     @id @db.SmallInt @map("priority_id")
+  name      String  @unique @db.VarChar(50)
+  sortOrder Int     @unique @db.SmallInt @map("sort_order")
+  tasks     Task[]
+
+  @@map("tbl_priority_level")
+}

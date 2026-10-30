@@ -26,7 +26,7 @@ export function deletedNotice(name: string, movedTaskCount: number): string {
 }
 
 @Component({
-  selector: 'app-project-list',
+  selector: 'app-projects-page',
   imports: [RouterLink, ProjectCard, ConfirmDeleteDialog, ProjectsHeader],
   templateUrl: './project-list.html',
   styleUrl: './project-list.scss',

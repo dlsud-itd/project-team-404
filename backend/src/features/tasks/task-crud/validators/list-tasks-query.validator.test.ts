@@ -7,6 +7,7 @@ describe('listTasksQueryValidator', () => {
       status: 'active',
       page: 1,
       pageSize: 20,
+      orderDirection: 'asc',
     });
   });
 
@@ -23,6 +24,7 @@ describe('listTasksQueryValidator', () => {
       page: 2,
       pageSize: 10,
       status: 'completed',
+      orderDirection: 'asc',
     });
   });
 

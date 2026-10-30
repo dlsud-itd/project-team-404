@@ -9,7 +9,14 @@ describe('AllTasks', () => {
 
   const el = <T extends HTMLElement>(selector: string) => page.querySelector(selector) as T | null;
   const titles = () => [...page.querySelectorAll('.task .title')].map((t) => t.textContent?.trim());
-  const render = () => fixture.detectChanges();
+  const heading = () => page.querySelector('h2')?.textContent?.trim();
+  const dueInput = () => page.querySelector<HTMLInputElement>('input[type="date"]');
+
+  function render(): void {
+    fixture.detectChanges();
+    TestBed.tick();
+    fixture.detectChanges();
+  }
 
   function type(selector: string, value: string): void {
     const input = el<HTMLInputElement>(selector)!;
@@ -31,6 +38,7 @@ describe('AllTasks', () => {
   beforeEach(async () => {
     vi.useFakeTimers({ toFake: ['Date'] });
     vi.setSystemTime(new Date(2026, 9, 30, 9, 0, 0));
+
     await TestBed.configureTestingModule({
       imports: [AllTasks],
       providers: [DashboardStore],
@@ -102,5 +110,29 @@ describe('AllTasks', () => {
     render();
 
     expect(el('.empty')?.textContent?.trim()).toBe('No tasks match. Add one with “+ New Task”.');
+  });
+
+  it('names the day in the heading', () => {
+    expect(heading()).toBe('All Tasks');
+
+    store.filter.set({ due: '2026-11-02' });
+    render();
+
+    expect(heading()).toBe('Due Nov 2');
+  });
+
+  it('starts a new task on the picked day', () => {
+    store.filter.set({ due: '2026-11-02' });
+    fixture.componentInstance.composing.set(true);
+    render();
+
+    expect(dueInput()?.value).toBe('2026-11-02');
+  });
+
+  it('starts a new task today when no day is picked', () => {
+    fixture.componentInstance.composing.set(true);
+    render();
+
+    expect(dueInput()?.value).toBe('2026-10-30');
   });
 });

@@ -1,0 +1,25 @@
+model Label {
+  id         Int         @id @default(autoincrement()) @map("label_id")
+  userId     String      @db.Uuid @map("user_id")
+  name       String      @db.VarChar(50)
+  color      String?     @db.Char(7)
+  createdAt  DateTime    @default(now()) @db.Timestamptz(6) @map("created_at")
+  updatedAt  DateTime    @default(now()) @db.Timestamptz(6) @map("updated_at")
+  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  taskLabels TaskLabel[]
+
+  @@unique([userId, name], map: "tbl_label_user_name_key")
+  @@index([userId], map: "tbl_label_user_id_idx")
+  @@map("tbl_label")
+}
+
+model TaskLabel {
+  taskId  Int   @db.Integer @map("task_id")
+  labelId Int   @db.Integer @map("label_id")
+  task    Task  @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  label   Label @relation(fields: [labelId], references: [id], onDelete: Cascade)
+
+  @@id([taskId, labelId], map: "tbl_task_label_pkey")
+  @@index([labelId], map: "tbl_task_label_label_id_idx")
+  @@map("tbl_task_label")
+}

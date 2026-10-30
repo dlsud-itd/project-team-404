@@ -6,6 +6,17 @@ export async function updateTask(
   userId: string,
   input: UpdateTaskInput
 ) {
+  const priorityLevel =
+    input.priority === undefined
+      ? null
+      : await prisma.priorityLevel.findUnique({
+          where: { name: input.priority },
+          select: { id: true },
+        });
+  if (input.priority !== undefined && !priorityLevel) {
+    throw new Error(`Priority level is not configured: ${input.priority}`);
+  }
+
   const result = await prisma.task.updateMany({
     where: { id: taskId, userId, deletedAt: null },
     data: {
@@ -34,7 +45,9 @@ export async function updateTask(
       ...(input.recurrence !== undefined
         ? { recurrence: input.recurrence ?? 'none' }
         : {}),
-      ...(input.priority !== undefined ? { priority: input.priority } : {}),
+      ...(input.priority !== undefined
+        ? { priorityId: priorityLevel!.id }
+        : {}),
       ...(input.isDone !== undefined ? { isDone: input.isDone } : {}),
       ...(input.doneAt !== undefined
         ? { doneAt: input.doneAt ? new Date(input.doneAt) : null }
@@ -46,5 +59,9 @@ export async function updateTask(
   }
   return prisma.task.findFirst({
     where: { id: taskId, userId, deletedAt: null },
+    include: {
+      priorityLevel: true,
+      taskLabels: { include: { label: true } },
+    },
   });
 }
