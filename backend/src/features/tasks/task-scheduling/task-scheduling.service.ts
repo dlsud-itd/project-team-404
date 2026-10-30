@@ -14,10 +14,18 @@ export type TaskSchedulingDependencies = {
 export class TaskSchedulingService {
   constructor(private readonly dependencies: TaskSchedulingDependencies) {}
 
-  async setScheduledDate(task: TaskRecord, userId: string, scheduledDate: string | null) {
-    const updated = await this.dependencies.updateTaskSchedule(task.id, userId, {
-      scheduledDate,
-    });
+  async setScheduledDate(
+    task: TaskRecord,
+    userId: string,
+    scheduledDate: string | null
+  ) {
+    const updated = await this.dependencies.updateTaskSchedule(
+      task.id,
+      userId,
+      {
+        scheduledDate,
+      }
+    );
     if (!updated) {
       throw new TaskNotFoundError();
     }
@@ -25,9 +33,13 @@ export class TaskSchedulingService {
   }
 
   async setDueDate(task: TaskRecord, userId: string, dueDate: string | null) {
-    const updated = await this.dependencies.updateTaskSchedule(task.id, userId, {
-      dueDate,
-    });
+    const updated = await this.dependencies.updateTaskSchedule(
+      task.id,
+      userId,
+      {
+        dueDate,
+      }
+    );
     if (!updated) {
       throw new TaskNotFoundError();
     }
@@ -35,9 +47,13 @@ export class TaskSchedulingService {
   }
 
   async setDeadline(task: TaskRecord, userId: string, deadline: string | null) {
-    const updated = await this.dependencies.updateTaskSchedule(task.id, userId, {
-      deadline,
-    });
+    const updated = await this.dependencies.updateTaskSchedule(
+      task.id,
+      userId,
+      {
+        deadline,
+      }
+    );
     if (!updated) {
       throw new TaskNotFoundError();
     }
@@ -49,9 +65,13 @@ export class TaskSchedulingService {
     userId: string,
     recurrence: 'none' | 'daily' | 'weekly' | 'monthly' | null
   ) {
-    const updated = await this.dependencies.updateTaskSchedule(task.id, userId, {
-      recurrence,
-    });
+    const updated = await this.dependencies.updateTaskSchedule(
+      task.id,
+      userId,
+      {
+        recurrence,
+      }
+    );
     if (!updated) {
       throw new TaskNotFoundError();
     }

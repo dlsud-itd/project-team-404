@@ -36,7 +36,11 @@ export function createTaskSchedulingRouter(
     requireAuth(sessionService),
     validateTaskId,
     requireOwnedTask,
-    validateRequest(scheduleTaskDateValidator, 'body', 'Invalid scheduled date'),
+    validateRequest(
+      scheduleTaskDateValidator,
+      'body',
+      'Invalid scheduled date'
+    ),
     controller.setScheduledDate
   );
   router.put(

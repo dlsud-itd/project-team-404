@@ -36,10 +36,16 @@ export function getNextOccurrence(
       0
     )
   );
-  const targetDay = Math.min(
-    normalized.getUTCDate(),
-    monthEnd.getUTCDate()
+  const targetDay = Math.min(normalized.getUTCDate(), monthEnd.getUTCDate());
+  const nextMonth = new Date(
+    Date.UTC(
+      normalized.getUTCFullYear(),
+      normalized.getUTCMonth() + 1,
+      targetDay,
+      0,
+      0,
+      0
+    )
   );
-  const nextMonth = new Date(Date.UTC(normalized.getUTCFullYear(), normalized.getUTCMonth() + 1, targetDay, 0, 0, 0));
   return nextMonth;
 }

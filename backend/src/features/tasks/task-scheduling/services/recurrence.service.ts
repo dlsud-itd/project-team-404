@@ -1,5 +1,8 @@
 import type { TaskRecord } from '../../shared/models/task.model';
-import { getNextOccurrence, type TaskRecurrence } from '../utils/next-occurrence.util';
+import {
+  getNextOccurrence,
+  type TaskRecurrence,
+} from '../utils/next-occurrence.util';
 
 export class RecurrenceService {
   getNextOccurrence(
