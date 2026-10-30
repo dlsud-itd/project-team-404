@@ -4,12 +4,15 @@ import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { environment } from '../../../../../environments/environment';
-import type { Project } from '../../../projects/shared/types/project.types';
+import type { ApiProject, Project } from '../../../projects/shared/types/project.types';
 import type { Task } from '../../shared/types/task.types';
 import { TaskList } from './task-list';
 
 const TASKS_URL = `${environment.apiBaseUrl}/api/tasks`;
 const PROJECTS_URL = `${environment.apiBaseUrl}/api/projects`;
+
+/** Projects as the API sends them: `id` instead of `projectId`. */
+const asApi = ({ projectId, ...rest }: Project): ApiProject => ({ id: projectId, ...rest });
 const LIST_URL = `${TASKS_URL}?projectId=10`;
 
 const CAPSTONE: Project = {
@@ -62,7 +65,7 @@ describe('TaskList', () => {
   }
 
   function loadWith(tasks: Task[], project: Project | null = CAPSTONE): void {
-    if (project) http.expectOne(`${PROJECTS_URL}/${project.projectId}`).flush(project);
+    if (project) http.expectOne(`${PROJECTS_URL}/${project.projectId}`).flush(asApi(project));
     http.expectOne(LIST_URL).flush(tasks);
     harness.detectChanges();
   }
@@ -129,7 +132,7 @@ describe('TaskList', () => {
 
   it('shows an error with a retry action when the list fails', async () => {
     await open();
-    http.expectOne(`${PROJECTS_URL}/10`).flush(CAPSTONE);
+    http.expectOne(`${PROJECTS_URL}/10`).flush(asApi(CAPSTONE));
     http.expectOne(LIST_URL).flush(null, { status: 500, statusText: 'Server Error' });
     harness.detectChanges();
 

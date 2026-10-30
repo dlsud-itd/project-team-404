@@ -5,7 +5,7 @@ import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { environment } from '../../../../../environments/environment';
-import type { Project } from '../../../projects/shared/types/project.types';
+import type { ApiProject, Project } from '../../../projects/shared/types/project.types';
 import type { Task } from '../../shared/types/task.types';
 import { TaskForm } from './task-form';
 
@@ -14,6 +14,9 @@ class Blank {}
 
 const URL = `${environment.apiBaseUrl}/api/tasks`;
 const PROJECTS_URL = `${environment.apiBaseUrl}/api/projects`;
+
+/** Projects as the API sends them: `id` instead of `projectId`. */
+const asApi = ({ projectId, ...rest }: Project): ApiProject => ({ id: projectId, ...rest });
 
 const project = (projectId: number, name: string, isInbox = false): Project => ({
   projectId,
@@ -94,7 +97,7 @@ describe('TaskForm', () => {
   }
 
   function flushProjects(): void {
-    http.expectOne(PROJECTS_URL).flush(PROJECTS);
+    http.expectOne(PROJECTS_URL).flush(PROJECTS.map(asApi));
     harness.detectChanges();
   }
 
