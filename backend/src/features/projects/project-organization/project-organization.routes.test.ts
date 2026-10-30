@@ -5,6 +5,9 @@ import type { ProjectRecord } from '../shared/models/project.model';
 import { request } from '../../../../tests/integration/helpers';
 import { createProjectOrganizationRouter } from './project-organization.routes';
 
+// The router's default dependencies import the Prisma client; the tests inject fakes instead.
+vi.mock('../../../shared/db/prisma.client', () => ({ prisma: {} }));
+
 const project: ProjectRecord = {
   id: 7,
   userId: 'user-123',
