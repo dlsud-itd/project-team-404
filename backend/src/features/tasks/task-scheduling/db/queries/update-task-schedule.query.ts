@@ -1,5 +1,5 @@
-import { prisma } from '../../../../shared/db/prisma.client';
-import type { TaskScheduleUpdateInput } from '../../task-scheduling/task-scheduling.types';
+import { prisma } from '../../../../../shared/db/prisma.client';
+import type { TaskScheduleUpdateInput } from '../../task-scheduling.types';
 
 export async function updateTaskSchedule(
   taskId: number,
