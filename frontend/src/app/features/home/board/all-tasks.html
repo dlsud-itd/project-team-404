@@ -1,5 +1,5 @@
 <section class="panel" aria-labelledby="all-tasks-heading">
-  <h2 id="all-tasks-heading" class="heading">All Tasks</h2>
+  <h2 id="all-tasks-heading" class="heading">{{ heading() }}</h2>
 
   @if (composing()) {
     <form class="composer" [formGroup]="form" (ngSubmit)="create()" novalidate>

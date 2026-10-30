@@ -1,4 +1,12 @@
-import { ChangeDetectionStrategy, Component, inject, model } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  inject,
+  model,
+  untracked,
+} from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { DashboardStore, PRIORITIES, type Priority } from '../dashboard.store';
 
@@ -22,6 +30,23 @@ export class AllTasks {
     priority: ['medium' as Priority],
     due: [this.store.today(), Validators.required],
   });
+
+  /** The day picked on the calendar, if any. */
+  private readonly dueFilter = computed(() => this.store.filter().due);
+
+  protected readonly heading = computed(() => {
+    const due = this.dueFilter();
+    return due ? `Due ${this.shortDate(due)}` : 'All Tasks';
+  });
+
+  constructor() {
+    // Opening the form, or picking a day while it is open, starts the due date on that day.
+    effect(() => {
+      const due = this.dueFilter();
+      if (!this.composing()) return;
+      untracked(() => this.form.controls.due.setValue(due ?? this.store.today()));
+    });
+  }
 
   protected create(): void {
     if (this.form.invalid) {

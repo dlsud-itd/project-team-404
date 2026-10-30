@@ -1,0 +1,179 @@
+<main class="page">
+  <a class="back" [routerLink]="listUrl">← Tasks</a>
+  <h1>{{ mode === 'create' ? 'New task' : 'Edit task' }}</h1>
+
+  @switch (loadState()) {
+    @case ('loading') {
+      <p class="status" role="status">Loading task…</p>
+    }
+    @case ('not-found') {
+      <div class="message" role="alert">
+        <p>{{ mode === 'create' ? 'Project not found.' : 'Task not found.' }}</p>
+        <a routerLink="/projects">Back to your projects</a>
+      </div>
+    }
+    @case ('error') {
+      <div class="message" role="alert">
+        <p>Couldn't load this task. Something went wrong. Please try again.</p>
+        <button type="button" class="secondary" (click)="load()">Try again</button>
+      </div>
+    }
+    @default {
+      @if (saved(); as message) {
+        <p class="form-notice" role="status">{{ message }}</p>
+      }
+      @if (formError(); as message) {
+        <p class="form-error" role="alert">{{ message }}</p>
+      }
+
+      <form
+        class="card"
+        [formGroup]="form"
+        (ngSubmit)="submit()"
+        (keydown.escape)="cancel()"
+        novalidate
+      >
+        <div class="field">
+          <div class="label-row">
+            <label for="task-title">Title</label>
+            <span class="count" [class.over]="form.controls.title.value.trim().length > titleMax">
+              {{ form.controls.title.value.trim().length }}/{{ titleMax }}
+            </span>
+          </div>
+          <input
+            id="task-title"
+            type="text"
+            formControlName="title"
+            autocomplete="off"
+            placeholder="e.g. Study ILT Module 4"
+            [attr.aria-invalid]="!!fieldError('title')"
+            aria-describedby="task-title-status"
+            (input)="clearServerError('title')"
+          />
+          <p id="task-title-status" class="field-message" aria-live="polite">
+            {{ fieldError('title') }}
+          </p>
+        </div>
+
+        <div class="field">
+          <label for="task-description">Description <span>(optional)</span></label>
+          <textarea
+            id="task-description"
+            formControlName="description"
+            rows="3"
+            placeholder="Notes, links or steps"
+            [attr.aria-invalid]="!!fieldError('description')"
+            aria-describedby="task-description-status"
+            (input)="clearServerError('description')"
+          ></textarea>
+          <p id="task-description-status" class="field-message" aria-live="polite">
+            {{ fieldError('description') }}
+          </p>
+        </div>
+
+        <div class="row">
+          <div class="field">
+            <label for="task-priority">Priority</label>
+            <select
+              id="task-priority"
+              formControlName="priorityId"
+              [attr.aria-invalid]="!!fieldError('priorityId')"
+              aria-describedby="task-priority-status"
+              (change)="clearServerError('priorityId')"
+            >
+              @for (priority of priorities; track priority.priorityId) {
+                <option [ngValue]="priority.priorityId">{{ priority.label }}</option>
+              }
+            </select>
+            <p id="task-priority-status" class="field-message" aria-live="polite">
+              {{ fieldError('priorityId') }}
+            </p>
+          </div>
+
+          <div class="field">
+            <label for="task-project">Project</label>
+            <select
+              id="task-project"
+              formControlName="projectId"
+              [attr.aria-invalid]="!!fieldError('projectId')"
+              aria-describedby="task-project-status"
+              (change)="clearServerError('projectId')"
+            >
+              @for (project of projectOptions(); track project.projectId) {
+                <option [ngValue]="project.projectId">{{ project.name }}</option>
+              }
+            </select>
+            <p id="task-project-status" class="field-message" aria-live="polite">
+              {{ fieldError('projectId') }}
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="field">
+            <label for="task-due-date">Due date <span>(optional)</span></label>
+            <input
+              id="task-due-date"
+              type="date"
+              formControlName="dueDate"
+              [attr.aria-invalid]="!!fieldError('dueDate')"
+              aria-describedby="task-due-date-status"
+              (input)="clearServerError('dueDate')"
+            />
+            <p id="task-due-date-status" class="field-message" aria-live="polite">
+              {{ fieldError('dueDate') }}
+            </p>
+          </div>
+
+          <div class="field">
+            <label for="task-due-time">Due time <span>(optional)</span></label>
+            <input
+              id="task-due-time"
+              type="time"
+              formControlName="dueTime"
+              [attr.aria-invalid]="!!fieldError('dueTime')"
+              aria-describedby="task-due-time-status"
+              (input)="clearServerError('dueTime')"
+            />
+            <p id="task-due-time-status" class="field-message" aria-live="polite">
+              {{ fieldError('dueTime') }}
+            </p>
+          </div>
+
+          <div class="field">
+            <label for="task-deadline">Deadline <span>(optional)</span></label>
+            <input
+              id="task-deadline"
+              type="date"
+              formControlName="deadline"
+              [min]="form.controls.dueDate.value || null"
+              [attr.aria-invalid]="!!fieldError('deadline')"
+              aria-describedby="task-deadline-status"
+              (input)="clearServerError('deadline')"
+            />
+            <p id="task-deadline-status" class="field-message" aria-live="polite">
+              {{ fieldError('deadline') }}
+            </p>
+          </div>
+        </div>
+
+        @if (task()?.isRecurring) {
+          <p class="hint">This task repeats, so it needs a due date.</p>
+        }
+
+        <div class="actions">
+          <button type="button" class="secondary" [disabled]="submitting()" (click)="cancel()">
+            Cancel
+          </button>
+          <button type="submit" class="primary" [disabled]="!canSave()">
+            @if (submitting()) {
+              {{ mode === 'create' ? 'Adding…' : 'Saving…' }}
+            } @else {
+              {{ mode === 'create' ? 'Add task' : 'Save changes' }}
+            }
+          </button>
+        </div>
+      </form>
+    }
+  }
+</main>

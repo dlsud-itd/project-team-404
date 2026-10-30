@@ -24,6 +24,8 @@ export interface Task {
 export interface TaskFilter {
   projectId?: number;
   priority?: Priority;
+  /** Local date, YYYY-MM-DD: only tasks due that day. Set by the calendar. */
+  due?: string;
 }
 
 export const PRIORITIES: { value: Priority; label: string; hint?: string }[] = [
@@ -159,11 +161,19 @@ export class DashboardStore {
   );
 
   readonly filteredTasks = computed(() => {
-    const { projectId, priority } = this.filter();
+    const { projectId, priority, due } = this.filter();
     return this.taskList()
       .filter((t) => projectId === undefined || t.projectId === projectId)
       .filter((t) => priority === undefined || t.priority === priority)
+      .filter((t) => due === undefined || t.due === due)
       .sort((a, b) => Number(a.done) - Number(b.done) || a.due.localeCompare(b.due));
+  });
+
+  /** Every task, grouped by due date, for the calendar. */
+  readonly tasksByDay = computed(() => {
+    const days = new Map<string, Task[]>();
+    for (const task of this.taskList()) days.set(task.due, [...(days.get(task.due) ?? []), task]);
+    return days;
   });
 
   /** Open tasks per project id. */
