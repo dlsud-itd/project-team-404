@@ -1,5 +1,4 @@
 import { describe, expect, it, vi } from 'vitest';
-import { Prisma } from '@prisma/client';
 import { LabelNameTakenError } from './errors/label-name-taken.error';
 import { LabelNotFoundError } from './errors/label-not-found.error';
 import { LabelCrudService } from './label-crud.service';
@@ -50,11 +49,10 @@ describe('LabelCrudService', () => {
   it('reports a duplicate name as a conflict', async () => {
     const deps = dependencies();
     vi.mocked(deps.createLabel).mockRejectedValue(
-      new Prisma.PrismaClientKnownRequestError('Duplicate label', {
+      {
         code: 'P2002',
-        clientVersion: '6.19.0',
         meta: { target: ['user_id', 'name'] },
-      })
+      }
     );
     const service = new LabelCrudService(deps);
 

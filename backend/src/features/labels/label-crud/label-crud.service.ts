@@ -1,4 +1,3 @@
-import { Prisma } from '@prisma/client';
 import { LabelNameTakenError } from './errors/label-name-taken.error';
 import { LabelNotFoundError } from './errors/label-not-found.error';
 import type { LabelRecord } from '../shared/models/label.model';
@@ -74,15 +73,22 @@ export class LabelCrudService {
 
 function isLabelNameConflict(error: unknown): boolean {
   if (
-    !(error instanceof Prisma.PrismaClientKnownRequestError) ||
-    error.code !== 'P2002'
+    typeof error !== 'object' ||
+    error === null ||
+    !('code' in error) ||
+    error.code !== 'P2002' ||
+    !('meta' in error) ||
+    typeof error.meta !== 'object' ||
+    error.meta === null ||
+    !('target' in error.meta)
   ) {
     return false;
   }
 
-  const target = error.meta?.target;
+  const target = error.meta.target;
   return (
     (Array.isArray(target) &&
+      target.every((field) => typeof field === 'string') &&
       (target.includes('userId') || target.includes('user_id')) &&
       target.includes('name')) ||
     target === 'tbl_label_user_name_key'
