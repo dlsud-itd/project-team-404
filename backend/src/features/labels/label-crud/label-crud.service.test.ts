@@ -48,12 +48,10 @@ describe('LabelCrudService', () => {
 
   it('reports a duplicate name as a conflict', async () => {
     const deps = dependencies();
-    vi.mocked(deps.createLabel).mockRejectedValue(
-      {
-        code: 'P2002',
-        meta: { target: ['user_id', 'name'] },
-      }
-    );
+    vi.mocked(deps.createLabel).mockRejectedValue({
+      code: 'P2002',
+      meta: { target: ['user_id', 'name'] },
+    });
     const service = new LabelCrudService(deps);
 
     await expect(
