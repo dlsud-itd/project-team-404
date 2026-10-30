@@ -12,6 +12,7 @@ model Project {
   updatedAt   DateTime  @default(now()) @db.Timestamptz(6) @map("updated_at")
   deletedAt   DateTime? @db.Timestamptz(6) @map("deleted_at")
   user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tasks       Task[]
 
   @@index([userId], map: "tbl_project_user_id_idx")
   @@map("tbl_project")

@@ -8,6 +8,7 @@ model User {
   deletedAt    DateTime?            @db.Timestamptz(6) @map("deleted_at")
   lastLoginAt  DateTime?            @db.Timestamptz(6) @map("last_login_at")
   projects     Project[]
+  tasks        Task[]
   sessions     Session[]
   resetTokens  PasswordResetToken[]
 

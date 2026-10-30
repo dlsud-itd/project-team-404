@@ -1,0 +1,26 @@
+enum TaskPriority {
+  low
+  medium
+  high
+}
+
+model Task {
+  id          Int          @id @default(autoincrement()) @map("task_id")
+  userId      String       @db.Uuid @map("user_id")
+  projectId   Int?         @db.Integer @map("project_id")
+  title       String       @db.VarChar(200)
+  description String?      @db.VarChar(1000)
+  priority    TaskPriority @default(medium)
+  dueDate     DateTime?    @db.Date @map("due_date")
+  isDone      Boolean      @default(false) @map("is_done")
+  doneAt      DateTime?    @db.Timestamptz(6) @map("done_at")
+  createdAt   DateTime     @default(now()) @db.Timestamptz(6) @map("created_at")
+  updatedAt   DateTime     @updatedAt @db.Timestamptz(6) @map("updated_at")
+  deletedAt   DateTime?    @db.Timestamptz(6) @map("deleted_at")
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project     Project?     @relation(fields: [projectId], references: [id], onDelete: SetNull)
+
+  @@index([userId], map: "tbl_task_user_id_idx")
+  @@index([projectId], map: "tbl_task_project_id_idx")
+  @@map("tbl_task")
+}

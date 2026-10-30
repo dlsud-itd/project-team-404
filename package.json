@@ -27,7 +27,8 @@
     "supabase:reset": "supabase db reset",
     "supabase:reset:remote": "node scripts/supabase-seed.mjs --reset",
     "supabase:repair": "supabase migration repair",
-    "supabase:seed:remote": "node scripts/supabase-seed.mjs"
+    "supabase:seed:remote": "node scripts/supabase-seed.mjs",
+    "postman:task-crud:export": "node scripts/generate-task-postman.mjs"
   },
   "devDependencies": {
     "concurrently": "^9.2.3",
