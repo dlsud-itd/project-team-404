@@ -14,12 +14,25 @@ export async function updateTask(
         ? { description: input.description }
         : {}),
       ...(input.projectId !== undefined ? { projectId: input.projectId } : {}),
+      ...(input.scheduledDate !== undefined
+        ? {
+            scheduledDate: input.scheduledDate
+              ? new Date(`${input.scheduledDate}T00:00:00.000Z`)
+              : null,
+          }
+        : {}),
       ...(input.dueDate !== undefined
         ? {
             dueDate: input.dueDate
               ? new Date(`${input.dueDate}T00:00:00.000Z`)
               : null,
           }
+        : {}),
+      ...(input.deadline !== undefined
+        ? { deadline: input.deadline ? new Date(input.deadline) : null }
+        : {}),
+      ...(input.recurrence !== undefined
+        ? { recurrence: input.recurrence ?? 'none' }
         : {}),
       ...(input.priority !== undefined ? { priority: input.priority } : {}),
       ...(input.isDone !== undefined ? { isDone: input.isDone } : {}),
