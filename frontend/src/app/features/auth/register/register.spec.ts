@@ -9,11 +9,18 @@ const API = `${environment.apiBaseUrl}/api/auth`;
 
 describe('Register', () => {
   let fixture: ComponentFixture<Register>;
-  let http: HttpTestingController;
+  let http: HttpTestingController | undefined;
   let page: HTMLElement;
 
   const el = <T extends HTMLElement>(selector: string) => page.querySelector(selector) as T;
   const messageFor = (id: string) => el(`#${id}-status`).textContent?.trim() ?? '';
+
+  function controller(): HttpTestingController {
+    if (!http) {
+      throw new Error('HTTP testing controller was not initialized');
+    }
+    return http;
+  }
 
   function type(id: string, value: string): void {
     const input = el<HTMLInputElement>(`#${id}`);
@@ -31,7 +38,7 @@ describe('Register', () => {
   /** Lets the availability debounce elapse and answers the check request. */
   function answerCheck(path: string, body: object, status = 200): void {
     vi.advanceTimersByTime(AVAILABILITY_DEBOUNCE_MS);
-    const req = http.expectOne(`${API}/${path}`);
+    const req = controller().expectOne(`${API}/${path}`);
     if (status === 200) {
       req.flush(body);
     } else {
@@ -50,21 +57,25 @@ describe('Register', () => {
   }
 
   beforeEach(async () => {
+    http = undefined;
     vi.useFakeTimers();
     await TestBed.configureTestingModule({
       imports: [Register],
       providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting()],
     }).compileComponents();
 
-    fixture = TestBed.createComponent(Register);
     http = TestBed.inject(HttpTestingController);
+    fixture = TestBed.createComponent(Register);
     page = fixture.nativeElement;
     fixture.detectChanges();
   });
 
   afterEach(() => {
-    http.verify();
-    vi.useRealTimers();
+    try {
+      http?.verify();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('renders every field with labels and defaults the timezone to Asia/Manila', () => {
@@ -83,7 +94,7 @@ describe('Register', () => {
     expect(messageFor('email')).toBe('Email is required.');
     expect(messageFor('password')).toBe('Password is required.');
     expect(messageFor('confirmPassword')).toBe('Confirm your password.');
-    http.expectNone(`${API}/signup`);
+    controller().expectNone(`${API}/signup`);
   });
 
   it('rejects a malformed email', () => {
@@ -162,7 +173,7 @@ describe('Register', () => {
     fillValidForm();
     submit();
 
-    const req = http.expectOne(`${API}/signup`);
+    const req = controller().expectOne(`${API}/signup`);
     expect(req.request.method).toBe('POST');
     expect(req.request.body).toEqual({
       username: 'james',
@@ -177,7 +188,7 @@ describe('Register', () => {
     expect(button.textContent).toContain('Creating account…');
 
     submit();
-    http.expectNone(`${API}/signup`);
+    controller().expectNone(`${API}/signup`);
 
     req.flush({ userId: 'u-1', inboxProjectId: 1 }, { status: 201, statusText: 'Created' });
     fixture.detectChanges();
@@ -187,7 +198,7 @@ describe('Register', () => {
   it('shows a 409 conflict on the relevant field and keeps the values', () => {
     fillValidForm();
     submit();
-    http
+    controller()
       .expectOne(`${API}/signup`)
       .flush({ error: 'Email is already in use' }, { status: 409, statusText: 'Conflict' });
     fixture.detectChanges();
@@ -200,13 +211,15 @@ describe('Register', () => {
   it('shows the server message on a 400 and keeps the values', () => {
     fillValidForm();
     submit();
-    http.expectOne(`${API}/signup`).flush(
-      {
-        error: 'Invalid signup details',
-        details: [{ field: 'timezone', message: 'Must be a valid IANA timezone' }],
-      },
-      { status: 400, statusText: 'Bad Request' },
-    );
+    controller()
+      .expectOne(`${API}/signup`)
+      .flush(
+        {
+          error: 'Invalid signup details',
+          details: [{ field: 'timezone', message: 'Must be a valid IANA timezone' }],
+        },
+        { status: 400, statusText: 'Bad Request' },
+      );
     fixture.detectChanges();
 
     expect(el('[role="alert"]').textContent).toContain('Invalid signup details');
@@ -216,7 +229,7 @@ describe('Register', () => {
   it('shows a generic error on a 500 and lets the user retry', () => {
     fillValidForm();
     submit();
-    http
+    controller()
       .expectOne(`${API}/signup`)
       .flush({ error: 'Internal server error' }, { status: 500, statusText: 'Server Error' });
     fixture.detectChanges();
