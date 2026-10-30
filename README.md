@@ -100,6 +100,23 @@ The current API includes:
 | `GET` | `/api/auth/validate-reset-token` | Validate a valid password reset token |
 | `POST` | `/api/auth/reset-password` | Reset a password with a valid token |
 
+### Task organization and labels
+
+Tasks accept `low`, `medium`, or `high` priority. Task-list requests can filter
+by `priority` and `labelId`, and order by `dueDate`, `createdAt`, `priority`,
+or `title` with `orderDirection=asc|desc`. Labels belong to the authenticated
+user; task-label operations reject labels owned by another user.
+
+| Method | Endpoint | Purpose |
+| --- | --- | --- |
+| `PUT` | `/api/tasks/:taskId/priority` | Set a task priority with `{ "priority": "high" }` |
+| `GET` | `/api/tasks?priority=high&labelId=12` | Filter tasks by priority, label, or both |
+| `GET` | `/api/tasks?orderBy=priority&orderDirection=desc` | Order tasks with stable ID tie-breaking |
+| `GET` / `POST` | `/api/labels` | List the current user's labels or create one with `{ "name": "Work", "color": "#f59e0b" }` |
+| `GET` / `PUT` / `DELETE` | `/api/labels/:labelId` | Read, update, or delete an owned label |
+| `GET` / `POST` | `/api/tasks/:taskId/labels` | List task labels or attach labels with `{ "labelIds": [2, 5] }` |
+| `DELETE` | `/api/tasks/:taskId/labels/:labelId` | Detach an owned label from a task; repeated detaches are safe |
+
 ### Project organization
 
 These authenticated endpoints organize projects in the existing `tbl_project`

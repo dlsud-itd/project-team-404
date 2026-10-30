@@ -1,0 +1,2263 @@
+{
+  "info": {
+    "_postman_id": "a0f4e431-5c0c-4f2e-bd37-f2dbdb1a3370",
+    "name": "Project-Team-404 API",
+    "description": "Project API collection with task CRUD and task organization case folders.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "337-task-crud",
+      "description": "Task CRUD cases for ownership, validation, list filters/paging, soft deletion, and authentication.",
+      "item": [
+        {
+          "name": "Login - James (token)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "const response = pm.response.json();",
+                  "pm.test('Login returns a token', function () { pm.expect(response.token).to.be.a('string').and.not.empty; });",
+                  "pm.environment.set('token', response.token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"identifier\": \"james@example.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Login - Harvey (tokenB)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "const response = pm.response.json();",
+                  "pm.test('Login returns a token', function () { pm.expect(response.token).to.be.a('string').and.not.empty; });",
+                  "pm.environment.set('tokenB', response.token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"identifier\": \"harvey@example.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Setup - Create James project",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 201', function () { pm.response.to.have.status(201); });",
+                  "const response = pm.response.json();",
+                  "pm.test('Project response has an ID', function () { pm.expect(response.id).to.be.a('number'); });",
+                  "pm.environment.set('projectId', String(response.id));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Postman CRUD project\",\n  \"description\": \"Task CRUD test data\",\n  \"color\": \"#f59e0b\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/projects",
+              "host": ["{{baseUrl}}"],
+              "path": ["projects"]
+            }
+          }
+        },
+        {
+          "name": "Setup - Create second James project",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 201', function () { pm.response.to.have.status(201); });",
+                  "const response = pm.response.json();",
+                  "pm.test('Project response has an ID', function () { pm.expect(response.id).to.be.a('number'); });",
+                  "pm.environment.set('projectId2', String(response.id));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Postman CRUD destination\",\n  \"description\": \"Task move test data\",\n  \"color\": \"#10b981\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/projects",
+              "host": ["{{baseUrl}}"],
+              "path": ["projects"]
+            }
+          }
+        },
+        {
+          "name": "Setup - Create Harvey project",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 201', function () { pm.response.to.have.status(201); });",
+                  "const response = pm.response.json();",
+                  "pm.test('Project response has an ID', function () { pm.expect(response.id).to.be.a('number'); });",
+                  "pm.environment.set('projectIdB', String(response.id));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{tokenB}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Harvey Postman project\",\n  \"description\": \"Other-user ownership test\",\n  \"color\": \"#3b82f6\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/projects",
+              "host": ["{{baseUrl}}"],
+              "path": ["projects"]
+            }
+          }
+        },
+        {
+          "name": "Setup - Create project to soft-delete",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 201', function () { pm.response.to.have.status(201); });",
+                  "const response = pm.response.json();",
+                  "pm.environment.set('deletedProjectId', String(response.id));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Postman deleted project\",\n  \"description\": \"Deleted project task rejection\",\n  \"color\": \"#ef4444\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/projects",
+              "host": ["{{baseUrl}}"],
+              "path": ["projects"]
+            }
+          }
+        },
+        {
+          "name": "Setup - Soft-delete project",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 204', function () { pm.response.to.have.status(204); });",
+                  "pm.test('Response body is empty', function () { pm.expect(pm.response.text()).to.equal(''); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/projects/{{deletedProjectId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["projects", "{{deletedProjectId}}"]
+            }
+          }
+        },
+        {
+          "name": "Create task in own project",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 201', function () { pm.response.to.have.status(201); });",
+                  "const response = pm.response.json();",
+                  "pm.test('Created task has expected title and description', function () { pm.expect(response.title).to.equal('Postman primary task'); pm.expect(response.description).to.equal('Task created in an owned project'); });",
+                  "pm.environment.set('taskId', String(response.id));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Postman primary task\",\n  \"description\": \"Task created in an owned project\",\n  \"projectId\": {{projectId}}\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/tasks",
+              "host": ["{{baseUrl}}"],
+              "path": ["tasks"]
+            }
+          }
+        },
+        {
+          "name": "Setup - Create active task for paging",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 201', function () { pm.response.to.have.status(201); });",
+                  "const response = pm.response.json();",
+                  "pm.test('Created task belongs to the project', function () { pm.expect(response.projectId).to.equal(Number(pm.environment.get('projectId'))); });",
+                  "pm.environment.set('pageTaskId', String(response.id));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Postman page task one\",\n  \"description\": \"First active page fixture\",\n  \"projectId\": {{projectId}}\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/tasks",
+              "host": ["{{baseUrl}}"],
+              "path": ["tasks"]
+            }
+          }
+        },
+        {
+          "name": "Setup - Create second active task for paging",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 201', function () { pm.response.to.have.status(201); });",
+                  "const response = pm.response.json();",
+                  "pm.environment.set('pageTaskTwoId', String(response.id));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Postman page task two\",\n  \"description\": \"Second active page fixture\",\n  \"projectId\": {{projectId}}\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/tasks",
+              "host": ["{{baseUrl}}"],
+              "path": ["tasks"]
+            }
+          }
+        },
+        {
+          "name": "Setup - Create completed task",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 201', function () { pm.response.to.have.status(201); });",
+                  "const response = pm.response.json();",
+                  "pm.test('Task is completed', function () { pm.expect(response.isDone).to.equal(true); });",
+                  "pm.environment.set('completedTaskId', String(response.id));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Postman completed task\",\n  \"description\": \"Completed status fixture\",\n  \"projectId\": {{projectId}},\n  \"isDone\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/tasks",
+              "host": ["{{baseUrl}}"],
+              "path": ["tasks"]
+            }
+          }
+        },
+        {
+          "name": "Setup - Create Harvey task",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 201', function () { pm.response.to.have.status(201); });",
+                  "const response = pm.response.json();",
+                  "pm.environment.set('taskIdB', String(response.id));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{tokenB}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Harvey private task\",\n  \"description\": \"Must not appear for James\",\n  \"projectId\": {{projectIdB}}\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/tasks",
+              "host": ["{{baseUrl}}"],
+              "path": ["tasks"]
+            }
+          }
+        },
+        {
+          "name": "Setup - Create task to soft-delete",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 201', function () { pm.response.to.have.status(201); });",
+                  "const response = pm.response.json();",
+                  "pm.environment.set('deleteTaskId', String(response.id));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Postman delete fixture\",\n  \"description\": \"Soft-delete behavior fixture\",\n  \"projectId\": {{projectId}}\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/tasks",
+              "host": ["{{baseUrl}}"],
+              "path": ["tasks"]
+            }
+          }
+        },
+        {
+          "name": "Create task with empty title returns 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 400', function () { pm.response.to.have.status(400); });",
+                  "pm.test('Response contains an error message', function () { pm.expect(pm.response.json()).to.have.property('error').that.is.a('string'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"   \",\n  \"description\": \"Invalid empty title\",\n  \"projectId\": {{projectId}}\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/tasks",
+              "host": ["{{baseUrl}}"],
+              "path": ["tasks"]
+            }
+          }
+        },
+        {
+          "name": "Create task with over-long title returns 400",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.variables.set('longTitle', 'x'.repeat(201));"]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 400', function () { pm.response.to.have.status(400); });",
+                  "pm.test('Response contains an error message', function () { pm.expect(pm.response.json()).to.have.property('error').that.is.a('string'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"{{longTitle}}\",\n  \"description\": \"Invalid over-long title\",\n  \"projectId\": {{projectId}}\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/tasks",
+              "host": ["{{baseUrl}}"],
+              "path": ["tasks"]
+            }
+          }
+        },
+        {
+          "name": "Create task with invalid body returns 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 400', function () { pm.response.to.have.status(400); });",
+                  "pm.test('Response contains an error message', function () { pm.expect(pm.response.json()).to.have.property('error').that.is.a('string'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": 12,\n  \"projectId\": {{projectId}},\n  \"unsupported\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/tasks",
+              "host": ["{{baseUrl}}"],
+              "path": ["tasks"]
+            }
+          }
+        },
+        {
+          "name": "Create task with missing project returns 404",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 404', function () { pm.response.to.have.status(404); });",
+                  "pm.test('Response contains an error message', function () { pm.expect(pm.response.json()).to.have.property('error').that.is.a('string'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Missing project fixture\",\n  \"description\": \"Must not be created\",\n  \"projectId\": {{missingProjectId}}\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/tasks",
+              "host": ["{{baseUrl}}"],
+              "path": ["tasks"]
+            }
+          }
+        },
+        {
+          "name": "Create task with deleted project returns 404",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 404', function () { pm.response.to.have.status(404); });",
+                  "pm.test('Response contains an error message', function () { pm.expect(pm.response.json()).to.have.property('error').that.is.a('string'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Deleted project fixture\",\n  \"description\": \"Must not be created\",\n  \"projectId\": {{deletedProjectId}}\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/tasks",
+              "host": ["{{baseUrl}}"],
+              "path": ["tasks"]
+            }
+          }
+        },
+        {
+          "name": "Create task in another user project returns 404",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 404', function () { pm.response.to.have.status(404); });",
+                  "pm.test('Response contains an error message', function () { pm.expect(pm.response.json()).to.have.property('error').that.is.a('string'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Foreign project fixture\",\n  \"description\": \"Must not be created\",\n  \"projectId\": {{projectIdB}}\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/tasks",
+              "host": ["{{baseUrl}}"],
+              "path": ["tasks"]
+            }
+          }
+        },
+        {
+          "name": "Rejected project assignments create no tasks",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "const response = pm.response.json();",
+                  "pm.test('Rejected tasks were not persisted', function () { const titles = response.map((task) => task.title); pm.expect(titles).not.to.include('Missing project fixture'); pm.expect(titles).not.to.include('Deleted project fixture'); pm.expect(titles).not.to.include('Foreign project fixture'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/tasks?status=all&page=1&pageSize=100",
+              "host": ["{{baseUrl}}"],
+              "path": ["tasks"],
+              "query": [
+                { "key": "status", "value": "all" },
+                { "key": "page", "value": "1" },
+                { "key": "pageSize", "value": "100" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List active tasks filtered by project",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "const response = pm.response.json();",
+                  "pm.test('Only active tasks from the requested project are returned', function () { pm.expect(response).to.be.an('array'); response.forEach((task) => { pm.expect(task.projectId).to.equal(Number(pm.environment.get('projectId'))); pm.expect(task.isDone).to.equal(false); }); });",
+                  "pm.test('Other-user task is excluded', function () { pm.expect(response.map((task) => String(task.id))).not.to.include(pm.environment.get('taskIdB')); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/tasks?projectId={{projectId}}&status=active&page=1&pageSize=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["tasks"],
+              "query": [
+                { "key": "projectId", "value": "{{projectId}}" },
+                { "key": "status", "value": "active" },
+                { "key": "page", "value": "1" },
+                { "key": "pageSize", "value": "20" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List completed tasks by status",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "const response = pm.response.json();",
+                  "pm.test('Only completed tasks are returned', function () { pm.expect(response).to.be.an('array').and.not.empty; response.forEach((task) => pm.expect(task.isDone).to.equal(true)); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/tasks?projectId={{projectId}}&status=completed&page=1&pageSize=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["tasks"],
+              "query": [
+                { "key": "projectId", "value": "{{projectId}}" },
+                { "key": "status", "value": "completed" },
+                { "key": "page", "value": "1" },
+                { "key": "pageSize", "value": "20" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List tasks page one",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "const response = pm.response.json();",
+                  "pm.test('Page one honors page size', function () { pm.expect(response).to.be.an('array').with.length(1); });",
+                  "pm.environment.set('firstPageTaskId', String(response[0].id));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/tasks?projectId={{projectId}}&status=active&page=1&pageSize=1",
+              "host": ["{{baseUrl}}"],
+              "path": ["tasks"],
+              "query": [
+                { "key": "projectId", "value": "{{projectId}}" },
+                { "key": "status", "value": "active" },
+                { "key": "page", "value": "1" },
+                { "key": "pageSize", "value": "1" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List tasks page two",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "const response = pm.response.json();",
+                  "pm.test('Page two honors page size and advances results', function () { pm.expect(response).to.be.an('array').with.length(1); pm.expect(String(response[0].id)).not.to.equal(pm.environment.get('firstPageTaskId')); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/tasks?projectId={{projectId}}&status=active&page=2&pageSize=1",
+              "host": ["{{baseUrl}}"],
+              "path": ["tasks"],
+              "query": [
+                { "key": "projectId", "value": "{{projectId}}" },
+                { "key": "status", "value": "active" },
+                { "key": "page", "value": "2" },
+                { "key": "pageSize", "value": "1" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get own task returns 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "const response = pm.response.json();",
+                  "pm.test('Response is the requested task', function () { pm.expect(String(response.id)).to.equal(pm.environment.get('taskId')); pm.expect(response.title).to.equal('Postman primary task'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/tasks/{{taskId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["tasks", "{{taskId}}"]
+            }
+          }
+        },
+        {
+          "name": "Get another user task returns 404",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 404', function () { pm.response.to.have.status(404); });",
+                  "pm.test('Response contains an error message', function () { pm.expect(pm.response.json()).to.have.property('error').that.is.a('string'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/tasks/{{taskIdB}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["tasks", "{{taskIdB}}"]
+            }
+          }
+        },
+        {
+          "name": "Get missing task returns 404",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 404', function () { pm.response.to.have.status(404); });",
+                  "pm.test('Response contains an error message', function () { pm.expect(pm.response.json()).to.have.property('error').that.is.a('string'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/tasks/{{missingTaskId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["tasks", "{{missingTaskId}}"]
+            }
+          }
+        },
+        {
+          "name": "Get malformed task ID returns 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 400', function () { pm.response.to.have.status(400); });",
+                  "pm.test('Response contains an error message', function () { pm.expect(pm.response.json()).to.have.property('error').that.is.a('string'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/tasks/not-an-integer",
+              "host": ["{{baseUrl}}"],
+              "path": ["tasks", "not-an-integer"]
+            }
+          }
+        },
+        {
+          "name": "Update task returns the API success message",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "const response = pm.response.json();",
+                  "pm.test('Update response matches the API spec', function () { pm.expect(response.taskId).to.equal(Number(pm.environment.get('taskId'))); pm.expect(response.message).to.equal('Task updated successfully'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Postman updated task\",\n  \"description\": \"Updated and persisted description\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/tasks/{{taskId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["tasks", "{{taskId}}"]
+            }
+          }
+        },
+        {
+          "name": "Updated title and description persist",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "const response = pm.response.json();",
+                  "pm.test('Updated fields persist', function () { pm.expect(response.title).to.equal('Postman updated task'); pm.expect(response.description).to.equal('Updated and persisted description'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/tasks/{{taskId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["tasks", "{{taskId}}"]
+            }
+          }
+        },
+        {
+          "name": "Move task to another owned project",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "const response = pm.response.json();",
+                  "pm.test('Move response matches the update API spec', function () { pm.expect(response.taskId).to.equal(Number(pm.environment.get('taskId'))); pm.expect(response.message).to.equal('Task updated successfully'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"projectId\": {{projectId2}}\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/tasks/{{taskId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["tasks", "{{taskId}}"]
+            }
+          }
+        },
+        {
+          "name": "Move task to another user project is rejected",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 404', function () { pm.response.to.have.status(404); });",
+                  "pm.test('Response contains an error message', function () { pm.expect(pm.response.json()).to.have.property('error').that.is.a('string'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"projectId\": {{projectIdB}}\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/tasks/{{taskId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["tasks", "{{taskId}}"]
+            }
+          }
+        },
+        {
+          "name": "Task remains in owned project after rejected move",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "const response = pm.response.json();",
+                  "pm.test('Rejected move did not change project', function () { pm.expect(response.projectId).to.equal(Number(pm.environment.get('projectId2'))); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/tasks/{{taskId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["tasks", "{{taskId}}"]
+            }
+          }
+        },
+        {
+          "name": "Delete task is a soft delete",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "const response = pm.response.json();",
+                  "pm.test('Delete response matches the API spec', function () { pm.expect(response.message).to.equal('Task deleted successfully'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/tasks/{{deleteTaskId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["tasks", "{{deleteTaskId}}"]
+            }
+          }
+        },
+        {
+          "name": "Soft-deleted task leaves the list",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "const response = pm.response.json();",
+                  "pm.test('Deleted task is excluded from list', function () { pm.expect(response.map((task) => String(task.id))).not.to.include(pm.environment.get('deleteTaskId')); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/tasks?projectId={{projectId}}&status=all&page=1&pageSize=100",
+              "host": ["{{baseUrl}}"],
+              "path": ["tasks"],
+              "query": [
+                { "key": "projectId", "value": "{{projectId}}" },
+                { "key": "status", "value": "all" },
+                { "key": "page", "value": "1" },
+                { "key": "pageSize", "value": "100" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get soft-deleted task returns 404",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 404', function () { pm.response.to.have.status(404); });",
+                  "pm.test('Response contains an error message', function () { pm.expect(pm.response.json()).to.have.property('error').that.is.a('string'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/tasks/{{deleteTaskId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["tasks", "{{deleteTaskId}}"]
+            }
+          }
+        },
+        {
+          "name": "Second delete returns 404",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 404', function () { pm.response.to.have.status(404); });",
+                  "pm.test('Response contains an error message', function () { pm.expect(pm.response.json()).to.have.property('error').that.is.a('string'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/tasks/{{deleteTaskId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["tasks", "{{deleteTaskId}}"]
+            }
+          }
+        },
+        {
+          "name": "Create task without token returns 401",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 401', function () { pm.response.to.have.status(401); });",
+                  "pm.test('Response contains an error message', function () { pm.expect(pm.response.json()).to.have.property('error').that.is.a('string'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Unauthenticated create\",\n  \"projectId\": {{projectId}}\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/tasks",
+              "host": ["{{baseUrl}}"],
+              "path": ["tasks"]
+            }
+          }
+        },
+        {
+          "name": "List tasks without token returns 401",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 401', function () { pm.response.to.have.status(401); });",
+                  "pm.test('Response contains an error message', function () { pm.expect(pm.response.json()).to.have.property('error').that.is.a('string'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/tasks",
+              "host": ["{{baseUrl}}"],
+              "path": ["tasks"]
+            }
+          }
+        },
+        {
+          "name": "Get task without token returns 401",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 401', function () { pm.response.to.have.status(401); });",
+                  "pm.test('Response contains an error message', function () { pm.expect(pm.response.json()).to.have.property('error').that.is.a('string'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/tasks/{{taskId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["tasks", "{{taskId}}"]
+            }
+          }
+        },
+        {
+          "name": "Update task without token returns 401",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 401', function () { pm.response.to.have.status(401); });",
+                  "pm.test('Response contains an error message', function () { pm.expect(pm.response.json()).to.have.property('error').that.is.a('string'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Unauthenticated update\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/tasks/{{taskId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["tasks", "{{taskId}}"]
+            }
+          }
+        },
+        {
+          "name": "Delete task without token returns 401",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 401', function () { pm.response.to.have.status(401); });",
+                  "pm.test('Response contains an error message', function () { pm.expect(pm.response.json()).to.have.property('error').that.is.a('string'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/tasks/{{taskId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["tasks", "{{taskId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "339-task-organization",
+      "description": "Task priorities, filtering, task ordering, and per-user labels with ownership checks.",
+      "item": [
+        {
+          "name": "Login - James (token)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "const response = pm.response.json();",
+                  "pm.test('Login returns a token', function () { pm.expect(response.token).to.be.a('string').and.not.empty; });",
+                  "pm.environment.set('token', response.token);",
+                  "pm.environment.set('runId', Date.now().toString());"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"identifier\": \"james@example.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Login - Harvey (tokenB)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "const response = pm.response.json();",
+                  "pm.environment.set('tokenB', response.token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"identifier\": \"harvey@example.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Create task for James",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 201', function () { pm.response.to.have.status(201); });",
+                  "const response = pm.response.json();",
+                  "pm.test('Task has an ID and requested title', function () { pm.expect(response.id).to.be.a('number'); pm.expect(response.title).to.equal('Organization task ' + pm.environment.get('runId')); });",
+                  "pm.environment.set('orgTaskId', String(response.id));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Organization task {{runId}}\",\n  \"priority\": \"medium\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/tasks",
+              "host": ["{{baseUrl}}"],
+              "path": ["tasks"]
+            }
+          }
+        },
+        {
+          "name": "Create task for Harvey",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 201', function () { pm.response.to.have.status(201); });",
+                  "const response = pm.response.json();",
+                  "pm.test('Harvey task has an ID', function () { pm.expect(response.id).to.be.a('number'); });",
+                  "pm.environment.set('orgTaskIdB', String(response.id));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{tokenB}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Harvey organization task {{runId}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/tasks",
+              "host": ["{{baseUrl}}"],
+              "path": ["tasks"]
+            }
+          }
+        },
+        {
+          "name": "Create label for James",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 201', function () { pm.response.to.have.status(201); });",
+                  "const response = pm.response.json();",
+                  "pm.test('Label name and ID are returned', function () { pm.expect(response.id).to.be.a('number'); pm.expect(response.name).to.equal('Organization Work ' + pm.environment.get('runId')); });",
+                  "pm.environment.set('orgLabelId', String(response.id));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Organization Work {{runId}}\",\n  \"color\": \"#f59e0b\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/labels",
+              "host": ["{{baseUrl}}"],
+              "path": ["labels"]
+            }
+          }
+        },
+        {
+          "name": "Create second label with same name for Harvey",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 201', function () { pm.response.to.have.status(201); });",
+                  "const response = pm.response.json();",
+                  "pm.test('Other user can reuse the label name', function () { pm.expect(response.id).to.be.a('number'); pm.expect(response.name).to.equal('Organization Work ' + pm.environment.get('runId')); });",
+                  "pm.environment.set('orgLabelIdB', String(response.id));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{tokenB}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Organization Work {{runId}}\",\n  \"color\": \"#3b82f6\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/labels",
+              "host": ["{{baseUrl}}"],
+              "path": ["labels"]
+            }
+          }
+        },
+        {
+          "name": "Create a label with no attached tasks",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 201', function () { pm.response.to.have.status(201); });",
+                  "const response = pm.response.json();",
+                  "pm.test('Unassigned label is created', function () { pm.expect(response.id).to.be.a('number'); });",
+                  "pm.environment.set('orgUnusedLabelId', String(response.id));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Unassigned {{runId}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/labels",
+              "host": ["{{baseUrl}}"],
+              "path": ["labels"]
+            }
+          }
+        },
+        {
+          "name": "Create a second James label for cascade test",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 201', function () { pm.response.to.have.status(201); });",
+                  "const response = pm.response.json();",
+                  "pm.test('Cascade label is created', function () { pm.expect(response.id).to.be.a('number'); });",
+                  "pm.environment.set('orgCascadeLabelId', String(response.id));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Cascade {{runId}}\",\n  \"color\": \"#8b5cf6\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/labels",
+              "host": ["{{baseUrl}}"],
+              "path": ["labels"]
+            }
+          }
+        },
+        {
+          "name": "Reject duplicate label name for James",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 409', function () { pm.response.to.have.status(409); });",
+                  "pm.test('Duplicate label has the expected code', function () { pm.expect(pm.response.json().code).to.equal('label-name-taken'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Organization Work {{runId}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/labels",
+              "host": ["{{baseUrl}}"],
+              "path": ["labels"]
+            }
+          }
+        },
+        {
+          "name": "Reject invalid label color",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 400', function () { pm.response.to.have.status(400); });",
+                  "pm.test('Response contains an error message', function () { pm.expect(pm.response.json()).to.have.property('error').that.is.a('string'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Invalid color {{runId}}\",\n  \"color\": \"red\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/labels",
+              "host": ["{{baseUrl}}"],
+              "path": ["labels"]
+            }
+          }
+        },
+        {
+          "name": "Reject blank label name",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 400', function () { pm.response.to.have.status(400); });",
+                  "pm.test('Response contains an error message', function () { pm.expect(pm.response.json()).to.have.property('error').that.is.a('string'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"   \"\n}" },
+            "url": {
+              "raw": "{{baseUrl}}/labels",
+              "host": ["{{baseUrl}}"],
+              "path": ["labels"]
+            }
+          }
+        },
+        {
+          "name": "List James labels only",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('James label is listed', function () { pm.expect(pm.response.json().some((label) => String(label.id) === pm.environment.get('orgLabelId'))).to.equal(true); });",
+                  "pm.test('Harvey label is not exposed', function () { pm.expect(pm.response.json().some((label) => String(label.id) === pm.environment.get('orgLabelIdB'))).to.equal(false); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/labels",
+              "host": ["{{baseUrl}}"],
+              "path": ["labels"]
+            }
+          }
+        },
+        {
+          "name": "List Harvey labels only",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Harvey label is listed', function () { pm.expect(pm.response.json().some((label) => String(label.id) === pm.environment.get('orgLabelIdB'))).to.equal(true); });",
+                  "pm.test('James label is not exposed', function () { pm.expect(pm.response.json().some((label) => String(label.id) === pm.environment.get('orgLabelId'))).to.equal(false); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{tokenB}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/labels",
+              "host": ["{{baseUrl}}"],
+              "path": ["labels"]
+            }
+          }
+        },
+        {
+          "name": "Update label name and color",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Label update persisted', function () { pm.expect(pm.response.json().name).to.equal('Updated Work ' + pm.environment.get('runId')); pm.expect(pm.response.json().color.trim()).to.equal('#10b981'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Work {{runId}}\",\n  \"color\": \"#10b981\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/labels/{{orgLabelId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["labels", "{{orgLabelId}}"]
+            }
+          }
+        },
+        {
+          "name": "Set supported task priority",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Priority was saved', function () { pm.expect(pm.response.json().priority).to.equal('high'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"priority\": \"high\"\n}" },
+            "url": {
+              "raw": "{{baseUrl}}/tasks/{{orgTaskId}}/priority",
+              "host": ["{{baseUrl}}"],
+              "path": ["tasks", "{{orgTaskId}}", "priority"]
+            }
+          }
+        },
+        {
+          "name": "Reject unsupported task priority",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 400', function () { pm.response.to.have.status(400); });",
+                  "pm.test('Response contains an error message', function () { pm.expect(pm.response.json()).to.have.property('error').that.is.a('string'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"priority\": \"urgent\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/tasks/{{orgTaskId}}/priority",
+              "host": ["{{baseUrl}}"],
+              "path": ["tasks", "{{orgTaskId}}", "priority"]
+            }
+          }
+        },
+        {
+          "name": "Attach label to task",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Labels were attached', function () { pm.expect(pm.response.json().labels).to.have.lengthOf(2); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"labelIds\": [\n    {{orgLabelId}},\n    {{orgCascadeLabelId}}\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/tasks/{{orgTaskId}}/labels",
+              "host": ["{{baseUrl}}"],
+              "path": ["tasks", "{{orgTaskId}}", "labels"]
+            }
+          }
+        },
+        {
+          "name": "Attach the same label again safely",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Duplicate attachment is idempotent', function () { pm.expect(pm.response.json().labels).to.have.lengthOf(2); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"labelIds\": [\n    {{orgLabelId}}\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/tasks/{{orgTaskId}}/labels",
+              "host": ["{{baseUrl}}"],
+              "path": ["tasks", "{{orgTaskId}}", "labels"]
+            }
+          }
+        },
+        {
+          "name": "Reject attaching another user label",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 404', function () { pm.response.to.have.status(404); });",
+                  "pm.test('Response contains an error message', function () { pm.expect(pm.response.json()).to.have.property('error').that.is.a('string'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"labelIds\": [\n    {{orgLabelIdB}}\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/tasks/{{orgTaskId}}/labels",
+              "host": ["{{baseUrl}}"],
+              "path": ["tasks", "{{orgTaskId}}", "labels"]
+            }
+          }
+        },
+        {
+          "name": "Reject attaching own label to another user task",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 404', function () { pm.response.to.have.status(404); });",
+                  "pm.test('Response contains an error message', function () { pm.expect(pm.response.json()).to.have.property('error').that.is.a('string'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"labelIds\": [\n    {{orgLabelId}}\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/tasks/{{orgTaskIdB}}/labels",
+              "host": ["{{baseUrl}}"],
+              "path": ["tasks", "{{orgTaskIdB}}", "labels"]
+            }
+          }
+        },
+        {
+          "name": "List labels attached to task",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Task has both attached labels', function () { pm.expect(pm.response.json()).to.have.lengthOf(2); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/tasks/{{orgTaskId}}/labels",
+              "host": ["{{baseUrl}}"],
+              "path": ["tasks", "{{orgTaskId}}", "labels"]
+            }
+          }
+        },
+        {
+          "name": "Filter tasks by priority only",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Every task has the requested priority', function () { pm.expect(pm.response.json().every((task) => task.priority === 'high')).to.equal(true); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/tasks?priority=high",
+              "host": ["{{baseUrl}}"],
+              "path": ["tasks"],
+              "query": [{ "key": "priority", "value": "high" }]
+            }
+          }
+        },
+        {
+          "name": "Filter tasks by label only",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('The labeled task is included', function () { pm.expect(pm.response.json().some((task) => String(task.id) === pm.environment.get('orgTaskId'))).to.equal(true); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/tasks?labelId={{orgLabelId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["tasks"],
+              "query": [{ "key": "labelId", "value": "{{orgLabelId}}" }]
+            }
+          }
+        },
+        {
+          "name": "Filter tasks by priority and label",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Both filters match the task', function () { pm.expect(pm.response.json().some((task) => String(task.id) === pm.environment.get('orgTaskId'))).to.equal(true); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/tasks?priority=high&labelId={{orgLabelId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["tasks"],
+              "query": [
+                { "key": "priority", "value": "high" },
+                { "key": "labelId", "value": "{{orgLabelId}}" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Filtering by unused label returns empty list",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('No tasks match the unused label', function () { pm.expect(pm.response.json()).to.be.an('array').that.is.empty; });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/tasks?labelId={{orgUnusedLabelId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["tasks"],
+              "query": [{ "key": "labelId", "value": "{{orgUnusedLabelId}}" }]
+            }
+          }
+        },
+        {
+          "name": "Order tasks by priority",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Tasks are sorted by descending priority', function () { const order = { low: 1, medium: 2, high: 3 }; const tasks = pm.response.json(); pm.expect(tasks).to.be.an('array'); for (let i = 1; i < tasks.length; i++) { pm.expect(order[tasks[i - 1].priority]).to.be.at.least(order[tasks[i].priority]); if (tasks[i - 1].priority === tasks[i].priority) pm.expect(tasks[i - 1].id).to.be.at.most(tasks[i].id); } });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/tasks?orderBy=priority&orderDirection=desc",
+              "host": ["{{baseUrl}}"],
+              "path": ["tasks"],
+              "query": [
+                { "key": "orderBy", "value": "priority" },
+                { "key": "orderDirection", "value": "desc" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Detach label from task",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('The remaining label stays attached', function () { pm.expect(pm.response.json().labels).to.have.lengthOf(1); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/tasks/{{orgTaskId}}/labels/{{orgLabelId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["tasks", "{{orgTaskId}}", "labels", "{{orgLabelId}}"]
+            }
+          }
+        },
+        {
+          "name": "Detaching the same label again is safe",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Repeated detach is safe', function () { pm.expect(pm.response.json().labels).to.have.lengthOf(1); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/tasks/{{orgTaskId}}/labels/{{orgLabelId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["tasks", "{{orgTaskId}}", "labels", "{{orgLabelId}}"]
+            }
+          }
+        },
+        {
+          "name": "Delete an attached label without deleting the task",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 204', function () { pm.response.to.have.status(204); });",
+                  "pm.test('Response body is empty', function () { pm.expect(pm.response.text()).to.equal(''); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/labels/{{orgCascadeLabelId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["labels", "{{orgCascadeLabelId}}"]
+            }
+          }
+        },
+        {
+          "name": "Task-label link is removed by label deletion",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Task remains and the deleted label is detached', function () { pm.expect(pm.response.json().id).to.equal(Number(pm.environment.get('orgTaskId'))); pm.expect(pm.response.json().labels).to.be.an('array').that.is.empty; });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/tasks/{{orgTaskId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["tasks", "{{orgTaskId}}"]
+            }
+          }
+        },
+        {
+          "name": "Delete label without deleting the task",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 204', function () { pm.response.to.have.status(204); });",
+                  "pm.test('Response body is empty', function () { pm.expect(pm.response.text()).to.equal(''); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/labels/{{orgLabelId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["labels", "{{orgLabelId}}"]
+            }
+          }
+        },
+        {
+          "name": "Task remains after label deletion",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Task still exists without labels', function () { pm.expect(pm.response.json().id).to.equal(Number(pm.environment.get('orgTaskId'))); pm.expect(pm.response.json().labels).to.be.an('array').that.is.empty; });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/tasks/{{orgTaskId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["tasks", "{{orgTaskId}}"]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000/api",
+      "type": "string",
+      "description": "Derived from NG_APP_API_BASE_URL and backend PORT examples."
+    },
+    {
+      "key": "token",
+      "value": "PASTE_TOKEN_OR_RUN_JAMES_LOGIN_FIRST",
+      "type": "string",
+      "description": "Placeholder only; the James login request replaces it."
+    },
+    {
+      "key": "tokenB",
+      "value": "PASTE_TOKEN_OR_RUN_HARVEY_LOGIN_FIRST",
+      "type": "string",
+      "description": "Placeholder only; the Harvey login request replaces it."
+    },
+    {
+      "key": "projectId",
+      "value": "1",
+      "type": "string",
+      "description": "Sample only; setup creates and replaces it."
+    },
+    {
+      "key": "projectId2",
+      "value": "2",
+      "type": "string",
+      "description": "Sample only; setup creates and replaces it."
+    },
+    {
+      "key": "projectIdB",
+      "value": "3",
+      "type": "string",
+      "description": "Sample only; setup creates and replaces it."
+    },
+    {
+      "key": "deletedProjectId",
+      "value": "4",
+      "type": "string",
+      "description": "Sample only; setup creates and replaces it."
+    },
+    {
+      "key": "taskId",
+      "value": "1",
+      "type": "string",
+      "description": "Sample only; task creation replaces it."
+    },
+    {
+      "key": "taskIdB",
+      "value": "2",
+      "type": "string",
+      "description": "Sample only; setup replaces it."
+    },
+    {
+      "key": "deleteTaskId",
+      "value": "3",
+      "type": "string",
+      "description": "Sample only; setup replaces it."
+    },
+    {
+      "key": "pageTaskId",
+      "value": "4",
+      "type": "string",
+      "description": "Sample only; setup replaces it."
+    },
+    {
+      "key": "pageTaskTwoId",
+      "value": "5",
+      "type": "string",
+      "description": "Sample only; setup replaces it."
+    },
+    {
+      "key": "firstPageTaskId",
+      "value": "4",
+      "type": "string",
+      "description": "Sample only; paging request replaces it."
+    },
+    {
+      "key": "completedTaskId",
+      "value": "6",
+      "type": "string",
+      "description": "Sample only; setup replaces it."
+    },
+    { "key": "missingProjectId", "value": "999999999", "type": "string" },
+    { "key": "missingTaskId", "value": "999999999", "type": "string" },
+    { "key": "runId", "value": "organization-test", "type": "string" },
+    { "key": "orgTaskId", "value": "1", "type": "string" },
+    { "key": "orgTaskIdB", "value": "2", "type": "string" },
+    { "key": "orgLabelId", "value": "1", "type": "string" },
+    { "key": "orgLabelIdB", "value": "2", "type": "string" },
+    { "key": "orgUnusedLabelId", "value": "3", "type": "string" },
+    { "key": "orgCascadeLabelId", "value": "4", "type": "string" }
+  ]
+}

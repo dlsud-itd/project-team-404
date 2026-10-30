@@ -9,13 +9,18 @@ const task: TaskRecord = {
   projectId: 7,
   title: 'Plan sprint review',
   description: 'Outline the demo and risks.',
-  priority: 'high',
+  priorityId: 3,
   dueDate: new Date('2026-10-31T00:00:00.000Z'),
+  scheduledDate: null,
+  deadline: null,
+  recurrence: 'none',
   isDone: false,
   doneAt: null,
   createdAt: new Date('2026-10-20T00:00:00.000Z'),
   updatedAt: new Date('2026-10-20T00:00:00.000Z'),
   deletedAt: null,
+  priorityLevel: { id: 3, name: 'high', sortOrder: 3 },
+  taskLabels: [],
 };
 
 function dependencies() {
@@ -76,6 +81,7 @@ describe('TaskCrudService', () => {
       status: 'active' as const,
       page: 1,
       pageSize: 20,
+      orderDirection: 'asc' as const,
     };
     const result = await service.list('user-123', filters);
 

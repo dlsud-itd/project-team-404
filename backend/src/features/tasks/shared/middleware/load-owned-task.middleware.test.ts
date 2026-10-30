@@ -9,13 +9,18 @@ const task: TaskRecord = {
   projectId: 4,
   title: 'Review sprint plan',
   description: null,
-  priority: 'medium',
+  priorityId: 2,
   dueDate: null,
+  scheduledDate: null,
+  deadline: null,
+  recurrence: 'none',
   isDone: false,
   doneAt: null,
   createdAt: new Date(),
   updatedAt: new Date(),
   deletedAt: null,
+  priorityLevel: { id: 2, name: 'medium', sortOrder: 2 },
+  taskLabels: [],
 };
 
 function context() {

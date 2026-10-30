@@ -7,6 +7,7 @@ import {
 } from './features/auth/auth.routes';
 import { createProjectCrudRouter } from './features/projects/project-crud/project-crud.routes';
 import { createTasksRouter } from './features/tasks/tasks.routes';
+import { createLabelsRouter } from './features/labels/labels.routes';
 import { errorHandler } from './middleware/error-handler.middleware';
 
 export const app = express();
@@ -18,6 +19,7 @@ const sessions = createSessionService();
 app.use('/api/auth', createAuthRouter({ sessionService: sessions }));
 app.use('/api/projects', createProjectCrudRouter(sessions));
 app.use('/api/tasks', createTasksRouter(sessions));
+app.use('/api/labels', createLabelsRouter(sessions));
 
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok' });
