@@ -213,8 +213,7 @@ export class ProjectForm {
         takeUntilDestroyed(this.destroyRef),
       )
       .subscribe({
-        next: () => {
-          const updated = { ...project, ...changes };
+        next: (updated) => {
           this.project.set(updated);
           this.form.reset({
             name: updated.name,
@@ -231,9 +230,8 @@ export class ProjectForm {
   private showError(error: unknown): void {
     const { message, field, notFound } = mapProjectError(error);
     if (notFound) {
-      this.formError.set(message);
-      // The list is out of date; reload it so the missing project disappears.
-      this.projects.refresh().subscribe({ error: () => {} });
+      // The project is gone: back to the list, which reloads and shows why.
+      void this.router.navigateByUrl('/projects', { state: { error: message } });
       return;
     }
     if (field) this.serverErrors.set({ [field]: message });

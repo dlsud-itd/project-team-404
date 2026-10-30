@@ -9,7 +9,6 @@ import type {
   DeleteProjectResponse,
   Project,
   UpdateProjectRequest,
-  UpdateProjectResponse,
 } from '../../shared/types/project.types';
 import { mapProjectError } from '../mappers/project-error.mapper';
 import { toProject } from '../mappers/project.mapper';
@@ -28,7 +27,7 @@ export class ProjectService {
   /** GET /api/projects. `archived` limits the list to archived or active projects. */
   list(archived?: boolean): Observable<Project[]> {
     const params =
-      archived === undefined ? undefined : new HttpParams().set('archived', String(archived));
+      archived === undefined ? undefined : new HttpParams().set('isArchived', String(archived));
     return this.http
       .get<ApiProject[]>(this.baseUrl, { params })
       .pipe(map((projects) => projects.map(toProject)));
@@ -65,18 +64,22 @@ export class ProjectService {
     );
   }
 
-  /** PUT /api/projects/{id} with only the changed fields. */
-  update(projectId: number, changes: UpdateProjectRequest): Observable<UpdateProjectResponse> {
-    return this.http
-      .put<UpdateProjectResponse>(`${this.baseUrl}/${projectId}`, changes)
-      .pipe(tap(() => this.store.patch(projectId, changes)));
+  /** PATCH /api/projects/{id} with only the changed fields; returns the saved project. */
+  update(projectId: number, changes: UpdateProjectRequest): Observable<Project> {
+    return this.http.patch<ApiProject>(`${this.baseUrl}/${projectId}`, changes).pipe(
+      map(toProject),
+      tap((project) => this.store.upsert(project)),
+    );
   }
 
   /** Soft-deletes a project; the server moves its tasks to the Inbox. */
   delete(projectId: number): Observable<DeleteProjectResponse> {
-    return this.http.delete<DeleteProjectResponse>(`${this.baseUrl}/${projectId}`).pipe(
-      tap(() => this.store.remove(projectId)),
-      map((response) => ({ ...response, movedTaskCount: response.movedTaskCount ?? 0 })),
-    );
+    // 204 No Content gives a null body.
+    return this.http
+      .delete<Partial<DeleteProjectResponse> | null>(`${this.baseUrl}/${projectId}`)
+      .pipe(
+        tap(() => this.store.remove(projectId)),
+        map((response) => ({ movedTaskCount: response?.movedTaskCount ?? 0 })),
+      );
   }
 }

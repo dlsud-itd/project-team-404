@@ -18,6 +18,26 @@ describe('mapProjectError', () => {
     });
   });
 
+  it.each([
+    ['name', 'Enter a project name of 150 characters or fewer.'],
+    ['description', 'Use 500 characters or fewer.'],
+    ['color', 'Pick one of the colors shown.'],
+  ] as const)('maps a 400 whose details name %s to that field', (field, message) => {
+    const body = {
+      error: 'Invalid project details',
+      details: [{ field, message: 'Too big: expected string to have <=150 characters' }],
+    };
+    expect(mapProjectError(httpError(400, body))).toEqual({ message, field, notFound: false });
+  });
+
+  it('ignores details that name no form field', () => {
+    const body = { error: 'Invalid project details', details: [{ field: '', message: 'x' }] };
+    expect(mapProjectError(httpError(400, body))).toEqual({
+      message: 'Invalid project details',
+      notFound: false,
+    });
+  });
+
   it('keeps a 400 message that names no field, without a field', () => {
     expect(mapProjectError(httpError(400, { error: 'Inbox project cannot be deleted' }))).toEqual({
       message: 'Inbox project cannot be deleted',
@@ -38,6 +58,14 @@ describe('mapProjectError', () => {
     expect(mapProjectError(httpError(404, { error: 'Invalid updating project.' }))).toEqual({
       message: 'Project not found.',
       notFound: true,
+    });
+  });
+
+  it('maps 403 to the read-only Inbox message', () => {
+    const body = { error: 'Inbox project cannot be edited or deleted' };
+    expect(mapProjectError(httpError(403, body))).toEqual({
+      message: "Your Inbox is read-only, so it can't be changed.",
+      notFound: false,
     });
   });
 
