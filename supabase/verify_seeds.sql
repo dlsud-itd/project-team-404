@@ -156,4 +156,57 @@ from (
   )
   select bool_and(passed) as passed from project_seed_status
 ) as project_seed_status
+union all
+select
+  '005_tasks.sql' as seed_file,
+  case when passed then 'PASS' else 'FAIL' end as status,
+  case
+    when passed then 'Each seeded user has the expected sample tasks assigned to their projects or Inbox.'
+    else 'One or more seeded users are missing the expected tasks, project assignments, or due dates.'
+  end as details
+from (
+  with expected_tasks(email, project_name, title, description, priority, due_date, is_done) as (
+    values
+      ('james@example.com', 'Work', 'Prepare sprint notes', 'Summarize blockers, wins, and next steps for the team sync.', 'high', '2026-10-31'::date, false),
+      ('james@example.com', 'Home', 'Book weekend groceries', 'Finalize the shopping list and place the order before Saturday morning.', 'medium', '2026-11-02'::date, false),
+      ('harvey@example.com', 'Client Projects', 'Send client recap', 'Share the status update and next milestone notes with the client.', 'high', '2026-10-29'::date, true),
+      ('alex@example.com', 'Learning', 'Finish chapter review', 'Capture the key takeaways and finish the final recap question.', 'low', '2026-11-05'::date, false)
+  ),
+  task_seed_status as (
+    select
+      bool_and(
+        auth_user.id is not null
+        and task.task_id is not null
+        and task.user_id = auth_user.id
+        and task.title = expected.title
+        and task.description = expected.description
+        and task.priority::text = expected.priority
+        and task.due_date = expected.due_date
+        and task.is_done = expected.is_done
+        and task.deleted_at is null
+        and (
+          expected.project_name is null and task.project_id is null
+          or expected.project_name is not null and task.project_id = project.project_id
+        )
+        and (
+          select count(*)
+          from public.tbl_task as matching_task
+          where matching_task.user_id = auth_user.id
+            and matching_task.project_id is not distinct from project.project_id
+            and matching_task.title = expected.title
+            and matching_task.deleted_at is null
+        ) = 1
+      ) as passed
+    from expected_tasks as expected
+    left join auth.users as auth_user on auth_user.email = expected.email
+    left join public.tbl_project as project
+      on project.user_id = auth_user.id
+     and project.name = expected.project_name
+     and project.deleted_at is null
+    left join public.tbl_task as task
+      on task.user_id = auth_user.id
+     and task.title = expected.title
+  )
+  select bool_and(passed) as passed from task_seed_status
+) as task_seed_status
 order by seed_file;
