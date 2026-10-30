@@ -1,20 +1,20 @@
 # Sprint 2 Test Matrix
 
-Last Updated: October 21, 2026
+Last Updated: October 30, 2026
 
 ## Overview
 
-Combined backend and frontend test cases for Sprint 2 (Projects), based on API Specification v1.1, Section II (`/api/projects`): Project Listing & Retrieval, Project Creation, Project Editing, Favorite / Archive / Sort Order, and Project Deletion. Test IDs keep the Sprint 1 convention: `BE` for backend and `FE` for frontend.
+Combined backend and frontend test cases for Sprint 2 (Projects), based on API Specification v1.1, Section II (`/api/projects`): Project Listing & Retrieval, Project Creation, Project Editing, Favorite / Archive / Sort Order, and Project Deletion. Section 6 covers the public landing page at `/` and section 7 the signed-in Home dashboard at `/home`; neither calls a projects or tasks API yet. Test IDs keep the Sprint 1 convention: `BE` for backend and `FE` for frontend.
 
 Every `/api/projects` endpoint requires `Authorization: Bearer <token>` from `/api/auth/login` and only returns data owned by the authenticated user. Projects are stored in `tbl_project`. Deletion is soft (`deleted_at` is set), and soft-deleted projects are treated as not found.
 
 Frontend integration tests use the app's real routes, services, and `HttpClient`; only network requests are faked with `HttpTestingController`. Run with `npm test` from `frontend`.
 
-Backend integration tests belong in `backend/src/testing/integration` and run with `npm run test:integration` from `backend`, against the isolated Supabase test project described in the Sprint 1 matrix (`SUPABASE_TEST_URL`, `SUPABASE_TEST_SERVICE_ROLE_KEY`, `SUPABASE_TEST_DATABASE_URL`).
+Backend integration tests belong in `backend/tests/integration/features` and run with `npm run test:integration` from `backend`, against the isolated Supabase test project described in the Sprint 1 matrix (`SUPABASE_TEST_URL`, `SUPABASE_TEST_SERVICE_ROLE_KEY`, `SUPABASE_TEST_DATABASE_URL`).
 
 Project CRUD integration tests use the production app and its real authenticated router. They follow the current backend contract: create returns 201, updates use PATCH, and list filtering uses `isArchived`. The API specification describes different values (200, PUT, and `archived`); reconcile the spec and implementation separately. The current list API has no pagination parameters.
 
-Frontend routes for projects do not exist yet. This matrix assumes `/projects/:projectId` for a single project view; update the routes here once they are implemented.
+Frontend project routes are `/projects` (list), `/projects/new` (create page) and `/projects/:projectId/edit` (edit page), all behind `authGuard`. Rows written for a sidebar, an "Add project" dialog or a `/projects/:projectId` view are checked against these pages; rows for screens that do not exist yet (single project view, Archived view, inline rename, project menu) stay Failing.
 
 Status values: `Failing`, `Passing`, `Blocked`.
 
@@ -58,25 +58,32 @@ Status values: `Failing`, `Passing`, `Blocked`.
 
 | ID        | Test Case                                    | Expected Result                                                                | Status  |
 | --------- | -------------------------------------------- | ------------------------------------------------------------------------------ | ------- |
-| FE-LST-01 | Open the app while logged in                 | Sidebar shows Inbox first, then projects in `sortOrder` with name and color.   | Failing |
-| FE-LST-02 | View the Inbox entry                         | Inbox is visually distinct and has no archive or delete actions.               | Failing |
+| FE-LST-01 | Open the app while logged in                 | Sidebar shows Inbox first, then projects in `sortOrder` with name and color.   | Passing |
+| FE-LST-02 | View the Inbox entry                         | Inbox is visually distinct and has no archive or delete actions.               | Passing |
 | FE-LST-03 | View favorite projects                       | Favorite projects appear in a Favorites section.                               | Failing |
 | FE-LST-04 | View archived projects                       | Archived projects are hidden from the main list and shown in an Archived view. | Failing |
-| FE-LST-05 | User has only the Inbox                      | Empty state invites the user to create a project.                              | Failing |
-| FE-LST-06 | Load the project list                        | Loading state is shown until the list request finishes.                        | Failing |
-| FE-LST-07 | List request returns 500 or a network error  | Error is shown with a retry action.                                            | Failing |
+| FE-LST-05 | User has only the Inbox                      | Empty state invites the user to create a project.                              | Passing |
+| FE-LST-06 | Load the project list                        | Loading state is shown until the list request finishes.                        | Passing |
+| FE-LST-07 | List request returns 500 or a network error  | Error is shown with a retry action.                                            | Passing |
 | FE-LST-08 | Click a project in the list                  | Navigates to `/projects/:projectId` showing name, description, and color.      | Failing |
 | FE-LST-09 | Open `/projects/:projectId` that returns 404 | "Project not found" message with a link back to Inbox.                         | Failing |
-| FE-LST-10 | Visit a project route while unauthenticated  | User is redirected to `/login`.                                                | Failing |
+| FE-LST-10 | Visit a project route while unauthenticated  | User is redirected to `/login`.                                                | Passing |
 
 ### 1.5 Listing & Retrieval Frontend Integration Tests
 
 | ID        | Test Case                   | Expected Result                                                       | Status  |
 | --------- | --------------------------- | --------------------------------------------------------------------- | ------- |
-| FE-LST-11 | Load the project list       | Calls `GET /api/projects` with the token in the Authorization header. | Failing |
+| FE-LST-11 | Load the project list       | Calls `GET /api/projects` with the token in the Authorization header. | Passing |
 | FE-LST-12 | Open the Archived view      | Calls `GET /api/projects?archived=true`.                              | Failing |
-| FE-LST-13 | Open a project              | Calls `GET /api/projects/{projectId}` with the route's ID.            | Failing |
-| FE-LST-14 | Project request returns 401 | Session is cleared; user is redirected to `/login`.                   | Failing |
+| FE-LST-13 | Open a project              | Calls `GET /api/projects/{projectId}` with the route's ID.            | Passing |
+| FE-LST-14 | Project request returns 401 | Session is cleared; user is redirected to `/login`.                   | Passing |
+
+Tests: `frontend/tests/integration/features/projects/projects.integration.spec.ts`. They run through the real `/projects` routes behind `authGuard`, `ProjectService`, `ProjectsStore`, the project-permissions util and `authInterceptor`; the user is signed in by restoring a stored token and answering `GET /api/auth/me`. Response bodies follow `backend/src/features/projects/project-crud`.
+
+- FE-LST-01 and FE-LST-02 are checked on the `/projects` page (Inbox first, then by `sortOrder`, with name, description and color swatch; the Inbox card has a Read-only badge and no edit or delete controls). There is no sidebar list yet.
+- FE-LST-13 is checked through the edit page, which calls `GET /api/projects/{projectId}` with the route's ID. FE-LST-08, FE-LST-09 and FE-LST-12 need the single project view and Archived view, which do not exist yet.
+- The backend returns each project's ID as `id`; `ProjectService` converts it to `projectId` for the app. Before this fix, card links pointed to `/projects/undefined/edit`.
+- The list filter is sent as `isArchived`, as the backend expects (see Open Questions).
 
 ### 1.6 Listing & Retrieval End-to-End
 
@@ -113,23 +120,26 @@ Status values: `Failing`, `Passing`, `Blocked`.
 
 | ID        | Test Case                                         | Expected Result                                                              | Status  |
 | --------- | ------------------------------------------------- | ---------------------------------------------------------------------------- | ------- |
-| FE-CRT-01 | Open the "Add project" dialog                     | Name, description, color picker, and submit button are shown.                | Failing |
-| FE-CRT-02 | Submit with an empty name                         | Required-field error is shown; no API call is made.                          | Failing |
-| FE-CRT-03 | Enter name over 150 or description over 500 chars | Inline maximum-length error is shown; submit is blocked.                     | Failing |
-| FE-CRT-04 | Choose a color                                    | Only valid hex colors can be selected.                                       | Failing |
-| FE-CRT-05 | Submit the create form                            | Button is disabled and loading state shown; duplicate submits are prevented. | Failing |
-| FE-CRT-06 | Create succeeds                                   | Dialog closes; new project appears in the sidebar without a reload.          | Failing |
-| FE-CRT-07 | Create returns 400                                | Server error message is shown; form values are preserved.                    | Failing |
-| FE-CRT-08 | Create returns 500 or a network error             | Generic error is shown; user can retry.                                      | Failing |
-| FE-CRT-09 | Cancel the dialog                                 | Dialog closes; no API call is made.                                          | Failing |
+| FE-CRT-01 | Open the "Add project" dialog                     | Name, description, color picker, and submit button are shown.                | Passing |
+| FE-CRT-02 | Submit with an empty name                         | Required-field error is shown; no API call is made.                          | Passing |
+| FE-CRT-03 | Enter name over 150 or description over 500 chars | Inline maximum-length error is shown; submit is blocked.                     | Passing |
+| FE-CRT-04 | Choose a color                                    | Only valid hex colors can be selected.                                       | Passing |
+| FE-CRT-05 | Submit the create form                            | Button is disabled and loading state shown; duplicate submits are prevented. | Passing |
+| FE-CRT-06 | Create succeeds                                   | Dialog closes; new project appears in the sidebar without a reload.          | Passing |
+| FE-CRT-07 | Create returns 400                                | Server error message is shown; form values are preserved.                    | Passing |
+| FE-CRT-08 | Create returns 500 or a network error             | Generic error is shown; user can retry.                                      | Passing |
+| FE-CRT-09 | Cancel the dialog                                 | Dialog closes; no API call is made.                                          | Passing |
 | FE-CRT-10 | Use the dialog with a keyboard                    | Fields have labels and logical tab order; Enter submits; Escape closes.      | Failing |
 
 ### 2.4 Creation Frontend Integration Tests
 
 | ID        | Test Case                         | Expected Result                                                                                                       | Status  |
 | --------- | --------------------------------- | --------------------------------------------------------------------------------------------------------------------- | ------- |
-| FE-CRT-11 | Submit a valid project            | Calls `POST /api/projects` with `name`, `description`, `color`; never sends `isInbox`, `isFavorite`, or `isArchived`. | Failing |
-| FE-CRT-12 | Submit with optional fields empty | `description` and `color` are sent as null or omitted, never as empty strings.                                        | Failing |
+| FE-CRT-11 | Submit a valid project            | Calls `POST /api/projects` with `name`, `description`, `color`; never sends `isInbox`, `isFavorite`, or `isArchived`. | Passing |
+| FE-CRT-12 | Submit with optional fields empty | `description` and `color` are sent as null or omitted, never as empty strings.                                        | Passing |
+
+- Create is a page at `/projects/new`, not a dialog. FE-CRT-06: on 201 the app returns to `/projects`, which reloads the list and shows the new card without a page reload. FE-CRT-09: Cancel returns to the list and sends no POST.
+- FE-CRT-07: a 400's `details` field (`name`, `description` or `color`) puts a readable message on that field, because the backend's own detail text is Zod's ("Too big: expected string to have <=150 characters"). A 400 without a usable field shows the `error` text above the form.
 
 ### 2.5 Creation End-to-End
 
@@ -191,26 +201,31 @@ Status values: `Failing`, `Passing`, `Blocked`.
 
 | ID        | Test Case                                   | Expected Result                                                               | Status  |
 | --------- | ------------------------------------------- | ----------------------------------------------------------------------------- | ------- |
-| FE-EDT-01 | Open the Edit Project form                  | Name, description, and color are pre-filled with current values.              | Failing |
-| FE-EDT-02 | Clear the name and submit                   | Required-field error is shown; no API call is made.                           | Failing |
+| FE-EDT-01 | Open the Edit Project form                  | Name, description, and color are pre-filled with current values.              | Passing |
+| FE-EDT-02 | Clear the name and submit                   | Required-field error is shown; no API call is made.                           | Passing |
 | FE-EDT-03 | Enter name over 150 or description over 500 | Inline maximum-length error is shown; submit is blocked.                      | Failing |
-| FE-EDT-04 | Open the form without changing fields       | Save is enabled only when the form is dirty.                                  | Failing |
-| FE-EDT-05 | Submit the edit form                        | Button is disabled and loading state shown; duplicate submits are prevented.  | Failing |
-| FE-EDT-06 | Save valid changes                          | Success message is shown; sidebar and project header update without a reload. | Failing |
-| FE-EDT-07 | Save returns 400                            | Error is shown on the relevant field; edits are preserved.                    | Failing |
-| FE-EDT-08 | Save returns 404                            | "Project not found" is shown; project list is refreshed.                      | Failing |
-| FE-EDT-09 | Save returns 500 or a network error         | Generic error is shown; edits are preserved.                                  | Failing |
+| FE-EDT-04 | Open the form without changing fields       | Save is enabled only when the form is dirty.                                  | Passing |
+| FE-EDT-05 | Submit the edit form                        | Button is disabled and loading state shown; duplicate submits are prevented.  | Passing |
+| FE-EDT-06 | Save valid changes                          | Success message is shown; sidebar and project header update without a reload. | Passing |
+| FE-EDT-07 | Save returns 400                            | Error is shown on the relevant field; edits are preserved.                    | Passing |
+| FE-EDT-08 | Save returns 404                            | "Project not found" is shown; project list is refreshed.                      | Passing |
+| FE-EDT-09 | Save returns 500 or a network error         | Generic error is shown; edits are preserved.                                  | Passing |
 | FE-EDT-10 | Rename a project inline from the sidebar    | Enter saves the new name; Escape cancels and restores the old name.           | Failing |
 | FE-EDT-11 | Change color from the project menu          | Project color chip updates in the sidebar.                                    | Failing |
 
 ### 3.7 Editing Frontend Integration Tests
 
-| ID        | Test Case                  | Expected Result                                                                       | Status  |
-| --------- | -------------------------- | ------------------------------------------------------------------------------------- | ------- |
-| FE-EDT-12 | Save the Edit Project form | Calls `PUT /api/projects/{projectId}` with only changed `name`/`description`/`color`. | Failing |
-| FE-EDT-13 | Rename inline              | Calls `PUT /api/projects/{projectId}/name` with only `name`.                          | Failing |
-| FE-EDT-14 | Clear the description      | Calls `PUT /api/projects/{projectId}/description` with `description: null`.           | Failing |
-| FE-EDT-15 | Remove the color           | Calls `PUT /api/projects/{projectId}/color` with `color: null`.                       | Failing |
+| ID        | Test Case                  | Expected Result                                                                         | Status  |
+| --------- | -------------------------- | --------------------------------------------------------------------------------------- | ------- |
+| FE-EDT-12 | Save the Edit Project form | Calls `PATCH /api/projects/{projectId}` with only changed `name`/`description`/`color`. | Passing |
+| FE-EDT-13 | Rename inline              | Calls `PUT /api/projects/{projectId}/name` with only `name`.                            | Failing |
+| FE-EDT-14 | Clear the description      | Calls `PUT /api/projects/{projectId}/description` with `description: null`.             | Failing |
+| FE-EDT-15 | Remove the color           | Calls `PUT /api/projects/{projectId}/color` with `color: null`.                         | Failing |
+
+- FE-EDT-12 now matches the backend: `PATCH`, not `PUT`, and the response is the saved project, which replaces the one in `ProjectsStore`. FE-EDT-13 to FE-EDT-15 (`/name`, `/description`, `/color` sub-routes) are not used by the frontend and stay Failing.
+- FE-EDT-06: there is no sidebar or project header yet; the saved values show in the form and in the shared `ProjectsStore`.
+- FE-EDT-08: a 404 on save returns to `/projects`, which reloads the list without the project and shows "Project not found.".
+- A 403 (`Inbox project cannot be edited or deleted`) shows "Your Inbox is read-only, so it can't be changed.". Opening the Inbox's edit URL directly shows the read-only message with no form.
 
 ### 3.8 Editing End-to-End
 
@@ -267,21 +282,29 @@ Status values: `Failing`, `Passing`, `Blocked`.
 
 | ID        | Test Case                                      | Expected Result                                                              | Status  |
 | --------- | ---------------------------------------------- | ---------------------------------------------------------------------------- | ------- |
-| FE-ORG-01 | Toggle favorite on a project                   | Project moves into or out of the Favorites section.                          | Failing |
-| FE-ORG-02 | Archive a project                              | Project is removed from the active list and shown in the Archived view.      | Failing |
-| FE-ORG-03 | Unarchive a project from the Archived view     | Project returns to the active list.                                          | Failing |
-| FE-ORG-04 | Open the Inbox project menu                    | No archive option is shown.                                                  | Failing |
-| FE-ORG-05 | Reorder projects in the sidebar                | New order is shown; Inbox stays first.                                       | Failing |
-| FE-ORG-06 | Favorite, archive, or reorder request fails    | Change is reverted and an error is shown.                                    | Failing |
-| FE-ORG-07 | Toggle favorite repeatedly in quick succession | Final UI state matches the server; no conflicting requests are left pending. | Failing |
+| FE-ORG-01 | Toggle favorite on a project                   | Project moves into or out of the Favorites section.                          | Passing |
+| FE-ORG-02 | Archive a project                              | Project is removed from the active list and shown in the Archived view.      | Passing |
+| FE-ORG-03 | Unarchive a project from the Archived view     | Project returns to the active list.                                          | Passing |
+| FE-ORG-04 | Open the Inbox project menu                    | No archive option is shown.                                                  | Passing |
+| FE-ORG-05 | Reorder projects in the sidebar                | New order is shown; Inbox stays first.                                       | Passing |
+| FE-ORG-06 | Favorite, archive, or reorder request fails    | Change is reverted and an error is shown.                                    | Passing |
+| FE-ORG-07 | Toggle favorite repeatedly in quick succession | Final UI state matches the server; no conflicting requests are left pending. | Passing |
 
 ### 4.6 Favorite, Archive & Sort Order Frontend Integration Tests
 
-| ID        | Test Case          | Expected Result                                                         | Status  |
-| --------- | ------------------ | ----------------------------------------------------------------------- | ------- |
-| FE-ORG-08 | Toggle favorite    | Calls `PUT /api/projects/{projectId}/favorite` with only `isFavorite`.  | Failing |
-| FE-ORG-09 | Archive or restore | Calls `PUT /api/projects/{projectId}/archive` with only `isArchived`.   | Failing |
-| FE-ORG-10 | Reorder a project  | Calls `PUT /api/projects/{projectId}/sort-order` with only `sortOrder`. | Failing |
+| ID        | Test Case          | Expected Result                                                                       | Status  |
+| --------- | ------------------ | ------------------------------------------------------------------------------------- | ------- |
+| FE-ORG-08 | Toggle favorite    | Calls `PUT /api/projects/{projectId}/favorite` with only `isFavorite`.                | Passing |
+| FE-ORG-09 | Archive or restore | Calls `PUT /api/projects/{projectId}/archive` with only `isArchived`.                 | Passing |
+| FE-ORG-10 | Reorder a project  | Calls `PUT /api/projects/reorder` with every non-Inbox `projectIds` in the new order. | Passing |
+
+Tests: the `Project Organization (switcher)` block in `frontend/tests/integration/features/projects/projects.integration.spec.ts`. They run through the real `/projects/organize` route (project switcher) with `ProjectOrganizationService`, `ProjectsStore`, the split-projects and reorder utils and the switcher's CDK drop lists; drags are sent through the drop list's real `cdkDropListDropped` handler. Response bodies follow `backend/src/features/projects/project-organization`.
+
+- The switcher page stands in for the sidebar and project menu in FE-ORG-01 to FE-ORG-05: favorites, my projects and archived are separate sections, and the Inbox row has no favorite, archive or move controls.
+- Favorite, archive and reorder are optimistic: the change shows before the server answers and is undone on a 400 or 500, with "Your change wasn't saved." and the reason (FE-ORG-06). Temporarily removing the rollback in `ProjectOrganizationService` makes exactly these tests fail.
+- FE-ORG-07: the favorite button is disabled while its request runs, so a second click sends nothing.
+- FE-ORG-10: the switcher sends one `PUT /api/projects/reorder` with every non-Inbox id (favorites, then my projects, then archived), not one `PUT /api/projects/{projectId}/sort-order` per project. Both routes exist on the backend; the switcher uses the bulk one, so the row now names it.
+- Also covered: selecting a project switches the active project (`aria-current`, no request), every control is a named `<button>` with `aria-pressed` on the favorite toggle and move buttons as the keyboard alternative to dragging, and a 401 on favorite, archive or reorder clears the session and redirects to `/login`.
 
 ### 4.7 Favorite, Archive & Sort Order End-to-End
 
@@ -316,19 +339,22 @@ Status values: `Failing`, `Passing`, `Blocked`.
 
 | ID        | Test Case                                      | Expected Result                                                                                 | Status  |
 | --------- | ---------------------------------------------- | ----------------------------------------------------------------------------------------------- | ------- |
-| FE-DEL-01 | Choose Delete from a project menu              | Confirmation dialog names the project and says its tasks will move to Inbox.                    | Failing |
-| FE-DEL-02 | Cancel the confirmation                        | Dialog closes; no API call is made.                                                             | Failing |
-| FE-DEL-03 | Confirm deletion                               | Loading state shown; on success the project is removed and a notice shows the moved-task count. | Failing |
+| FE-DEL-01 | Choose Delete from a project menu              | Confirmation dialog names the project and says its tasks will move to Inbox.                    | Passing |
+| FE-DEL-02 | Cancel the confirmation                        | Dialog closes; no API call is made.                                                             | Passing |
+| FE-DEL-03 | Confirm deletion                               | Loading state shown; on success the project is removed and a notice shows the moved-task count. | Blocked |
 | FE-DEL-04 | Delete the project that is currently open      | User is navigated to the Inbox.                                                                 | Failing |
-| FE-DEL-05 | Open the Inbox project menu                    | No delete option is shown.                                                                      | Failing |
-| FE-DEL-06 | Delete returns 400, 404, 500, or network error | Error is shown; on 404 the list is refreshed, otherwise the project remains.                    | Failing |
+| FE-DEL-05 | Open the Inbox project menu                    | No delete option is shown.                                                                      | Passing |
+| FE-DEL-06 | Delete returns 400, 404, 500, or network error | Error is shown; on 404 the list is refreshed, otherwise the project remains.                    | Passing |
 
 ### 5.4 Deletion Frontend Integration Tests
 
 | ID        | Test Case                  | Expected Result                                               | Status  |
 | --------- | -------------------------- | ------------------------------------------------------------- | ------- |
-| FE-DEL-07 | Confirm deletion           | Calls `DELETE /api/projects/{projectId}` once with the token. | Failing |
+| FE-DEL-07 | Confirm deletion           | Calls `DELETE /api/projects/{projectId}` once with the token. | Passing |
 | FE-DEL-08 | Handle a successful delete | `movedTaskCount` from the response is shown in the notice.    | Failing |
+
+- FE-DEL-03 is Blocked by Tasks: the backend answers `204 No Content` with no `movedTaskCount`, so the notice reads “Capstone” was deleted. without a count. Loading state and removal are tested and pass. Before this fix the null 204 body made the app report a failed delete after a successful one.
+- FE-DEL-06 is checked for 404 (dialog closes, list reloads), 500 and network errors (dialog stays with the error, project kept). The delete API never returns 400.
 
 ### 5.5 Deletion End-to-End
 
@@ -338,6 +364,49 @@ Status values: `Failing`, `Passing`, `Blocked`.
 | FE-DEL-10 | Delete a project with tasks, then open the Inbox | The deleted project's tasks are shown in the Inbox. | Blocked |
 
 - BE-DEL-08 to BE-DEL-10 and FE-DEL-10 are Blocked by Tasks. There is no task table or task API yet, so tasks cannot be moved to the Inbox or counted for `movedTaskCount`. They will be unblocked when the Tasks feature adds its table.
+
+## 6. Landing Page
+
+### 6.1 Landing Page Frontend Integration Tests
+
+| ID        | Test Case                                                        | Expected Result                                                                                                 | Status  |
+| --------- | ---------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- | ------- |
+| FE-LND-01 | Open `/` as a guest                                              | Hero heading, four feature groups, four steps, closing card and footer are shown; page title is `HabitTracker`. | Passing |
+| FE-LND-02 | Click Get Started, or Create free account in the hero or closing | User is taken to `/register`.                                                                                   | Passing |
+| FE-LND-03 | Click Log in, or I already have an account                       | User is taken to `/login`.                                                                                      | Passing |
+| FE-LND-04 | Click Features, How it works or About in the header              | Page scrolls to `#features`, `#how-it-works` or `#about`.                                                       | Passing |
+| FE-LND-05 | Open `/` with a stored token that `GET /api/auth/me` accepts     | `guestGuard` redirects the user to `/home`.                                                                     | Passing |
+| FE-LND-06 | Open `/` with a stored token that `GET /api/auth/me` rejects     | Landing page is shown.                                                                                          | Passing |
+| FE-LND-07 | Check images and headings                                        | Every image has alt text or is `aria-hidden`; one `h1`, and heading levels never skip on the way down.          | Passing |
+
+Tests: `frontend/tests/integration/features/landing/landing.integration.spec.ts`. The app runs with its real `appConfig` (the `''` route behind `guestGuard`, `SessionService`, the restore-session initializer and the router's anchor scrolling); only the network is faked.
+
+- FE-LND-04 bootstraps the real root `App` component, because the router only starts anchor scrolling from the app's bootstrap listener. Turning `anchorScrolling` off in `app.config.ts` makes these tests fail; removing `guestGuard` from `''` makes FE-LND-05 fail.
+- A guest opening `/` sends no request; there is no session to restore.
+- Unit specs for the landing components are next to them: `landing.spec.ts`, `features/landing-features.spec.ts`, `steps/landing-steps.spec.ts`, `closing/landing-closing.spec.ts` and `footer/landing-footer.spec.ts`.
+- Fixed while testing: the footer tagline showed "Get itdone". Angular removes whitespace-only text between tags, so the space between the two spans was lost; it now sits inside the first span.
+
+## 7. Home Dashboard
+
+### 7.1 Home Dashboard Frontend Integration Tests
+
+| ID        | Test Case                                                       | Expected Result                                                                                                                           | Status  |
+| --------- | --------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- | ------- |
+| FE-HOM-01 | Visit `/home` while signed out                                  | User is redirected to `/login`.                                                                                                           | Passing |
+| FE-HOM-02 | Open `/home` in the morning, afternoon and evening              | Greeting reads Good Morning, Good Afternoon or Good Evening with the username; the avatar shows its first letter.                         | Passing |
+| FE-HOM-03 | Open `/home` with the sample data                               | Overdue note, Open tasks and Done today match the sample tasks.                                                                           | Passing |
+| FE-HOM-04 | View the status columns                                         | Each open task is in Current, Upcoming or Overdue by due date; done tasks are checked in All Tasks.                                       | Passing |
+| FE-HOM-05 | Click a project or priority in the sidebar, then click it again | Columns and All Tasks are filtered, then the filter clears; `aria-pressed` follows.                                                       | Passing |
+| FE-HOM-06 | Add a task with + New Task                                      | Empty, spaces-only or over-120-character titles are blocked; a valid task lands in the right column and counts update.                    | Passing |
+| FE-HOM-07 | Add, rename and delete a project in the sidebar                 | The project list updates; a deleted project's tasks stay without a project and its filter clears.                                         | Passing |
+| FE-HOM-08 | Use the account menu                                            | Menu opens; Profile settings goes to `/settings/profile`; Log out sends `POST /api/auth/logout`, clears the session and goes to `/login`. | Passing |
+
+Tests: `frontend/tests/integration/features/home/home.integration.spec.ts`. They run through the real `/home` route behind `authGuard` with the Home page, its board and sidebar components, `DashboardStore`, `SessionService` and `authInterceptor`; the user is signed in by restoring a token and answering `GET /api/auth/me`. Only the network and `Date` are faked (Friday 30 October 2026), because the sample tasks are dated relative to today.
+
+- The dashboard still uses `DashboardStore`'s sample data, not `/api/projects` or a tasks API (its own TODO for Sprint 2). These rows check the page's behaviour, not persistence.
+- FE-HOM-04: the board has Current, Upcoming and Overdue columns only. Done tasks are grouped as `done` in `DashboardStore` and shown checked at the end of All Tasks; there is no Done column.
+- Fixed while testing: clicking the active project in the sidebar did not clear the filter (the priority list already toggled), and a task title of only spaces passed `required` and added a blank task. Both tests fail without the fixes.
+- Unit specs: `dashboard.store.spec.ts`, `board/status-columns.spec.ts`, `board/all-tasks.spec.ts`, `sidebar/project-list.spec.ts`, `sidebar/priority-list.spec.ts` and `sidebar/mini-calendar.spec.ts`.
 
 ## Open Questions
 
@@ -350,9 +419,11 @@ Status values: `Failing`, `Passing`, `Blocked`.
 
 | Deliverable                    | Backend Cases | Frontend Cases | Total   | Failing | Passing | Blocked |
 | ------------------------------ | ------------- | -------------- | ------- | ------- | ------- | ------- |
-| Project Listing & Retrieval    | 19            | 15             | 34      | 15      | 0       | 19      |
-| Project Creation               | 13            | 13             | 26      | 17      | 0       | 9       |
-| Project Editing                | 23            | 16             | 39      | 35      | 0       | 4       |
-| Favorite, Archive & Sort Order | 23            | 11             | 34      | 27      | 0       | 7       |
-| Project Deletion               | 11            | 10             | 21      | 9       | 0       | 12      |
-| **Total**                      | **89**        | **65**         | **154** | **103** | **0**   | **51**  |
+| Project Listing & Retrieval    | 19            | 15             | 34      | 6       | 9       | 19      |
+| Project Creation               | 13            | 13             | 26      | 6       | 11      | 9       |
+| Project Editing                | 23            | 16             | 39      | 26      | 9       | 4       |
+| Favorite, Archive & Sort Order | 23            | 11             | 34      | 17      | 10      | 7       |
+| Project Deletion               | 11            | 10             | 21      | 3       | 5       | 13      |
+| Landing Page                   | 0             | 7              | 7       | 0       | 7       | 0       |
+| Home Dashboard                 | 0             | 8              | 8       | 0       | 8       | 0       |
+| **Total**                      | **89**        | **80**         | **169** | **58**  | **59**  | **52**  |

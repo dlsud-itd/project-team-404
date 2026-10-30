@@ -10,9 +10,19 @@ describe('MiniCalendar', () => {
   let page: HTMLElement;
 
   const el = <T extends HTMLElement>(selector: string) => page.querySelector(selector) as T | null;
+  const heading = () => page.querySelector('h2')?.textContent?.trim();
+  const days = () =>
+    [...page.querySelectorAll<HTMLButtonElement>('button.day:not(.outside)')].map((c) =>
+      c.textContent?.trim(),
+    );
   const day = (key: string) => el<HTMLButtonElement>(`[data-date="${key}"]`)!;
   const text = (selector: string) => el(selector)?.textContent?.replace(/\s+/g, ' ').trim() ?? '';
   const mark = (key: string) => day(key).querySelector('.mark')?.getAttribute('data-mark') ?? null;
+
+  function shift(label: string): void {
+    page.querySelector<HTMLButtonElement>(`button[aria-label="${label}"]`)!.click();
+    fixture.detectChanges();
+  }
 
   async function press(key: string, target: HTMLElement): Promise<void> {
     target.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true }));
@@ -22,7 +32,7 @@ describe('MiniCalendar', () => {
 
   beforeEach(async () => {
     vi.useFakeTimers({ toFake: ['Date'] });
-    vi.setSystemTime(new Date(2026, 9, 30, 9, 0));
+    vi.setSystemTime(new Date(2026, 9, 30, 9, 0, 0));
 
     await TestBed.configureTestingModule({
       imports: [MiniCalendar],
@@ -35,6 +45,38 @@ describe('MiniCalendar', () => {
   });
 
   afterEach(() => vi.useRealTimers());
+
+  it('shows the current month, Monday first, with today marked', () => {
+    expect(heading()).toBe('October 2026');
+    expect([...page.querySelectorAll('[role="columnheader"]')].map((c) => c.textContent)).toEqual([
+      'Mo',
+      'Tu',
+      'We',
+      'Th',
+      'Fr',
+      'Sa',
+      'Su',
+    ]);
+    // October has 31 in-month days; the six-week grid also shows adjacent-month dates.
+    expect(days().slice(0, 4)).toEqual(['1', '2', '3', '4']);
+    expect(days().filter(Boolean)).toHaveLength(31);
+    expect(page.querySelector('[aria-current="date"]')?.textContent?.trim()).toBe('30');
+  });
+
+  it('moves between months and marks today whenever it is in the displayed grid', () => {
+    shift('Next month');
+    expect(heading()).toBe('November 2026');
+    expect(day('2026-10-30').getAttribute('aria-current')).toBe('date');
+    expect(day('2026-10-30').classList).toContain('outside');
+
+    shift('Previous month');
+    shift('Previous month');
+    expect(heading()).toBe('September 2026');
+    expect(page.querySelector('[aria-current="date"]')).toBeNull();
+
+    shift('Next month');
+    expect(page.querySelector('[aria-current="date"]')?.textContent?.trim()).toBe('30');
+  });
 
   it('shows six full weeks of the current month, with today marked', () => {
     expect(text('h2')).toBe('October 2026');

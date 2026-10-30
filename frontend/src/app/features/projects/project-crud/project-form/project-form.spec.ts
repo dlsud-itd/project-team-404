@@ -224,9 +224,9 @@ describe('ProjectForm', () => {
       submit();
 
       const req = http.expectOne(`${URL}/10`);
-      expect(req.request.method).toBe('PUT');
+      expect(req.request.method).toBe('PATCH');
       expect(req.request.body).toEqual({ name: 'Capstone 2' });
-      req.flush({ projectId: 10, message: 'Project updated successfully' });
+      req.flush(apiProject({ ...CAPSTONE, name: 'Capstone 2' }));
       harness.detectChanges();
 
       expect(text('.form-notice')).toBe('Changes saved.');
@@ -252,14 +252,15 @@ describe('ProjectForm', () => {
       expect(el<HTMLTextAreaElement>('#project-description').value).toBe('New text');
     });
 
-    it('shows "Project not found" and refreshes the list when the save returns 404', async () => {
+    it('goes back to the project list when the save returns 404', async () => {
       await open();
       type('project-name', 'Capstone 2');
       submit();
-      fail(`${URL}/10`, 404, 'Invalid updating project.');
+      fail(`${URL}/10`, 404, 'Project not found');
+      await harness.fixture.whenStable();
 
-      expect(text('.form-error')).toBe('Project not found.');
-      http.expectOne(URL).flush([]);
+      // The list page reloads itself and shows "Project not found." (integration spec).
+      expect(router.url).toBe('/projects');
     });
 
     it('shows "Project not found" when the project cannot be loaded', async () => {

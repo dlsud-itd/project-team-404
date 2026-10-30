@@ -67,7 +67,7 @@ import { DashboardStore } from '../dashboard.store';
                 class="row"
                 [class.active]="store.filter().projectId === project.id"
                 [attr.aria-pressed]="store.filter().projectId === project.id"
-                (click)="store.filter.set({ projectId: project.id })"
+                (click)="toggle(project.id)"
               >
                 <span class="swatch" [style.background]="project.color"></span>
                 <span class="name">{{ project.name }}</span>
@@ -247,6 +247,11 @@ export class ProjectList {
   protected readonly store = inject(DashboardStore);
   protected readonly adding = signal(false);
   protected readonly editingId = signal<number | null>(null);
+
+  /** Filters by a project; clicking the active project again clears the filter. */
+  protected toggle(projectId: number): void {
+    this.store.filter.update((f) => (f.projectId === projectId ? {} : { projectId }));
+  }
 
   protected create(name: string): void {
     if (!name.trim()) return;

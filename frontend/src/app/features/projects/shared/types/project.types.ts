@@ -1,4 +1,4 @@
-/** A project as returned by /api/projects (API spec v1.1, section II). */
+/** A project as the app uses it. ProjectService converts the API's `id` to `projectId`. */
 export interface Project {
   projectId: number;
   name: string;
@@ -29,16 +29,11 @@ export interface CreateProjectRequest {
   color: string | null;
 }
 
-/** Body of PUT /api/projects/{projectId}: only the fields that changed. */
+/** Body of PATCH /api/projects/{projectId}: only the fields that changed. */
 export type UpdateProjectRequest = Partial<CreateProjectRequest>;
 
-export interface UpdateProjectResponse {
-  projectId: number;
-  message: string;
-}
-
 export interface DeleteProjectResponse {
-  message: string;
+  /** Tasks moved to the Inbox. The API answers 204 with no body today, so this is 0 then. */
   movedTaskCount: number;
 }
 

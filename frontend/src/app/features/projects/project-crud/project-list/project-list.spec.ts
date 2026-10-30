@@ -127,7 +127,7 @@ describe('ProjectList', () => {
       http.expectNone(`${URL}/10`);
     });
 
-    it('deletes once, removes the project and shows how many tasks moved', () => {
+    it('deletes once on 204 No Content, removes the project and shows a notice', () => {
       askToDelete('Capstone');
       el<HTMLButtonElement>('button.confirm')!.click();
       render();
@@ -137,11 +137,11 @@ describe('ProjectList', () => {
 
       const req = http.expectOne(`${URL}/10`);
       expect(req.request.method).toBe('DELETE');
-      req.flush({ message: 'Project deleted successfully', movedTaskCount: 4 });
+      req.flush(null, { status: 204, statusText: 'No Content' });
       render();
 
       expect(el('app-confirm-delete-dialog')).toBeNull();
-      expect(text('.form-notice')).toBe('“Capstone” was deleted. 4 tasks moved to your Inbox.');
+      expect(text('.form-notice')).toBe('“Capstone” was deleted.');
       expect(cardNames()).toEqual(['Inbox']);
     });
 

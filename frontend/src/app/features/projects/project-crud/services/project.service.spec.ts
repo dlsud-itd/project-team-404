@@ -51,15 +51,19 @@ describe('ProjectService', () => {
       const req = http.expectOne(URL);
       expect(req.request.method).toBe('GET');
       expect(req.request.params.keys()).toEqual([]);
-      req.flush([INBOX, CAPSTONE].map(apiProject));
+      req.flush([
+        { ...apiProject(INBOX), createdAt: '2026-10-20T00:00:00.000Z' },
+        { ...apiProject(CAPSTONE), updatedAt: '2026-10-20T00:00:00.000Z' },
+      ]);
 
+      // id becomes projectId; timestamps are dropped.
       expect(result).toEqual([INBOX, CAPSTONE]);
     });
 
-    it.each([true, false])('sends archived=%s when asked', (archived) => {
+    it.each([true, false])('sends isArchived=%s when asked', (archived) => {
       service.list(archived).subscribe();
 
-      http.expectOne(`${URL}?archived=${archived}`).flush([]);
+      http.expectOne(`${URL}?isArchived=${archived}`).flush([]);
     });
   });
 
@@ -108,15 +112,17 @@ describe('ProjectService', () => {
     expect(store.byId(10)).toEqual(CAPSTONE);
   });
 
-  it('updates only the changed fields and patches the store', () => {
+  it('PATCHes only the changed fields and keeps the saved project in the store', () => {
     store.setProjects([CAPSTONE]);
-    service.update(10, { description: null }).subscribe();
+    let result: Project | undefined;
+    service.update(10, { description: null }).subscribe((project) => (result = project));
 
     const req = http.expectOne(`${URL}/10`);
-    expect(req.request.method).toBe('PUT');
+    expect(req.request.method).toBe('PATCH');
     expect(req.request.body).toEqual({ description: null });
-    req.flush({ projectId: 10, message: 'Project updated successfully' });
+    req.flush(apiProject({ ...CAPSTONE, description: null }));
 
+    expect(result).toEqual({ ...CAPSTONE, description: null });
     expect(store.byId(10)).toEqual({ ...CAPSTONE, description: null });
   });
 
@@ -131,16 +137,25 @@ describe('ProjectService', () => {
     expect(store.byId(10)?.name).toBe('Capstone');
   });
 
-  it('deletes a project, removes it from the store and returns the moved-task count', () => {
+  it('deletes a project on 204 No Content, removes it from the store and reports 0 moved', () => {
     store.setProjects([INBOX, CAPSTONE]);
     let moved: number | undefined;
     service.delete(10).subscribe(({ movedTaskCount }) => (moved = movedTaskCount));
 
     const req = http.expectOne(`${URL}/10`);
     expect(req.request.method).toBe('DELETE');
-    req.flush({ message: 'Project deleted successfully', movedTaskCount: 4 });
+    req.flush(null, { status: 204, statusText: 'No Content' });
+
+    expect(moved).toBe(0);
+    expect(store.projects()).toEqual([INBOX]);
+  });
+
+  it('reports the moved-task count when the server sends one', () => {
+    let moved: number | undefined;
+    service.delete(10).subscribe(({ movedTaskCount }) => (moved = movedTaskCount));
+
+    http.expectOne(`${URL}/10`).flush({ movedTaskCount: 4 });
 
     expect(moved).toBe(4);
-    expect(store.projects()).toEqual([INBOX]);
   });
 });

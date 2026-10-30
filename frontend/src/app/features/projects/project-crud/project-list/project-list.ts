@@ -7,7 +7,7 @@ import {
   signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
 import { ProjectsHeader } from '../../shared/components/projects-header/projects-header';
 import { ProjectsStore } from '../../shared/state/projects.store';
@@ -53,6 +53,11 @@ export class ProjectList {
   protected readonly actionError = signal<string | null>(null);
 
   constructor() {
+    // A page that sent the user here may say why, e.g. the edited project no longer exists.
+    const error: unknown = inject(Router).currentNavigation()?.extras.state?.['error'];
+    const navigationError = this.store.consumeNavigationError();
+    if (typeof error === 'string') this.actionError.set(error);
+    else if (navigationError) this.actionError.set(navigationError);
     this.load();
   }
 

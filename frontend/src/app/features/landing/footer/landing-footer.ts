@@ -7,7 +7,8 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
       <p class="brand">HabitTracker</p>
       <p class="tagline">
         Plan. Prioritize<br />
-        <span class="get-it">Get it</span> <span class="done">done</span>
+        <!-- The space sits inside the span: Angular drops whitespace-only text between tags. -->
+        <span class="get-it">Get it </span><span class="done">done</span>
       </p>
       <p class="text">
         Tasks, projects, deadlines, priorities and labels, all on one dashboard that shows what's

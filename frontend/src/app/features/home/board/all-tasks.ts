@@ -7,8 +7,12 @@ import {
   model,
   untracked,
 } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, ReactiveFormsModule, type ValidatorFn, Validators } from '@angular/forms';
 import { DashboardStore, PRIORITIES, type Priority } from '../dashboard.store';
+
+/** Like Validators.required, but a title of only spaces counts as empty too. */
+const notBlank: ValidatorFn = ({ value }) =>
+  typeof value === 'string' && !value.trim() ? { required: true } : null;
 
 @Component({
   selector: 'app-all-tasks',
@@ -25,7 +29,7 @@ export class AllTasks {
   readonly composing = model(false);
 
   protected readonly form = inject(FormBuilder).nonNullable.group({
-    title: ['', [Validators.required, Validators.maxLength(120)]],
+    title: ['', [notBlank, Validators.maxLength(120)]],
     projectId: [''],
     priority: ['medium' as Priority],
     due: [this.store.today(), Validators.required],
