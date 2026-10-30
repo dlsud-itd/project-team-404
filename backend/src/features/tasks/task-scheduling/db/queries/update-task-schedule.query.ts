@@ -38,5 +38,9 @@ export async function updateTaskSchedule(
 
   return prisma.task.findFirst({
     where: { id: taskId, userId, deletedAt: null },
+    include: {
+      priorityLevel: true,
+      taskLabels: { include: { label: true } },
+    },
   });
 }
