@@ -43,7 +43,7 @@ seeded_tasks as (
     expected.project_name,
     expected.title,
     expected.description,
-    expected.priority::public.task_priority as priority,
+    priority_level.priority_id,
     expected.due_date::date as due_date,
     expected.is_done,
     user_profile.user_id,
@@ -54,13 +54,15 @@ seeded_tasks as (
     on project_row.user_id = user_profile.user_id
    and project_row.name = expected.project_name
    and project_row.deleted_at is null
+  join public.tbl_priority_level as priority_level
+    on priority_level.name = expected.priority
 )
 insert into public.tbl_task (
   user_id,
   project_id,
   title,
   description,
-  priority,
+  priority_id,
   due_date,
   is_done,
   done_at
@@ -70,7 +72,7 @@ select
   project_id,
   title,
   description,
-  priority,
+  priority_id,
   due_date,
   is_done,
   case when is_done then now() else null end as done_at

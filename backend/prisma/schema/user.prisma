@@ -9,6 +9,7 @@ model User {
   lastLoginAt  DateTime?            @db.Timestamptz(6) @map("last_login_at")
   projects     Project[]
   tasks        Task[]
+  labels       Label[]
   sessions     Session[]
   resetTokens  PasswordResetToken[]
 
