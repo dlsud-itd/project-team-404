@@ -2,7 +2,7 @@ import express from 'express';
 import { describe, expect, it, vi } from 'vitest';
 import type { SessionService } from '../../auth/session/session.service';
 import type { ProjectRecord } from '../shared/models/project.model';
-import { request } from '../../../testing/helpers';
+import { request } from '../../../../tests/integration/helpers';
 import { createProjectOrganizationRouter } from './project-organization.routes';
 
 const project: ProjectRecord = {
