@@ -120,6 +120,13 @@ describe('ProjectsStore', () => {
     expect(store.selected()).toEqual(SCHOOL);
   });
 
+  it('consumes a navigation error once', () => {
+    store.setNavigationError('Project not found.');
+
+    expect(store.consumeNavigationError()).toBe('Project not found.');
+    expect(store.consumeNavigationError()).toBeNull();
+  });
+
   it('has no selected project once that project is removed', () => {
     store.setProjects([INBOX, SCHOOL]);
     store.select(10);
@@ -140,5 +147,6 @@ describe('ProjectsStore', () => {
     expect(store.loaded()).toBe(false);
     expect(store.error()).toBeNull();
     expect(store.selectedProjectId()).toBeNull();
+    expect(store.consumeNavigationError()).toBeNull();
   });
 });

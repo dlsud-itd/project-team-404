@@ -18,6 +18,7 @@ import {
   type ProjectField,
   type UpdateProjectRequest,
 } from '../../shared/types/project.types';
+import { ProjectsStore } from '../../shared/state/projects.store';
 import { mapProjectError } from '../mappers/project-error.mapper';
 import { ProjectService } from '../services/project.service';
 import { isReadOnlyProject } from '../utils/project-permissions.util';
@@ -51,6 +52,7 @@ type LoadState = 'loading' | 'ready' | 'not-found' | 'error';
 })
 export class ProjectForm {
   private readonly projects = inject(ProjectService);
+  private readonly projectsStore = inject(ProjectsStore);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
   private readonly route = inject(ActivatedRoute).snapshot;
@@ -230,7 +232,8 @@ export class ProjectForm {
   private showError(error: unknown): void {
     const { message, field, notFound } = mapProjectError(error);
     if (notFound) {
-      // The project is gone: back to the list, which reloads and shows why.
+      // The projects list may render after a tab redirect, so preserve the notice in its store.
+      this.projectsStore.setNavigationError(message);
       void this.router.navigateByUrl('/projects', { state: { error: message } });
       return;
     }

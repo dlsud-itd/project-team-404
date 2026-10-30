@@ -134,14 +134,6 @@ describe('Projects integration (Project CRUD screens + API)', () => {
   /** Signs in the way a page load does: a stored token that GET /api/auth/me accepts. */
   async function startSignedIn(): Promise<void> {
     localStorage.setItem(TOKEN_STORAGE_KEY, TOKEN);
-    TestBed.configureTestingModule({
-      providers: [
-        provideRouter(routes),
-        provideHttpClient(withInterceptors([authInterceptor])),
-        provideHttpClientTesting(),
-        provideSessionRestore(),
-      ],
-    });
     http = TestBed.inject(HttpTestingController);
     router = TestBed.inject(Router);
     session = TestBed.inject(SessionService);
@@ -174,12 +166,26 @@ describe('Projects integration (Project CRUD screens + API)', () => {
     await settle();
   }
 
-  beforeEach(() => {
+  beforeEach(async () => {
     localStorage.clear();
     sessionStorage.clear();
+    await TestBed.configureTestingModule({
+      providers: [
+        provideRouter(routes),
+        provideHttpClient(withInterceptors([authInterceptor])),
+        provideHttpClientTesting(),
+        provideSessionRestore(),
+      ],
+    }).compileComponents();
   });
 
-  afterEach(() => http.verify());
+  afterEach(() => {
+    try {
+      if (http) http.verify();
+    } finally {
+      TestBed.resetTestingModule();
+    }
+  });
 
   // Case 1: list page and its states.
   describe('Project list', () => {
@@ -188,7 +194,7 @@ describe('Projects integration (Project CRUD screens + API)', () => {
       await startSignedIn();
       await openList([THESIS, CAPSTONE, INBOX]);
 
-      expect(router.url).toBe('/projects');
+      expect(router.url).toBe('/home?tab=projects');
       expect(cardNames()).toEqual(['Inbox', 'Capstone', 'Thesis']);
       expect(text('app-project-card.inbox .badge')).toBe('Read-only');
       expect(card('Capstone').querySelector('.description')?.textContent?.trim()).toBe(
@@ -345,7 +351,7 @@ describe('Projects integration (Project CRUD screens + API)', () => {
       );
       await settle();
 
-      expect(router.url).toBe('/projects');
+      expect(router.url).toBe('/home?tab=projects');
       // The list page reloads from the server; the new project is in that list.
       http.expectOne(API).flush([INBOX, { ...THESIS, color: '#16A34A' }]);
       await settle();
@@ -409,7 +415,7 @@ describe('Projects integration (Project CRUD screens + API)', () => {
         .click();
       await settle();
 
-      expect(router.url).toBe('/projects');
+      expect(router.url).toBe('/home?tab=projects');
       // Only the list's GET is sent; no POST.
       const req = http.expectOne(API);
       expect(req.request.method).toBe('GET');
@@ -498,7 +504,7 @@ describe('Projects integration (Project CRUD screens + API)', () => {
       http.expectOne(`${API}/10`).flush(NOT_FOUND, status(404, 'Not Found'));
       await settle();
 
-      expect(router.url).toBe('/projects');
+      expect(router.url).toBe('/home?tab=projects');
       http.expectOne(API).flush([INBOX, THESIS]);
       await settle();
       expect(text('.banner-error')).toBe('Project not found.');
@@ -646,14 +652,6 @@ describe('Projects integration (Project CRUD screens + API)', () => {
 
     // FE-LST-10
     it('redirects to /login when there is no session at all', async () => {
-      TestBed.configureTestingModule({
-        providers: [
-          provideRouter(routes),
-          provideHttpClient(withInterceptors([authInterceptor])),
-          provideHttpClientTesting(),
-          provideSessionRestore(),
-        ],
-      });
       http = TestBed.inject(HttpTestingController);
       router = TestBed.inject(Router);
       harness = await RouterTestingHarness.create();

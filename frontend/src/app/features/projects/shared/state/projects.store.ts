@@ -29,6 +29,7 @@ export class ProjectsStore {
 
   /** The project the user switched to, if any. */
   readonly selectedProjectId = signal<number | null>(null);
+  private readonly navigationError = signal<string | null>(null);
   readonly selected = computed(() => {
     const id = this.selectedProjectId();
     return id === null ? null : (this.projects().find((p) => p.projectId === id) ?? null);
@@ -81,6 +82,16 @@ export class ProjectsStore {
     this.selectedProjectId.set(projectId);
   }
 
+  setNavigationError(message: string): void {
+    this.navigationError.set(message);
+  }
+
+  consumeNavigationError(): string | null {
+    const message = this.navigationError();
+    this.navigationError.set(null);
+    return message;
+  }
+
   remove(projectId: number): void {
     this.list.update((list) => list.filter((p) => p.projectId !== projectId));
   }
@@ -92,5 +103,6 @@ export class ProjectsStore {
     this.loaded.set(false);
     this.error.set(null);
     this.selectedProjectId.set(null);
+    this.navigationError.set(null);
   }
 }

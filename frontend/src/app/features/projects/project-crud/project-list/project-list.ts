@@ -55,7 +55,9 @@ export class ProjectList {
   constructor() {
     // A page that sent the user here may say why, e.g. the edited project no longer exists.
     const error: unknown = inject(Router).currentNavigation()?.extras.state?.['error'];
+    const navigationError = this.store.consumeNavigationError();
     if (typeof error === 'string') this.actionError.set(error);
+    else if (navigationError) this.actionError.set(navigationError);
     this.load();
   }
 
