@@ -4,6 +4,7 @@ import { Observable, map, tap } from 'rxjs';
 import { environment } from '../../../../../environments/environment';
 import { ProjectsStore } from '../../shared/state/projects.store';
 import type {
+  ApiProject,
   CreateProjectRequest,
   DeleteProjectResponse,
   Project,
@@ -11,6 +12,7 @@ import type {
   UpdateProjectResponse,
 } from '../../shared/types/project.types';
 import { mapProjectError } from '../mappers/project-error.mapper';
+import { toProject } from '../mappers/project.mapper';
 
 /**
  * Create, read, update and delete calls for /api/projects. Successful calls also update
@@ -27,7 +29,9 @@ export class ProjectService {
   list(archived?: boolean): Observable<Project[]> {
     const params =
       archived === undefined ? undefined : new HttpParams().set('archived', String(archived));
-    return this.http.get<Project[]>(this.baseUrl, { params });
+    return this.http
+      .get<ApiProject[]>(this.baseUrl, { params })
+      .pipe(map((projects) => projects.map(toProject)));
   }
 
   /** Loads every project into the store, recording loading and error state there. */
@@ -42,9 +46,10 @@ export class ProjectService {
   }
 
   get(projectId: number): Observable<Project> {
-    return this.http
-      .get<Project>(`${this.baseUrl}/${projectId}`)
-      .pipe(tap((project) => this.store.upsert(project)));
+    return this.http.get<ApiProject>(`${this.baseUrl}/${projectId}`).pipe(
+      map(toProject),
+      tap((project) => this.store.upsert(project)),
+    );
   }
 
   /** Sends only name, description and color; the server sets the flags. */
@@ -54,9 +59,10 @@ export class ProjectService {
       description: request.description,
       color: request.color,
     };
-    return this.http
-      .post<Project>(this.baseUrl, body)
-      .pipe(tap((project) => this.store.upsert(project)));
+    return this.http.post<ApiProject>(this.baseUrl, body).pipe(
+      map(toProject),
+      tap((project) => this.store.upsert(project)),
+    );
   }
 
   /** PUT /api/projects/{id} with only the changed fields. */

@@ -5,6 +5,7 @@ import { provideRouter } from '@angular/router';
 import { environment } from '../../../../../environments/environment';
 import type { Project } from '../../shared/types/project.types';
 import { ProjectList, deletedNotice } from './project-list';
+import { apiProject } from '../../testing/helpers/api-project';
 
 const URL = `${environment.apiBaseUrl}/api/projects`;
 const base: Project = {
@@ -48,7 +49,7 @@ describe('ProjectList', () => {
   const render = () => fixture.detectChanges();
 
   function loadWith(projects: Project[]): void {
-    http.expectOne(URL).flush(projects);
+    http.expectOne(URL).flush(projects.map(apiProject));
     render();
   }
 

@@ -7,6 +7,7 @@ import { RouterTestingHarness } from '@angular/router/testing';
 import { environment } from '../../../../../environments/environment';
 import type { Project } from '../../shared/types/project.types';
 import { ProjectForm } from './project-form';
+import { apiProject } from '../../testing/helpers/api-project';
 
 @Component({ template: '' })
 class Blank {}
@@ -119,7 +120,7 @@ describe('ProjectForm', () => {
       const req = http.expectOne(URL);
       expect(req.request.method).toBe('POST');
       expect(req.request.body).toEqual({ name: 'Capstone', description: null, color: null });
-      req.flush(CAPSTONE);
+      req.flush(apiProject(CAPSTONE));
     });
 
     it('sends the chosen description and color', () => {
@@ -142,13 +143,13 @@ describe('ProjectForm', () => {
 
       expect(saveButton().disabled).toBe(true);
       expect(saveButton().textContent).toContain('Creating…');
-      http.expectOne(URL).flush(CAPSTONE);
+      http.expectOne(URL).flush(apiProject(CAPSTONE));
     });
 
     it('goes back to the project list after creating', async () => {
       type('project-name', 'Capstone');
       submit();
-      http.expectOne(URL).flush(CAPSTONE);
+      http.expectOne(URL).flush(apiProject(CAPSTONE));
       await harness.fixture.whenStable();
 
       expect(router.url).toBe('/projects');
@@ -176,7 +177,7 @@ describe('ProjectForm', () => {
       expect(el<HTMLInputElement>('#project-name').value).toBe('Capstone');
 
       submit();
-      http.expectOne(URL).flush(CAPSTONE);
+      http.expectOne(URL).flush(apiProject(CAPSTONE));
     });
 
     it('closes with Escape without saving', async () => {
@@ -193,7 +194,7 @@ describe('ProjectForm', () => {
     async function open(project: Project = CAPSTONE): Promise<void> {
       await harness.navigateByUrl(`/projects/${project.projectId}/edit`);
       expect(text('[role="status"]')).toBe('Loading project…');
-      http.expectOne(`${URL}/${project.projectId}`).flush(project);
+      http.expectOne(`${URL}/${project.projectId}`).flush(apiProject(project));
       harness.detectChanges();
     }
 
@@ -280,7 +281,7 @@ describe('ProjectForm', () => {
       fail(`${URL}/10`, 500);
 
       el<HTMLButtonElement>('.message button').click();
-      http.expectOne(`${URL}/10`).flush(CAPSTONE);
+      http.expectOne(`${URL}/10`).flush(apiProject(CAPSTONE));
       harness.detectChanges();
 
       expect(el<HTMLInputElement>('#project-name').value).toBe('Capstone');

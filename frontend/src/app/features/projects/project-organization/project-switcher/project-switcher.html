@@ -1,0 +1,200 @@
+<main class="page">
+  <app-projects-header />
+
+  <p class="visually-hidden" role="status" aria-live="polite">{{ announcement() }}</p>
+
+  @if (actionError(); as message) {
+    <p class="banner-error" role="alert">{{ message }}</p>
+  }
+
+  @if (store.error(); as message) {
+    <div class="load-error" role="alert">
+      <p>Couldn't load your projects. {{ message }}</p>
+      <button type="button" class="retry" [disabled]="store.loading()" (click)="load()">
+        {{ store.loading() ? 'Retrying…' : 'Try again' }}
+      </button>
+    </div>
+  }
+
+  @if (firstLoad()) {
+    <p class="status">Loading projects…</p>
+  } @else if (store.loaded()) {
+    <p class="intro">
+      Pick the project you're working on. Star the ones you use most, drag or use the arrows to
+      change their order, and archive the ones you're done with.
+    </p>
+
+    @if (split().inbox; as inbox) {
+      <div class="item inbox">
+        <ng-container *ngTemplateOutlet="row; context: { $implicit: inbox }" />
+      </div>
+    }
+
+    <section class="group" aria-labelledby="switcher-favorites-heading">
+      <h2 id="switcher-favorites-heading">Favorites</h2>
+      @if (split().favorites.length) {
+        <ul
+          class="list"
+          cdkDropList
+          [cdkDropListDisabled]="reordering()"
+          (cdkDropListDropped)="dropped('favorites', $event)"
+        >
+          @for (project of split().favorites; track project.projectId; let i = $index) {
+            <li class="item" cdkDrag cdkDragLockAxis="y" [cdkDragData]="project">
+              <span class="handle" cdkDragHandle aria-hidden="true" title="Drag to reorder">
+                <svg viewBox="0 0 24 24">
+                  <circle cx="9" cy="6" r="1.5" />
+                  <circle cx="15" cy="6" r="1.5" />
+                  <circle cx="9" cy="12" r="1.5" />
+                  <circle cx="15" cy="12" r="1.5" />
+                  <circle cx="9" cy="18" r="1.5" />
+                  <circle cx="15" cy="18" r="1.5" />
+                </svg>
+              </span>
+              <ng-container
+                *ngTemplateOutlet="
+                  row;
+                  context: {
+                    $implicit: project,
+                    group: 'favorites',
+                    index: i,
+                    count: split().favorites.length,
+                  }
+                "
+              />
+              <div class="placeholder" *cdkDragPlaceholder></div>
+            </li>
+          }
+        </ul>
+      } @else {
+        <p class="empty">Star a project to keep it at the top.</p>
+      }
+    </section>
+
+    <section class="group" aria-labelledby="switcher-projects-heading">
+      <h2 id="switcher-projects-heading">My projects</h2>
+      @if (split().active.length) {
+        <ul
+          class="list"
+          cdkDropList
+          [cdkDropListDisabled]="reordering()"
+          (cdkDropListDropped)="dropped('active', $event)"
+        >
+          @for (project of split().active; track project.projectId; let i = $index) {
+            <li class="item" cdkDrag cdkDragLockAxis="y" [cdkDragData]="project">
+              <span class="handle" cdkDragHandle aria-hidden="true" title="Drag to reorder">
+                <svg viewBox="0 0 24 24">
+                  <circle cx="9" cy="6" r="1.5" />
+                  <circle cx="15" cy="6" r="1.5" />
+                  <circle cx="9" cy="12" r="1.5" />
+                  <circle cx="15" cy="12" r="1.5" />
+                  <circle cx="9" cy="18" r="1.5" />
+                  <circle cx="15" cy="18" r="1.5" />
+                </svg>
+              </span>
+              <ng-container
+                *ngTemplateOutlet="
+                  row;
+                  context: {
+                    $implicit: project,
+                    group: 'active',
+                    index: i,
+                    count: split().active.length,
+                  }
+                "
+              />
+              <div class="placeholder" *cdkDragPlaceholder></div>
+            </li>
+          }
+        </ul>
+      } @else {
+        <p class="empty">
+          No other projects. <a routerLink="/projects/new">Create one</a> to group related tasks.
+        </p>
+      }
+    </section>
+
+    @if (split().archived.length) {
+      <details class="group archived">
+        <summary>
+          <h2 id="switcher-archived-heading">Archived</h2>
+          <span class="count">{{ split().archived.length }}</span>
+        </summary>
+        <ul class="list" aria-labelledby="switcher-archived-heading">
+          @for (project of split().archived; track project.projectId) {
+            <li class="item">
+              <ng-container *ngTemplateOutlet="row; context: { $implicit: project }" />
+            </li>
+          }
+        </ul>
+      </details>
+    }
+  }
+</main>
+
+<ng-template #row let-project let-group="group" let-index="index" let-count="count">
+  <div class="row" [class.selected]="store.selectedProjectId() === project.projectId">
+    <button
+      type="button"
+      class="select"
+      [attr.aria-current]="store.selectedProjectId() === project.projectId ? 'true' : null"
+      (click)="select(project)"
+    >
+      <span class="swatch" [style.background]="project.color ?? null" aria-hidden="true"></span>
+      <span class="name">{{ project.name }}</span>
+    </button>
+
+    <div class="controls">
+      @if (group) {
+        <button
+          type="button"
+          class="icon"
+          [attr.aria-label]="'Move ' + project.name + ' up'"
+          [disabled]="index === 0 || reordering()"
+          (click)="move(group, index, index - 1)"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 15 6-6 6 6" /></svg>
+        </button>
+        <button
+          type="button"
+          class="icon"
+          [attr.aria-label]="'Move ' + project.name + ' down'"
+          [disabled]="index === count - 1 || reordering()"
+          (click)="move(group, index, index + 1)"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
+        </button>
+        <button
+          type="button"
+          class="icon star"
+          [class.on]="project.isFavorite"
+          [attr.aria-label]="'Favorite ' + project.name"
+          [attr.aria-pressed]="project.isFavorite"
+          [disabled]="isPending(project)"
+          (click)="toggleFavorite(project)"
+        >
+          <span aria-hidden="true">{{ project.isFavorite ? '★' : '☆' }}</span>
+        </button>
+        <button
+          type="button"
+          class="action"
+          [attr.aria-label]="'Archive ' + project.name"
+          [disabled]="isPending(project)"
+          (click)="setArchived(project, true)"
+        >
+          Archive
+        </button>
+      } @else if (project.isArchived) {
+        <button
+          type="button"
+          class="action"
+          [attr.aria-label]="'Restore ' + project.name"
+          [disabled]="isPending(project)"
+          (click)="setArchived(project, false)"
+        >
+          Restore
+        </button>
+      }
+    </div>
+  </div>
+</ng-template>

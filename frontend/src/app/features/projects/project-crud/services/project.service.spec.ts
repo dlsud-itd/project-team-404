@@ -5,6 +5,7 @@ import { environment } from '../../../../../environments/environment';
 import { ProjectsStore } from '../../shared/state/projects.store';
 import type { Project } from '../../shared/types/project.types';
 import { ProjectService } from './project.service';
+import { apiProject } from '../../testing/helpers/api-project';
 
 const URL = `${environment.apiBaseUrl}/api/projects`;
 const INBOX: Project = {
@@ -50,7 +51,7 @@ describe('ProjectService', () => {
       const req = http.expectOne(URL);
       expect(req.request.method).toBe('GET');
       expect(req.request.params.keys()).toEqual([]);
-      req.flush([INBOX, CAPSTONE]);
+      req.flush([INBOX, CAPSTONE].map(apiProject));
 
       expect(result).toEqual([INBOX, CAPSTONE]);
     });
@@ -67,7 +68,7 @@ describe('ProjectService', () => {
       service.refresh().subscribe();
       expect(store.loading()).toBe(true);
 
-      http.expectOne(URL).flush([CAPSTONE, INBOX]);
+      http.expectOne(URL).flush([CAPSTONE, INBOX].map(apiProject));
 
       expect(store.loading()).toBe(false);
       expect(store.projects()).toEqual([INBOX, CAPSTONE]);
@@ -89,7 +90,7 @@ describe('ProjectService', () => {
 
     const req = http.expectOne(`${URL}/10`);
     expect(req.request.method).toBe('GET');
-    req.flush(CAPSTONE);
+    req.flush(apiProject(CAPSTONE));
 
     expect(result).toEqual(CAPSTONE);
     expect(store.byId(10)).toEqual(CAPSTONE);
@@ -102,7 +103,7 @@ describe('ProjectService', () => {
     const req = http.expectOne(URL);
     expect(req.request.method).toBe('POST');
     expect(req.request.body).toEqual({ name: 'Capstone', description: null, color: null });
-    req.flush(CAPSTONE);
+    req.flush(apiProject(CAPSTONE));
 
     expect(store.byId(10)).toEqual(CAPSTONE);
   });

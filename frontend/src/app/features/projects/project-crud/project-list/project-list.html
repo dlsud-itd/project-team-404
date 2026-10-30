@@ -1,11 +1,5 @@
 <main class="page">
-  <header class="head">
-    <a class="back" routerLink="/home">← Dashboard</a>
-    <div class="title-row">
-      <h1>Projects</h1>
-      <a class="new" routerLink="/projects/new">+ New project</a>
-    </div>
-  </header>
+  <app-projects-header />
 
   @if (notice(); as message) {
     <p class="form-notice" role="status">{{ message }}</p>
