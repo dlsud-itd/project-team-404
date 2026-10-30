@@ -9,7 +9,11 @@ const taskDate = z
   .regex(/^\d{4}-\d{2}-\d{2}$/)
   .nullable()
   .optional();
-const taskDeadline = z.string().datetime({ offset: true }).nullable().optional();
+const taskDeadline = z
+  .string()
+  .datetime({ offset: true })
+  .nullable()
+  .optional();
 const taskPriority = z.enum(['low', 'medium', 'high']).optional();
 const taskRecurrence = z
   .enum(['none', 'daily', 'weekly', 'monthly'])

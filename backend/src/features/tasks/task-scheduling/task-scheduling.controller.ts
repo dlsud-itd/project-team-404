@@ -9,7 +9,9 @@ import type {
   TaskDueDateInput,
 } from './task-scheduling.types';
 
-export function createTaskSchedulingController(service: TaskSchedulingService): {
+export function createTaskSchedulingController(
+  service: TaskSchedulingService
+): {
   setScheduledDate: RequestHandler;
   setDueDate: RequestHandler;
   setDeadline: RequestHandler;
@@ -46,7 +48,11 @@ export function createTaskSchedulingController(service: TaskSchedulingService): 
       try {
         const task = res.locals.ownedTask as TaskRecord;
         const { dueDate } = res.locals.validated as TaskDueDateInput;
-        const result = await service.setDueDate(task, req.auth!.userId, dueDate ?? null);
+        const result = await service.setDueDate(
+          task,
+          req.auth!.userId,
+          dueDate ?? null
+        );
         res.status(200).json(result);
       } catch (error) {
         respondToError(error, res, next);
@@ -56,7 +62,11 @@ export function createTaskSchedulingController(service: TaskSchedulingService): 
       try {
         const task = res.locals.ownedTask as TaskRecord;
         const { deadline } = res.locals.validated as TaskDeadlineInput;
-        const result = await service.setDeadline(task, req.auth!.userId, deadline ?? null);
+        const result = await service.setDeadline(
+          task,
+          req.auth!.userId,
+          deadline ?? null
+        );
         res.status(200).json(result);
       } catch (error) {
         respondToError(error, res, next);
