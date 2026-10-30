@@ -15,7 +15,7 @@
     "clean": "rimraf dist",
     "test": "vitest run --passWithNoTests",
     "test:report": "vitest run --coverage --passWithNoTests",
-    "test:integration": "vitest run tests/integration/features",
+    "test:integration": "node --env-file-if-exists=.env ./node_modules/vitest/vitest.mjs run tests/integration",
     "test:watch": "vitest",
     "pretypecheck": "npm run prisma:generate",
     "typecheck": "tsc --noEmit",

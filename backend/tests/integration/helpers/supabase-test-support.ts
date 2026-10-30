@@ -31,13 +31,17 @@ export function configureSupabaseTest(): TestSupabaseConfig | null {
     );
   }
 
-  const databaseUrl = process.env.SUPABASE_TEST_DATABASE_URL;
+  const databaseUrl =
+    process.env.SUPABASE_TEST_DATABASE_URL ?? process.env.TEST_DATABASE_URL;
   if (!databaseUrl) {
     throw new Error(
       'Set SUPABASE_TEST_DATABASE_URL to the isolated test database'
     );
   }
-  const directUrl = process.env.SUPABASE_TEST_DIRECT_URL ?? databaseUrl;
+  const directUrl =
+    process.env.SUPABASE_TEST_DIRECT_URL ??
+    process.env.TEST_DIRECT_URL ??
+    databaseUrl;
 
   if (process.env.SUPABASE_URL === url) {
     throw new Error(
@@ -236,7 +240,7 @@ async function supabaseRequest<T = unknown>(
     method: options.method,
     headers: {
       apikey: config.serviceRoleKey,
-      Authorization: `******`,
+      Authorization: `Bearer ${config.serviceRoleKey}`,
       'Content-Type': 'application/json',
       ...(options.prefer ? { Prefer: options.prefer } : {}),
     },

@@ -12,22 +12,24 @@ Status values: `Failing` means the case is planned but not yet passing; `Blocked
 
 ### 1.1 Backend Integration Tests
 
+Implementation: `backend/tests/integration/tasks.integration.test.ts`. Run with `npm run test:integration` from `backend`, using the isolated Supabase test project. The latest targeted run passed all 9 tests against the isolated project.
+
 | ID         | Test Case                                           | Expected Result                                                                                        | Status  |
 | ---------- | --------------------------------------------------- | ------------------------------------------------------------------------------------------------------ | ------- |
-| BE-CRUD-01 | Create a task with valid required fields            | The API returns success and persists a task owned by the authenticated user with the submitted values. | Failing |
-| BE-CRUD-02 | Create a task with optional description and project | The task is persisted with the description and project association.                                    | Failing |
-| BE-CRUD-03 | Create a task without required fields               | The API returns a validation error and creates no task.                                                | Failing |
-| BE-CRUD-04 | Create a task with invalid field values             | The API returns a validation error and creates no task.                                                | Failing |
-| BE-CRUD-05 | List tasks for an authenticated user                | The response contains that user's tasks and no tasks owned by another user.                            | Failing |
-| BE-CRUD-06 | Get an owned task by ID                             | The API returns the task and its persisted fields.                                                     | Failing |
-| BE-CRUD-07 | Get another user's task                             | The API returns not found without disclosing the task.                                                 | Failing |
-| BE-CRUD-08 | Get a nonexistent or malformed task ID              | The API returns the contract's not-found or validation response; no data is changed.                   | Failing |
-| BE-CRUD-09 | Update an owned task's title and description        | The API returns success and persists only the submitted changes.                                       | Failing |
-| BE-CRUD-10 | Update a task with invalid values                   | The API returns a validation error and leaves the task unchanged.                                      | Failing |
-| BE-CRUD-11 | Update another user's task                          | The API returns not found and leaves the task unchanged.                                               | Failing |
-| BE-CRUD-12 | Delete an owned task                                | The API returns the contract's successful deletion response and the task is no longer retrievable.     | Failing |
-| BE-CRUD-13 | Delete another user's or a nonexistent task         | The API returns not found; no other task is changed.                                                   | Failing |
-| BE-CRUD-14 | Call task endpoints without a valid access token    | Each protected operation returns unauthorized and changes no data.                                     | Failing |
+| BE-CRUD-01 | Create a task with valid required fields            | The API returns success and persists a task owned by the authenticated user with the submitted values. | Passing |
+| BE-CRUD-02 | Create a task with optional description and project | The task is persisted with the description and project association.                                    | Passing |
+| BE-CRUD-03 | Create a task with an empty required title          | The API returns a validation error and creates no task.                                                | Passing |
+| BE-CRUD-04 | Create a task with invalid field values             | The API returns a validation error and creates no task.                                                | Passing |
+| BE-CRUD-05 | List tasks for an authenticated user                | The response contains that user's tasks and no tasks owned by another user.                            | Passing |
+| BE-CRUD-06 | Get an owned task by ID                             | The API returns the task and its persisted fields.                                                     | Passing |
+| BE-CRUD-07 | Get another user's task                             | The API returns not found without disclosing the task.                                                 | Passing |
+| BE-CRUD-08 | Get a nonexistent or malformed task ID              | The API returns the contract's not-found or validation response; no data is changed.                   | Passing |
+| BE-CRUD-09 | Update an owned task's title and description        | The API returns success and persists only the submitted changes.                                       | Passing |
+| BE-CRUD-10 | Update a task with invalid values                   | The API returns a validation error and leaves the task unchanged.                                      | Passing |
+| BE-CRUD-11 | Update another user's task                          | The API returns not found and leaves the task unchanged.                                               | Passing |
+| BE-CRUD-12 | Delete an owned task                                | The API returns the contract's successful deletion response and the task is no longer retrievable.     | Passing |
+| BE-CRUD-13 | Delete another user's or a nonexistent task         | The API returns not found; no other task is changed.                                                   | Passing |
+| BE-CRUD-14 | Call task endpoints without a valid access token    | Each protected operation returns unauthorized and changes no data.                                     | Passing |
 
 ### 1.2 Frontend Integration Tests
 
