@@ -2,12 +2,8 @@ import type { Routes } from '@angular/router';
 
 /** Lazy-loaded under /projects; app.routes.ts puts authGuard in front of all of these. */
 export const PROJECTS_ROUTES: Routes = [
-  {
-    path: '',
-    title: 'Projects · HabitTracker',
-    loadComponent: () =>
-      import('./project-crud/project-list/project-list').then((m) => m.ProjectList),
-  },
+  // The list lives in the Projects tab of the home page.
+  { path: '', pathMatch: 'full', redirectTo: '/home?tab=projects' },
   {
     path: 'new',
     title: 'New project · HabitTracker',

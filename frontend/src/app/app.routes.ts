@@ -16,6 +16,12 @@ export const routes: Routes = [
     loadComponent: () => import('./features/home/home').then((m) => m.Home),
   },
   {
+    // Before 'projects' so the projects routes don't claim these URLs.
+    path: 'projects/:projectId/tasks',
+    canActivate: [authGuard],
+    loadChildren: () => import('./features/tasks/tasks.routes').then((m) => m.TASKS_ROUTES),
+  },
+  {
     path: 'projects',
     canActivate: [authGuard],
     loadChildren: () =>
