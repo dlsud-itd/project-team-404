@@ -63,6 +63,56 @@ The Angular app is available at `http://localhost:4200`; the Express API is at
 Run **`✅ CI: Verify All`** after configuring the environment files. Individual
 frontend test and build tasks also use the values in `frontend/.env`.
 
+## Browser E2E tests
+
+The shared Playwright runner exercises registration, login/session handling,
+password recovery, and profile management against the local frontend and API.
+By default, it starts local Supabase and uses its seeded database. It forces the
+backend console mailer and does not read or connect to a linked/remote project.
+
+Prerequisites:
+
+- Docker Desktop is installed and running.
+- Root, frontend, and backend npm dependencies are installed.
+- The local Supabase database has the repository migrations and seed data. For
+  a new local database, run `supabase db reset --local` from the repository
+  root; this is destructive to that local database only.
+- Install the Playwright Chromium browser once with
+  `npx playwright install chromium`.
+
+Run `npm run test:e2e` from the repository root, or choose
+**`🧪 E2E: Tests (run once)`** in VS Code. The runner starts the frontend at
+`http://localhost:4200` and API at `http://localhost:3000`, then stops both
+when the suite completes. Supabase remains running so you can run the command
+again against the same database. No real email is sent. Created test users are
+deleted and seeded user profiles, passwords, sessions, and reset tokens are
+restored after each relevant test and again at suite teardown.
+
+Failed-test screenshots, videos, and traces are saved under
+`tests/e2e/test-results/` (ignored by Git). The backend's captured console-mail
+output, including temporary reset links, is kept in an OS temporary directory
+and deleted after the run.
+
+To run E2E against a **dedicated, isolated remote Supabase test project** instead
+of Docker, set its `SUPABASE_TEST_URL`, `SUPABASE_TEST_ANON_KEY`,
+`SUPABASE_TEST_SERVICE_ROLE_KEY`, and `SUPABASE_TEST_DATABASE_URL` in
+`backend/.env`, then opt in explicitly from PowerShell:
+
+```powershell
+$env:E2E_SUPABASE_TARGET = 'remote-test'
+npm run test:e2e
+Remove-Item Env:E2E_SUPABASE_TARGET
+```
+
+`SUPABASE_TEST_DIRECT_URL` is optional; the runner uses the test database URL if
+it is omitted. For older environment files, `TEST_DATABASE_URL` and
+`TEST_DIRECT_URL` are accepted aliases. Remote E2E does **not** reset or seed the
+database. Before running, ensure it already has the current migrations and the
+E2E fixture accounts and reset-token rows from `supabase/seeds/`. The suite
+creates/deletes temporary accounts and modifies then restores the seeded James
+account's password, profile, sessions, and reset tokens. Never point it at a
+production or shared development project.
+
 ## Regression tests
 
 **`🔁 Regression: Run All`** (or `npm run test:regression` from the repository

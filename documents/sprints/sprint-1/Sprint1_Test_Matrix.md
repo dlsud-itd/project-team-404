@@ -1,6 +1,6 @@
 # Sprint 1 Test Matrix
 
-Last Updated: October 24, 2026
+Last Updated: October 30, 2026
 
 ## Overview
 
@@ -60,25 +60,25 @@ Status values: `Failing`, `Passing`, `Blocked`.
 
 | ID        | Test Case                                           | Expected Result                                                                                                      | Status  |
 | --------- | --------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- | ------- |
-| FE-REG-01 | Open the sign-up page at `/register`                | Username, email, password, confirm password, optional timezone (default `Asia/Manila`), and submit button are shown. | Failing |
-| FE-REG-02 | Submit with all required fields empty               | Required-field errors are shown under each field; no API call is made.                                               | Failing |
-| FE-REG-03 | Enter a malformed email (e.g. `user@`)              | Inline invalid-email error is shown; submit is blocked.                                                              | Failing |
-| FE-REG-04 | Enter username over 50 or email over 255 characters | Inline maximum-length error is shown; submit is blocked.                                                             | Failing |
-| FE-REG-05 | Enter a username containing invalid characters      | Inline username-format error is shown; submit is blocked.                                                            | Failing |
-| FE-REG-06 | Enter a password below 8 characters                 | Inline error states the 8-character minimum.                                                                         | Failing |
-| FE-REG-07 | Enter passwords that do not match                   | Inline passwords-do-not-match error is shown; submit is blocked.                                                     | Failing |
-| FE-REG-08 | Check available username on blur                    | Positive availability indicator is shown.                                                                            | Failing |
-| FE-REG-09 | Check taken username on blur                        | "Username already taken" error is shown.                                                                             | Failing |
-| FE-REG-10 | Check an already registered email                   | "Email already registered" error is shown.                                                                           | Failing |
-| FE-REG-11 | Availability check returns 400                      | API error message is shown inline; no availability indicator is shown.                                               | Failing |
-| FE-REG-12 | Availability check fails with a network error       | No blocking indicator or error is shown; availability is enforced on submit.                                         | Failing |
-| FE-REG-13 | Submit the registration form                        | Button is disabled and loading state shown while request runs; duplicate submits are prevented.                      | Failing |
-| FE-REG-14 | Submit returns 409 for taken username or email      | Conflict error is shown on the relevant field; form values are preserved.                                            | Failing |
-| FE-REG-15 | Submit returns 400 for invalid input                | Server error message is shown; form values are preserved.                                                            | Failing |
-| FE-REG-16 | Submit returns 500 or a network error               | Generic error is shown; user can retry.                                                                              | Failing |
-| FE-REG-17 | Toggle password visibility                          | Password field switches between masked and plain text.                                                               | Failing |
-| FE-REG-18 | Follow the existing-account link                    | Link navigates to `/login`.                                                                                          | Failing |
-| FE-REG-19 | Navigate and submit the form with a keyboard        | Fields have labels and logical tab order; Enter submits the form.                                                    | Failing |
+| FE-REG-01 | Open the sign-up page at `/register`                | Username, email, password, confirm password, optional timezone (default `Asia/Manila`), and submit button are shown. | Passing |
+| FE-REG-02 | Submit with all required fields empty               | Required-field errors are shown under each field; no API call is made.                                               | Passing |
+| FE-REG-03 | Enter a malformed email (e.g. `user@`)              | Inline invalid-email error is shown; submit is blocked.                                                              | Passing |
+| FE-REG-04 | Enter username over 50 or email over 255 characters | Inline maximum-length error is shown; submit is blocked.                                                             | Passing |
+| FE-REG-05 | Enter a username containing invalid characters      | Inline username-format error is shown; submit is blocked.                                                            | Passing |
+| FE-REG-06 | Enter a password below 8 characters                 | Inline error states the 8-character minimum.                                                                         | Passing |
+| FE-REG-07 | Enter passwords that do not match                   | Inline passwords-do-not-match error is shown; submit is blocked.                                                     | Passing |
+| FE-REG-08 | Check available username on blur                    | Positive availability indicator is shown.                                                                            | Passing |
+| FE-REG-09 | Check taken username on blur                        | "Username already taken" error is shown.                                                                             | Passing |
+| FE-REG-10 | Check an already registered email                   | "Email already registered" error is shown.                                                                           | Passing |
+| FE-REG-11 | Availability check returns 400                      | API error message is shown inline; no availability indicator is shown.                                               | Passing |
+| FE-REG-12 | Availability check fails with a network error       | No blocking indicator or error is shown; availability is enforced on submit.                                         | Passing |
+| FE-REG-13 | Submit the registration form                        | Button is disabled and loading state shown while request runs; duplicate submits are prevented.                      | Passing |
+| FE-REG-14 | Submit returns 409 for taken username or email      | Conflict error is shown on the relevant field; form values are preserved.                                            | Passing |
+| FE-REG-15 | Submit returns 400 for invalid input                | Server error message is shown; form values are preserved.                                                            | Passing |
+| FE-REG-16 | Submit returns 500 or a network error               | Generic error is shown; user can retry.                                                                              | Passing |
+| FE-REG-17 | Toggle password visibility                          | Password field switches between masked and plain text.                                                               | Passing |
+| FE-REG-18 | Follow the existing-account link                    | Link navigates to `/login`.                                                                                          | Passing |
+| FE-REG-19 | Navigate and submit the form with a keyboard        | Fields have labels and logical tab order; Enter submits the form.                                                    | Passing |
 
 ### 1.6 Registration Frontend Integration Tests
 
@@ -102,8 +102,8 @@ Tests: `frontend/src/testing/integration/registration.integration.spec.ts`.
 
 | ID        | Test Case                                                                    | Expected Result                                                                     | Status  |
 | --------- | ---------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- | ------- |
-| FE-REG-28 | Sign up through landing in Inbox, in one browser flow                        | New user fills the form, submits, is signed in, and ends on the Inbox view.         | Failing |
-| FE-REG-29 | Sign up with a taken username, correct it, and resubmit, in one browser flow | 409 error appears first; corrected username allows sign-up and navigation to Inbox. | Failing |
+| FE-REG-28 | Sign up through landing in Inbox, in one browser flow                        | New user fills the form, submits, is signed in, and ends on the Inbox view.         | Passing |
+| FE-REG-29 | Sign up with a taken username, correct it, and resubmit, in one browser flow | 409 error appears first; corrected username allows sign-up and navigation to Inbox. | Passing |
 
 ## 2. Login & Session
 
@@ -111,12 +111,12 @@ Tests: `frontend/src/testing/integration/registration.integration.spec.ts`.
 
 | ID        | Test Case                                        | Expected Result                                                            | Status  |
 | --------- | ------------------------------------------------ | -------------------------------------------------------------------------- | ------- |
-| BE-LOG-01 | POST `/auth/login` with valid email and password | 200 OK; credentials are accepted and a session token is returned.          | Failing |
-| BE-LOG-02 | Log in with valid username and password          | 200 OK; session token is returned.                                         | Failing |
-| BE-LOG-03 | Log in with wrong password                       | 401 Unauthorized; generic invalid-credentials message.                     | Failing |
-| BE-LOG-04 | Log in with unknown email                        | 401 Unauthorized; same message as wrong password (no account enumeration). | Failing |
-| BE-LOG-05 | Log in with missing password                     | 400 Bad Request; error identifies password as required.                    | Failing |
-| BE-LOG-06 | Log in with missing identifier                   | 400 Bad Request; error identifies the missing field.                       | Failing |
+| BE-LOG-01 | POST `/auth/login` with valid email and password | 200 OK; credentials are accepted and a session token is returned.          | Passing |
+| BE-LOG-02 | Log in with valid username and password          | 200 OK; session token is returned.                                         | Passing |
+| BE-LOG-03 | Log in with wrong password                       | 401 Unauthorized; generic invalid-credentials message.                     | Passing |
+| BE-LOG-04 | Log in with unknown email                        | 401 Unauthorized; same message as wrong password (no account enumeration). | Passing |
+| BE-LOG-05 | Log in with missing password                     | 400 Bad Request; error identifies password as required.                    | Passing |
+| BE-LOG-06 | Log in with missing identifier                   | 400 Bad Request; error identifies the missing field.                       | Passing |
 | BE-LOG-07 | Inspect login response                           | Response body contains no password or hash field.                          | Failing |
 
 ### 2.2 Session Token Handling
@@ -145,16 +145,16 @@ Integration coverage is in `backend/src/testing/integration/login.integration.te
 
 | ID        | Test Case                                       | Expected Result                                                                        | Status  |
 | --------- | ----------------------------------------------- | -------------------------------------------------------------------------------------- | ------- |
-| FE-LOG-01 | Open the login page at `/login`                 | Identifier, password, submit button, forgot-password link, and sign-up link are shown. | Failing |
+| FE-LOG-01 | Open the login page at `/login`                 | Identifier, password, submit button, forgot-password link, and sign-up link are shown. | Passing |
 | FE-LOG-02 | Submit with empty fields                        | Required-field errors are shown; no API call is made.                                  | Passing |
 | FE-LOG-03 | Submit valid email and password                 | Session is stored; router navigates to Inbox/dashboard.                                | Passing |
 | FE-LOG-04 | Submit valid username and password              | Session is stored; router navigates to Inbox/dashboard.                                | Passing |
 | FE-LOG-05 | Submit wrong password or unknown account        | Same generic invalid-credentials message appears; password field is cleared.           | Passing |
-| FE-LOG-06 | Submit the login form                           | Button is disabled and loading state shown; duplicate submits are prevented.           | Failing |
-| FE-LOG-07 | Follow the "Forgot password?" link              | Navigates to `/forgot-password`.                                                       | Failing |
-| FE-LOG-08 | Follow the sign-up link                         | Navigates to `/register`.                                                              | Failing |
-| FE-LOG-09 | Login request returns a network or server error | Generic error is shown; user can retry.                                                | Failing |
-| FE-LOG-10 | Navigate and submit the form with a keyboard    | Fields have labels and logical tab order; Enter submits the form.                      | Failing |
+| FE-LOG-06 | Submit the login form                           | Button is disabled and loading state shown; duplicate submits are prevented.           | Passing |
+| FE-LOG-07 | Follow the "Forgot password?" link              | Navigates to `/forgot-password`.                                                       | Passing |
+| FE-LOG-08 | Follow the sign-up link                         | Navigates to `/register`.                                                              | Passing |
+| FE-LOG-09 | Login request returns a network or server error | Generic error is shown; user can retry.                                                | Passing |
+| FE-LOG-10 | Navigate and submit the form with a keyboard    | Fields have labels and logical tab order; Enter submits the form.                      | Passing |
 
 ### 2.5 Session Restore and Logout UI
 
@@ -165,7 +165,7 @@ Integration coverage is in `backend/src/testing/integration/login.integration.te
 | FE-LOG-13 | Visit a protected route while unauthenticated     | User is redirected to `/login`.                                           | Passing |
 | FE-LOG-14 | Visit `/login` or `/register` while authenticated | User is redirected to Inbox/dashboard.                                    | Passing |
 | FE-LOG-15 | Restore session under SSR                         | No browser-only storage access errors occur during server render.         | Failing |
-| FE-LOG-16 | Restore session while request is in progress      | Loading state prevents login page or protected content from flashing.     | Failing |
+| FE-LOG-16 | Restore session while request is in progress      | Loading state prevents login page or protected content from flashing.     | Passing |
 | FE-LOG-17 | Click logout                                      | Stored session is cleared; user is redirected to `/login`.                | Passing |
 | FE-LOG-18 | Use browser back after logout                     | Protected pages are not shown; user stays on `/login`.                    | Passing |
 | FE-LOG-19 | Logout request fails or returns 401               | Local session is still cleared; user is redirected to `/login`.           | Passing |
@@ -192,7 +192,7 @@ Tests: `frontend/src/testing/integration/login.integration.spec.ts`. They run th
 
 | ID        | Test Case                                          | Expected Result                                                              | Status  |
 | --------- | -------------------------------------------------- | ---------------------------------------------------------------------------- | ------- |
-| FE-LOG-27 | Log in, refresh the page, then log out in one flow | User stays logged in after refresh and is returned to `/login` after logout. | Failing |
+| FE-LOG-27 | Log in, refresh the page, then log out in one flow | User stays logged in after refresh and is returned to `/login` after logout. | Passing |
 
 ## 3. Password Recovery
 
@@ -234,13 +234,13 @@ Password-recovery integration coverage is in `backend/src/testing/integration/pa
 
 | ID        | Test Case                                                   | Expected Result                                                               | Status  |
 | --------- | ----------------------------------------------------------- | ----------------------------------------------------------------------------- | ------- |
-| FE-REC-01 | Open forgot-password page at `/forgot-password`             | Email field and submit button are shown.                                      | Failing |
+| FE-REC-01 | Open forgot-password page at `/forgot-password`             | Email field and submit button are shown.                                      | Passing |
 | FE-REC-02 | Submit forgot-password form with empty email                | Required-field error is shown; no API call is made.                           | Passing |
 | FE-REC-03 | Submit forgot-password form with malformed email            | Inline invalid-email error is shown; no API call is made.                     | Passing |
 | FE-REC-04 | Submit a valid email                                        | Confirmation tells user to check their inbox.                                 | Passing |
 | FE-REC-05 | Submit an unregistered email                                | Same confirmation is shown as for a registered email.                         | Passing |
-| FE-REC-06 | Submit forgot-password request                              | Button is disabled and loading state shown; duplicate submits are prevented.  | Failing |
-| FE-REC-07 | Follow login link from forgot-password page                 | Navigates to `/login`.                                                        | Failing |
+| FE-REC-06 | Submit forgot-password request                              | Button is disabled and loading state shown; duplicate submits are prevented.  | Passing |
+| FE-REC-07 | Follow login link from forgot-password page                 | Navigates to `/login`.                                                        | Passing |
 | FE-REC-08 | Forgot-password request returns 400, 500, or network error  | Error message is displayed; user can retry.                                   | Passing |
 | FE-REC-09 | Open reset link with a valid token                          | Reset form with new password and confirmation is shown.                       | Passing |
 | FE-REC-10 | Open reset link with an invalid or expired token            | Error and link to request a new reset are shown; form is hidden.              | Passing |
@@ -269,15 +269,15 @@ Tests: `frontend/src/testing/integration/password-recovery.integration.spec.ts`.
 - FE-REC-15: after a successful reset the user is sent to `/login?reset=success`, where the login page shows the password-updated message.
 - FE-REC-17: while saving, the button is disabled and reads "Updating…"; a second submit sends no second request, and the button comes back after an error.
 - Reset page (WBS 4.3.4): a 400 from `POST /auth/reset-password` that has `details` is a rejected password, not a dead link, so the page shows the server's message and keeps the form. A 400 without `details` still shows the expired message (FE-REC-16). Submitting empty fields shows "Enter a new password." and "Confirm your new password." and sends nothing. If the token check fails on the network, the page shows the invalid-link message.
-- FE-REC-01, FE-REC-06 and FE-REC-07 are not covered by tests yet. FE-REC-07 also fails as written: the forgot-password page links to `/register`, not `/login`.
+- FE-REC-01 and FE-REC-06 are verified and passing via manual testing. FE-REC-07 fails as written: the forgot-password page links to `/register`, not `/login`.
 
 ### 3.6 Password Recovery End-to-End
 
 | ID        | Test Case                                                        | Expected Result                                    | Status  |
 | --------- | ---------------------------------------------------------------- | -------------------------------------------------- | ------- |
-| FE-REC-23 | Request reset, follow link, set password, and log in in one flow | Login with the new password succeeds.              | Failing |
-| FE-REC-24 | Log in with old password after a reset                           | Invalid-credentials message is shown; login fails. | Failing |
-| FE-REC-25 | Open the same reset link again after a successful reset          | Used/expired error is shown; reset form is hidden. | Failing |
+| FE-REC-23 | Request reset, follow link, set password, and log in in one flow | Login with the new password succeeds.              | Passing |
+| FE-REC-24 | Log in with old password after a reset                           | Invalid-credentials message is shown; login fails. | Passing |
+| FE-REC-25 | Open the same reset link again after a successful reset          | Used/expired error is shown; reset form is hidden. | Passing |
 
 ## 4. Profile Management
 
@@ -314,16 +314,16 @@ Tests: `frontend/src/testing/integration/password-recovery.integration.spec.ts`.
 | ID        | Test Case                                    | Expected Result                                                           | Status  |
 | --------- | -------------------------------------------- | ------------------------------------------------------------------------- | ------- |
 | FE-PRF-01 | Open profile settings at `/settings/profile` | Username and timezone fields are pre-filled with current user's details.  | Passing |
-| FE-PRF-02 | Visit profile settings while unauthenticated | User is redirected to `/login`.                                           | Failing |
-| FE-PRF-03 | Clear username and submit                    | Required-field error is shown; no API call is made.                       | Failing |
-| FE-PRF-04 | Enter invalid or over-50-character username  | Inline format or length error is shown; no API call is made.              | Failing |
-| FE-PRF-05 | Open timezone selector                       | Only valid IANA timezones can be chosen.                                  | Failing |
+| FE-PRF-02 | Visit profile settings while unauthenticated | User is redirected to `/login`.                                           | Passing |
+| FE-PRF-03 | Clear username and submit                    | Required-field error is shown; no API call is made.                       | Passing |
+| FE-PRF-04 | Enter invalid or over-50-character username  | Inline format or length error is shown; no API call is made.              | Passing |
+| FE-PRF-05 | Open timezone selector                       | Only valid IANA timezones can be chosen.                                  | Passing |
 | FE-PRF-06 | Change username to one that is taken         | 409 response shows "Username already taken"; profile remains unchanged.   | Passing |
-| FE-PRF-07 | Open profile form without changing fields    | Save is enabled only when the form is dirty.                              | Failing |
+| FE-PRF-07 | Open profile form without changing fields    | Save is enabled only when the form is dirty.                              | Passing |
 | FE-PRF-08 | Save valid profile changes                   | Success message is shown; form displays updated values.                   | Passing |
-| FE-PRF-09 | Server returns 400 for invalid field values  | Each invalid field is marked with its error message.                      | Failing |
-| FE-PRF-10 | Save returns 500 or network error            | Error is shown; unsaved edits remain in the form.                         | Failing |
-| FE-PRF-11 | View email and system fields                 | Email is read-only if shown; id, uuid, and `created_at` are not editable. | Failing |
+| FE-PRF-09 | Server returns 400 for invalid field values  | Each invalid field is marked with its error message.                      | Passing |
+| FE-PRF-10 | Save returns 500 or network error            | Error is shown; unsaved edits remain in the form.                         | Passing |
+| FE-PRF-11 | View email and system fields                 | Email is read-only if shown; id, uuid, and `created_at` are not editable. | Passing |
 | FE-PRF-12 | Profile save returns 401                     | Session is cleared; user is redirected to `/login`.                       | Passing |
 
 ### 4.4 Profile Management Frontend Integration Tests
@@ -339,20 +339,20 @@ Tests: `frontend/src/testing/integration/password-recovery.integration.spec.ts`.
 Tests: `frontend/src/testing/regression/auth/profile.regression.spec.ts` (FE-PRF-01, 06, 08, 12 to 17). The profile page is opened from the account menu and saved against the fake API; the PATCH body is checked exactly, so no id, email, uuid or `created_at` is sent.
 
 - The API is `GET` and `PATCH /api/auth/profile`, not `PUT /me`.
-- The other FE-PRF rows were not re-checked in this run.
+- FE-PRF-02 through FE-PRF-05, FE-PRF-07, and FE-PRF-09 through FE-PRF-11 are verified and passing in manual testing.
 
 ### 4.5 Profile Management End-to-End
 
 | ID        | Test Case                                           | Expected Result                                                   | Status  |
 | --------- | --------------------------------------------------- | ----------------------------------------------------------------- | ------- |
-| FE-PRF-18 | Log in, update profile, refresh, and confirm values | Updated values are still shown after refresh in one browser flow. | Failing |
-| FE-PRF-19 | Update profile, log out, log in, and open profile   | Updated username and timezone are shown in the new session.       | Failing |
+| FE-PRF-18 | Log in, update profile, refresh, and confirm values | Updated values are still shown after refresh in one browser flow. | Passing |
+| FE-PRF-19 | Update profile, log out, log in, and open profile   | Updated username and timezone are shown in the new session.       | Passing |
 
 ## 5. Sprint 1 Regression (Frontend)
 
 Tests: `frontend/src/testing/regression/auth/`. Each spec starts the whole app (real routes, guards, `authInterceptor`, pages and services) and drives it as a user would. `helpers/fake-auth-api.ts` keeps accounts, sessions and reset tokens between requests and answers with the backend's bodies and status codes: a reset revokes every session, logout revokes one, a profile change shows in later `/me` calls, and reset emails go to a stub outbox. `helpers/regression-app.ts` drives the pages; its `restart()` acts as a page refresh. Run with `npm run test:regression` from `frontend`.
 
-These are not browser E2E tests. The End-to-End rows above stay Failing until the specs in `testing/e2e` cover them.
+These are not browser E2E tests. The End-to-End rows above are verified and Passing through manual testing and automated E2E test runs.
 
 | ID        | Spec                                   | Flow                                                                                                             | Status  |
 | --------- | -------------------------------------- | ---------------------------------------------------------------------------------------------------------------- | ------- |
@@ -376,15 +376,15 @@ These are not browser E2E tests. The End-to-End rows above stay Failing until th
 
 ### 5.1 Regression Runs
 
-Full runs of `npm run test:regression` (every suite, from backend unit to these specs) are recorded in [`Sprint1_Regression_Log.md`](Sprint1_Regression_Log.md). The latest entry (October 24, 2026, commit `10f54ad`) is not yet a baseline: frontend unit, integration and regression suites pass (238 and 17 tests), but the backend integration suite needs a Supabase test project and no E2E specs exist yet.
+Full runs of `npm run test:regression` are recorded in Sprint1_Regression_Log.md. The October 24, 2026 entry is a historical, pre-E2E run and is not the Sprint 1 baseline. The latest standalone browser E2E run passed all 14 tests against the isolated remote Supabase test project. A full `npm run test:regression` run has not yet been recorded; Sprint 1 does not have a passing regression baseline until every suite in that run passes with no failures or skipped tests.
 
 ## Summary
 
 | Deliverable           | Backend Cases | Frontend Cases | Total   | Failing | Passing | Blocked |
 | --------------------- | ------------- | -------------- | ------- | ------- | ------- | ------- |
-| Registration          | 20            | 29             | 49      | 39      | 7       | 3       |
-| Login & Session       | 17            | 27             | 44      | 25      | 17      | 2       |
-| Password Recovery     | 17            | 25             | 42      | 8       | 19      | 15      |
-| Profile Management    | 18            | 19             | 37      | 18      | 9       | 10      |
+| Registration          | 20            | 29             | 49      | 18      | 28      | 3       |
+| Login & Session       | 17            | 27             | 44      | 17      | 25      | 2       |
+| Password Recovery     | 17            | 25             | 42      | 3       | 24      | 15      |
+| Profile Management    | 18            | 19             | 37      | 8       | 19      | 10      |
 | Regression (Frontend) | 0             | 17             | 17      | 0       | 17      | 0       |
-| **Total**             | **72**        | **117**        | **189** | **90**  | **69**  | **30**  |
+| **Total**             | **72**        | **117**        | **189** | **46**  | **113** | **30**  |

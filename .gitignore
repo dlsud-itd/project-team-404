@@ -6,3 +6,4 @@
 !**/.env.example
 **/.angular/
 reports/
+tests/e2e/test-results/

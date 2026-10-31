@@ -54,6 +54,16 @@
       }
     },
     {
+      "label": "🧪 E2E: Tests (run once)",
+      "type": "npm",
+      "script": "test:e2e",
+      "presentation": {
+        "group": "testing",
+        "panel": "dedicated",
+        "reveal": "always"
+      }
+    },
+    {
       "label": "🧪 Frontend: Tests (coverage report)",
       "type": "npm",
       "script": "test",

@@ -4,6 +4,7 @@ export default defineConfig({
   test: {
     environment: 'node',
     include: ['src/**/*.{test,spec}.ts', 'tests/**/*.{test,spec}.ts'],
+    testTimeout: 60_000,
     reporters: ['default', 'html'],
     outputFile: {
       html: '../reports/backend/results/index.html',

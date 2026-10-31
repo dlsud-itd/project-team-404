@@ -8,6 +8,8 @@ const TEST_ENV_KEYS = [
   'SUPABASE_TEST_SERVICE_ROLE_KEY',
   'SUPABASE_TEST_DATABASE_URL',
   'SUPABASE_TEST_DIRECT_URL',
+  'TEST_DATABASE_URL',
+  'TEST_DIRECT_URL',
 ];
 
 const rootScripts = JSON.parse(readFileSync('package.json', 'utf8')).scripts;
@@ -98,11 +100,14 @@ function testEnv() {
       }
     }
   }
-  return Object.fromEntries(
+  const values = Object.fromEntries(
     TEST_ENV_KEYS.map((key) => [key, process.env[key] || fromFile[key]]).filter(
       ([, v]) => v
     )
   );
+  values.SUPABASE_TEST_DATABASE_URL ??= values.TEST_DATABASE_URL;
+  values.SUPABASE_TEST_DIRECT_URL ??= values.TEST_DIRECT_URL;
+  return values;
 }
 
 function run(command, env = {}) {

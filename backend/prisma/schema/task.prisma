@@ -3,6 +3,8 @@ enum TaskRecurrence {
   daily
   weekly
   monthly
+
+  @@map("task_recurrence")
 }
 
 model Task {
