@@ -87,17 +87,25 @@ describe('ProjectList', () => {
     expect(page.textContent).not.toContain('Old class');
   });
 
-  it('links to the new-project page', () => {
+  it('opens the new-project popup from the header', () => {
     loadWith([INBOX, CAPSTONE]);
+    expect(el('app-new-project-dialog')).toBeNull();
 
-    expect(el('.title-row a.new')?.getAttribute('href')).toBe('/projects/new');
+    el<HTMLButtonElement>('.title-row button.new')!.click();
+    render();
+
+    expect(el('app-new-project-dialog [role="dialog"]')).toBeTruthy();
   });
 
   it('invites the user to create a project when only the Inbox exists', () => {
     loadWith([INBOX]);
 
     expect(text('.empty-title')).toBe('You only have your Inbox so far.');
-    expect(el('.empty a')?.getAttribute('href')).toBe('/projects/new');
+
+    el<HTMLButtonElement>('.empty button.new')!.click();
+    render();
+
+    expect(el('app-new-project-dialog [role="dialog"]')).toBeTruthy();
   });
 
   it('shows an error with a retry action when the list fails', () => {

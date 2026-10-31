@@ -1,27 +1,13 @@
-import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import type { Task } from '../../../shared/types/task.types';
-
-/** "2026-10-02" → "Oct 2", with the year added when it is not the current year. */
-export function formatDate(date: string, today: Date = new Date()): string {
-  const [year, month, day] = date.split('-').map(Number);
-  // Built from parts so the date stays local; new Date('YYYY-MM-DD') would be read as UTC.
-  const local = new Date(year, month - 1, day);
-  return local.toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    ...(year === today.getFullYear() ? {} : { year: 'numeric' }),
-  });
-}
-
-/** "18:00:00" → "6:00 PM". */
-export function formatTime(time: string): string {
-  const [hours, minutes] = time.split(':').map(Number);
-  return new Date(2000, 0, 1, hours, minutes).toLocaleTimeString('en-US', {
-    hour: 'numeric',
-    minute: '2-digit',
-  });
-}
+import { SessionService } from '../../../../auth/session/session.service';
+import { TASK_PRIORITIES, type Task } from '../../../shared/types/task.types';
+import {
+  formatDate,
+  instantToDate,
+  userTimeZone,
+} from '../../../task-scheduling/utils/date-format.util';
+import { recurrenceLabel } from '../../../task-scheduling/utils/recurrence-label.util';
 
 @Component({
   selector: 'app-task-item',
@@ -31,8 +17,8 @@ export function formatTime(time: string): string {
       <span
         class="priority"
         [attr.data-priority]="task().priorityId"
-        [attr.aria-label]="'Priority ' + task().priorityId"
-        >P{{ task().priorityId }}</span
+        [attr.aria-label]="priority() + ' priority'"
+        >{{ priority() }}</span
       >
 
       <div class="body">
@@ -41,7 +27,7 @@ export function formatTime(time: string): string {
           <p class="description">{{ description }}</p>
         }
 
-        @if (due() || deadline() || task().isRecurring || done()) {
+        @if (due() || deadline() || repeats() || done()) {
           <p class="meta">
             @if (due(); as due) {
               <span class="due">Due {{ due }}</span>
@@ -49,8 +35,8 @@ export function formatTime(time: string): string {
             @if (deadline(); as deadline) {
               <span class="deadline">Deadline {{ deadline }}</span>
             }
-            @if (task().isRecurring) {
-              <span class="badge">Repeats</span>
+            @if (repeats(); as repeats) {
+              <span class="badge">{{ repeats }}</span>
             }
             @if (done()) {
               <span class="badge complete">Done</span>
@@ -216,14 +202,21 @@ export class TaskItem {
   readonly task = input.required<Task>();
   readonly deleteRequested = output<Task>();
 
+  private readonly session = inject(SessionService);
+
   protected readonly done = computed(() => this.task().completedAt !== null);
+  protected readonly priority = computed(
+    () => TASK_PRIORITIES.find((p) => p.priorityId === this.task().priorityId)?.label,
+  );
+  protected readonly repeats = computed(() => recurrenceLabel(this.task().recurrence));
   protected readonly due = computed(() => {
-    const { dueDate, dueTime } = this.task();
-    if (!dueDate) return null;
-    return dueTime ? `${formatDate(dueDate)}, ${formatTime(dueTime)}` : formatDate(dueDate);
+    const { dueDate } = this.task();
+    return dueDate ? formatDate(dueDate) : null;
   });
   protected readonly deadline = computed(() => {
     const { deadline } = this.task();
-    return deadline ? formatDate(deadline) : null;
+    if (!deadline) return null;
+    const timeZone = userTimeZone(this.session.currentUser()?.timezone);
+    return formatDate(instantToDate(deadline, timeZone));
   });
 }

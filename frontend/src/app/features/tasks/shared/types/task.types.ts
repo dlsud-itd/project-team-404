@@ -1,4 +1,9 @@
-/** A label attached to a task (API spec v1.1, III.A). */
+import type {
+  TaskRecurrence,
+  TaskScheduleChanges,
+} from '../../task-scheduling/types/task-scheduling.types';
+
+/** A label attached to a task. */
 export interface TaskLabel {
   labelId: number;
   name: string;
@@ -6,20 +11,40 @@ export interface TaskLabel {
   color: string | null;
 }
 
-/** A task as returned by /api/tasks (API spec v1.1, section III). */
+/** The priorities as the API names them. */
+export type ApiTaskPriority = 'high' | 'medium' | 'low';
+
+/** A task as /api/tasks sends it. See toTask for the shape the app uses. */
+export interface ApiTask {
+  id: number;
+  projectId: number | null;
+  title: string;
+  description: string | null;
+  priority: ApiTaskPriority;
+  scheduledDate: string | null;
+  dueDate: string | null;
+  deadline: string | null;
+  recurrence: TaskRecurrence | null;
+  isDone: boolean;
+  doneAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+  labels: { id: number; name: string; color: string | null }[];
+}
+
+/** A task as the app uses it. */
 export interface Task {
   taskId: number;
   projectId: number;
-  /** 1 is the highest priority, 4 the lowest (and the default). */
+  /** 1 is the highest priority, 3 the lowest (and the default). */
   priorityId: number;
   title: string;
   description: string | null;
   /** YYYY-MM-DD, or null when the task is unscheduled. */
   dueDate: string | null;
-  /** HH:mm:ss, or null. Only set when dueDate is. */
-  dueTime: string | null;
-  /** YYYY-MM-DD, never earlier than dueDate. */
+  /** ISO instant, never on a day before dueDate; instantToDate gives the day to show. */
   deadline: string | null;
+  recurrence: TaskRecurrence;
   /** Completion timestamp, or null while the task is open. */
   completedAt: string | null;
   sortOrder: number;
@@ -28,7 +53,7 @@ export interface Task {
   labels: TaskLabel[];
 }
 
-/** Body of POST /api/tasks. Optional fields are sent as null, never as empty strings. */
+/** A new task. Optional fields are null, never empty strings. */
 export interface CreateTaskRequest {
   /** Omit to put the task in the Inbox. */
   projectId?: number;
@@ -36,14 +61,16 @@ export interface CreateTaskRequest {
   title: string;
   description: string | null;
   dueDate: string | null;
-  dueTime: string | null;
   deadline: string | null;
+  recurrence: TaskRecurrence;
 }
 
-/** What POST /api/tasks returns: a task without its labels, completion or recurrence. */
-export type CreateTaskResponse = Omit<Task, 'completedAt' | 'isRecurring' | 'labels'>;
+/** Body of POST /api/tasks. */
+export type CreateTaskBody = Omit<CreateTaskRequest, 'priorityId'> & {
+  priority: ApiTaskPriority;
+};
 
-/** Body of PUT /api/tasks/{taskId}: only the details that changed. */
+/** The details that changed in an edit. */
 export interface UpdateTaskRequest {
   projectId?: number;
   title?: string;
@@ -51,31 +78,20 @@ export interface UpdateTaskRequest {
   priorityId?: number;
 }
 
+/** Body of PUT /api/tasks/{taskId}. */
+export type UpdateTaskBody = Omit<UpdateTaskRequest, 'priorityId'> & {
+  priority?: ApiTaskPriority;
+};
+
 export interface UpdateTaskResponse {
   taskId: number;
   message: string;
 }
 
-/** Body of PUT /api/tasks/{taskId}/schedule (API spec IV.C): only the fields that changed. */
-export interface RescheduleTaskRequest {
-  dueDate?: string | null;
-  dueTime?: string | null;
-  deadline?: string | null;
-}
-
-export interface RescheduleTaskResponse {
-  taskId: number;
-  dueDate: string | null;
-  dueTime: string | null;
-  deadline: string | null;
-  status: string;
-  message: string;
-}
-
-/** Everything an edit form can change, split by the endpoint that changes it. */
+/** Everything an edit form can change, split by the service that saves it. */
 export interface TaskChanges {
   details: UpdateTaskRequest;
-  schedule: RescheduleTaskRequest;
+  schedule: TaskScheduleChanges;
 }
 
 export interface DeleteTaskResponse {
@@ -83,7 +99,7 @@ export interface DeleteTaskResponse {
 }
 
 export type TaskField =
-  'title' | 'description' | 'priorityId' | 'projectId' | 'dueDate' | 'dueTime' | 'deadline';
+  'title' | 'description' | 'priorityId' | 'projectId' | 'dueDate' | 'deadline' | 'recurrence';
 
 /** A failed task request, turned into something a page can show. */
 export interface TaskError {
@@ -95,12 +111,18 @@ export interface TaskError {
 }
 
 export const TASK_TITLE_MAX_LENGTH = 200;
-export const DEFAULT_TASK_PRIORITY = 4;
+export const DEFAULT_TASK_PRIORITY = 3;
 
-/** The fixed priority levels (API spec V.A), highest first. */
+/** The fixed priority levels, highest first. */
 export const TASK_PRIORITIES: readonly { priorityId: number; label: string }[] = [
-  { priorityId: 1, label: 'Priority 1' },
-  { priorityId: 2, label: 'Priority 2' },
-  { priorityId: 3, label: 'Priority 3' },
-  { priorityId: 4, label: 'Priority 4' },
+  { priorityId: 1, label: 'High' },
+  { priorityId: 2, label: 'Medium' },
+  { priorityId: 3, label: 'Low' },
 ];
+
+/** Each priority id's name in the API. */
+export const PRIORITY_NAMES: Readonly<Record<number, ApiTaskPriority>> = {
+  1: 'high',
+  2: 'medium',
+  3: 'low',
+};

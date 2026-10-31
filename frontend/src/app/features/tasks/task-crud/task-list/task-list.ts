@@ -34,8 +34,8 @@ export class TaskList {
   private readonly projectsStore = inject(ProjectsStore);
   private readonly destroyRef = inject(DestroyRef);
 
-  protected readonly projectId = Number(inject(ActivatedRoute).snapshot.paramMap.get('projectId'));
-  protected readonly project = computed(() => this.projectsStore.byId(this.projectId) ?? null);
+  private readonly projectId = signal(0);
+  protected readonly project = computed(() => this.projectsStore.byId(this.projectId()) ?? null);
   /** The project does not exist or belongs to someone else. */
   protected readonly projectMissing = signal(false);
 
@@ -49,20 +49,33 @@ export class TaskList {
   protected readonly actionError = signal<string | null>(null);
 
   constructor() {
-    if (!Number.isInteger(this.projectId) || this.projectId <= 0) {
-      this.projectMissing.set(true);
-      return;
-    }
+    // The router reuses this page between projects, so :projectId can change under it.
+    inject(ActivatedRoute)
+      .paramMap.pipe(takeUntilDestroyed())
+      .subscribe((params) => this.open(Number(params.get('projectId'))));
+  }
+
+  private open(projectId: number): void {
+    this.projectId.set(projectId);
+    this.notice.set(null);
+    this.actionError.set(null);
+    this.projectMissing.set(!Number.isInteger(projectId) || projectId <= 0);
+    if (this.projectMissing()) return;
     this.loadProject();
     this.load();
   }
 
   protected load(): void {
     this.tasks
-      .refresh(this.projectId)
+      .refresh(this.projectId())
       .pipe(takeUntilDestroyed(this.destroyRef))
       // The store records the error for the template.
       .subscribe({ error: () => {} });
+  }
+
+  protected newTask(): void {
+    this.notice.set(null);
+    this.store.creating.set({ projectId: this.projectId() });
   }
 
   protected askDelete(task: Task): void {
@@ -111,7 +124,7 @@ export class TaskList {
   /** Fetches the project for its name; a missing project replaces the page with a message. */
   private loadProject(): void {
     this.projects
-      .get(this.projectId)
+      .get(this.projectId())
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         error: (error: unknown) => {

@@ -1,0 +1,67 @@
+<header class="topbar">
+  <a class="brand" routerLink="/home">Habit Tracker</a>
+
+  <div
+    class="tabs"
+    role="tablist"
+    aria-label="Main"
+    [style.--tab-index]="tabIndex()"
+    (keydown)="onTabKey($event)"
+  >
+    @if (tab()) {
+      <span class="indicator" aria-hidden="true"></span>
+    }
+    @for (item of tabs; track item.id) {
+      <button
+        type="button"
+        class="tab"
+        role="tab"
+        [id]="'tab-' + item.id"
+        [class.active]="tab() === item.id"
+        [attr.aria-selected]="tab() === item.id"
+        [attr.aria-controls]="onHome() ? 'panel-' + item.id : null"
+        [tabIndex]="focusableTab() === item.id ? 0 : -1"
+        (click)="select(item.id)"
+      >
+        {{ item.label }}
+      </button>
+    }
+  </div>
+
+  <div class="actions">
+    <span class="streak">Streak <span aria-hidden="true">🔥</span></span>
+    <button type="button" class="new-task" (click)="newTask()">+ New Task</button>
+
+    <div class="account">
+      <button
+        type="button"
+        class="avatar"
+        aria-haspopup="menu"
+        [attr.aria-expanded]="menuOpen()"
+        (click)="menuOpen.set(!menuOpen())"
+      >
+        <span aria-hidden="true">{{ initial() }}</span>
+        <span class="visually-hidden">Account menu</span>
+      </button>
+      @if (menuOpen()) {
+        <div class="menu" role="menu">
+          <p class="menu-user">{{ session.currentUser()?.username }}</p>
+          <a class="menu-link" role="menuitem" routerLink="/settings/profile">Profile settings</a>
+          <button
+            type="button"
+            class="logout"
+            role="menuitem"
+            [disabled]="loggingOut()"
+            (click)="logout()"
+          >
+            {{ loggingOut() ? 'Logging out…' : 'Log out' }}
+          </button>
+        </div>
+      }
+    </div>
+  </div>
+</header>
+
+@if (tasksStore.creating()) {
+  <app-new-task-dialog (created)="showTask($event)" />
+}

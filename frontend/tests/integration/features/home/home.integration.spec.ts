@@ -103,6 +103,13 @@ describe('Home integration (dashboard, sidebar filters, new task, account menu)'
   }
 
   /** Signs in by restoring a stored token, then opens /home at the given hour. */
+  /** The calendar still opens the sample form; "+ New Task" opens the real one in a popup. */
+  async function openSampleComposer(): Promise<void> {
+    await click(el('app-mini-calendar [aria-current="date"]'));
+    await click(el('app-mini-calendar .add'));
+    await click(el('app-mini-calendar .clear'));
+  }
+
   async function openHome(hour = 9): Promise<void> {
     vi.setSystemTime(at(hour));
     localStorage.setItem(TOKEN_STORAGE_KEY, TOKEN);
@@ -248,7 +255,7 @@ describe('Home integration (dashboard, sidebar filters, new task, account menu)'
     const titleInput = () => el<HTMLInputElement>('input[aria-label="Task title"]');
 
     async function openComposer(): Promise<void> {
-      await click(el('button.new-task'));
+      await openSampleComposer();
       expect(composer()).toBeTruthy();
     }
 
@@ -335,7 +342,7 @@ describe('Home integration (dashboard, sidebar filters, new task, account menu)'
       expect(allTasks()).toHaveLength(9);
       expect(stat('Open tasks')).toBe('8');
       // The new-task form no longer offers it.
-      await click(el('button.new-task'));
+      await openSampleComposer();
       expect(all('select[aria-label="Project"] option').map((o) => o.textContent?.trim())).toEqual([
         'No project',
         'School',

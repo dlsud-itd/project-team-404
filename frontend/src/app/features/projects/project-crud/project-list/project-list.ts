@@ -7,7 +7,7 @@ import {
   signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 import { finalize } from 'rxjs';
 import { ProjectsHeader } from '../../shared/components/projects-header/projects-header';
 import { ProjectsStore } from '../../shared/state/projects.store';
@@ -27,7 +27,7 @@ export function deletedNotice(name: string, movedTaskCount: number): string {
 
 @Component({
   selector: 'app-projects-page',
-  imports: [RouterLink, ProjectCard, ConfirmDeleteDialog, ProjectsHeader],
+  imports: [ProjectCard, ConfirmDeleteDialog, ProjectsHeader],
   templateUrl: './project-list.html',
   styleUrl: './project-list.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

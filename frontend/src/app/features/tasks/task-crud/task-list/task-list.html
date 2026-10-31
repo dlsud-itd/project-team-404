@@ -4,7 +4,7 @@
     <div class="title-row">
       <h1>{{ project()?.name ?? 'Tasks' }}</h1>
       @if (!projectMissing()) {
-        <a class="new" [routerLink]="['/projects', projectId, 'tasks', 'new']">+ New task</a>
+        <button type="button" class="new" (click)="newTask()">+ New task</button>
       }
     </div>
     @if (project()?.description; as description) {
@@ -69,7 +69,7 @@
         <div class="empty">
           <p class="empty-title">No tasks here yet.</p>
           <p>Add the first thing you need to get done in this project.</p>
-          <a class="new" [routerLink]="['/projects', projectId, 'tasks', 'new']">Add a task</a>
+          <button type="button" class="new" (click)="newTask()">Add a task</button>
         </div>
       }
     }

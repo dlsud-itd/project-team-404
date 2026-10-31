@@ -1,0 +1,16 @@
+<div class="label-row">
+  <label for="task-deadline">Deadline <span>(optional)</span></label>
+  @if (control().value) {
+    <button type="button" class="clear" aria-label="Clear deadline" (click)="clear()">Clear</button>
+  }
+</div>
+<input
+  id="task-deadline"
+  type="date"
+  [formControl]="control()"
+  [attr.min]="dueDate() || null"
+  [attr.aria-invalid]="!!error()"
+  aria-describedby="task-deadline-status"
+  (input)="edited.emit()"
+/>
+<p id="task-deadline-status" class="field-message" aria-live="polite">{{ error() }}</p>
