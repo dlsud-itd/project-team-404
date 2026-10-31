@@ -44,13 +44,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/auth/login",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "auth",
-                "login"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
             }
           },
           "response": []
@@ -88,13 +83,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/auth/login",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "auth",
-                "login"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
             }
           },
           "response": []
@@ -123,13 +113,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/auth/me",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "auth",
-                "me"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "me"]
             }
           },
           "response": []
@@ -171,12 +156,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/projects",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "projects"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["projects"]
             }
           },
           "response": []
@@ -218,12 +199,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/projects",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "projects"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["projects"]
             }
           },
           "response": []
@@ -265,12 +242,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/projects",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "projects"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["projects"]
             }
           },
           "response": []
@@ -312,14 +285,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/projects/{{projectId}}/favorite",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "projects",
-                "{{projectId}}",
-                "favorite"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["projects", "{{projectId}}", "favorite"]
             }
           },
           "response": []
@@ -361,14 +328,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/projects/{{projectId}}/favorite",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "projects",
-                "{{projectId}}",
-                "favorite"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["projects", "{{projectId}}", "favorite"]
             }
           },
           "response": []
@@ -397,13 +358,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/projects/{{projectId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "projects",
-                "{{projectId}}"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["projects", "{{projectId}}"]
             }
           },
           "response": []
@@ -445,14 +401,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/projects/{{projectId}}/favorite",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "projects",
-                "{{projectId}}",
-                "favorite"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["projects", "{{projectId}}", "favorite"]
             }
           },
           "response": []
@@ -494,14 +444,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/projects/{{projectId}}/archive",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "projects",
-                "{{projectId}}",
-                "archive"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["projects", "{{projectId}}", "archive"]
             }
           },
           "response": []
@@ -530,12 +474,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/projects?isArchived=true",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "projects"
-              ],
+              "host": ["{{baseUrl}}"],
+              "path": ["projects"],
               "query": [
                 {
                   "key": "isArchived",
@@ -570,12 +510,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/projects?isArchived=false",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "projects"
-              ],
+              "host": ["{{baseUrl}}"],
+              "path": ["projects"],
               "query": [
                 {
                   "key": "isArchived",
@@ -623,14 +559,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/projects/{{projectId}}/archive",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "projects",
-                "{{projectId}}",
-                "archive"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["projects", "{{projectId}}", "archive"]
             }
           },
           "response": []
@@ -672,14 +602,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/projects/{{inboxProjectId}}/archive",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "projects",
-                "{{inboxProjectId}}",
-                "archive"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["projects", "{{inboxProjectId}}", "archive"]
             }
           },
           "response": []
@@ -721,13 +645,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/projects/reorder",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "projects",
-                "reorder"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["projects", "reorder"]
             }
           },
           "response": []
@@ -756,12 +675,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/projects?isArchived=false",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "projects"
-              ],
+              "host": ["{{baseUrl}}"],
+              "path": ["projects"],
               "query": [
                 {
                   "key": "isArchived",
@@ -809,13 +724,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/projects/reorder",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "projects",
-                "reorder"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["projects", "reorder"]
             }
           },
           "response": []
@@ -857,13 +767,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/projects/reorder",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "projects",
-                "reorder"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["projects", "reorder"]
             }
           },
           "response": []
@@ -905,13 +810,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/projects/reorder",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "projects",
-                "reorder"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["projects", "reorder"]
             }
           },
           "response": []
@@ -940,12 +840,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/projects?isArchived=false",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "projects"
-              ],
+              "host": ["{{baseUrl}}"],
+              "path": ["projects"],
               "query": [
                 {
                   "key": "isArchived",
@@ -993,13 +889,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/projects/reorder",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "projects",
-                "reorder"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["projects", "reorder"]
             }
           },
           "response": []
@@ -1041,13 +932,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/projects/reorder",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "projects",
-                "reorder"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["projects", "reorder"]
             }
           },
           "response": []
@@ -1089,13 +975,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/projects/reorder",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "projects",
-                "reorder"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["projects", "reorder"]
             }
           },
           "response": []
@@ -1133,14 +1014,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/projects/{{projectId}}/favorite",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "projects",
-                "{{projectId}}",
-                "favorite"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["projects", "{{projectId}}", "favorite"]
             }
           },
           "response": []
@@ -1178,14 +1053,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/projects/{{projectId}}/archive",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "projects",
-                "{{projectId}}",
-                "archive"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["projects", "{{projectId}}", "archive"]
             }
           },
           "response": []
@@ -1223,13 +1092,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/projects/reorder",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "projects",
-                "reorder"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["projects", "reorder"]
             }
           },
           "response": []

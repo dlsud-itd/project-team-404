@@ -58,13 +58,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/auth/signup",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "auth",
-                "signup"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "signup"]
             }
           },
           "response": []
@@ -102,13 +97,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/auth/signup",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "auth",
-                "signup"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "signup"]
             }
           },
           "response": []
@@ -146,13 +136,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/auth/signup",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "auth",
-                "signup"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "signup"]
             }
           },
           "response": []
@@ -190,13 +175,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/auth/signup",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "auth",
-                "signup"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "signup"]
             }
           },
           "response": []
@@ -234,13 +214,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/auth/signup",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "auth",
-                "signup"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "signup"]
             }
           },
           "response": []
@@ -278,13 +253,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/auth/signup",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "auth",
-                "signup"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "signup"]
             }
           },
           "response": []
@@ -322,13 +292,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/auth/signup",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "auth",
-                "signup"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "signup"]
             }
           },
           "response": []
@@ -366,13 +331,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/auth/signup",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "auth",
-                "signup"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "signup"]
             }
           },
           "response": []
@@ -396,14 +356,8 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/auth/check-username/{{availableUsername}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "auth",
-                "check-username",
-                "{{availableUsername}}"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "check-username", "{{availableUsername}}"]
             }
           },
           "response": []
@@ -427,14 +381,8 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/auth/check-username/james",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "auth",
-                "check-username",
-                "james"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "check-username", "james"]
             }
           },
           "response": []
@@ -458,9 +406,7 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/auth/check-username/uuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuu",
-              "host": [
-                "{{baseUrl}}"
-              ],
+              "host": ["{{baseUrl}}"],
               "path": [
                 "auth",
                 "check-username",
@@ -489,14 +435,8 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/auth/check-email/{{availableEmail}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "auth",
-                "check-email",
-                "{{availableEmail}}"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "check-email", "{{availableEmail}}"]
             }
           },
           "response": []
@@ -520,14 +460,8 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/auth/check-email/james@example.com",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "auth",
-                "check-email",
-                "james@example.com"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "check-email", "james@example.com"]
             }
           },
           "response": []
@@ -551,14 +485,8 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/auth/check-email/not-an-email",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "auth",
-                "check-email",
-                "not-an-email"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "check-email", "not-an-email"]
             }
           },
           "response": []
@@ -596,13 +524,8 @@
             },
             "url": {
               "raw": "{{baseUrl}}/auth/login",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "auth",
-                "login"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
             }
           },
           "response": []
@@ -631,12 +554,8 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/projects",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "projects"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["projects"]
             }
           },
           "response": []
