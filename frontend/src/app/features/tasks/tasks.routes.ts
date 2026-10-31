@@ -10,12 +10,8 @@ export const TASKS_ROUTES: Routes = [
     title: 'Tasks · HabitTracker',
     loadComponent: () => import('./task-crud/task-list/task-list').then((m) => m.TaskList),
   },
-  {
-    path: 'new',
-    title: 'New task · HabitTracker',
-    data: { mode: 'create' },
-    loadComponent: () => import('./task-crud/task-form/task-form').then((m) => m.TaskForm),
-  },
+  // New tasks are made in a popup on the list.
+  { path: 'new', pathMatch: 'full', redirectTo: '' },
   {
     path: ':taskId/edit',
     title: 'Edit task · HabitTracker',

@@ -1,6 +1,10 @@
-<main class="page">
-  <a class="back" routerLink="/projects">← Projects</a>
-  <h1>{{ mode === 'create' ? 'New project' : 'Edit project' }}</h1>
+<div class="page" [attr.role]="dialog() ? null : 'main'">
+  @if (dialog()) {
+    <h2 id="new-project-title">New project</h2>
+  } @else {
+    <a class="back" routerLink="/projects">← Projects</a>
+    <h1>Edit project</h1>
+  }
 
   @switch (loadState()) {
     @case ('loading') {
@@ -36,7 +40,7 @@
           class="card"
           [formGroup]="form"
           (ngSubmit)="submit()"
-          (keydown.escape)="cancel()"
+          (keydown.escape)="dialog() || cancel()"
           novalidate
         >
           <div class="field">
@@ -129,4 +133,4 @@
       }
     }
   }
-</main>
+</div>

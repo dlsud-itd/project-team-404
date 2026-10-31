@@ -3,19 +3,21 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed } from '@angular/core/testing';
 import { environment } from '../../../../../environments/environment';
 import { TasksStore } from '../../shared/state/tasks.store';
+import { asApiTask } from '../../shared/testing/api-task';
 import type { CreateTaskRequest, Task } from '../../shared/types/task.types';
 import { TaskService } from './task.service';
 
 const URL = `${environment.apiBaseUrl}/api/tasks`;
+const LIST_QUERY = 'status=all&pageSize=100';
 const STUDY: Task = {
   taskId: 1,
   projectId: 10,
-  priorityId: 4,
+  priorityId: 3,
   title: 'Study ILT Module 4',
   description: 'Read all lessons',
   dueDate: '2026-10-02',
-  dueTime: '18:00:00',
-  deadline: '2026-10-02',
+  deadline: '2026-10-02T15:59:59.999Z',
+  recurrence: 'none',
   completedAt: null,
   sortOrder: 0,
   isRecurring: false,
@@ -41,22 +43,21 @@ describe('TaskService', () => {
   afterEach(() => http.verify());
 
   describe('list', () => {
-    it('gets every active task when no filter is given', () => {
+    it('gets open and completed tasks, as many as one request allows', () => {
       let result: Task[] | undefined;
       service.list().subscribe((tasks) => (result = tasks));
 
-      const req = http.expectOne(URL);
+      const req = http.expectOne(`${URL}?${LIST_QUERY}`);
       expect(req.request.method).toBe('GET');
-      expect(req.request.params.keys()).toEqual([]);
-      req.flush([STUDY]);
+      req.flush([asApiTask(STUDY)]);
 
       expect(result).toEqual([STUDY]);
     });
 
-    it('sends the project and archived filters', () => {
-      service.list({ projectId: 10, archived: true }).subscribe();
+    it('sends the project filter', () => {
+      service.list({ projectId: 10 }).subscribe();
 
-      http.expectOne(`${URL}?projectId=10&archived=true`).flush([]);
+      http.expectOne(`${URL}?projectId=10&${LIST_QUERY}`).flush([]);
     });
   });
 
@@ -66,7 +67,7 @@ describe('TaskService', () => {
       expect(store.loading()).toBe(true);
       expect(store.projectId()).toBe(10);
 
-      http.expectOne(`${URL}?projectId=10`).flush([DOCS, STUDY]);
+      http.expectOne(`${URL}?projectId=10&${LIST_QUERY}`).flush([DOCS, STUDY].map(asApiTask));
 
       expect(store.loading()).toBe(false);
       expect(store.tasks()).toEqual([STUDY, DOCS]);
@@ -76,7 +77,7 @@ describe('TaskService', () => {
       service.refresh(10).subscribe({ error: () => {} });
 
       http
-        .expectOne(`${URL}?projectId=10`)
+        .expectOne(`${URL}?projectId=10&${LIST_QUERY}`)
         .flush(null, { status: 500, statusText: 'Server Error' });
 
       expect(store.loading()).toBe(false);
@@ -90,41 +91,37 @@ describe('TaskService', () => {
 
     const req = http.expectOne(`${URL}/1`);
     expect(req.request.method).toBe('GET');
-    req.flush(STUDY);
+    req.flush(asApiTask(STUDY));
 
     expect(result).toEqual(STUDY);
     expect(store.byId(1)).toEqual(STUDY);
   });
 
-  it('creates a task and fills in the fields the reply leaves out', () => {
+  it('creates a task in the form the API accepts and stores the reply', () => {
     const request: CreateTaskRequest = {
       projectId: 10,
       priorityId: 2,
       title: 'Submit documentation',
       description: null,
       dueDate: null,
-      dueTime: null,
       deadline: null,
+      recurrence: 'weekly',
     };
     let result: Task | undefined;
     service.create(request).subscribe((task) => (result = task));
 
     const req = http.expectOne(URL);
     expect(req.request.method).toBe('POST');
-    expect(req.request.body).toEqual(request);
-    // POST replies without completedAt, isRecurring and labels (API spec III.C).
-    req.flush({
-      taskId: 2,
+    expect(req.request.body).toEqual({
       projectId: 10,
-      priorityId: 4,
+      priority: 'medium',
       title: 'Submit documentation',
-      description: 'Read all lessons',
-      dueDate: '2026-10-02',
-      dueTime: '18:00:00',
-      deadline: '2026-10-02',
-      sortOrder: 0,
-      isArchived: false,
+      description: null,
+      dueDate: null,
+      deadline: null,
+      recurrence: 'weekly',
     });
+    req.flush(asApiTask(DOCS));
 
     expect(result).toEqual(DOCS);
     expect(store.byId(2)).toEqual(DOCS);
@@ -136,7 +133,7 @@ describe('TaskService', () => {
 
     const req = http.expectOne(`${URL}/1`);
     expect(req.request.method).toBe('PUT');
-    expect(req.request.body).toEqual({ title: 'Study module 5', priorityId: 1 });
+    expect(req.request.body).toEqual({ title: 'Study module 5', priority: 'high' });
     req.flush({ taskId: 1, message: 'Task updated successfully' });
 
     expect(store.byId(1)).toEqual({ ...STUDY, title: 'Study module 5', priorityId: 1 });
@@ -153,51 +150,20 @@ describe('TaskService', () => {
     expect(store.byId(1)?.title).toBe('Study ILT Module 4');
   });
 
-  it('reschedules and stores the schedule the server returns', () => {
-    store.setTasks(10, [STUDY]);
-    service.reschedule(1, { dueDate: null }).subscribe();
-
-    const req = http.expectOne(`${URL}/1/schedule`);
-    expect(req.request.method).toBe('PUT');
-    expect(req.request.body).toEqual({ dueDate: null });
-    req.flush({
-      taskId: 1,
-      dueDate: null,
-      dueTime: null,
-      deadline: '2026-10-02',
-      status: 'unscheduled',
-      message: 'Task rescheduled successfully',
-    });
-
-    expect(store.byId(1)).toEqual({ ...STUDY, dueDate: null, dueTime: null });
-  });
-
   describe('save', () => {
-    const SCHEDULED = {
-      taskId: 1,
-      dueDate: '2026-10-05',
-      dueTime: '18:00:00',
-      deadline: '2026-10-07',
-      status: 'upcoming',
-      message: 'Task rescheduled successfully',
-    };
-
     it('sends the details, then the schedule', () => {
       store.setTasks(10, [STUDY]);
       let done = false;
       service
-        .save(1, {
-          details: { title: 'Study' },
-          schedule: { dueDate: '2026-10-05', deadline: '2026-10-07' },
-        })
+        .save(1, { details: { title: 'Study' }, schedule: { dueDate: '2026-10-05' } })
         .subscribe(() => (done = true));
 
-      http.expectNone(`${URL}/1/schedule`);
+      http.expectNone(`${URL}/1/due-date`);
       http.expectOne(`${URL}/1`).flush({ taskId: 1, message: 'Task updated successfully' });
-      const req = http.expectOne(`${URL}/1/schedule`);
-      expect(req.request.body).toEqual({ dueDate: '2026-10-05', deadline: '2026-10-07' });
+      const req = http.expectOne(`${URL}/1/due-date`);
+      expect(req.request.body).toEqual({ dueDate: '2026-10-05' });
       expect(done).toBe(false);
-      req.flush(SCHEDULED);
+      req.flush(asApiTask({ ...STUDY, title: 'Study', dueDate: '2026-10-05' }));
 
       expect(done).toBe(true);
       expect(store.byId(1)).toMatchObject({ title: 'Study', dueDate: '2026-10-05' });
@@ -206,7 +172,7 @@ describe('TaskService', () => {
     it('skips the part with no changes', () => {
       service.save(1, { details: {}, schedule: { deadline: null } }).subscribe();
 
-      http.expectOne(`${URL}/1/schedule`).flush({ ...SCHEDULED, deadline: null });
+      http.expectOne(`${URL}/1/deadline`).flush(asApiTask({ ...STUDY, deadline: null }));
     });
 
     it('does nothing when there are no changes', () => {
@@ -216,7 +182,7 @@ describe('TaskService', () => {
       expect(done).toBe(true);
     });
 
-    it('does not reschedule when the details fail', () => {
+    it('does not touch the schedule when the details fail', () => {
       let failed = false;
       service
         .save(1, { details: { title: 'x' }, schedule: { dueDate: null } })

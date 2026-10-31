@@ -5,6 +5,8 @@ import { provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { environment } from '../../../../../environments/environment';
 import type { ApiProject, Project } from '../../../projects/shared/types/project.types';
+import { asApiTask } from '../../shared/testing/api-task';
+import { AppShell } from '../../../../shared/components/app-shell/app-shell';
 import type { Task } from '../../shared/types/task.types';
 import { TaskList } from './task-list';
 
@@ -13,7 +15,7 @@ const PROJECTS_URL = `${environment.apiBaseUrl}/api/projects`;
 
 /** Projects as the API sends them: `id` instead of `projectId`. */
 const asApi = ({ projectId, ...rest }: Project): ApiProject => ({ id: projectId, ...rest });
-const LIST_URL = `${TASKS_URL}?projectId=10`;
+const LIST_URL = `${TASKS_URL}?projectId=10&status=all&pageSize=100`;
 
 const CAPSTONE: Project = {
   projectId: 10,
@@ -28,20 +30,20 @@ const CAPSTONE: Project = {
 const base: Task = {
   taskId: 1,
   projectId: 10,
-  priorityId: 4,
+  priorityId: 3,
   title: 'Write chapter 1',
   description: null,
   dueDate: null,
-  dueTime: null,
   deadline: null,
+  recurrence: 'none',
   completedAt: null,
-  sortOrder: 1,
+  sortOrder: 0,
   isRecurring: false,
   isArchived: false,
   labels: [],
 };
 const CHAPTER = base;
-const OUTLINE: Task = { ...base, taskId: 2, title: 'Outline', sortOrder: 0 };
+const OUTLINE: Task = { ...base, taskId: 2, title: 'Outline' };
 const PROPOSAL: Task = {
   ...base,
   taskId: 3,
@@ -66,7 +68,7 @@ describe('TaskList', () => {
 
   function loadWith(tasks: Task[], project: Project | null = CAPSTONE): void {
     if (project) http.expectOne(`${PROJECTS_URL}/${project.projectId}`).flush(asApi(project));
-    http.expectOne(LIST_URL).flush(tasks);
+    http.expectOne(LIST_URL).flush(tasks.map(asApiTask));
     harness.detectChanges();
   }
 
@@ -78,7 +80,14 @@ describe('TaskList', () => {
   beforeEach(async () => {
     TestBed.configureTestingModule({
       providers: [
-        provideRouter([{ path: 'projects/:projectId/tasks', component: TaskList }]),
+        // The popup lives in the top bar, so the list runs inside the shell as it does for real.
+        provideRouter([
+          {
+            path: 'projects/:projectId/tasks',
+            component: AppShell,
+            children: [{ path: '', component: TaskList }],
+          },
+        ]),
         provideHttpClient(),
         provideHttpClientTesting(),
       ],
@@ -106,20 +115,78 @@ describe('TaskList', () => {
     expect(text('.subtitle')).toBe('Final requirements');
   });
 
-  it('lists open tasks by sortOrder, with completed tasks in their own section', async () => {
+  it('lists open tasks by id, with completed tasks in their own section', async () => {
     await open();
-    loadWith([CHAPTER, PROPOSAL, OUTLINE]);
+    loadWith([OUTLINE, PROPOSAL, CHAPTER]);
 
-    expect(titles('[aria-labelledby="open-heading"]')).toEqual(['Outline', 'Write chapter 1']);
+    expect(titles('[aria-labelledby="open-heading"]')).toEqual(['Write chapter 1', 'Outline']);
     expect(titles('[aria-labelledby="completed-heading"]')).toEqual(['Proposal']);
     expect(text('#open-heading')).toBe('To do · 2');
   });
 
-  it('links to the new-task page of this project', async () => {
-    await open();
-    loadWith([CHAPTER]);
+  describe('new task popup', () => {
+    async function openPopup(selector = '.title-row button.new'): Promise<void> {
+      el<HTMLButtonElement>(selector)!.click();
+      harness.detectChanges();
+      // The form's project picker loads the projects.
+      http.expectOne(PROJECTS_URL).flush([asApi(CAPSTONE)]);
+      await harness.fixture.whenStable();
+      harness.detectChanges();
+    }
 
-    expect(el('.title-row a.new')?.getAttribute('href')).toBe('/projects/10/tasks/new');
+    function add(title: string): void {
+      const input = el<HTMLInputElement>('#task-title')!;
+      input.value = title;
+      input.dispatchEvent(new Event('input'));
+      el('.dialog form')!.dispatchEvent(new Event('submit'));
+      harness.detectChanges();
+    }
+
+    it('opens over the list with this project picked', async () => {
+      await open();
+      loadWith([CHAPTER]);
+      expect(el('[role="dialog"]')).toBeNull();
+
+      await openPopup();
+
+      expect(el('[role="dialog"]')).toBeTruthy();
+      expect(titles()).toEqual(['Write chapter 1']);
+      expect(el<HTMLSelectElement>('#task-project')!.selectedOptions[0].textContent).toContain(
+        'Capstone',
+      );
+    });
+
+    it('adds the task to the list without a reload', async () => {
+      await open();
+      loadWith([CHAPTER]);
+      await openPopup();
+
+      add('Outline');
+      http.expectOne(TASKS_URL).flush(asApiTask(OUTLINE));
+      harness.detectChanges();
+
+      expect(el('[role="dialog"]')).toBeNull();
+      expect(titles()).toEqual(['Write chapter 1', 'Outline']);
+    });
+
+    it('moves to the other project when the task was added there', async () => {
+      const GYM = { ...CAPSTONE, projectId: 11, name: 'Gym' };
+      await open();
+      loadWith([CHAPTER]);
+      await openPopup();
+
+      add('Outline');
+      http.expectOne(TASKS_URL).flush(asApiTask({ ...OUTLINE, projectId: 11 }));
+      await harness.fixture.whenStable();
+      http.expectOne(`${PROJECTS_URL}/11`).flush(asApi(GYM));
+      http
+        .expectOne(`${TASKS_URL}?projectId=11&status=all&pageSize=100`)
+        .flush([asApiTask({ ...OUTLINE, projectId: 11 })]);
+      harness.detectChanges();
+
+      expect(text('h1')).toBe('Gym');
+      expect(titles()).toEqual(['Outline']);
+    });
   });
 
   it('invites the user to add a task when the project has none', async () => {
@@ -127,7 +194,12 @@ describe('TaskList', () => {
     loadWith([]);
 
     expect(text('.empty-title')).toBe('No tasks here yet.');
-    expect(el('.empty a')?.getAttribute('href')).toBe('/projects/10/tasks/new');
+
+    el<HTMLButtonElement>('.empty button.new')!.click();
+    harness.detectChanges();
+    http.expectOne(PROJECTS_URL).flush([asApi(CAPSTONE)]);
+
+    expect(el('[role="dialog"]')).toBeTruthy();
   });
 
   it('shows an error with a retry action when the list fails', async () => {
@@ -139,7 +211,7 @@ describe('TaskList', () => {
     expect(text('.load-error p')).toContain('Something went wrong. Please try again.');
 
     el<HTMLButtonElement>('button.retry')!.click();
-    http.expectOne(LIST_URL).flush([CHAPTER]);
+    http.expectOne(LIST_URL).flush([asApiTask(CHAPTER)]);
     harness.detectChanges();
 
     expect(el('.load-error')).toBeNull();
@@ -151,11 +223,11 @@ describe('TaskList', () => {
     http
       .expectOne(`${PROJECTS_URL}/99`)
       .flush({ error: 'Project not found' }, { status: 404, statusText: 'Not Found' });
-    http.expectOne(`${TASKS_URL}?projectId=99`).flush([]);
+    http.expectOne(`${TASKS_URL}?projectId=99&status=all&pageSize=100`).flush([]);
     harness.detectChanges();
 
     expect(text('.message p')).toBe('Project not found.');
-    expect(el('a.new')).toBeNull();
+    expect(el('button.new')).toBeNull();
   });
 
   it('treats a non-numeric project id as not found without a request', async () => {
@@ -207,7 +279,7 @@ describe('TaskList', () => {
 
       expect(text('.dialog [role="alert"]')).toBe('Something went wrong. Please try again.');
       expect(el<HTMLButtonElement>('button.confirm')!.disabled).toBe(false);
-      expect(titles()).toEqual(['Outline', 'Write chapter 1']);
+      expect(titles()).toEqual(['Write chapter 1', 'Outline']);
     });
 
     it('closes the dialog and reloads the list when the task is already gone', () => {
@@ -220,7 +292,7 @@ describe('TaskList', () => {
 
       expect(el('app-confirm-delete-task-dialog')).toBeNull();
       expect(text('.banner-error')).toBe('Task not found.');
-      http.expectOne(LIST_URL).flush([CHAPTER]);
+      http.expectOne(LIST_URL).flush([asApiTask(CHAPTER)]);
       harness.detectChanges();
       expect(titles()).toEqual(['Write chapter 1']);
     });

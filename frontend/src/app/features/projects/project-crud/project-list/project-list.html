@@ -51,7 +51,9 @@
         <div class="empty">
           <p class="empty-title">You only have your Inbox so far.</p>
           <p>Create a project to group the tasks for a class, a job or anything else you manage.</p>
-          <a class="new" routerLink="/projects/new">Create your first project</a>
+          <button type="button" class="new" (click)="store.creating.set(true)">
+            Create your first project
+          </button>
         </div>
       }
     </section>

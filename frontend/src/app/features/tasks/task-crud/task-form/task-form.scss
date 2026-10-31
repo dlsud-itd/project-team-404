@@ -1,13 +1,30 @@
 :host {
   display: block;
-  min-height: 100dvh;
-  background: #fcebe3;
 }
 
 .page {
   max-width: 40rem;
   margin: 0 auto;
   padding: 2rem 1rem 4rem;
+}
+
+/* Inside the new-task popup, which supplies the panel. */
+:host(.in-dialog) {
+  .page {
+    padding: 0;
+  }
+
+  .card {
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+  }
+
+  .dialog-title {
+    margin: 0 0 1.25rem;
+    font-size: 1.25rem;
+    font-weight: 800;
+  }
 }
 
 .back {
@@ -95,8 +112,6 @@ legend {
 }
 
 input[type='text'],
-input[type='date'],
-input[type='time'],
 select,
 textarea {
   width: 100%;
@@ -168,8 +183,14 @@ select {
   gap: 0 0.75rem;
 }
 
-.hint {
-  margin: 0 0 0.5rem;
-  color: var(--ink-muted);
-  font-size: 0.8125rem;
+.schedule {
+  margin-top: 0.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--orange-light);
+
+  h2 {
+    margin: 0 0 0.75rem;
+    font-size: 1rem;
+    font-weight: 700;
+  }
 }

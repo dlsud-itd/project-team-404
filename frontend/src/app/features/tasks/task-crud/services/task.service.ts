@@ -4,22 +4,23 @@ import { Observable, concat, last, map, of, tap } from 'rxjs';
 import { environment } from '../../../../../environments/environment';
 import { TasksStore } from '../../shared/state/tasks.store';
 import type {
+  ApiTask,
   CreateTaskRequest,
-  CreateTaskResponse,
   DeleteTaskResponse,
-  RescheduleTaskRequest,
-  RescheduleTaskResponse,
   Task,
   TaskChanges,
   UpdateTaskRequest,
   UpdateTaskResponse,
 } from '../../shared/types/task.types';
+import { TaskSchedulingService } from '../../task-scheduling/services/task-scheduling.service';
 import { mapTaskError } from '../mappers/task-error.mapper';
+import { toCreateTaskBody, toTask, toUpdateTaskBody } from '../mappers/task.mapper';
+
+/** The most tasks one list request can return. */
+const MAX_PAGE_SIZE = 100;
 
 export interface TaskListFilter {
   projectId?: number;
-  /** true lists only archived tasks; the server's default is false. */
-  archived?: boolean;
 }
 
 /**
@@ -31,14 +32,17 @@ export interface TaskListFilter {
 export class TaskService {
   private readonly http = inject(HttpClient);
   private readonly store = inject(TasksStore);
+  private readonly scheduling = inject(TaskSchedulingService);
   private readonly baseUrl = `${environment.apiBaseUrl}/api/tasks`;
 
-  /** GET /api/tasks, optionally limited to one project or to archived tasks. */
+  /** GET /api/tasks, open and completed, optionally limited to one project. */
   list(filter: TaskListFilter = {}): Observable<Task[]> {
     let params = new HttpParams();
     if (filter.projectId !== undefined) params = params.set('projectId', filter.projectId);
-    if (filter.archived !== undefined) params = params.set('archived', String(filter.archived));
-    return this.http.get<Task[]>(this.baseUrl, { params });
+    params = params.set('status', 'all').set('pageSize', MAX_PAGE_SIZE);
+    return this.http
+      .get<ApiTask[]>(this.baseUrl, { params })
+      .pipe(map((tasks) => tasks.map(toTask)));
   }
 
   /** Loads a project's active tasks into the store, recording loading and error state there. */
@@ -53,15 +57,15 @@ export class TaskService {
   }
 
   get(taskId: number): Observable<Task> {
-    return this.http
-      .get<Task>(`${this.baseUrl}/${taskId}`)
-      .pipe(tap((task) => this.store.upsert(task)));
+    return this.http.get<ApiTask>(`${this.baseUrl}/${taskId}`).pipe(
+      map(toTask),
+      tap((task) => this.store.upsert(task)),
+    );
   }
 
-  /** POST /api/tasks. The reply has no labels or completion, so those get their new-task values. */
   create(request: CreateTaskRequest): Observable<Task> {
-    return this.http.post<CreateTaskResponse>(this.baseUrl, request).pipe(
-      map((created): Task => ({ completedAt: null, isRecurring: false, labels: [], ...created })),
+    return this.http.post<ApiTask>(this.baseUrl, toCreateTaskBody(request)).pipe(
+      map(toTask),
       tap((task) => this.store.upsert(task)),
     );
   }
@@ -69,19 +73,8 @@ export class TaskService {
   /** PUT /api/tasks/{id} with only the changed details (title, description, priority, project). */
   update(taskId: number, changes: UpdateTaskRequest): Observable<UpdateTaskResponse> {
     return this.http
-      .put<UpdateTaskResponse>(`${this.baseUrl}/${taskId}`, changes)
+      .put<UpdateTaskResponse>(`${this.baseUrl}/${taskId}`, toUpdateTaskBody(changes))
       .pipe(tap(() => this.store.patch(taskId, changes)));
-  }
-
-  /** PUT /api/tasks/{id}/schedule with only the changed due date, due time and deadline. */
-  reschedule(taskId: number, changes: RescheduleTaskRequest): Observable<RescheduleTaskResponse> {
-    return this.http
-      .put<RescheduleTaskResponse>(`${this.baseUrl}/${taskId}/schedule`, changes)
-      .pipe(
-        tap(({ dueDate, dueTime, deadline }) =>
-          this.store.patch(taskId, { dueDate, dueTime, deadline }),
-        ),
-      );
   }
 
   /**
@@ -91,7 +84,7 @@ export class TaskService {
   save(taskId: number, { details, schedule }: TaskChanges): Observable<void> {
     const requests: Observable<unknown>[] = [];
     if (Object.keys(details).length) requests.push(this.update(taskId, details));
-    if (Object.keys(schedule).length) requests.push(this.reschedule(taskId, schedule));
+    if (Object.keys(schedule).length) requests.push(this.scheduling.save(taskId, schedule));
     if (!requests.length) return of(undefined);
     return concat(...requests).pipe(
       last(),

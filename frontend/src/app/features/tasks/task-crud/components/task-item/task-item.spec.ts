@@ -1,7 +1,9 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+import { SessionService } from '../../../../auth/session/session.service';
 import type { Task } from '../../../shared/types/task.types';
-import { TaskItem, formatDate, formatTime } from './task-item';
+import { formatDate } from '../../../task-scheduling/utils/date-format.util';
+import { TaskItem } from './task-item';
 
 const STUDY: Task = {
   taskId: 1,
@@ -10,8 +12,9 @@ const STUDY: Task = {
   title: 'Study ILT Module 4',
   description: 'Read all lessons',
   dueDate: '2026-10-02',
-  dueTime: '18:00:00',
-  deadline: '2026-10-05',
+  // Oct 6 in Asia/Manila (UTC+8), though still Oct 5 in UTC.
+  deadline: '2026-10-05T17:00:00.000Z',
+  recurrence: 'none',
   completedAt: null,
   sortOrder: 0,
   isRecurring: false,
@@ -20,10 +23,9 @@ const STUDY: Task = {
 };
 const BARE: Task = {
   ...STUDY,
-  priorityId: 4,
+  priorityId: 3,
   description: null,
   dueDate: null,
-  dueTime: null,
   deadline: null,
   labels: [],
 };
@@ -43,7 +45,10 @@ describe('TaskItem', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [TaskItem],
-      providers: [provideRouter([])],
+      providers: [
+        provideRouter([]),
+        { provide: SessionService, useValue: { currentUser: () => ({ timezone: 'Asia/Manila' }) } },
+      ],
     }).compileComponents();
     fixture = TestBed.createComponent(TaskItem);
     page = fixture.nativeElement;
@@ -54,16 +59,16 @@ describe('TaskItem', () => {
 
     expect(text('.title')).toBe('Study ILT Module 4');
     expect(text('.description')).toBe('Read all lessons');
-    expect(text('.priority')).toBe('P1');
-    expect(el('.priority')?.getAttribute('aria-label')).toBe('Priority 1');
+    expect(text('.priority')).toBe('High');
+    expect(el('.priority')?.getAttribute('aria-label')).toBe('High priority');
     expect(text('.label')).toBe('Study');
   });
 
-  it('shows the due date with its time, and the deadline', () => {
+  it("shows the due date, and the deadline on its day in the user's timezone", () => {
     render(STUDY);
 
-    expect(text('.due')).toBe(`Due ${formatDate('2026-10-02')}, 6:00 PM`);
-    expect(text('.deadline')).toBe(`Deadline ${formatDate('2026-10-05')}`);
+    expect(text('.due')).toBe(`Due ${formatDate('2026-10-02')}`);
+    expect(text('.deadline')).toBe(`Deadline ${formatDate('2026-10-06')}`);
   });
 
   it('leaves out the parts a task does not have', () => {
@@ -75,11 +80,16 @@ describe('TaskItem', () => {
   });
 
   it('marks completed and repeating tasks', () => {
-    render({ ...BARE, completedAt: '2026-10-01T10:00:00Z', isRecurring: true });
+    render({
+      ...BARE,
+      completedAt: '2026-10-01T10:00:00Z',
+      recurrence: 'weekly',
+      isRecurring: true,
+    });
 
     expect(el('.item')?.classList).toContain('done');
     expect(text('.complete')).toBe('Done');
-    expect(page.textContent).toContain('Repeats');
+    expect(page.textContent).toContain('Every week');
   });
 
   it('links to the edit page of the task', () => {
@@ -97,24 +107,5 @@ describe('TaskItem', () => {
     el<HTMLButtonElement>('button.delete')!.click();
 
     expect(requested).toEqual(STUDY);
-  });
-});
-
-describe('formatDate', () => {
-  const today = new Date(2026, 9, 30);
-
-  it('shows month and day for this year', () => {
-    expect(formatDate('2026-10-02', today)).toBe('Oct 2');
-  });
-
-  it('adds the year for another year', () => {
-    expect(formatDate('2027-01-15', today)).toBe('Jan 15, 2027');
-  });
-});
-
-describe('formatTime', () => {
-  it('shows a 12-hour time', () => {
-    expect(formatTime('18:00:00')).toBe('6:00 PM');
-    expect(formatTime('09:05:00')).toBe('9:05 AM');
   });
 });
