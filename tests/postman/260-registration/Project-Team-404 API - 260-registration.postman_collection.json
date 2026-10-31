@@ -1,0 +1,648 @@
+{
+  "info": {
+    "_postman_id": "222b0c92-8c4d-475e-82b6-c70e69e67b1f",
+    "name": "Project-Team-404 API - 260-registration",
+    "description": "Postman API tests for 260-registration. Seeded test users: James, Harvey, and Alex (password123).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "59321793",
+    "_collection_link": "https://go.postman.co/collection/59321793-222b0c92-8c4d-475e-82b6-c70e69e67b1f?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "260-registration",
+      "item": [
+        {
+          "name": "Register a new user and Inbox",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const suffix = pm.variables.replaceIn('{{$guid}}').replace(/-/g, '').slice(0, 10);",
+                  "pm.environment.set('newUsername', 'pm' + suffix);",
+                  "pm.environment.set('uniqueEmail', 'postman.' + suffix + '@example.com');",
+                  "pm.environment.set('availableUsername', 'free' + suffix);",
+                  "pm.environment.set('availableEmail', 'available.' + suffix + '@example.com');",
+                  "pm.environment.set('signupPassword', 'PostmanPass123');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 201', function () { pm.response.to.have.status(201); });",
+                  "pm.test(\"Signup returns user and Inbox IDs\", function () { const body = pm.response.json(); pm.expect(body.userId).to.be.a('string').and.not.empty; pm.expect(body.inboxProjectId).to.be.a('number'); pm.environment.set('registeredUserId', body.userId); pm.environment.set('registeredInboxId', String(body.inboxProjectId)); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{newUsername}}\",\n  \"email\": \"{{uniqueEmail}}\",\n  \"password\": \"{{signupPassword}}\",\n  \"confirmPassword\": \"{{signupPassword}}\",\n  \"timezone\": \"Asia/Manila\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/signup",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "signup"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Duplicate seeded username returns 409",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 409', function () { pm.response.to.have.status(409); });",
+                  "pm.test(\"Response includes an error\", function () { const body = pm.response.json(); pm.expect(body.error).to.be.a('string').and.not.empty; });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"james\",\n  \"email\": \"{{uniqueEmail}}\",\n  \"password\": \"{{signupPassword}}\",\n  \"confirmPassword\": \"{{signupPassword}}\",\n  \"timezone\": \"Asia/Manila\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/signup",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "signup"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Duplicate seeded email returns 409",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 409', function () { pm.response.to.have.status(409); });",
+                  "pm.test(\"Response includes an error\", function () { const body = pm.response.json(); pm.expect(body.error).to.be.a('string').and.not.empty; });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{availableUsername}}\",\n  \"email\": \"james@example.com\",\n  \"password\": \"{{signupPassword}}\",\n  \"confirmPassword\": \"{{signupPassword}}\",\n  \"timezone\": \"Asia/Manila\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/signup",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "signup"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Password shorter than 8 characters returns 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 400', function () { pm.response.to.have.status(400); });",
+                  "pm.test(\"Response includes an error\", function () { const body = pm.response.json(); pm.expect(body.error).to.be.a('string').and.not.empty; });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{availableUsername}}\",\n  \"email\": \"{{uniqueEmail}}\",\n  \"password\": \"short\",\n  \"confirmPassword\": \"short\",\n  \"timezone\": \"Asia/Manila\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/signup",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "signup"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Confirm password mismatch returns 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 400', function () { pm.response.to.have.status(400); });",
+                  "pm.test(\"Response includes an error\", function () { const body = pm.response.json(); pm.expect(body.error).to.be.a('string').and.not.empty; });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{availableUsername}}\",\n  \"email\": \"{{uniqueEmail}}\",\n  \"password\": \"PostmanPass123\",\n  \"confirmPassword\": \"DifferentPass123\",\n  \"timezone\": \"Asia/Manila\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/signup",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "signup"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Invalid email format returns 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 400', function () { pm.response.to.have.status(400); });",
+                  "pm.test(\"Response includes an error\", function () { const body = pm.response.json(); pm.expect(body.error).to.be.a('string').and.not.empty; });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{availableUsername}}\",\n  \"email\": \"not-an-email\",\n  \"password\": \"{{signupPassword}}\",\n  \"confirmPassword\": \"{{signupPassword}}\",\n  \"timezone\": \"Asia/Manila\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/signup",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "signup"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Username over 50 characters returns 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 400', function () { pm.response.to.have.status(400); });",
+                  "pm.test(\"Response includes an error\", function () { const body = pm.response.json(); pm.expect(body.error).to.be.a('string').and.not.empty; });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"uuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuu\",\n  \"email\": \"{{uniqueEmail}}\",\n  \"password\": \"{{signupPassword}}\",\n  \"confirmPassword\": \"{{signupPassword}}\",\n  \"timezone\": \"Asia/Manila\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/signup",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "signup"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Invalid timezone returns 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 400', function () { pm.response.to.have.status(400); });",
+                  "pm.test(\"Response includes an error\", function () { const body = pm.response.json(); pm.expect(body.error).to.be.a('string').and.not.empty; });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{availableUsername}}\",\n  \"email\": \"{{uniqueEmail}}\",\n  \"password\": \"{{signupPassword}}\",\n  \"confirmPassword\": \"{{signupPassword}}\",\n  \"timezone\": \"Mars/Olympus\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/signup",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "signup"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Unused username is available",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"Username is available\", function () { const body = pm.response.json(); pm.expect(body.available).to.equal(true); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/check-username/{{availableUsername}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "check-username",
+                "{{availableUsername}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Seeded username is unavailable",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"Username is unavailable\", function () { const body = pm.response.json(); pm.expect(body.available).to.equal(false); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/check-username/james",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "check-username",
+                "james"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Username over 50 characters is rejected",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 400', function () { pm.response.to.have.status(400); });",
+                  "pm.test(\"Response includes an error\", function () { const body = pm.response.json(); pm.expect(body.error).to.be.a('string').and.not.empty; });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/check-username/uuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuu",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "check-username",
+                "uuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuu"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Unused email is available",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"Email is available\", function () { const body = pm.response.json(); pm.expect(body.available).to.equal(true); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/check-email/{{availableEmail}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "check-email",
+                "{{availableEmail}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Seeded email is unavailable",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"Email is unavailable\", function () { const body = pm.response.json(); pm.expect(body.available).to.equal(false); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/check-email/james@example.com",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "check-email",
+                "james@example.com"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Invalid email format is rejected",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 400', function () { pm.response.to.have.status(400); });",
+                  "pm.test(\"Response includes an error\", function () { const body = pm.response.json(); pm.expect(body.error).to.be.a('string').and.not.empty; });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/check-email/not-an-email",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "check-email",
+                "not-an-email"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Login with newly registered user",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"Created credentials log in\", function () { const body = pm.response.json(); pm.expect(body.token).to.be.a('string').and.not.empty; pm.expect(body.user.username).to.equal(pm.environment.get('newUsername')); pm.expect(body.user.email).to.equal(pm.environment.get('uniqueEmail')); pm.environment.set('token', body.token); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"identifier\": \"{{uniqueEmail}}\",\n  \"password\": \"{{signupPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Registered user has exactly one default Inbox",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"Inbox count and ID match signup\", function () { const body = pm.response.json(); pm.expect(body).to.be.an('array'); const inboxes = body.filter((project) => project.isInbox === true); pm.expect(inboxes).to.have.lengthOf(1); pm.expect(String(inboxes[0].id)).to.equal(pm.environment.get('registeredInboxId')); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/projects",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "projects"
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "description": "Run requests in order. Setup requests create real rows through the API and save returned IDs for subsequent cases. Authentication uses Supabase-seeded users."
+    }
+  ]
+}
