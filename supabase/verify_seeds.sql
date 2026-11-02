@@ -206,6 +206,7 @@ from (
     left join public.tbl_task as task
       on task.user_id = auth_user.id
      and task.title = expected.title
+     and task.project_id is not distinct from project.project_id
     left join public.tbl_priority_level as priority_level
       on priority_level.priority_id = task.priority_id
   )
