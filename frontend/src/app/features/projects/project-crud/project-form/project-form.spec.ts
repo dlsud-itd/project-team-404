@@ -12,6 +12,19 @@ import { apiProject } from '../../testing/helpers/api-project';
 @Component({ template: '' })
 class Blank {}
 
+let timesClosed = 0;
+
+/** Create mode only runs inside the popup, so this hosts the form the way the popup does. */
+@Component({
+  imports: [ProjectForm],
+  template: `<app-project-form [dialog]="true" (closed)="onClosed()" />`,
+})
+class CreateHost {
+  protected onClosed(): void {
+    timesClosed++;
+  }
+}
+
 const URL = `${environment.apiBaseUrl}/api/projects`;
 const CAPSTONE: Project = {
   projectId: 10,
@@ -63,7 +76,7 @@ describe('ProjectForm', () => {
       providers: [
         provideRouter([
           { path: 'projects', component: Blank },
-          { path: 'projects/new', component: ProjectForm, data: { mode: 'create' } },
+          { path: 'create-host', component: CreateHost },
           { path: 'projects/:projectId/edit', component: ProjectForm, data: { mode: 'edit' } },
         ]),
         provideHttpClient(),
@@ -79,11 +92,12 @@ describe('ProjectForm', () => {
 
   describe('create mode', () => {
     beforeEach(async () => {
-      await harness.navigateByUrl('/projects/new');
+      timesClosed = 0;
+      await harness.navigateByUrl('/create-host');
     });
 
     it('shows labelled name and description fields, a color picker and a submit button', () => {
-      expect(text('h1')).toBe('New project');
+      expect(text('h2')).toBe('New project');
       for (const id of ['project-name', 'project-description']) {
         expect(el(`#${id}`)).toBeTruthy();
         expect(el(`label[for="${id}"]`)).toBeTruthy();
@@ -146,13 +160,14 @@ describe('ProjectForm', () => {
       http.expectOne(URL).flush(apiProject(CAPSTONE));
     });
 
-    it('goes back to the project list after creating', async () => {
+    it('reports that it closed after creating, without leaving the page', async () => {
       type('project-name', 'Capstone');
       submit();
       http.expectOne(URL).flush(apiProject(CAPSTONE));
       await harness.fixture.whenStable();
 
-      expect(router.url).toBe('/projects');
+      expect(timesClosed).toBe(1);
+      expect(router.url).toBe('/create-host');
     });
 
     it('shows a 400 on the field it names and keeps the input', () => {
@@ -180,12 +195,13 @@ describe('ProjectForm', () => {
       http.expectOne(URL).flush(apiProject(CAPSTONE));
     });
 
-    it('closes with Escape without saving', async () => {
+    it('closes with Escape without saving, and only once', async () => {
       type('project-name', 'Capstone');
-      el('form').dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+      el('form').dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
       await harness.fixture.whenStable();
 
-      expect(router.url).toBe('/projects');
+      expect(timesClosed).toBe(1);
+      expect(router.url).toBe('/create-host');
       http.expectNone(URL);
     });
   });

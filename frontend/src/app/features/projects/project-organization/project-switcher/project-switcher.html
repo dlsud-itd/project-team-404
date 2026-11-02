@@ -109,7 +109,11 @@
         </ul>
       } @else {
         <p class="empty">
-          No other projects. <a routerLink="/projects/new">Create one</a> to group related tasks.
+          No other projects.
+          <button type="button" class="create" (click)="store.creating.set(true)">
+            Create one
+          </button>
+          to group related tasks.
         </p>
       }
     </section>

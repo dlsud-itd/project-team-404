@@ -15,7 +15,6 @@ import {
   signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { RouterLink } from '@angular/router';
 import { Observable, finalize } from 'rxjs';
 import { mapProjectError } from '../../project-crud/mappers/project-error.mapper';
 import { ProjectService } from '../../project-crud/services/project.service';
@@ -34,7 +33,6 @@ import { splitProjects } from '../utils/split-projects.util';
 @Component({
   selector: 'app-project-switcher',
   imports: [
-    RouterLink,
     NgTemplateOutlet,
     CdkDropList,
     CdkDrag,

@@ -187,6 +187,29 @@ describe('Projects integration (Project CRUD screens + API)', () => {
     }
   });
 
+  // The top bar stays on every signed-in page.
+  describe('Top bar', () => {
+    it('stays when a project is opened', async () => {
+      await startSignedIn();
+      await openList();
+
+      el<HTMLAnchorElement>('a.tasks-link').click();
+      await settle();
+
+      expect(router.url).toMatch(/^\/projects\/\d+\/tasks$/);
+      expect(el('header.topbar')).toBeTruthy();
+      expect(el('#tab-projects').getAttribute('aria-selected')).toBe('true');
+      http.match(() => true).forEach((req) => req.flush([]));
+    });
+
+    it('stays on the edit project page', async () => {
+      await startSignedIn();
+      await openEdit();
+
+      expect(el('header.topbar')).toBeTruthy();
+    });
+  });
+
   // Case 1: list page and its states.
   describe('Project list', () => {
     // FE-LST-01, FE-LST-11
@@ -225,7 +248,7 @@ describe('Projects integration (Project CRUD screens + API)', () => {
 
       expect(cardNames()).toEqual(['Inbox']);
       expect(text('.empty-title')).toBe('You only have your Inbox so far.');
-      expect(el<HTMLAnchorElement>('.empty a').getAttribute('href')).toBe('/projects/new');
+      expect(text('.empty button.new')).toBe('Create your first project');
     });
 
     // FE-LST-07
@@ -280,8 +303,11 @@ describe('Projects integration (Project CRUD screens + API)', () => {
 
   // Case 3: create.
   describe('Create', () => {
+    /** Opens the Projects tab, then the new-project popup. */
     async function openCreate(): Promise<void> {
-      await open('/projects/new');
+      await openList([INBOX]);
+      el<HTMLButtonElement>('.title-row button.new').click();
+      await settle();
     }
 
     // FE-CRT-01, FE-CRT-04
@@ -351,10 +377,9 @@ describe('Projects integration (Project CRUD screens + API)', () => {
       );
       await settle();
 
+      // The list stayed on screen behind the popup, so no reload is needed.
       expect(router.url).toBe('/home?tab=projects');
-      // The list page reloads from the server; the new project is in that list.
-      http.expectOne(API).flush([INBOX, { ...THESIS, color: '#16A34A' }]);
-      await settle();
+      expect(el('[role="dialog"]')).toBeNull();
       expect(cardNames()).toEqual(['Inbox', 'Thesis']);
     });
 
@@ -369,7 +394,6 @@ describe('Projects integration (Project CRUD screens + API)', () => {
       expect(req.request.body).toEqual({ name: 'Thesis', description: null, color: null });
       req.flush(THESIS, status(201, 'Created'));
       await settle();
-      http.expectOne(API).flush([INBOX, THESIS]);
     });
 
     // FE-CRT-07
@@ -381,7 +405,7 @@ describe('Projects integration (Project CRUD screens + API)', () => {
       http.expectOne(API).flush(CREATE_INVALID, status(400, 'Bad Request'));
       await settle();
 
-      expect(router.url).toBe('/projects/new');
+      expect(el('[role="dialog"]')).toBeTruthy();
       expect(text('#project-name-status')).toBe('Enter a project name of 150 characters or fewer.');
       expect(el<HTMLInputElement>('#project-name').value).toBe('Thesis');
       expect(el<HTMLButtonElement>('button[type="submit"]').disabled).toBe(false);
@@ -402,11 +426,11 @@ describe('Projects integration (Project CRUD screens + API)', () => {
       submit();
       http.expectOne(API).flush(THESIS, status(201, 'Created'));
       await settle();
-      http.expectOne(API).flush([INBOX, THESIS]);
+      expect(cardNames()).toEqual(['Inbox', 'Thesis']);
     });
 
     // FE-CRT-09
-    it('goes back to the list without creating anything when cancelled', async () => {
+    it('closes the popup without creating anything when cancelled', async () => {
       await startSignedIn();
       await openCreate();
       type('project-name', 'Thesis');
@@ -416,10 +440,9 @@ describe('Projects integration (Project CRUD screens + API)', () => {
       await settle();
 
       expect(router.url).toBe('/home?tab=projects');
-      // Only the list's GET is sent; no POST.
-      const req = http.expectOne(API);
-      expect(req.request.method).toBe('GET');
-      req.flush([INBOX]);
+      expect(el('[role="dialog"]')).toBeNull();
+      // The form never sent anything.
+      http.expectNone(API);
     });
   });
 
@@ -662,7 +685,7 @@ describe('Projects integration (Project CRUD screens + API)', () => {
     });
   });
 
-  // Project Organization: the switcher at /projects/organize (FE-ORG rows).
+  // Project Organization: the switcher in the Projects tab (FE-ORG rows).
   describe('Project Organization (switcher)', () => {
     const GYM = {
       ...CAPSTONE,
@@ -716,7 +739,7 @@ describe('Projects integration (Project CRUD screens + API)', () => {
       await startSignedIn();
       await openSwitcher([OLD, THESIS, CAPSTONE, GYM, INBOX]);
 
-      expect(router.url).toBe('/projects/organize');
+      expect(router.url).toBe('/home?tab=projects&view=organize');
       expect(text('.item.inbox .name')).toBe('Inbox');
       expect(favorites()).toEqual(['Gym']);
       expect(active()).toEqual(['Capstone', 'Thesis']);

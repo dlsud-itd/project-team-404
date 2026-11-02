@@ -1,6 +1,10 @@
-<main class="page">
-  <a class="back" [routerLink]="listUrl">← Tasks</a>
-  <h1>{{ mode === 'create' ? 'New task' : 'Edit task' }}</h1>
+<div class="page" [attr.role]="dialog ? null : 'main'">
+  @if (dialog) {
+    <h2 id="new-task-title" class="dialog-title">New task</h2>
+  } @else {
+    <a class="back" [routerLink]="listUrl">← Tasks</a>
+    <h1>{{ mode === 'create' ? 'New task' : 'Edit task' }}</h1>
+  }
 
   @switch (loadState()) {
     @case ('loading') {
@@ -30,7 +34,7 @@
         class="card"
         [formGroup]="form"
         (ngSubmit)="submit()"
-        (keydown.escape)="cancel()"
+        (keydown.escape)="dialog || cancel()"
         novalidate
       >
         <div class="field">
@@ -109,57 +113,27 @@
           </div>
         </div>
 
-        <div class="row">
-          <div class="field">
-            <label for="task-due-date">Due date <span>(optional)</span></label>
-            <input
-              id="task-due-date"
-              type="date"
-              formControlName="dueDate"
-              [attr.aria-invalid]="!!fieldError('dueDate')"
-              aria-describedby="task-due-date-status"
-              (input)="clearServerError('dueDate')"
+        <section class="schedule" aria-labelledby="task-schedule-heading">
+          <h2 id="task-schedule-heading">Date and deadline</h2>
+          <div class="row">
+            <app-due-date-picker
+              [control]="form.controls.dueDate"
+              [error]="fieldError('dueDate')"
+              (edited)="clearServerError('dueDate')"
             />
-            <p id="task-due-date-status" class="field-message" aria-live="polite">
-              {{ fieldError('dueDate') }}
-            </p>
-          </div>
-
-          <div class="field">
-            <label for="task-due-time">Due time <span>(optional)</span></label>
-            <input
-              id="task-due-time"
-              type="time"
-              formControlName="dueTime"
-              [attr.aria-invalid]="!!fieldError('dueTime')"
-              aria-describedby="task-due-time-status"
-              (input)="clearServerError('dueTime')"
+            <app-deadline-picker
+              [control]="form.controls.deadline"
+              [dueDate]="form.controls.dueDate.value"
+              [error]="fieldError('deadline')"
+              (edited)="clearServerError('deadline')"
             />
-            <p id="task-due-time-status" class="field-message" aria-live="polite">
-              {{ fieldError('dueTime') }}
-            </p>
           </div>
-
-          <div class="field">
-            <label for="task-deadline">Deadline <span>(optional)</span></label>
-            <input
-              id="task-deadline"
-              type="date"
-              formControlName="deadline"
-              [min]="form.controls.dueDate.value || null"
-              [attr.aria-invalid]="!!fieldError('deadline')"
-              aria-describedby="task-deadline-status"
-              (input)="clearServerError('deadline')"
-            />
-            <p id="task-deadline-status" class="field-message" aria-live="polite">
-              {{ fieldError('deadline') }}
-            </p>
-          </div>
-        </div>
-
-        @if (task()?.isRecurring) {
-          <p class="hint">This task repeats, so it needs a due date.</p>
-        }
+          <app-recurrence-picker
+            [control]="form.controls.recurrence"
+            [error]="fieldError('recurrence')"
+            (edited)="clearServerError('recurrence')"
+          />
+        </section>
 
         <div class="actions">
           <button type="button" class="secondary" [disabled]="submitting()" (click)="cancel()">
@@ -176,4 +150,4 @@
       </form>
     }
   }
-</main>
+</div>

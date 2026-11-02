@@ -5,7 +5,10 @@ import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { environment } from '../../../../../environments/environment';
+import { SessionService } from '../../../auth/session/session.service';
 import type { ApiProject, Project } from '../../../projects/shared/types/project.types';
+import { TasksStore } from '../../shared/state/tasks.store';
+import { asApiTask } from '../../shared/testing/api-task';
 import type { Task } from '../../shared/types/task.types';
 import { TaskForm } from './task-form';
 
@@ -13,6 +16,7 @@ import { TaskForm } from './task-form';
 class Blank {}
 
 const URL = `${environment.apiBaseUrl}/api/tasks`;
+const LIST_QUERY = 'status=all&pageSize=100';
 const PROJECTS_URL = `${environment.apiBaseUrl}/api/projects`;
 
 /** Projects as the API sends them: `id` instead of `projectId`. */
@@ -37,22 +41,16 @@ const STUDY: Task = {
   title: 'Study ILT Module 4',
   description: 'Read all lessons',
   dueDate: '2026-10-02',
-  dueTime: '18:00:00',
-  deadline: '2026-10-05',
+  // The end of Oct 5 for a user in Asia/Manila (UTC+8).
+  deadline: '2026-10-05T15:59:59.999Z',
+  recurrence: 'none',
   completedAt: null,
   sortOrder: 0,
   isRecurring: false,
   isArchived: false,
   labels: [],
 };
-const SCHEDULE_REPLY = {
-  taskId: 1,
-  dueDate: '2026-10-02',
-  dueTime: '18:00:00',
-  deadline: '2026-10-05',
-  status: 'upcoming',
-  message: 'Task rescheduled successfully',
-};
+const TASK_REPLY = asApiTask(STUDY);
 
 describe('TaskForm', () => {
   let harness: RouterTestingHarness;
@@ -75,6 +73,14 @@ describe('TaskForm', () => {
     field.value = input;
     field.dispatchEvent(new Event('input'));
     field.dispatchEvent(new Event('blur'));
+    harness.detectChanges();
+  }
+
+  function repeat(label: string): void {
+    const option = [...page().querySelectorAll('.option')].find(
+      (o) => o.textContent?.trim() === label,
+    );
+    option!.querySelector('input')!.click();
     harness.detectChanges();
   }
 
@@ -117,6 +123,7 @@ describe('TaskForm', () => {
         ]),
         provideHttpClient(),
         provideHttpClientTesting(),
+        { provide: SessionService, useValue: { currentUser: () => ({ timezone: 'Asia/Manila' }) } },
       ],
     });
     http = TestBed.inject(HttpTestingController);
@@ -127,26 +134,41 @@ describe('TaskForm', () => {
   afterEach(() => http.verify());
 
   describe('create mode', () => {
-    beforeEach(async () => {
+    let closed: number;
+    let created: Task[];
+
+    /** Create mode only runs inside the popup, which sets TasksStore.creating first. */
+    async function openPopup(): Promise<void> {
+      TestBed.inject(TasksStore).creating.set({ projectId: 10 });
       await harness.navigateByUrl('/projects/10/tasks/new');
+      const form = harness.routeDebugElement!.componentInstance as TaskForm;
+      closed = 0;
+      created = [];
+      form.closed.subscribe(() => closed++);
+      form.created.subscribe((task) => created.push(task));
+    }
+
+    beforeEach(async () => {
+      await openPopup();
       flushProjects();
     });
 
     it('shows labelled fields, with the lowest priority and this project picked', () => {
-      expect(text('h1')).toBe('New task');
+      expect(text('#new-task-title')).toBe('New task');
       for (const id of [
         'task-title',
         'task-description',
         'task-priority',
         'task-project',
         'task-due-date',
-        'task-due-time',
         'task-deadline',
       ]) {
         expect(el(`#${id}`)).toBeTruthy();
         expect(el(`label[for="${id}"]`)).toBeTruthy();
       }
-      expect(selected('task-priority')).toBe('Priority 4');
+      expect(text('.schedule h2')).toBe('Date and deadline');
+      expect(text('legend')).toBe('Repeat');
+      expect(selected('task-priority')).toBe('Low');
       expect(selected('task-project')).toBe('Capstone');
       expect(el<HTMLSelectElement>('#task-project').options).toHaveLength(3);
       expect(saveButton().textContent).toContain('Add task');
@@ -177,54 +199,70 @@ describe('TaskForm', () => {
       expect(req.request.method).toBe('POST');
       expect(req.request.body).toEqual({
         projectId: 10,
-        priorityId: 4,
+        priority: 'low',
         title: 'Study ILT Module 4',
         description: null,
         dueDate: null,
-        dueTime: null,
         deadline: null,
+        recurrence: 'none',
       });
-      req.flush(STUDY);
+      req.flush(TASK_REPLY);
     });
 
-    it('sends every field the user filled in, with the time in HH:mm:ss', () => {
+    it("sends every field the user filled in, with the deadline in the user's timezone", () => {
       type('task-title', 'Gym session');
       type('task-description', 'Leg day');
-      choose('task-priority', 'Priority 1');
+      choose('task-priority', 'High');
       choose('task-project', 'Gym');
       type('task-due-date', '2026-10-02');
-      type('task-due-time', '18:00');
       type('task-deadline', '2026-10-03');
+      repeat('Weekly');
       submit();
 
       expect(http.expectOne(URL).request.body).toEqual({
         projectId: 11,
-        priorityId: 1,
+        priority: 'high',
         title: 'Gym session',
         description: 'Leg day',
         dueDate: '2026-10-02',
-        dueTime: '18:00:00',
-        deadline: '2026-10-03',
+        deadline: '2026-10-03T15:59:59.999Z',
+        recurrence: 'weekly',
       });
     });
 
-    it("goes to the list of the task's project after adding", async () => {
+    it('reports the new task, without leaving the page', async () => {
       type('task-title', 'Gym session');
       choose('task-project', 'Gym');
       submit();
-      http.expectOne(URL).flush({ ...STUDY, taskId: 5, projectId: 11 });
+      http.expectOne(URL).flush({ ...TASK_REPLY, id: 5, projectId: 11 });
       await harness.fixture.whenStable();
 
-      expect(router.url).toBe('/projects/11/tasks');
+      expect(created.map((task) => task.taskId)).toEqual([5]);
+      expect(router.url).toBe('/projects/10/tasks/new');
     });
 
-    it('needs a due date before a due time', () => {
+    it('needs a due date for a repeating task', () => {
       type('task-title', 'Study');
-      type('task-due-time', '18:00');
+      repeat('Daily');
 
-      expect(messageFor('task-due-time')).toBe('Add a due date to set a time.');
+      expect(messageFor('task-due-date')).toBe('Repeating tasks need a due date.');
       submit();
       http.expectNone(URL);
+
+      type('task-due-date', '2026-10-02');
+      expect(messageFor('task-due-date')).toBe('');
+      submit();
+      http.expectOne(URL).flush(TASK_REPLY);
+    });
+
+    it('allows a deadline on the due date', () => {
+      type('task-title', 'Study');
+      type('task-due-date', '2026-10-05');
+      type('task-deadline', '2026-10-05');
+
+      expect(messageFor('task-deadline')).toBe('');
+      submit();
+      http.expectOne(URL).flush(TASK_REPLY);
     });
 
     it('does not allow a deadline before the due date', () => {
@@ -245,7 +283,7 @@ describe('TaskForm', () => {
 
       expect(saveButton().disabled).toBe(true);
       expect(saveButton().textContent).toContain('Adding…');
-      http.expectOne(URL).flush(STUDY);
+      http.expectOne(URL).flush(TASK_REPLY);
     });
 
     it('shows a 400 on the field it names and keeps the input', () => {
@@ -260,6 +298,18 @@ describe('TaskForm', () => {
 
       type('task-deadline', '2026-10-03');
       expect(messageFor('task-deadline')).toBe('');
+    });
+
+    it('shows a recurrence error on the recurrence field', () => {
+      type('task-title', 'Study');
+      submit();
+      fail(URL, 400, 'Invalid recurrence rule');
+
+      expect(messageFor('task-recurrence')).toBe('Invalid recurrence rule');
+
+      type('task-due-date', '2026-10-02');
+      repeat('Daily');
+      expect(messageFor('task-recurrence')).toBe('');
     });
 
     it('shows a missing target project on the project field', () => {
@@ -278,16 +328,40 @@ describe('TaskForm', () => {
       expect(text('.form-error')).toBe('Something went wrong. Please try again.');
 
       submit();
-      http.expectOne(URL).flush(STUDY);
+      http.expectOne(URL).flush(TASK_REPLY);
     });
 
-    it('closes with Escape without saving', async () => {
+    it('closes with Escape without saving, and only once', async () => {
       type('task-title', 'Study');
-      el('form').dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+      el('form').dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
       await harness.fixture.whenStable();
 
-      expect(router.url).toBe('/projects/10/tasks');
+      expect(closed).toBe(1);
       http.expectNone(URL);
+    });
+  });
+
+  describe('create mode without a project', () => {
+    beforeEach(async () => {
+      TestBed.inject(TasksStore).creating.set({ projectId: null });
+      await harness.navigateByUrl('/projects/10/tasks/new');
+    });
+
+    it('picks the Inbox once the projects load', () => {
+      flushProjects();
+
+      expect(selected('task-project')).toBe('Inbox');
+    });
+
+    it('lets the server use the Inbox when the projects could not load', () => {
+      http.expectOne(PROJECTS_URL).flush(null, { status: 500, statusText: 'Error' });
+      harness.detectChanges();
+      type('task-title', 'Study');
+      submit();
+
+      const req = http.expectOne(URL);
+      expect(req.request.body.projectId).toBeUndefined();
+      req.flush(TASK_REPLY);
     });
   });
 
@@ -303,7 +377,7 @@ describe('TaskForm', () => {
       await harness.navigateByUrl(`/projects/10/tasks/${task.taskId}/edit`);
       flushProjects();
       expect(text('[role="status"]')).toBe('Loading task…');
-      http.expectOne(`${URL}/${task.taskId}`).flush(task);
+      http.expectOne(`${URL}/${task.taskId}`).flush(asApiTask(task));
       harness.detectChanges();
     }
 
@@ -313,11 +387,23 @@ describe('TaskForm', () => {
       expect(text('h1')).toBe('Edit task');
       expect(value('task-title')).toBe('Study ILT Module 4');
       expect(el<HTMLTextAreaElement>('#task-description').value).toBe('Read all lessons');
-      expect(selected('task-priority')).toBe('Priority 2');
+      expect(selected('task-priority')).toBe('Medium');
       expect(selected('task-project')).toBe('Capstone');
       expect(value('task-due-date')).toBe('2026-10-02');
-      expect(value('task-due-time')).toBe('18:00');
       expect(value('task-deadline')).toBe('2026-10-05');
+    });
+
+    it("shows the deadline on its day in the user's timezone", async () => {
+      await open({ ...STUDY, deadline: '2026-10-05T17:00:00.000Z' });
+
+      expect(value('task-deadline')).toBe('2026-10-06');
+      expect(saveButton().disabled).toBe(true);
+    });
+
+    it('shows the saved recurrence', async () => {
+      await open({ ...STUDY, recurrence: 'monthly', isRecurring: true });
+
+      expect(text('.summary')).toBe('Repeats every month');
     });
 
     it('keeps Save off until something changes', async () => {
@@ -334,40 +420,60 @@ describe('TaskForm', () => {
     it('sends only the changed details and confirms the save', async () => {
       await open();
       type('task-title', 'Study module 5');
-      choose('task-priority', 'Priority 1');
+      choose('task-priority', 'High');
       submit();
 
       const req = http.expectOne(`${URL}/1`);
       expect(req.request.method).toBe('PUT');
-      expect(req.request.body).toEqual({ title: 'Study module 5', priorityId: 1 });
+      expect(req.request.body).toEqual({ title: 'Study module 5', priority: 'high' });
       req.flush({ taskId: 1, message: 'Task updated successfully' });
       harness.detectChanges();
 
-      http.expectNone(`${URL}/1/schedule`);
+      http.expectNone(`${URL}/1/due-date`);
+      http.expectNone(`${URL}/1/deadline`);
+      http.expectNone(`${URL}/1/recurrence`);
       expect(text('.form-notice')).toBe('Changes saved.');
       expect(saveButton().disabled).toBe(true);
     });
 
-    it('sends schedule changes to the reschedule endpoint only', async () => {
+    it('sends a schedule change to its own endpoint only', async () => {
       await open();
       type('task-deadline', '2026-10-09');
       submit();
 
-      const req = http.expectOne(`${URL}/1/schedule`);
+      const req = http.expectOne(`${URL}/1/deadline`);
       expect(req.request.method).toBe('PUT');
-      expect(req.request.body).toEqual({ deadline: '2026-10-09' });
-      req.flush({ ...SCHEDULE_REPLY, deadline: '2026-10-09' });
+      expect(req.request.body).toEqual({ deadline: '2026-10-09T15:59:59.999Z' });
+      req.flush({ ...TASK_REPLY, deadline: '2026-10-09T15:59:59.999Z' });
       harness.detectChanges();
 
       expect(text('.form-notice')).toBe('Changes saved.');
       expect(value('task-deadline')).toBe('2026-10-09');
     });
 
+    it('changes and removes the recurrence', async () => {
+      await open();
+      repeat('Weekly');
+      submit();
+
+      const set = http.expectOne(`${URL}/1/recurrence`);
+      expect(set.request.body).toEqual({ recurrence: 'weekly' });
+      set.flush({ ...TASK_REPLY, recurrence: 'weekly' });
+      harness.detectChanges();
+      expect(text('.summary')).toBe('Repeats every week');
+
+      repeat('Never');
+      submit();
+
+      const clear = http.expectOne(`${URL}/1/recurrence`);
+      expect(clear.request.body).toEqual({ recurrence: 'none' });
+      clear.flush(TASK_REPLY);
+    });
+
     it('saves details first, then clears the schedule with nulls', async () => {
       await open();
       type('task-description', '');
       type('task-due-date', '');
-      type('task-due-time', '');
       type('task-deadline', '');
       submit();
 
@@ -375,9 +481,13 @@ describe('TaskForm', () => {
       expect(details.request.body).toEqual({ description: null });
       details.flush({ taskId: 1, message: 'Task updated successfully' });
 
-      const schedule = http.expectOne(`${URL}/1/schedule`);
-      expect(schedule.request.body).toEqual({ dueDate: null, dueTime: null, deadline: null });
-      schedule.flush({ ...SCHEDULE_REPLY, dueDate: null, dueTime: null, deadline: null });
+      const dueDate = http.expectOne(`${URL}/1/due-date`);
+      expect(dueDate.request.body).toEqual({ dueDate: null });
+      dueDate.flush({ ...TASK_REPLY, dueDate: null });
+
+      const deadline = http.expectOne(`${URL}/1/deadline`);
+      expect(deadline.request.body).toEqual({ deadline: null });
+      deadline.flush({ ...TASK_REPLY, dueDate: null, deadline: null });
       harness.detectChanges();
 
       expect(text('.form-notice')).toBe('Changes saved.');
@@ -398,26 +508,35 @@ describe('TaskForm', () => {
       submit();
 
       http.expectOne(`${URL}/1`).flush({ taskId: 1, message: 'Task updated successfully' });
-      fail(`${URL}/1/schedule`, 400, 'Deadline cannot be earlier than due date');
+      fail(`${URL}/1/deadline`, 400, 'Invalid deadline');
 
-      expect(messageFor('task-deadline')).toBe('Deadline cannot be earlier than due date');
+      expect(messageFor('task-deadline')).toBe('Invalid deadline');
       expect(saveButton().disabled).toBe(false);
 
       submit();
       http.expectNone(`${URL}/1`);
-      expect(http.expectOne(`${URL}/1/schedule`).request.body).toEqual({ deadline: '2026-10-09' });
+      expect(http.expectOne(`${URL}/1/deadline`).request.body).toEqual({
+        deadline: '2026-10-09T15:59:59.999Z',
+      });
     });
 
     it('keeps the due date of a repeating task', async () => {
-      await open({ ...STUDY, isRecurring: true });
-      expect(text('.hint')).toBe('This task repeats, so it needs a due date.');
+      await open({ ...STUDY, recurrence: 'weekly', isRecurring: true });
 
       type('task-due-date', '');
-      type('task-due-time', '');
 
       expect(messageFor('task-due-date')).toBe('Repeating tasks need a due date.');
       submit();
-      http.expectNone(`${URL}/1/schedule`);
+      http.expectNone(`${URL}/1/due-date`);
+    });
+
+    it('clears a date with its Clear button', async () => {
+      await open();
+      el<HTMLButtonElement>('button[aria-label="Clear deadline"]').click();
+      harness.detectChanges();
+      submit();
+
+      expect(http.expectOne(`${URL}/1/deadline`).request.body).toEqual({ deadline: null });
     });
 
     it('shows "Task not found" and refreshes the list when the save returns 404', async () => {
@@ -427,7 +546,7 @@ describe('TaskForm', () => {
       fail(`${URL}/1`, 404, 'Invalid updating task.');
 
       expect(text('.form-error')).toBe('Task not found.');
-      http.expectOne(`${URL}?projectId=10`).flush([]);
+      http.expectOne(`${URL}?projectId=10&${LIST_QUERY}`).flush([]);
     });
 
     it('shows "Task not found" when the task cannot be loaded', async () => {
@@ -452,7 +571,7 @@ describe('TaskForm', () => {
       fail(`${URL}/1`, 500);
 
       el<HTMLButtonElement>('.message button').click();
-      http.expectOne(`${URL}/1`).flush(STUDY);
+      http.expectOne(`${URL}/1`).flush(TASK_REPLY);
       harness.detectChanges();
 
       expect(value('task-title')).toBe('Study ILT Module 4');

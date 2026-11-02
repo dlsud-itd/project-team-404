@@ -1,0 +1,63 @@
+// Shared by the due date and deadline pickers so the two fields always match.
+:host {
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+.label-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 0.375rem;
+}
+
+label {
+  font-size: 0.875rem;
+  font-weight: 600;
+
+  span {
+    color: var(--ink-muted);
+    font-weight: 400;
+  }
+}
+
+.clear {
+  padding: 0 0.25rem;
+  border: 0;
+  border-radius: 0.25rem;
+  background: none;
+  color: #7b23a8;
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+
+  &:hover {
+    text-decoration: underline;
+  }
+
+  &:focus-visible {
+    outline: 2px solid #7b23a8;
+    outline-offset: 1px;
+  }
+}
+
+input {
+  width: 100%;
+  padding: 0.625rem 0.75rem;
+  border: 1px solid var(--field-border);
+  border-radius: 0.5rem;
+  font: inherit;
+  font-size: 0.9375rem;
+
+  &[aria-invalid='true'] {
+    border-color: var(--error);
+  }
+}
+
+.field-message {
+  min-height: 1.125rem;
+  margin: 0.25rem 0 0;
+  color: var(--error);
+  font-size: 0.8125rem;
+}

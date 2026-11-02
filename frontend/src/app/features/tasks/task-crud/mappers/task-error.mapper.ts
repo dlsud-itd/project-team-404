@@ -10,7 +10,7 @@ const NOT_FOUND = 'Task not found.';
  */
 function fieldFor(message: string): TaskField | undefined {
   if (/deadline/i.test(message)) return 'deadline';
-  if (/time/i.test(message)) return 'dueTime';
+  if (/recurrence/i.test(message)) return 'recurrence';
   if (/date/i.test(message)) return 'dueDate';
   if (/priority/i.test(message)) return 'priorityId';
   if (/project/i.test(message)) return 'projectId';

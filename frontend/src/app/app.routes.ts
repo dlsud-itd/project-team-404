@@ -16,25 +16,31 @@ export const routes: Routes = [
     loadComponent: () => import('./features/home/home').then((m) => m.Home),
   },
   {
-    // Before 'projects' so the projects routes don't claim these URLs.
-    path: 'projects/:projectId/tasks',
+    // Signed-in pages outside the home page, which adds the top bar itself. Pages that match
+    // none of these fall through to the routes below.
+    path: '',
     canActivate: [authGuard],
-    loadChildren: () => import('./features/tasks/tasks.routes').then((m) => m.TASKS_ROUTES),
-  },
-  {
-    path: 'projects',
-    canActivate: [authGuard],
-    loadChildren: () =>
-      import('./features/projects/projects.routes').then((m) => m.PROJECTS_ROUTES),
-  },
-  {
-    path: 'settings/profile',
-    title: 'Profile · HabitTracker',
-    canActivate: [authGuard],
-    loadComponent: () =>
-      import('./features/auth/profile/profile-settings/profile-settings').then(
-        (m) => m.ProfileSettings,
-      ),
+    loadComponent: () => import('./shared/components/app-shell/app-shell').then((m) => m.AppShell),
+    children: [
+      {
+        // Before 'projects' so the projects routes don't claim these URLs.
+        path: 'projects/:projectId/tasks',
+        loadChildren: () => import('./features/tasks/tasks.routes').then((m) => m.TASKS_ROUTES),
+      },
+      {
+        path: 'projects',
+        loadChildren: () =>
+          import('./features/projects/projects.routes').then((m) => m.PROJECTS_ROUTES),
+      },
+      {
+        path: 'settings/profile',
+        title: 'Profile · HabitTracker',
+        loadComponent: () =>
+          import('./features/auth/profile/profile-settings/profile-settings').then(
+            (m) => m.ProfileSettings,
+          ),
+      },
+    ],
   },
   {
     path: 'forgot-password',

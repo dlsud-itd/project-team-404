@@ -1,0 +1,15 @@
+<div class="label-row">
+  <label for="task-due-date">Due date <span>(optional)</span></label>
+  @if (control().value) {
+    <button type="button" class="clear" aria-label="Clear due date" (click)="clear()">Clear</button>
+  }
+</div>
+<input
+  id="task-due-date"
+  type="date"
+  [formControl]="control()"
+  [attr.aria-invalid]="!!error()"
+  aria-describedby="task-due-date-status"
+  (input)="edited.emit()"
+/>
+<p id="task-due-date-status" class="field-message" aria-live="polite">{{ error() }}</p>

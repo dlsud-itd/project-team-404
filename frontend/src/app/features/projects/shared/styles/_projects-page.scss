@@ -1,15 +1,13 @@
-/* Page shell shared by the Projects tabs: banners, load states and grouped lists. */
+/* Shared by the views in the home page's Projects tab, which supplies the background. */
 
 :host {
   display: block;
-  min-height: 100dvh;
-  background: #fcebe3;
 }
 
 .page {
   max-width: 48rem;
   margin: 0 auto;
-  padding: 2rem 1rem 4rem;
+  padding: 1.25rem 1rem 4rem;
 }
 
 .retry:focus-visible {

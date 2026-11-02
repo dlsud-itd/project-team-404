@@ -18,9 +18,15 @@ $accent: #7b23a8;
   color: var(--ink-muted);
   font-size: 0.875rem;
 
-  a {
+  .create {
+    padding: 0;
+    border: 0;
+    background: none;
     color: $accent;
+    font: inherit;
     font-weight: 600;
+    text-decoration: underline;
+    cursor: pointer;
   }
 }
 

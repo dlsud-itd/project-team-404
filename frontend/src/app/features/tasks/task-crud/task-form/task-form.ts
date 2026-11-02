@@ -3,13 +3,16 @@ import {
   Component,
   DestroyRef,
   computed,
+  effect,
   inject,
+  output,
   signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
+import { SessionService } from '../../../auth/session/session.service';
 import { ProjectService } from '../../../projects/project-crud/services/project.service';
 import { ProjectsStore } from '../../../projects/shared/state/projects.store';
 import { TasksStore } from '../../shared/state/tasks.store';
@@ -22,49 +25,61 @@ import {
   type TaskChanges,
   type TaskField,
 } from '../../shared/types/task.types';
+import { DeadlinePicker } from '../../task-scheduling/components/deadline-picker/deadline-picker';
+import { DueDatePicker } from '../../task-scheduling/components/due-date-picker/due-date-picker';
+import { RecurrencePicker } from '../../task-scheduling/components/recurrence-picker/recurrence-picker';
+import { DEFAULT_TASK_RECURRENCE } from '../../task-scheduling/types/task-scheduling.types';
+import {
+  deadlineToInstant,
+  instantToDate,
+  userTimeZone,
+} from '../../task-scheduling/utils/date-format.util';
+import { deadlineAfterDueDateValidator } from '../../task-scheduling/validators/deadline-after-due-date.validator';
+import { recurrenceRequiresDueDateValidator } from '../../task-scheduling/validators/recurrence-requires-due-date.validator';
 import { mapTaskError } from '../mappers/task-error.mapper';
 import { TaskService } from '../services/task.service';
-import { taskScheduleValidator } from '../validators/task-schedule.validator';
 import { taskTitleValidator } from '../validators/task-title.validator';
 
 export type TaskFormMode = 'create' | 'edit';
 
 type LoadState = 'loading' | 'ready' | 'not-found' | 'error';
 
-/** The form's values as the API expects them. */
-type TaskValues = Required<CreateTaskRequest>;
-
-/** "18:00:00" → "18:00", the value a time input shows. */
-function toTimeInput(time: string | null): string {
-  return time?.slice(0, 5) ?? '';
-}
-
-/** "18:00" → "18:00:00", the HH:mm:ss the API expects. */
-function toApiTime(time: string): string | null {
-  if (!time) return null;
-  return time.length === 5 ? `${time}:00` : time;
-}
-
 @Component({
   selector: 'app-task-form',
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, RouterLink, DueDatePicker, DeadlinePicker, RecurrencePicker],
   templateUrl: './task-form.html',
   styleUrl: './task-form.scss',
+  host: {
+    '[class.in-dialog]': 'dialog',
+    '(document:keydown.escape)': 'dialog && cancel()',
+  },
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TaskForm {
+  /** The popup was cancelled. */
+  readonly closed = output<void>();
+  /** The popup saved a new task. */
+  readonly created = output<Task>();
+
   private readonly tasks = inject(TaskService);
   private readonly tasksStore = inject(TasksStore);
   private readonly projects = inject(ProjectService);
   private readonly projectsStore = inject(ProjectsStore);
+  private readonly session = inject(SessionService);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
   private readonly route = inject(ActivatedRoute).snapshot;
 
-  /** Set by the route: `.../tasks/new` creates, `.../tasks/:taskId/edit` edits. */
+  /** What the new-task popup asked for; null on the edit page. */
+  private readonly popup = this.tasksStore.creating();
+  protected readonly dialog = this.popup !== null;
+
+  /** The `.../tasks/:taskId/edit` route edits; without its data, the form creates. */
   protected readonly mode: TaskFormMode = this.route.data['mode'] === 'edit' ? 'edit' : 'create';
-  /** The project in the URL; new tasks go here unless the user picks another. */
-  protected readonly projectId = Number(this.route.paramMap.get('projectId'));
+  /** New tasks go here unless the user picks another; 0 until the Inbox is known. */
+  protected readonly projectId = this.popup
+    ? (this.popup.projectId ?? 0)
+    : Number(this.route.paramMap.get('projectId'));
   private readonly taskId = Number(this.route.paramMap.get('taskId'));
   protected readonly listUrl = `/projects/${this.route.paramMap.get('projectId')}/tasks`;
 
@@ -102,19 +117,24 @@ export class TaskForm {
       priorityId: [DEFAULT_TASK_PRIORITY],
       projectId: [this.projectId],
       dueDate: [''],
-      dueTime: [''],
       deadline: [''],
+      recurrence: [DEFAULT_TASK_RECURRENCE],
     },
-    { validators: taskScheduleValidator },
+    { validators: [deadlineAfterDueDateValidator, recurrenceRequiresDueDateValidator] },
   );
 
   constructor() {
-    if (!this.validId(this.projectId)) {
+    if (!this.dialog && !this.validId(this.projectId)) {
       this.loadState.set('not-found');
       return;
     }
+    effect(() => {
+      const inbox = this.projectsStore.inbox();
+      const project = this.form.controls.projectId;
+      if (inbox && !project.value) project.setValue(inbox.projectId);
+    });
     if (!this.projectsStore.loaded()) {
-      // Only fills the project picker; the form still works with the URL's project.
+      // Only fills the project picker; the form still works without it.
       this.projects
         .refresh()
         .pipe(takeUntilDestroyed(this.destroyRef))
@@ -135,9 +155,6 @@ export class TaskForm {
       .subscribe({
         next: (task) => {
           this.fill(task);
-          // A repeating task's due date cannot be cleared (API spec III.J).
-          if (task.isRecurring) this.form.controls.dueDate.addValidators(Validators.required);
-          this.form.controls.dueDate.updateValueAndValidity();
           this.loadState.set('ready');
         },
         error: (error: unknown) =>
@@ -168,7 +185,9 @@ export class TaskForm {
   }
 
   protected cancel(): void {
-    if (!this.submitting()) void this.router.navigateByUrl(this.listUrl);
+    if (this.submitting()) return;
+    if (this.dialog) this.closed.emit();
+    else void this.router.navigateByUrl(this.listUrl);
   }
 
   protected clearServerError(field: TaskField): void {
@@ -182,8 +201,8 @@ export class TaskForm {
     const server = this.serverErrors()[field];
     if (server) return server;
 
-    if (field === 'dueTime' && this.form.hasError('dueTimeWithoutDate')) {
-      return 'Add a due date to set a time.';
+    if (field === 'dueDate' && this.form.hasError('recurrenceWithoutDueDate')) {
+      return 'Repeating tasks need a due date.';
     }
     if (field === 'deadline' && this.form.hasError('deadlineBeforeDueDate')) {
       return "The deadline can't be before the due date.";
@@ -194,8 +213,7 @@ export class TaskForm {
     if (!errors || !(control.touched || control.dirty)) return null;
 
     if (errors['required']) {
-      if (!control.touched) return null;
-      return field === 'title' ? 'Task title is required.' : 'Repeating tasks need a due date.';
+      return control.touched ? 'Task title is required.' : null;
     }
     if (errors['maxlength']) return `Use ${TASK_TITLE_MAX_LENGTH} characters or fewer.`;
     return null;
@@ -212,23 +230,33 @@ export class TaskForm {
       priorityId: task.priorityId,
       projectId: task.projectId,
       dueDate: task.dueDate ?? '',
-      dueTime: toTimeInput(task.dueTime),
-      deadline: task.deadline ?? '',
+      deadline: this.deadlineDate(task),
+      recurrence: task.recurrence,
     });
   }
 
-  /** Trimmed, with empty optional fields as null. */
-  private values(): TaskValues {
-    const { title, description, priorityId, projectId, dueDate, dueTime, deadline } =
+  private timeZone(): string {
+    return userTimeZone(this.session.currentUser()?.timezone);
+  }
+
+  /** The day the task's deadline falls on for this user, as the date input shows it. */
+  private deadlineDate(task: Task): string {
+    return task.deadline ? instantToDate(task.deadline, this.timeZone()) : '';
+  }
+
+  /** As the API expects them: trimmed, with empty optional fields as null. */
+  private values(): CreateTaskRequest {
+    const { title, description, priorityId, projectId, dueDate, deadline, recurrence } =
       this.form.getRawValue();
     return {
-      projectId,
+      // Left out if the Inbox never loaded; the server then uses the Inbox itself.
+      projectId: projectId || undefined,
       priorityId,
       title: title.trim(),
       description: description.trim() || null,
       dueDate: dueDate || null,
-      dueTime: toApiTime(dueTime),
-      deadline: deadline || null,
+      deadline: deadline ? deadlineToInstant(deadline, this.timeZone()) : null,
+      recurrence,
     };
   }
 
@@ -244,9 +272,11 @@ export class TaskForm {
     if (values.priorityId !== task.priorityId) details.priorityId = values.priorityId;
     if (values.projectId !== task.projectId) details.projectId = values.projectId;
     if (values.dueDate !== task.dueDate) schedule.dueDate = values.dueDate;
-    if (toTimeInput(values.dueTime) !== toTimeInput(task.dueTime))
-      schedule.dueTime = values.dueTime;
-    if (values.deadline !== task.deadline) schedule.deadline = values.deadline;
+    // Compared by day: a deadline set elsewhere may be any time of day, and that isn't a change.
+    if (this.form.controls.deadline.value !== this.deadlineDate(task)) {
+      schedule.deadline = values.deadline;
+    }
+    if (values.recurrence !== task.recurrence) schedule.recurrence = values.recurrence;
     return changes;
   }
 
@@ -260,7 +290,7 @@ export class TaskForm {
         takeUntilDestroyed(this.destroyRef),
       )
       .subscribe({
-        next: (task) => void this.router.navigateByUrl(`/projects/${task.projectId}/tasks`),
+        next: (task) => this.created.emit(task),
         error: (error: unknown) => this.showError(error),
       });
   }

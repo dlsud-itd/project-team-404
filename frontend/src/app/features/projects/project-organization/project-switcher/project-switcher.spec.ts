@@ -94,7 +94,10 @@ describe('ProjectSwitcher', () => {
     loadWith([INBOX]);
 
     const tabs = [...page.querySelectorAll('nav[aria-label="Project views"] a')];
-    expect(tabs.map((a) => a.getAttribute('href'))).toEqual(['/projects', '/projects/organize']);
+    expect(tabs.map((a) => a.getAttribute('href'))).toEqual([
+      '/home?tab=projects',
+      '/home?tab=projects&view=organize',
+    ]);
   });
 
   it('gives the Inbox no favorite, archive or move controls', () => {
@@ -108,8 +111,12 @@ describe('ProjectSwitcher', () => {
     loadWith([INBOX]);
 
     expect(page.textContent).toContain('Star a project to keep it at the top.');
-    expect(el('.empty a')?.getAttribute('href')).toBe('/projects/new');
     expect(el('.archived')).toBeNull();
+
+    el<HTMLButtonElement>('.empty button')!.click();
+    render();
+
+    expect(el('app-new-project-dialog [role="dialog"]')).toBeTruthy();
   });
 
   describe('switching', () => {

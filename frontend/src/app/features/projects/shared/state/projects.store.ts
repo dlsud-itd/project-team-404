@@ -29,6 +29,8 @@ export class ProjectsStore {
 
   /** The project the user switched to, if any. */
   readonly selectedProjectId = signal<number | null>(null);
+  /** Whether the new-project popup is open. */
+  readonly creating = signal(false);
   private readonly navigationError = signal<string | null>(null);
   readonly selected = computed(() => {
     const id = this.selectedProjectId();
@@ -103,6 +105,7 @@ export class ProjectsStore {
     this.loaded.set(false);
     this.error.set(null);
     this.selectedProjectId.set(null);
+    this.creating.set(false);
     this.navigationError.set(null);
   }
 }
