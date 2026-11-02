@@ -2,6 +2,7 @@ import type { TestRequest } from '@angular/common/http/testing';
 import { environment } from '../../../../../environments/environment';
 
 export const API = `${environment.apiBaseUrl}/api/auth`;
+const BASE_API = `${environment.apiBaseUrl}/api`;
 
 export type Account = {
   id: string;
@@ -94,15 +95,41 @@ export class FakeAuthApi {
 
   respond(req: TestRequest): void {
     const { method, url } = req.request;
-    if (!url.startsWith(API)) throw new Error(`FakeAuthApi: unexpected request ${method} ${url}`);
-    const path = url.slice(API.length);
+    if (!url.startsWith(BASE_API))
+      throw new Error(`FakeAuthApi: unexpected request ${method} ${url}`);
+    const path = url.startsWith(API) ? url.slice(API.length) : url.slice(BASE_API.length);
     this.received.push({ route: `${method} ${path}`, body: req.request.body });
 
-    const reply = this.route(req, method, path);
+    const reply =
+      method === 'GET' && path === '/projects'
+        ? this.projects(req)
+        : method === 'GET' && path === '/tasks'
+          ? ok([])
+          : this.route(req, method, path);
     req.flush(reply.body, {
       status: reply.status,
       statusText: STATUS_TEXT[reply.status] ?? 'Error',
     });
+  }
+
+  private projects(req: TestRequest): Reply {
+    const user = this.userFor(req);
+    return ok(
+      user
+        ? [
+            {
+              id: user.inboxProjectId,
+              name: 'Inbox',
+              description: null,
+              color: null,
+              isInbox: true,
+              isFavorite: false,
+              isArchived: false,
+              sortOrder: 0,
+            },
+          ]
+        : [],
+    );
   }
 
   private route(req: TestRequest, method: string, path: string): Reply {

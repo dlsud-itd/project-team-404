@@ -19,6 +19,8 @@ import { environment } from '../../../../src/environments/environment';
  */
 
 const AUTH_API = `${environment.apiBaseUrl}/api/auth`;
+const PROJECTS_API = `${environment.apiBaseUrl}/api/projects`;
+const TASKS_API = `${environment.apiBaseUrl}/api/tasks`;
 const TOKEN = 'session-token';
 const USER = {
   id: 'user-1',
@@ -41,6 +43,12 @@ describe('Landing integration (landing page, guestGuard, session)', () => {
     all(`${scope} a`).find((a) => a.textContent?.replace(/\s+/g, ' ').trim() === label)!;
 
   async function settle(): Promise<void> {
+    await harness.fixture.whenStable();
+    harness.detectChanges();
+    http.match(PROJECTS_API).forEach((request) => request.flush([]));
+    http
+      .match((request) => request.url === TASKS_API && request.method === 'GET')
+      .forEach((request) => request.flush([]));
     await harness.fixture.whenStable();
     harness.detectChanges();
   }

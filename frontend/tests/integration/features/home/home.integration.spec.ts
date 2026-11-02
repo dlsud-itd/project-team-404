@@ -171,7 +171,7 @@ describe('Home integration (live dashboard APIs)', () => {
     await click(el<HTMLButtonElement>('app-mini-calendar [data-date="2026-10-30"]'));
 
     expect(allTasks()).toEqual(['Read chapter 4', 'Team stand-up notes', 'Gym session']);
-    expect(text('.summary')).toContain('3 tasks');
+    expect(text('.summary')).toContain('2 tasks to do, 1 done');
   });
 
   it('persists task completion through the Tasks API', async () => {
