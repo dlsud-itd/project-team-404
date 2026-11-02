@@ -115,7 +115,8 @@ export class StatusColumns {
     { status: 'overdue', label: 'Overdue' },
   ];
 
-  protected shortDate(key: string): string {
+  protected shortDate(key: string | null): string {
+    if (!key) return 'No due date';
     return new Date(`${key}T00:00`).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   }
 }

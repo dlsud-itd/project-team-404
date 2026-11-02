@@ -81,10 +81,11 @@ export function createProjectCrudController(service: ProjectCrudService): {
     },
     delete: async (req, res, next) => {
       try {
-        await service.delete(
+        const movedTaskCount = await service.delete(
           res.locals.ownedProject as ProjectRecord,
           req.auth!.userId
         );
+        res.setHeader('X-Moved-Task-Count', String(movedTaskCount));
         res.status(204).end();
       } catch (error) {
         respondToError(error, res, next);

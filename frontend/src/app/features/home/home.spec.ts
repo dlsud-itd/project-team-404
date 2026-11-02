@@ -10,6 +10,17 @@ import { Home } from './home';
 
 const PROJECTS_URL = `${environment.apiBaseUrl}/api/projects`;
 const TASKS_URL = `${environment.apiBaseUrl}/api/tasks`;
+const ALL_TASKS_URL = `${TASKS_URL}?status=all&pageSize=100&page=1`;
+const INBOX = {
+  id: 1,
+  name: 'Inbox',
+  description: null,
+  color: null,
+  isInbox: true,
+  isFavorite: false,
+  isArchived: false,
+  sortOrder: 0,
+};
 
 @Component({ template: '' })
 class Blank {}
@@ -27,6 +38,18 @@ describe('Home tabs', () => {
 
   async function settle(): Promise<void> {
     await harness.fixture.whenStable();
+    harness.detectChanges();
+  }
+
+  function loadTasksTab(): void {
+    http.expectOne(PROJECTS_URL).flush([INBOX]);
+    http.expectOne(ALL_TASKS_URL).flush([]);
+    harness.detectChanges();
+  }
+
+  function loadDashboardTab(): void {
+    http.expectOne(PROJECTS_URL).flush([INBOX]);
+    http.expectOne(ALL_TASKS_URL).flush([]);
     harness.detectChanges();
   }
 
@@ -52,6 +75,7 @@ describe('Home tabs', () => {
 
   it('opens on the dashboard with its tab selected', async () => {
     await harness.navigateByUrl('/home');
+    loadDashboardTab();
 
     expect(panelId()).toBe('panel-dashboard');
     expect(tab('dashboard').getAttribute('aria-selected')).toBe('true');
@@ -64,14 +88,16 @@ describe('Home tabs', () => {
 
   it('swaps the content in place and keeps the tab in the URL', async () => {
     await harness.navigateByUrl('/home');
+    loadDashboardTab();
     const home = harness.routeDebugElement?.componentInstance;
 
     tab('tasks').click();
     await settle();
+    loadTasksTab();
 
     expect(router.url).toBe('/home?tab=tasks');
     expect(panelId()).toBe('panel-tasks');
-    expect(el('#panel-tasks app-all-tasks')).toBeTruthy();
+    expect(el('#panel-tasks app-tasks-page')).toBeTruthy();
     expect(el('[role="tabpanel"]')?.getAttribute('data-slide')).toBe('right');
     // Same component instance: the page was not reloaded.
     expect(harness.routeDebugElement?.componentInstance).toBe(home);
@@ -79,9 +105,11 @@ describe('Home tabs', () => {
 
   it('slides in from the left when going back to an earlier tab', async () => {
     await harness.navigateByUrl('/home?tab=tasks');
+    loadTasksTab();
 
     tab('dashboard').click();
     await settle();
+    loadDashboardTab();
 
     expect(router.url).toBe('/home');
     expect(panelId()).toBe('panel-dashboard');
@@ -90,6 +118,7 @@ describe('Home tabs', () => {
 
   it('shows the projects list in the Projects tab', async () => {
     await harness.navigateByUrl('/home');
+    loadDashboardTab();
 
     tab('projects').click();
     await settle();
@@ -109,6 +138,7 @@ describe('Home tabs', () => {
 
   it('moves between tabs with the arrow keys', async () => {
     await harness.navigateByUrl('/home');
+    loadDashboardTab();
 
     el('[role="tablist"]')!.dispatchEvent(
       new KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true }),
@@ -122,30 +152,19 @@ describe('Home tabs', () => {
       new KeyboardEvent('keydown', { key: 'Home', bubbles: true }),
     );
     await settle();
+    loadDashboardTab();
     expect(router.url).toBe('/home');
   });
 
   describe('"+ New Task" popup', () => {
-    const INBOX = {
-      id: 1,
-      name: 'Inbox',
-      description: null,
-      color: null,
-      isInbox: true,
-      isFavorite: false,
-      isArchived: false,
-      sortOrder: 0,
-    };
-
     async function openPopup(): Promise<void> {
       el<HTMLButtonElement>('button.new-task')!.click();
-      await settle();
-      http.expectOne(PROJECTS_URL).flush([INBOX]);
       await settle();
     }
 
     it('opens the real form over the current tab, with the Inbox picked', async () => {
       await harness.navigateByUrl('/home');
+      loadDashboardTab();
 
       await openPopup();
 
@@ -159,6 +178,7 @@ describe('Home tabs', () => {
 
     it("goes to the task's project after adding, so the task can be seen", async () => {
       await harness.navigateByUrl('/home');
+      loadDashboardTab();
       await openPopup();
 
       const title = el<HTMLInputElement>('#task-title')!;
@@ -294,6 +314,7 @@ describe('Home tabs', () => {
 
       tab('tasks').click();
       await settle();
+      loadTasksTab();
 
       expect(router.url).toBe('/home?tab=tasks');
     });
@@ -301,6 +322,7 @@ describe('Home tabs', () => {
 
   it('falls back to the dashboard for an unknown tab', async () => {
     await harness.navigateByUrl('/home?tab=nope');
+    loadDashboardTab();
 
     expect(panelId()).toBe('panel-dashboard');
   });

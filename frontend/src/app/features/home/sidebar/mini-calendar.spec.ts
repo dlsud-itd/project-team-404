@@ -1,9 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { DashboardStore } from '../dashboard.store';
+import { DASHBOARD_PROJECTS, DASHBOARD_TASKS } from '../testing/dashboard-fixture';
 import { MiniCalendar, taskCount } from './mini-calendar';
 
-// The store's sample tasks are dated relative to today, which is Friday, October 30, 2026 here:
-// two overdue (Oct 28, 29), three today (one done), then Nov 1, 2, 3 and 5.
 describe('MiniCalendar', () => {
   let fixture: ComponentFixture<MiniCalendar>;
   let store: DashboardStore;
@@ -39,6 +38,7 @@ describe('MiniCalendar', () => {
       providers: [DashboardStore],
     }).compileComponents();
     store = TestBed.inject(DashboardStore);
+    store.setData(DASHBOARD_PROJECTS, DASHBOARD_TASKS);
     fixture = TestBed.createComponent(MiniCalendar);
     page = fixture.nativeElement;
     fixture.detectChanges();
@@ -89,7 +89,7 @@ describe('MiniCalendar', () => {
   });
 
   it('puts a dot under days with tasks, coloured by the most urgent one', () => {
-    store.toggleTask(9); // Nov 5's only task is now done.
+    store.setTaskCompletion(9, new Date(2026, 9, 30, 10).toISOString());
     fixture.detectChanges();
 
     expect(mark('2026-10-28')).toBe('overdue');

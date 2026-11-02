@@ -61,6 +61,36 @@ describe('TaskService', () => {
     });
   });
 
+  describe('listAll', () => {
+    it('loads every page without stopping at the API page size', () => {
+      let result: Task[] | undefined;
+      service.listAll().subscribe((tasks) => (result = tasks));
+
+      const firstPage = Array.from({ length: 100 }, (_, index) =>
+        asApiTask({ ...STUDY, taskId: index + 1 }),
+      );
+      http.expectOne(`${URL}?status=all&pageSize=100&page=1`).flush(firstPage);
+      http.expectOne(`${URL}?status=all&pageSize=100&page=2`).flush([asApiTask(DOCS)]);
+
+      expect(result).toHaveLength(101);
+      expect(result?.[0].taskId).toBe(1);
+      expect(result?.[100]).toEqual(DOCS);
+    });
+
+    it('requests one more page when the last page is exactly full', () => {
+      let result: Task[] | undefined;
+      service.listAll({ projectId: 10 }).subscribe((tasks) => (result = tasks));
+
+      const fullPage = Array.from({ length: 100 }, (_, index) =>
+        asApiTask({ ...STUDY, taskId: index + 1 }),
+      );
+      http.expectOne(`${URL}?projectId=10&status=all&pageSize=100&page=1`).flush(fullPage);
+      http.expectOne(`${URL}?projectId=10&status=all&pageSize=100&page=2`).flush([]);
+
+      expect(result).toHaveLength(100);
+    });
+  });
+
   describe('refresh', () => {
     it("loads a project's tasks into the store", () => {
       service.refresh(10).subscribe();
@@ -137,6 +167,19 @@ describe('TaskService', () => {
     req.flush({ taskId: 1, message: 'Task updated successfully' });
 
     expect(store.byId(1)).toEqual({ ...STUDY, title: 'Study module 5', priorityId: 1 });
+  });
+
+  it('updates completion using the backend completion fields', () => {
+    store.setTasks(10, [STUDY]);
+    const completedAt = '2026-10-01T10:00:00.000Z';
+    service.update(1, { completedAt }).subscribe();
+
+    const req = http.expectOne(`${URL}/1`);
+    expect(req.request.method).toBe('PUT');
+    expect(req.request.body).toEqual({ isDone: true, doneAt: completedAt });
+    req.flush({ taskId: 1, message: 'Task updated successfully' });
+
+    expect(store.byId(1)?.completedAt).toBe(completedAt);
   });
 
   it('leaves the store alone when an update fails', () => {
