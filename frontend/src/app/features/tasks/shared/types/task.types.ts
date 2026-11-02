@@ -76,11 +76,14 @@ export interface UpdateTaskRequest {
   title?: string;
   description?: string | null;
   priorityId?: number;
+  completedAt?: string | null;
 }
 
 /** Body of PUT /api/tasks/{taskId}. */
-export type UpdateTaskBody = Omit<UpdateTaskRequest, 'priorityId'> & {
+export type UpdateTaskBody = Omit<UpdateTaskRequest, 'priorityId' | 'completedAt'> & {
   priority?: ApiTaskPriority;
+  isDone?: boolean;
+  doneAt?: string | null;
 };
 
 export interface UpdateTaskResponse {

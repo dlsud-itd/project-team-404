@@ -12,7 +12,12 @@ import { errorHandler } from './middleware/error-handler.middleware';
 
 export const app = express();
 
-app.use(cors({ origin: env.CORS_ALLOWED_ORIGINS }));
+app.use(
+  cors({
+    origin: env.CORS_ALLOWED_ORIGINS,
+    exposedHeaders: ['X-Moved-Task-Count'],
+  })
+);
 app.use(express.json());
 
 const sessions = createSessionService();

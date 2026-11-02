@@ -2,13 +2,19 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  DestroyRef,
   effect,
   inject,
   model,
+  signal,
   untracked,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, type ValidatorFn, Validators } from '@angular/forms';
-import { DashboardStore, PRIORITIES, type Priority } from '../dashboard.store';
+import { finalize } from 'rxjs';
+import { DashboardStore, PRIORITIES, type Priority, type Task } from '../dashboard.store';
+import { mapTaskError } from '../../tasks/task-crud/mappers/task-error.mapper';
+import { TaskService } from '../../tasks/task-crud/services/task.service';
 
 /** Like Validators.required, but a title of only spaces counts as empty too. */
 const notBlank: ValidatorFn = ({ value }) =>
@@ -24,12 +30,17 @@ const notBlank: ValidatorFn = ({ value }) =>
 export class AllTasks {
   protected readonly store = inject(DashboardStore);
   protected readonly priorities = PRIORITIES;
+  protected readonly actionError = signal<string | null>(null);
+  protected readonly submitting = signal(false);
+  protected readonly busyTasks = signal<ReadonlySet<number>>(new Set());
+  private readonly tasksApi = inject(TaskService);
+  private readonly destroyRef = inject(DestroyRef);
 
   /** Whether the new-task form is open; the page's "+ New Task" button also sets it. */
   readonly composing = model(false);
 
   protected readonly form = inject(FormBuilder).nonNullable.group({
-    title: ['', [notBlank, Validators.maxLength(120)]],
+    title: ['', [notBlank, Validators.maxLength(200)]],
     projectId: [''],
     priority: ['medium' as Priority],
     due: [this.store.today(), Validators.required],
@@ -58,17 +69,80 @@ export class AllTasks {
       return;
     }
     const { title, projectId, priority, due } = this.form.getRawValue();
-    this.store.addTask({
-      title: title.trim(),
-      projectId: projectId ? Number(projectId) : null,
-      priority,
-      due,
-    });
-    this.form.reset({ title: '', projectId, priority: 'medium', due: this.store.today() });
-    this.composing.set(false);
+    this.actionError.set(null);
+    this.submitting.set(true);
+    this.tasksApi
+      .create({
+        ...(projectId ? { projectId: Number(projectId) } : {}),
+        priorityId: priority === 'high' ? 1 : priority === 'medium' ? 2 : 3,
+        title: title.trim(),
+        description: null,
+        dueDate: due || null,
+        deadline: null,
+        recurrence: 'none',
+      })
+      .pipe(
+        finalize(() => this.submitting.set(false)),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe({
+        next: (task) => {
+          this.store.upsertTask(task);
+          this.form.reset({ title: '', projectId, priority: 'medium', due: this.store.today() });
+          this.composing.set(false);
+        },
+        error: (error: unknown) => this.actionError.set(mapTaskError(error).message),
+      });
   }
 
-  protected shortDate(key: string): string {
+  protected isBusy(task: Task): boolean {
+    return this.busyTasks().has(task.id);
+  }
+
+  protected toggleTask(task: Task): void {
+    if (this.isBusy(task)) return;
+    const completedAt = task.done ? null : new Date().toISOString();
+    this.setBusy(task.id, true);
+    this.actionError.set(null);
+    this.tasksApi
+      .update(task.id, { completedAt })
+      .pipe(
+        finalize(() => this.setBusy(task.id, false)),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe({
+        next: () => this.store.setTaskCompletion(task.id, completedAt),
+        error: (error: unknown) => this.actionError.set(mapTaskError(error).message),
+      });
+  }
+
+  protected deleteTask(task: Task): void {
+    if (this.isBusy(task)) return;
+    this.setBusy(task.id, true);
+    this.actionError.set(null);
+    this.tasksApi
+      .delete(task.id)
+      .pipe(
+        finalize(() => this.setBusy(task.id, false)),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe({
+        next: () => this.store.removeTask(task.id),
+        error: (error: unknown) => this.actionError.set(mapTaskError(error).message),
+      });
+  }
+
+  protected shortDate(key: string | null): string {
+    if (!key) return 'No due date';
     return new Date(`${key}T00:00`).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  }
+
+  private setBusy(taskId: number, busy: boolean): void {
+    this.busyTasks.update((tasks) => {
+      const next = new Set(tasks);
+      if (busy) next.add(taskId);
+      else next.delete(taskId);
+      return next;
+    });
   }
 }

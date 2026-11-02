@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { DashboardStore } from '../dashboard.store';
+import { DASHBOARD_PROJECTS, DASHBOARD_TASKS } from '../testing/dashboard-fixture';
 import { StatusColumns } from './status-columns';
 
 describe('StatusColumns', () => {
@@ -20,6 +21,7 @@ describe('StatusColumns', () => {
       providers: [DashboardStore],
     }).compileComponents();
     store = TestBed.inject(DashboardStore);
+    store.setData(DASHBOARD_PROJECTS, DASHBOARD_TASKS);
     fixture = TestBed.createComponent(StatusColumns);
     page = fixture.nativeElement;
     fixture.detectChanges();

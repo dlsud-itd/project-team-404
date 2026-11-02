@@ -1,6 +1,6 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { Observable, concat, last, map, of, tap } from 'rxjs';
+import { EMPTY, Observable, concat, expand, last, map, of, tap, toArray } from 'rxjs';
 import { environment } from '../../../../../environments/environment';
 import { TasksStore } from '../../shared/state/tasks.store';
 import type {
@@ -21,6 +21,7 @@ const MAX_PAGE_SIZE = 100;
 
 export interface TaskListFilter {
   projectId?: number;
+  page?: number;
 }
 
 /**
@@ -40,9 +41,21 @@ export class TaskService {
     let params = new HttpParams();
     if (filter.projectId !== undefined) params = params.set('projectId', filter.projectId);
     params = params.set('status', 'all').set('pageSize', MAX_PAGE_SIZE);
+    if (filter.page !== undefined) params = params.set('page', filter.page);
     return this.http
       .get<ApiTask[]>(this.baseUrl, { params })
       .pipe(map((tasks) => tasks.map(toTask)));
+  }
+
+  /** Loads all API pages, rather than silently truncating the list at the page-size limit. */
+  listAll(filter: Omit<TaskListFilter, 'page'> = {}): Observable<Task[]> {
+    return this.list({ ...filter, page: 1 }).pipe(
+      expand((tasks, index) =>
+        tasks.length === MAX_PAGE_SIZE ? this.list({ ...filter, page: index + 2 }) : EMPTY,
+      ),
+      toArray(),
+      map((pages) => pages.flat()),
+    );
   }
 
   /** Loads a project's active tasks into the store, recording loading and error state there. */

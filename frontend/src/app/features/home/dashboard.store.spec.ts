@@ -1,13 +1,13 @@
 import { TestBed } from '@angular/core/testing';
+import { DASHBOARD_PROJECTS, DASHBOARD_TASKS, task } from './testing/dashboard-fixture';
 import { DashboardStore, toDateKey } from './dashboard.store';
 
-/** Friday 30 October 2026, 09:00 local time; the sample tasks are dated relative to it. */
 const NOW = new Date(2026, 9, 30, 9, 0, 0);
 
 describe('DashboardStore', () => {
   let store: DashboardStore;
 
-  const titles = (tasks: { title: string }[]) => tasks.map((t) => t.title);
+  const titles = (tasks: { title: string }[]) => tasks.map((item) => item.title);
 
   beforeEach(() => {
     vi.useFakeTimers({ toFake: ['Date'] });
@@ -18,18 +18,23 @@ describe('DashboardStore', () => {
 
   afterEach(() => vi.useRealTimers());
 
+  it('starts empty instead of displaying sample content', () => {
+    expect(store.projects()).toEqual([]);
+    expect(store.tasks()).toEqual([]);
+    expect(store.loaded()).toBe(false);
+  });
+
   it('formats dates as local YYYY-MM-DD keys', () => {
     expect(toDateKey(new Date(2026, 0, 5))).toBe('2026-01-05');
     expect(store.today()).toBe('2026-10-30');
   });
 
-  it('counts open tasks, tasks done today and overdue tasks', () => {
+  it('derives counts and statuses from loaded API models', () => {
+    store.setData(DASHBOARD_PROJECTS, DASHBOARD_TASKS);
+
     expect(store.openTasks()).toHaveLength(8);
     expect(store.doneToday()).toBe(1);
     expect(store.overdueCount()).toBe(2);
-  });
-
-  it('groups tasks by status: done, then past, today and future due dates', () => {
     const { current, upcoming, overdue, done } = store.byStatus();
     expect(titles(overdue)).toEqual(['Submit lab report', 'Reply to client email']);
     expect(titles(current)).toEqual(['Read chapter 4', 'Team stand-up notes']);
@@ -40,9 +45,12 @@ describe('DashboardStore', () => {
       'Plan weekend trip',
     ]);
     expect(titles(done)).toEqual(['Gym session']);
+    expect(store.loaded()).toBe(true);
   });
 
-  it('counts open tasks per project and per priority', () => {
+  it('counts open tasks by project and priority', () => {
+    store.setData(DASHBOARD_PROJECTS, DASHBOARD_TASKS);
+
     expect([...store.projectCounts()]).toEqual([
       [1, 3],
       [2, 3],
@@ -51,7 +59,8 @@ describe('DashboardStore', () => {
     expect(store.priorityCounts()).toEqual({ high: 3, medium: 3, low: 2 });
   });
 
-  it('filters by project or priority and sorts open tasks first, by due date', () => {
+  it('filters live tasks by project or priority and sorts open tasks first', () => {
+    store.setData(DASHBOARD_PROJECTS, DASHBOARD_TASKS);
     store.filter.set({ projectId: 3 });
     expect(titles(store.filteredTasks())).toEqual([
       'Call grandma',
@@ -67,47 +76,48 @@ describe('DashboardStore', () => {
     ]);
   });
 
-  it('adds, toggles and deletes tasks', () => {
-    store.addTask({ title: 'Write essay', projectId: 1, priority: 'high', due: '2026-10-30' });
-    const essay = store.tasks().at(-1)!;
-    expect(essay).toMatchObject({ title: 'Write essay', done: false });
-    expect(store.statusOf(essay)).toBe('current');
-
-    store.toggleTask(essay.id);
-    expect(store.tasks().at(-1)).toMatchObject({ done: true, doneOn: '2026-10-30' });
+  it('updates completion and removes tasks after successful API actions', () => {
+    store.setData(DASHBOARD_PROJECTS, DASHBOARD_TASKS);
+    const completedAt = new Date(2026, 9, 30, 11).toISOString();
+    store.setTaskCompletion(6, completedAt);
+    expect(store.tasks().find((item) => item.id === 6)).toMatchObject({
+      done: true,
+      doneOn: '2026-10-30',
+    });
     expect(store.doneToday()).toBe(2);
 
-    store.toggleTask(essay.id);
-    expect(store.tasks().at(-1)).toMatchObject({ done: false, doneOn: undefined });
-
-    store.deleteTask(essay.id);
-    expect(titles(store.tasks())).not.toContain('Write essay');
+    store.setTaskCompletion(6, null);
+    expect(store.tasks().find((item) => item.id === 6)?.done).toBe(false);
+    store.removeTask(6);
+    expect(titles(store.tasks())).not.toContain('Study for quiz');
   });
 
-  it('adds and renames projects', () => {
-    store.addProject('Thesis');
-    const thesis = store.projects().at(-1)!;
-    expect(thesis.name).toBe('Thesis');
-    expect(thesis.color).toMatch(/^#[0-9a-f]{6}$/i);
+  it('adds or replaces a task returned by the API', () => {
+    store.setData(DASHBOARD_PROJECTS, DASHBOARD_TASKS);
+    store.upsertTask(task(10, 'Write essay', 1, 1, '2026-10-30'));
+    expect(store.tasks().at(-1)).toMatchObject({ title: 'Write essay', done: false });
 
-    store.renameProject(thesis.id, 'Capstone');
-    expect(store.projectById(thesis.id)?.name).toBe('Capstone');
+    store.upsertTask(task(10, 'Revised essay', 1, 1, '2026-10-30'));
+    expect(store.tasks().filter((item) => item.id === 10)).toHaveLength(1);
+    expect(store.tasks().find((item) => item.id === 10)?.title).toBe('Revised essay');
   });
 
-  it('deletes a project, keeps its tasks without a project and clears its filter', () => {
-    store.filter.set({ projectId: 2 });
-    store.deleteProject(2);
+  it('keeps Inbox, excludes archived projects and calendar ignores tasks without a due date', () => {
+    store.setData(
+      [
+        ...DASHBOARD_PROJECTS,
+        { ...DASHBOARD_PROJECTS[0], projectId: 5, name: 'Archived', isArchived: true },
+      ],
+      [task(10, 'Unscheduled', 4, 2, null)],
+    );
 
-    expect(store.projectById(2)).toBeUndefined();
-    expect(store.tasks()).toHaveLength(9);
-    expect(store.tasks().filter((t) => t.projectId === 2)).toEqual([]);
-    expect(store.filter()).toEqual({});
-  });
-
-  it('keeps another filter when a different project is deleted', () => {
-    store.filter.set({ projectId: 1 });
-    store.deleteProject(3);
-
-    expect(store.filter()).toEqual({ projectId: 1 });
+    expect(store.projects().map((project) => project.name)).toEqual([
+      'Inbox',
+      'School',
+      'Work',
+      'Personal',
+    ]);
+    expect(store.tasksByDay().size).toBe(0);
+    expect(store.byStatus().unscheduled.map((item) => item.title)).toEqual(['Unscheduled']);
   });
 });

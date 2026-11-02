@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { DashboardStore } from '../dashboard.store';
+import { DASHBOARD_PROJECTS, DASHBOARD_TASKS } from '../testing/dashboard-fixture';
 import { PriorityList } from './priority-list';
 
 describe('PriorityList (sidebar)', () => {
@@ -17,6 +18,7 @@ describe('PriorityList (sidebar)', () => {
       providers: [DashboardStore],
     }).compileComponents();
     store = TestBed.inject(DashboardStore);
+    store.setData(DASHBOARD_PROJECTS, DASHBOARD_TASKS);
     fixture = TestBed.createComponent(PriorityList);
     page = fixture.nativeElement;
     fixture.detectChanges();

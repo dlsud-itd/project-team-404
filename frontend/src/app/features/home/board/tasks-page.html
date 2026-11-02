@@ -1,0 +1,118 @@
+<section class="panel" aria-labelledby="all-tasks-heading">
+  <header class="heading-row">
+    <h2 id="all-tasks-heading" class="heading">All Tasks</h2>
+    <button type="button" class="new" [disabled]="loading()" (click)="openComposer()">
+      + New task
+    </button>
+  </header>
+
+  @if (actionError(); as message) {
+    <p class="error" role="alert">{{ message }}</p>
+  }
+
+  @if (composing()) {
+    <form class="composer" [formGroup]="form" (ngSubmit)="create()" novalidate>
+      <label class="title-field">
+        <span class="visually-hidden">Task title</span>
+        <input
+          class="title-input"
+          formControlName="title"
+          aria-label="Task title"
+          placeholder="What needs doing?"
+          [attr.aria-invalid]="form.controls.title.touched && form.controls.title.invalid"
+        />
+      </label>
+      @if (form.controls.title.touched && form.controls.title.hasError('required')) {
+        <p class="error" role="alert">Enter a task title.</p>
+      } @else if (form.controls.title.touched && form.controls.title.hasError('maxlength')) {
+        <p class="error" role="alert">Task titles can be up to 200 characters.</p>
+      }
+      <select formControlName="projectId" aria-label="Project">
+        @for (project of projectsStore.active(); track project.projectId) {
+          <option [ngValue]="project.projectId">{{ project.name }}</option>
+        }
+      </select>
+      <select formControlName="priorityId" aria-label="Priority">
+        @for (priority of priorities; track priority.priorityId) {
+          <option [ngValue]="priority.priorityId">{{ priority.label }}</option>
+        }
+      </select>
+      <label class="due-field">
+        <span class="visually-hidden">Due date</span>
+        <input type="date" formControlName="dueDate" aria-label="Due date" />
+      </label>
+      <button type="submit" class="save" [disabled]="submitting()">
+        {{ submitting() ? 'Adding…' : 'Add task' }}
+      </button>
+      <button type="button" class="cancel" [disabled]="submitting()" (click)="composing.set(false)">
+        Cancel
+      </button>
+      @if (formError(); as message) {
+        <p class="error" role="alert">{{ message }}</p>
+      }
+    </form>
+  }
+
+  @if (loading()) {
+    <p class="status" role="status">Loading your tasks…</p>
+  } @else if (loadError(); as message) {
+    <div class="load-error" role="alert">
+      <p>Couldn't load your projects and tasks. {{ message }}</p>
+      <button type="button" class="retry" (click)="load()">Try again</button>
+    </div>
+  } @else {
+    <ul class="list">
+      @for (task of tasks(); track task.taskId) {
+        <li class="task" [class.done]="task.completedAt !== null">
+          <label class="check">
+            <input
+              type="checkbox"
+              [checked]="task.completedAt !== null"
+              [disabled]="isBusy(task)"
+              [attr.aria-label]="
+                task.completedAt !== null
+                  ? 'Mark ' + task.title + ' incomplete'
+                  : 'Mark ' + task.title + ' complete'
+              "
+              (change)="toggleCompleted(task)"
+            />
+            <span class="title">{{ task.title }}</span>
+          </label>
+          <span class="project">
+            <span class="swatch" [style.background]="projectColor(task.projectId)"></span>
+            {{ projectName(task.projectId) }}
+          </span>
+          <span class="priority" [attr.data-priority]="task.priorityId">
+            {{ priorityName(task.priorityId) }}
+          </span>
+          <span class="due" [class.overdue]="isOverdue(task)">
+            {{ formatDueDate(task.dueDate) }}
+          </span>
+          <button
+            type="button"
+            class="delete"
+            [disabled]="isBusy(task)"
+            [attr.aria-label]="'Delete ' + task.title"
+            (click)="askDelete(task)"
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6" />
+            </svg>
+          </button>
+        </li>
+      } @empty {
+        <li class="empty">No tasks yet. Create one to see it here.</li>
+      }
+    </ul>
+  }
+</section>
+
+@if (pendingDelete(); as task) {
+  <app-confirm-delete-task-dialog
+    [task]="task"
+    [busy]="deleting()"
+    [error]="deleteError()"
+    (confirmed)="confirmDelete()"
+    (cancelled)="cancelDelete()"
+  />
+}

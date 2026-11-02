@@ -41,6 +41,14 @@ export function toCreateTaskBody({ priorityId, ...rest }: CreateTaskRequest): Cr
   return { ...rest, priority: PRIORITY_NAMES[priorityId] };
 }
 
-export function toUpdateTaskBody({ priorityId, ...rest }: UpdateTaskRequest): UpdateTaskBody {
-  return priorityId === undefined ? rest : { ...rest, priority: PRIORITY_NAMES[priorityId] };
+export function toUpdateTaskBody({
+  priorityId,
+  completedAt,
+  ...rest
+}: UpdateTaskRequest): UpdateTaskBody {
+  return {
+    ...rest,
+    ...(priorityId === undefined ? {} : { priority: PRIORITY_NAMES[priorityId] }),
+    ...(completedAt === undefined ? {} : { isDone: completedAt !== null, doneAt: completedAt }),
+  };
 }

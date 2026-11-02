@@ -81,22 +81,33 @@
   }
 }
 
-.streak-badge {
-  margin: 0.5rem 0 0;
-  padding: 0.25rem 0.5rem;
-  border-radius: 999px;
-  background: #fff;
-  box-shadow: 0 2px 6px rgb(0 0 0 / 0.08);
-  color: #7b23a8;
-  font-size: 0.625rem;
-  font-weight: 700;
-  text-transform: uppercase;
-}
-
 .main {
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
+}
+
+.dashboard-status,
+.dashboard-error {
+  padding: 1rem;
+  border: 1px solid var(--orange-light);
+  border-radius: 0.75rem;
+  background: #fff;
+}
+
+.dashboard-error {
+  color: var(--error);
+}
+
+.retry {
+  padding: 0.45rem 0.8rem;
+  border: 1px solid var(--field-border);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--ink);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
 }
 
 .intro {

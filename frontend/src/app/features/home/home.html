@@ -11,7 +11,7 @@
           aria-labelledby="tab-tasks"
           [attr.data-slide]="slideFrom()"
         >
-          <app-all-tasks [(composing)]="composing" />
+          <app-tasks-page />
         </section>
       }
       @case ('projects') {
@@ -44,44 +44,50 @@
 
             <div class="mascot">
               <img src="home/streak-mascot.png" alt="" />
-              <p class="streak-badge">
-                <span aria-hidden="true">🔥</span> {{ store.streakDays() }} day streak!
-              </p>
             </div>
           </aside>
 
           <main class="main">
-            <div class="intro">
-              <div>
-                <h1 class="greeting">{{ greeting() }}, {{ session.currentUser()?.username }}</h1>
-                <p class="overdue-note">
-                  @switch (store.overdueCount()) {
-                    @case (0) {
-                      You're all caught up.
-                    }
-                    @case (1) {
-                      You have 1 overdue task.
-                    }
-                    @default {
-                      You have {{ store.overdueCount() }} overdue tasks.
-                    }
-                  }
-                </p>
+            @if (store.loading()) {
+              <p class="dashboard-status" role="status">Loading your dashboard…</p>
+            } @else if (store.error(); as message) {
+              <div class="dashboard-error" role="alert">
+                <p>Couldn't load your dashboard. {{ message }}</p>
+                <button type="button" class="retry" (click)="loadDashboard()">Try again</button>
               </div>
-              <dl class="stats">
-                <div class="stat">
-                  <dd>{{ store.openTasks().length }}</dd>
-                  <dt>Open tasks</dt>
+            } @else {
+              <div class="intro">
+                <div>
+                  <h1 class="greeting">{{ greeting() }}, {{ session.currentUser()?.username }}</h1>
+                  <p class="overdue-note">
+                    @switch (store.overdueCount()) {
+                      @case (0) {
+                        You're all caught up.
+                      }
+                      @case (1) {
+                        You have 1 overdue task.
+                      }
+                      @default {
+                        You have {{ store.overdueCount() }} overdue tasks.
+                      }
+                    }
+                  </p>
                 </div>
-                <div class="stat">
-                  <dd>{{ store.doneToday() }}</dd>
-                  <dt>Done today</dt>
-                </div>
-              </dl>
-            </div>
+                <dl class="stats">
+                  <div class="stat">
+                    <dd>{{ store.openTasks().length }}</dd>
+                    <dt>Open tasks</dt>
+                  </div>
+                  <div class="stat">
+                    <dd>{{ store.doneToday() }}</dd>
+                    <dt>Done today</dt>
+                  </div>
+                </dl>
+              </div>
 
-            <app-status-columns />
-            <app-all-tasks id="all-tasks" [(composing)]="composing" />
+              <app-status-columns />
+              <app-all-tasks id="all-tasks" [(composing)]="composing" />
+            }
           </main>
         </div>
       }

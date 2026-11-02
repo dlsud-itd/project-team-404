@@ -98,4 +98,17 @@ describe('toUpdateTaskBody', () => {
   it('leaves out the priority when it did not change', () => {
     expect(toUpdateTaskBody({ description: null })).toEqual({ description: null });
   });
+
+  it('maps completion and reopening to the backend fields', () => {
+    const completedAt = '2026-10-01T10:00:00.000Z';
+
+    expect(toUpdateTaskBody({ completedAt })).toEqual({
+      isDone: true,
+      doneAt: completedAt,
+    });
+    expect(toUpdateTaskBody({ completedAt: null })).toEqual({
+      isDone: false,
+      doneAt: null,
+    });
+  });
 });

@@ -23,6 +23,8 @@ import { environment } from '../../../../src/environments/environment';
  */
 
 const API = `${environment.apiBaseUrl}/api/auth`;
+const PROJECTS_API = `${environment.apiBaseUrl}/api/projects`;
+const TASKS_API = `${environment.apiBaseUrl}/api/tasks`;
 const PASSWORD = 'integration-password';
 const TOKEN = 'session-token';
 
@@ -69,6 +71,12 @@ describe(
     }
 
     async function settle(): Promise<void> {
+      await harness.fixture.whenStable();
+      harness.detectChanges();
+      http.match(PROJECTS_API).forEach((request) => request.flush([]));
+      http
+        .match((request) => request.url === TASKS_API && request.method === 'GET')
+        .forEach((request) => request.flush([]));
       await harness.fixture.whenStable();
       harness.detectChanges();
     }
@@ -214,6 +222,7 @@ describe(
         req.flush(USER);
 
         await harness.navigateByUrl('/home');
+        await settle();
         expect(session.currentUser()).toEqual(USER);
         expect(router.url).toBe('/home');
         expect(page().textContent).toMatch(/Good (Morning|Afternoon|Evening), james/);
@@ -224,6 +233,7 @@ describe(
 
         http.expectOne(`${API}/me`).flush(TOKEN_REJECTED, UNAUTHORIZED);
         await harness.navigateByUrl('/home');
+        await settle();
 
         expect(storedToken()).toBeNull();
         expect(session.currentUser()).toBeNull();
@@ -251,6 +261,7 @@ describe(
       it.each(['/login', '/register'])('redirects a signed-in user away from %s', async (url) => {
         await startSignedIn();
         await harness.navigateByUrl(url);
+        await settle();
 
         expect(router.url).toBe(POST_LOGIN_REDIRECT);
       });
@@ -277,6 +288,7 @@ describe(
       it('clears the session and redirects to /login when any API call answers 401', async () => {
         await startSignedIn();
         await harness.navigateByUrl('/home');
+        await settle();
 
         TestBed.inject(HttpClient)
           .get(`${API}/profile`)
@@ -300,6 +312,7 @@ describe(
         async (_label, body, init) => {
           await startSignedIn();
           await harness.navigateByUrl('/home');
+          await settle();
 
           await clickLogOut();
           const req = http.expectOne(`${API}/logout`);
@@ -326,6 +339,7 @@ describe(
       it('still ends the session when the logout request fails on the network', async () => {
         await startSignedIn();
         await harness.navigateByUrl('/home');
+        await settle();
 
         await clickLogOut();
         http.expectOne(`${API}/logout`).error(new ProgressEvent('error'));
@@ -351,6 +365,7 @@ describe(
       await startApp(saved);
       http.expectOne(`${API}/me`).flush(USER);
       await harness.navigateByUrl('/home');
+      await settle();
       expect(page().textContent).toMatch(/Good (Morning|Afternoon|Evening), james/);
 
       await clickLogOut();
