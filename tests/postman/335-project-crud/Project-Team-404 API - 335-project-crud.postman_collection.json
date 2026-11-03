@@ -292,15 +292,15 @@
           "response": []
         },
         {
-          "name": "Setup - Create Inbox flag ignored",
+          "name": "Client-supplied Inbox flag is rejected",
           "event": [
             {
               "listen": "test",
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('Status is 201', function () { pm.response.to.have.status(201); });",
-                  "pm.test(\"Project created and returned by API\", function () { const body = pm.response.json(); pm.expect(body.id).to.be.a('number'); pm.expect(body.name).to.equal('Postman Inbox flag ignored'); pm.expect(body.isInbox).to.equal(false); pm.environment.set('ignoredInboxProjectId', String(body.id)); });"
+                  "pm.test('Status is 400', function () { pm.response.to.have.status(400); });",
+                  "pm.test(\"Response includes a validation error\", function () { const body = pm.response.json(); pm.expect(body.error).to.be.a('string').and.not.empty; });"
                 ]
               }
             }
