@@ -2,6 +2,10 @@
 
 This guide explains how to run the password-recovery Postman collection when the API connects to a **remote Supabase test project**. It assumes you are new to Postman and Supabase. You do not need Docker, and you must not start local Supabase.
 
+## Can I run the collection all at once?
+
+**No, not as a single unattended Collection Runner run.** Three reset-link requests print raw tokens in the backend terminal, and those values must be pasted into the Postman environment before dependent requests can run. Send requests individually, in the listed order, and follow the token-copy steps in this guide.
+
 ## Important safety warning
 
 Use a **dedicated, isolated Supabase project for testing**. Do not use production, a teammate's project, or a shared development project. These steps seed and modify real rows in the selected remote database. The tests change James's password, create and invalidate reset tokens, and revoke sessions.
@@ -112,22 +116,16 @@ Postman will call the Express API running on your computer. That local API will 
 
 The `SUPABASE_TEST_*` variables in the example file are for automated integration/E2E runners. The manually run Postman requests use `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, and `DATABASE_URL` from `backend/.env`.
 
-## 5. Start and check the API
+## 5. Start the frontend and API
 
-1. In VS Code, choose **Terminal > New Terminal** to open a terminal for the API. Keep the Supabase CLI terminal available if you need to see its messages.
-2. From the repository root, start the backend:
-
-   ```powershell
-   npm --prefix backend run dev
-   ```
-
-3. Keep this terminal open while using Postman. It should report that the API is listening on port `3000`. Password reset emails should appear here beginning with text similar to:
+1. In VS Code, press `Ctrl+Shift+P`, choose **Tasks: Run Task**, and select **🚀 Dev: Start All**. This starts the frontend and backend in parallel. Keep the Supabase CLI terminal available for its output.
+2. Keep the task running while using Postman. Wait for the backend terminal to report that the server is listening on port `3000`. Password reset emails should appear in that backend terminal beginning with text similar to:
 
    ```text
    Password reset email for james@example.com:
    ```
 
-4. Check the local API by opening this address in a browser:
+3. Check the local API by opening this address in a browser:
 
    ```text
    http://localhost:3000/health

@@ -116,17 +116,11 @@ Postman calls the Express API running on your computer. The local API connects t
 
 The `SUPABASE_TEST_*` variables in the example file are for automated integration/E2E runners. These manual Postman requests use `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, and `DATABASE_URL` from `backend/.env`.
 
-## 5. Start and check the API
+## 5. Start the frontend and API
 
-1. In VS Code, choose **Terminal > New Terminal** to open a terminal for the API.
-2. From the repository root, start the backend:
-
-   ```powershell
-   npm --prefix backend run dev
-   ```
-
-3. Keep this terminal open while using Postman. It should report that the API is listening on port `3000`.
-4. Open this address in a browser to check that the local API is running:
+1. In VS Code, press `Ctrl+Shift+P`, choose **Tasks: Run Task**, and select **🚀 Dev: Start All**. This starts the frontend and backend in parallel.
+2. Keep the task running while using Postman. Wait for the backend terminal to report that the server is listening on port `3000`; the frontend runs on port `4200`.
+3. Open this address in a browser to check that the local API is running:
 
    ```text
    http://localhost:3000/health
