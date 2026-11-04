@@ -68,7 +68,10 @@ function readVerificationRows(output) {
               typeof row?.seed_file === 'string' &&
               (row.status === 'PASS' || row.status === 'FAIL')
           )
-          .map((row) => [row.seed_file, row.status === 'PASS'])
+          .map((row) => [
+            row.seed_file,
+            { passed: row.status === 'PASS', details: row.details },
+          ])
       );
     }
   } catch {
@@ -86,7 +89,10 @@ function readVerificationRows(output) {
       seedFiles.some((file) => file.endsWith(cells[0])) &&
       (cells[1] === 'PASS' || cells[1] === 'FAIL')
     ) {
-      rows.set(cells[0], cells[1] === 'PASS');
+      rows.set(cells[0], {
+        passed: cells[1] === 'PASS',
+        details: cells.slice(2).join(' '),
+      });
     }
   }
   return rows;
@@ -152,7 +158,7 @@ async function main() {
 
   const execution = new Map();
   for (const file of seedFiles) {
-    if (before.rows.get(path.basename(file))) {
+    if (before.rows.get(path.basename(file))?.passed) {
       execution.set(file, { skipped: true, succeeded: true });
       continue;
     }
@@ -166,10 +172,16 @@ async function main() {
       '--file',
       file,
     ]);
+    const output = oneLine(`${result.stdout}\n${result.stderr}`);
     execution.set(file, {
       skipped: false,
       succeeded: result.code === 0,
-      error: result.error ?? oneLine(`${result.stdout}\n${result.stderr}`),
+      error:
+        result.code === 0
+          ? undefined
+          : result.error ||
+            output ||
+            `Supabase CLI exited with code ${result.code}`,
     });
   }
 
@@ -178,7 +190,8 @@ async function main() {
   for (const file of seedFiles) {
     const name = path.basename(file);
     const result = execution.get(file);
-    const verified = after.rows?.get(name) === true;
+    const verification = after.rows?.get(name);
+    const verified = verification?.passed === true;
     if (!after.error && verified && result.skipped) {
       console.log(`${name}: SKIPPED (already seeded)`);
     } else if (!after.error && verified && result.succeeded) {
@@ -187,7 +200,9 @@ async function main() {
       const detail =
         result.error ||
         after.error ||
-        `Post-seed verification failed${result.skipped ? '' : ' after execution'}`;
+        `Post-seed verification failed${result.skipped ? '' : ' after execution'}${
+          verification?.details ? `: ${verification.details}` : ''
+        }`;
       console.log(`${name}: ERROR - ${oneLine(detail)}`);
       hasErrors = true;
     }

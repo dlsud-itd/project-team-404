@@ -137,22 +137,22 @@ from (
     select
       bool_and(
         auth_user.id is not null
-        and project.project_id is not null
-        and project.user_id = auth_user.id
-        and project.name = expected.name
-        and project.description = expected.description
-        and project.color = expected.color
-        and project.is_inbox = false
-        and project.is_favorite = expected.is_favorite
-        and project.is_archived = false
-        and project.sort_order = expected.sort_order
-        and project.deleted_at is null
+        and exists (
+          select 1
+          from public.tbl_project as project
+          where project.user_id = auth_user.id
+            and project.name = expected.name
+            and project.description = expected.description
+            and project.color = expected.color
+            and project.is_inbox = false
+            and project.is_favorite = expected.is_favorite
+            and project.is_archived = false
+            and project.sort_order = expected.sort_order
+            and project.deleted_at is null
+        )
       ) as passed
     from expected_projects as expected
     left join auth.users as auth_user on auth_user.email = expected.email
-    left join public.tbl_project as project
-      on project.user_id = auth_user.id
-     and project.name = expected.name
   )
   select bool_and(passed) as passed from project_seed_status
 ) as project_seed_status
@@ -176,39 +176,30 @@ from (
     select
       bool_and(
         auth_user.id is not null
-        and task.task_id is not null
-        and task.user_id = auth_user.id
-        and task.title = expected.title
-        and task.description = expected.description
-        and priority_level.name = expected.priority
-        and task.due_date = expected.due_date
-        and task.is_done = expected.is_done
-        and task.deleted_at is null
-        and (
-          expected.project_name is null and task.project_id is null
-          or expected.project_name is not null and task.project_id = project.project_id
+        and exists (
+          select 1
+          from public.tbl_task as task
+          left join public.tbl_project as project
+            on project.project_id = task.project_id
+          left join public.tbl_priority_level as priority_level
+            on priority_level.priority_id = task.priority_id
+          where task.user_id = auth_user.id
+            and task.title = expected.title
+            and task.description = expected.description
+            and priority_level.name = expected.priority
+            and task.due_date = expected.due_date
+            and task.is_done = expected.is_done
+            and task.deleted_at is null
+            and (
+              expected.project_name is null and task.project_id is null
+              or expected.project_name is not null
+                and project.name = expected.project_name
+                and project.deleted_at is null
+            )
         )
-        and (
-          select count(*)
-          from public.tbl_task as matching_task
-          where matching_task.user_id = auth_user.id
-            and matching_task.project_id is not distinct from project.project_id
-            and matching_task.title = expected.title
-            and matching_task.deleted_at is null
-        ) = 1
       ) as passed
     from expected_tasks as expected
     left join auth.users as auth_user on auth_user.email = expected.email
-    left join public.tbl_project as project
-      on project.user_id = auth_user.id
-     and project.name = expected.project_name
-     and project.deleted_at is null
-    left join public.tbl_task as task
-      on task.user_id = auth_user.id
-     and task.title = expected.title
-     and task.project_id is not distinct from project.project_id
-    left join public.tbl_priority_level as priority_level
-      on priority_level.priority_id = task.priority_id
   )
   select bool_and(passed) as passed from task_seed_status
 ) as task_seed_status

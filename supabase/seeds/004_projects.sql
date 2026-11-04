@@ -25,4 +25,11 @@ from (
     ('alex@example.com', 'Learning', 'Courses, notes, and references', '#8b5cf6', false, 0)
 ) as expected(email, name, description, color, is_favorite, sort_order)
 join auth.users as auth_user on auth_user.email = expected.email
-join public.tbl_user as profile on profile.user_id = auth_user.id;
+join public.tbl_user as profile on profile.user_id = auth_user.id
+where not exists (
+  select 1
+  from public.tbl_project as existing
+  where existing.user_id = profile.user_id
+    and existing.name = expected.name
+    and existing.deleted_at is null
+);
