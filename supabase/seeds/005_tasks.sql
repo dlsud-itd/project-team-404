@@ -50,10 +50,15 @@ seeded_tasks as (
     project_row.project_id
   from expected_tasks as expected
   join public.tbl_user as user_profile on user_profile.email = expected.email
-  join public.tbl_project as project_row
-    on project_row.user_id = user_profile.user_id
-   and project_row.name = expected.project_name
-   and project_row.deleted_at is null
+  join lateral (
+    select project.project_id
+    from public.tbl_project as project
+    where project.user_id = user_profile.user_id
+      and project.name = expected.project_name
+      and project.deleted_at is null
+    order by project.project_id
+    limit 1
+  ) as project_row on true
   join public.tbl_priority_level as priority_level
     on priority_level.name = expected.priority
 )
@@ -83,4 +88,5 @@ where not exists (
   where existing.user_id = seeded_tasks.user_id
     and existing.project_id is not distinct from seeded_tasks.project_id
     and existing.title = seeded_tasks.title
+    and existing.deleted_at is null
 );
