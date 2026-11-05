@@ -1,6 +1,7 @@
 import type {
   TaskRecurrence,
   TaskScheduleChanges,
+  Weekday,
 } from '../../task-scheduling/types/task-scheduling.types';
 
 /** A label attached to a task. */
@@ -25,6 +26,10 @@ export interface ApiTask {
   dueDate: string | null;
   deadline: string | null;
   recurrence: TaskRecurrence | null;
+  /** 0 = Sunday … 6 = Saturday; may be missing from older servers. */
+  recurrenceDays?: Weekday[];
+  /** YYYY-MM-DD; may be missing from older servers. */
+  recurrenceEndDate?: string | null;
   isDone: boolean;
   doneAt: string | null;
   createdAt: string;
@@ -45,6 +50,10 @@ export interface Task {
   /** ISO instant, never on a day before dueDate; instantToDate gives the day to show. */
   deadline: string | null;
   recurrence: TaskRecurrence;
+  /** The weekdays a weekly task repeats on; empty for other repeats. */
+  recurrenceDays: Weekday[];
+  /** YYYY-MM-DD, the last day a repeating task may fall on; null repeats forever. */
+  recurrenceEndDate: string | null;
   /** Completion timestamp, or null while the task is open. */
   completedAt: string | null;
   sortOrder: number;
@@ -63,6 +72,8 @@ export interface CreateTaskRequest {
   dueDate: string | null;
   deadline: string | null;
   recurrence: TaskRecurrence;
+  recurrenceDays: Weekday[];
+  recurrenceEndDate: string | null;
 }
 
 /** Body of POST /api/tasks. */
@@ -102,7 +113,15 @@ export interface DeleteTaskResponse {
 }
 
 export type TaskField =
-  'title' | 'description' | 'priorityId' | 'projectId' | 'dueDate' | 'deadline' | 'recurrence';
+  | 'title'
+  | 'description'
+  | 'priorityId'
+  | 'projectId'
+  | 'dueDate'
+  | 'deadline'
+  | 'recurrence'
+  | 'recurrenceDays'
+  | 'recurrenceEndDate';
 
 /** A failed task request, turned into something a page can show. */
 export interface TaskError {

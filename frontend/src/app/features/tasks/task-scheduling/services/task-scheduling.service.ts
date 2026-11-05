@@ -5,7 +5,13 @@ import { environment } from '../../../../../environments/environment';
 import { toTask } from '../../task-crud/mappers/task.mapper';
 import { TasksStore } from '../../shared/state/tasks.store';
 import type { ApiTask, Task } from '../../shared/types/task.types';
-import type { TaskRecurrence, TaskScheduleChanges } from '../types/task-scheduling.types';
+import type { TaskRecurrence, TaskScheduleChanges, Weekday } from '../types/task-scheduling.types';
+
+/** The rest of a recurrence rule; a field left out is left as it is. */
+export interface RecurrenceRuleDetails {
+  recurrenceDays?: Weekday[];
+  recurrenceEndDate?: string | null;
+}
 
 /**
  * Due date, deadline and recurrence calls for /api/tasks. Each returns the whole task, which
@@ -27,18 +33,29 @@ export class TaskSchedulingService {
     return this.put(taskId, 'deadline', { deadline });
   }
 
-  /** PUT /api/tasks/{id}/recurrence. */
-  setRecurrence(taskId: number, recurrence: TaskRecurrence): Observable<Task> {
-    return this.put(taskId, 'recurrence', { recurrence });
+  /** PUT /api/tasks/{id}/recurrence, with the weekdays and end date that go with it. */
+  setRecurrence(
+    taskId: number,
+    recurrence: TaskRecurrence,
+    details: RecurrenceRuleDetails = {},
+  ): Observable<Task> {
+    return this.put(taskId, 'recurrence', { recurrence, ...details });
   }
 
   /** Sends each change in turn. If one fails the rest are not sent; earlier ones stay saved. */
   save(taskId: number, changes: TaskScheduleChanges): Observable<void> {
     const requests: Observable<Task>[] = [];
-    const { dueDate, deadline, recurrence } = changes;
+    const { dueDate, deadline, recurrence, recurrenceDays, recurrenceEndDate } = changes;
     if (dueDate !== undefined) requests.push(this.setDueDate(taskId, dueDate));
     if (deadline !== undefined) requests.push(this.setDeadline(taskId, deadline));
-    if (recurrence !== undefined) requests.push(this.setRecurrence(taskId, recurrence));
+    if (recurrence !== undefined) {
+      requests.push(
+        this.setRecurrence(taskId, recurrence, {
+          ...(recurrenceDays === undefined ? {} : { recurrenceDays }),
+          ...(recurrenceEndDate === undefined ? {} : { recurrenceEndDate }),
+        }),
+      );
+    }
     if (!requests.length) return of(undefined);
     return concat(...requests).pipe(
       last(),

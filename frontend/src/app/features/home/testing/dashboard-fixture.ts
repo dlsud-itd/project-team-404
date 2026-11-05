@@ -73,6 +73,8 @@ export function task(
     dueDate,
     deadline: null,
     recurrence: 'none',
+    recurrenceDays: [],
+    recurrenceEndDate: null,
     completedAt: done ? new Date(2026, 9, 30, 10).toISOString() : null,
     sortOrder: 0,
     isRecurring: false,

@@ -130,7 +130,13 @@
           </div>
           <app-recurrence-picker
             [control]="form.controls.recurrence"
+            [days]="form.controls.recurrenceDays"
+            [ends]="form.controls.recurrenceEnds"
+            [endDate]="form.controls.recurrenceEndDate"
+            [dueDate]="form.controls.dueDate.value"
             [error]="fieldError('recurrence')"
+            [daysError]="fieldError('recurrenceDays')"
+            [endDateError]="fieldError('recurrenceEndDate')"
             (edited)="clearServerError('recurrence')"
           />
         </section>

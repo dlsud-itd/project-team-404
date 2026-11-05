@@ -8,12 +8,71 @@
           name="task-recurrence"
           [value]="option.value"
           [formControl]="control()"
-          (change)="edited.emit()"
+          (change)="chose()"
         />
         <span>{{ option.label }}</span>
       </label>
     }
   </div>
+
+  @if (control().value === 'weekly') {
+    <fieldset class="weekdays" aria-describedby="task-recurrence-days-status">
+      <legend>Repeat on</legend>
+      <div class="days">
+        @for (day of weekdays; track day.value) {
+          <label class="day" [title]="day.name">
+            <input
+              type="checkbox"
+              [attr.aria-label]="day.name"
+              [checked]="hasDay(day.value)"
+              [attr.aria-invalid]="!!daysError()"
+              (change)="toggleDay(day.value, $any($event.target).checked)"
+            />
+            <span aria-hidden="true">{{ day.short }}</span>
+          </label>
+        }
+      </div>
+      <p id="task-recurrence-days-status" class="field-message" aria-live="polite">
+        {{ daysError() }}
+      </p>
+    </fieldset>
+  }
+
+  @if (control().value !== 'none') {
+    <fieldset class="ends" aria-describedby="task-recurrence-end-date-status">
+      <legend>Ends</legend>
+      <div class="ends-row">
+        @for (option of endsOptions; track option.value) {
+          <label class="end">
+            <input
+              type="radio"
+              name="task-recurrence-ends"
+              [value]="option.value"
+              [formControl]="ends()"
+              (change)="edited.emit()"
+            />
+            <span>{{ option.label }}</span>
+          </label>
+        }
+        @if (ends().value === 'date') {
+          <input
+            id="task-recurrence-end-date"
+            class="end-date"
+            type="date"
+            aria-label="End date"
+            [formControl]="endDate()"
+            [min]="dueDate() || null"
+            [attr.aria-invalid]="!!endDateError()"
+            (input)="edited.emit()"
+          />
+        }
+      </div>
+      <p id="task-recurrence-end-date-status" class="field-message" aria-live="polite">
+        {{ endDateError() }}
+      </p>
+    </fieldset>
+  }
+
   @if (label(); as label) {
     <p class="summary">Repeats {{ label }}</p>
   }

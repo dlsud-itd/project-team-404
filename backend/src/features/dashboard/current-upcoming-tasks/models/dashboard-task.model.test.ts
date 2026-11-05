@@ -13,6 +13,8 @@ const task: TaskRecord = {
   dueDate: new Date('2026-11-06T00:00:00.000Z'),
   deadline: null,
   recurrence: 'none',
+  recurrenceDays: [],
+  recurrenceEndDate: null,
   isDone: false,
   doneAt: null,
   createdAt: new Date('2026-11-05T00:00:00.000Z'),

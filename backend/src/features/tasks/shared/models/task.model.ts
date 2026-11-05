@@ -14,6 +14,7 @@ export type Task = Omit<
   | 'dueDate'
   | 'deadline'
   | 'doneAt'
+  | 'recurrenceEndDate'
   | 'priorityId'
   | 'priorityLevel'
   | 'taskLabels'
@@ -23,6 +24,10 @@ export type Task = Omit<
   dueDate: string | null;
   deadline: string | null;
   recurrence: TaskRecurrence | null;
+  /** 0 = Sunday … 6 = Saturday; only for weekly repeats. */
+  recurrenceDays: number[];
+  /** YYYY-MM-DD, the last day the task may repeat on; null repeats forever. */
+  recurrenceEndDate: string | null;
   doneAt: string | null;
   labels: Label[];
 };
@@ -54,6 +59,10 @@ export function toTaskModel(task: TaskRecord): Task {
       : null,
     deadline: task.deadline ? new Date(task.deadline).toISOString() : null,
     recurrence: task.recurrence ?? null,
+    recurrenceDays: task.recurrenceDays ?? [],
+    recurrenceEndDate: task.recurrenceEndDate
+      ? new Date(task.recurrenceEndDate).toISOString().slice(0, 10)
+      : null,
     isDone: task.isDone,
     doneAt: task.doneAt ? new Date(task.doneAt).toISOString() : null,
     createdAt: new Date(task.createdAt),

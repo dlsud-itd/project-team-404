@@ -13,6 +13,8 @@ const record: TaskRecord = {
   scheduledDate: null,
   deadline: null,
   recurrence: 'none',
+  recurrenceDays: [],
+  recurrenceEndDate: null,
   isDone: false,
   doneAt: null,
   createdAt: new Date('2026-10-30T00:00:00.000Z'),

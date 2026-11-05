@@ -1,5 +1,6 @@
 import { prisma } from '../../../../../shared/db/prisma.client';
 import type { CreateTaskInput } from '../../types/task-crud.types';
+import { toRecurrenceData } from '../../../task-scheduling/utils/recurrence-data.util';
 
 export async function createTask(userId: string, input: CreateTaskInput) {
   const priorityLevel = await prisma.priorityLevel.findUnique({
@@ -26,7 +27,11 @@ export async function createTask(userId: string, input: CreateTaskInput) {
         ? new Date(`${input.dueDate}T00:00:00.000Z`)
         : null,
       deadline: input.deadline ? new Date(input.deadline) : null,
-      recurrence: input.recurrence ?? 'none',
+      ...toRecurrenceData({
+        recurrence: input.recurrence ?? 'none',
+        recurrenceDays: input.recurrenceDays,
+        recurrenceEndDate: input.recurrenceEndDate,
+      }),
       isDone: input.isDone ?? false,
       doneAt: input.doneAt ? new Date(input.doneAt) : null,
     },

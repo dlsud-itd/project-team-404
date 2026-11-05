@@ -1,4 +1,10 @@
 import { z } from 'zod';
+import {
+  checkRecurrenceRule,
+  recurrenceDaysField,
+  recurrenceEndDateField,
+  taskRecurrenceField,
+} from '../../task-scheduling/validators/recurrence-fields';
 
 const taskTitle = z.string().trim().min(1).max(200);
 const taskDescription = z.string().trim().max(1000).nullable().optional();
@@ -15,10 +21,6 @@ const taskDeadline = z
   .nullable()
   .optional();
 const taskPriority = z.enum(['low', 'medium', 'high']).optional();
-const taskRecurrence = z
-  .enum(['none', 'daily', 'weekly', 'monthly'])
-  .nullable()
-  .optional();
 
 export const createTaskValidator = z
   .object({
@@ -28,9 +30,12 @@ export const createTaskValidator = z
     scheduledDate: taskDate,
     dueDate: taskDate,
     deadline: taskDeadline,
-    recurrence: taskRecurrence,
+    recurrence: taskRecurrenceField,
+    recurrenceDays: recurrenceDaysField,
+    recurrenceEndDate: recurrenceEndDateField,
     priority: taskPriority,
     isDone: z.boolean().optional(),
     doneAt: z.string().datetime({ offset: true }).nullable().optional(),
   })
-  .strict();
+  .strict()
+  .superRefine(checkRecurrenceRule);
