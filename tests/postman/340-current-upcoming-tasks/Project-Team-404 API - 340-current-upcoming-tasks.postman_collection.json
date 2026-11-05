@@ -1,0 +1,1615 @@
+{
+  "info": {
+    "_postman_id": "34000000-0000-4000-8000-000000000001",
+    "name": "Project-Team-404 API - 340-current-upcoming-tasks",
+    "description": "Current and upcoming tasks dashboard API checks. Uses seeded James and Harvey accounts; setup creates disposable test rows.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "340-current-upcoming-tasks",
+      "description": "Run in order. Setup requests create date-relative fixtures, then each request validates one behavior.",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "function localDateKey(timeZone) {",
+              "  const parts = new Intl.DateTimeFormat('en-US', { timeZone, year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date());",
+              "  const part = (name) => parts.find((item) => item.type === name).value;",
+              "  return part('year') + '-' + part('month') + '-' + part('day');",
+              "}",
+              "function addDays(dateKey, days) {",
+              "  const [year, month, day] = dateKey.split('-').map(Number);",
+              "  const date = new Date(Date.UTC(year, month - 1, day + days));",
+              "  return date.toISOString().slice(0, 10);",
+              "}",
+              "const runId = pm.environment.get('runId') || 'pending';",
+              "if (pm.environment.get('dateRunId') !== runId || !pm.environment.get('todayManila')) {",
+              "  const todayManila = localDateKey('Asia/Manila');",
+              "  const todayWest = localDateKey(pm.environment.get('westTimeZone') || 'Etc/GMT+12');",
+              "  const defaultDays = Number(pm.environment.get('defaultDays') || 7);",
+              "  const maxDays = Number(pm.environment.get('maxDays') || 30);",
+              "  pm.environment.set('dateRunId', runId);",
+              "  pm.environment.set('todayManila', todayManila);",
+              "  pm.environment.set('tomorrowManila', addDays(todayManila, 1));",
+              "  pm.environment.set('defaultLastDay', addDays(todayManila, defaultDays));",
+              "  pm.environment.set('defaultDayAfter', addDays(todayManila, defaultDays + 1));",
+              "  pm.environment.set('maxLastDay', addDays(todayManila, maxDays));",
+              "  pm.environment.set('maxDayAfter', addDays(todayManila, maxDays + 1));",
+              "  pm.environment.set('pastDayManila', addDays(todayManila, -1));",
+              "  pm.environment.set('todayWest', todayWest);",
+              "  pm.environment.set('aboveMaxDays', String(maxDays + 1));",
+              "}"
+            ]
+          }
+        }
+      ],
+      "item": [
+        {
+          "name": "Login - James (token, Asia/Manila)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test('Login returns a token and Manila profile', function () { pm.expect(body.token).to.be.a('string').and.not.empty; pm.expect(body.user.timezone).to.equal('Asia/Manila'); });",
+                  "pm.environment.set('token', body.token);",
+                  "pm.environment.set('runId', String(Date.now()));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"identifier\": \"james@example.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Login - Harvey (tokenB, far-west profile)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test('Login returns a token', function () { pm.expect(body.token).to.be.a('string').and.not.empty; });",
+                  "pm.environment.set('tokenB', body.token);",
+                  "pm.environment.set('harveyOriginalTimezone', body.user.timezone || 'Asia/Manila');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"identifier\": \"harvey@example.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Setup - Set Harvey to far-west timezone",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test('Profile uses the configured far-west timezone', function () { pm.expect(body.timezone || body.user?.timezone).to.equal(pm.environment.get('westTimeZone')); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenB}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"timezone\": \"{{westTimeZone}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/profile",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "profile"]
+            }
+          }
+        },
+        {
+          "name": "Setup - Create archived project",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 201', function () { pm.response.to.have.status(201); });",
+                  "const body = pm.response.json();",
+                  "pm.test('Project response has an ID', function () { pm.expect(body.id).to.be.a('number'); });",
+                  "pm.environment.set('archivedProjectId', String(body.id));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Current-upcoming archived {{runId}}\",\n  \"description\": \"Dashboard exclusion fixture\",\n  \"color\": \"#ef4444\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/projects",
+              "host": ["{{baseUrl}}"],
+              "path": ["projects"]
+            }
+          }
+        },
+        {
+          "name": "Setup - Create task due today (Manila)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 201', function () { pm.response.to.have.status(201); });",
+                  "const body = pm.response.json();",
+                  "pm.test('Task has the current Manila due date', function () { pm.expect(body.dueDate).to.equal(pm.environment.get('todayManila')); });",
+                  "pm.environment.set('todayTaskId', String(body.id));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Current-upcoming today {{runId}}\",\n  \"dueDate\": \"{{todayManila}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/tasks",
+              "host": ["{{baseUrl}}"],
+              "path": ["tasks"]
+            }
+          }
+        },
+        {
+          "name": "Setup - Create task due tomorrow",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 201', function () { pm.response.to.have.status(201); });",
+                  "const body = pm.response.json();",
+                  "pm.test('Task has tomorrow Manila due date', function () { pm.expect(body.dueDate).to.equal(pm.environment.get('tomorrowManila')); });",
+                  "pm.environment.set('tomorrowTaskId', String(body.id));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Current-upcoming tomorrow {{runId}}\",\n  \"dueDate\": \"{{tomorrowManila}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/tasks",
+              "host": ["{{baseUrl}}"],
+              "path": ["tasks"]
+            }
+          }
+        },
+        {
+          "name": "Setup - Create task due on default window's last day",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 201', function () { pm.response.to.have.status(201); });",
+                  "const body = pm.response.json();",
+                  "pm.test('Task has the default window last date', function () { pm.expect(body.dueDate).to.equal(pm.environment.get('defaultLastDay')); });",
+                  "pm.environment.set('defaultLastTaskId', String(body.id));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Current-upcoming default last day {{runId}}\",\n  \"dueDate\": \"{{defaultLastDay}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/tasks",
+              "host": ["{{baseUrl}}"],
+              "path": ["tasks"]
+            }
+          }
+        },
+        {
+          "name": "Setup - Create task due on maximum window's last day",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 201', function () { pm.response.to.have.status(201); });",
+                  "const body = pm.response.json();",
+                  "pm.test('Task has the maximum window last date', function () { pm.expect(body.dueDate).to.equal(pm.environment.get('maxLastDay')); });",
+                  "pm.environment.set('maxLastTaskId', String(body.id));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Current-upcoming max last day {{runId}}\",\n  \"dueDate\": \"{{maxLastDay}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/tasks",
+              "host": ["{{baseUrl}}"],
+              "path": ["tasks"]
+            }
+          }
+        },
+        {
+          "name": "Setup - Create task due after the default window",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 201', function () { pm.response.to.have.status(201); });",
+                  "const body = pm.response.json();",
+                  "pm.test('Task has the date after the default window', function () { pm.expect(body.dueDate).to.equal(pm.environment.get('defaultDayAfter')); });",
+                  "pm.environment.set('afterDefaultTaskId', String(body.id));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Current-upcoming after default {{runId}}\",\n  \"dueDate\": \"{{defaultDayAfter}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/tasks",
+              "host": ["{{baseUrl}}"],
+              "path": ["tasks"]
+            }
+          }
+        },
+        {
+          "name": "Setup - Create task due after the maximum window",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 201', function () { pm.response.to.have.status(201); });",
+                  "const body = pm.response.json();",
+                  "pm.test('Task has the date after the maximum window', function () { pm.expect(body.dueDate).to.equal(pm.environment.get('maxDayAfter')); });",
+                  "pm.environment.set('afterMaxTaskId', String(body.id));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Current-upcoming after max {{runId}}\",\n  \"dueDate\": \"{{maxDayAfter}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/tasks",
+              "host": ["{{baseUrl}}"],
+              "path": ["tasks"]
+            }
+          }
+        },
+        {
+          "name": "Setup - Create past-due task",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 201', function () { pm.response.to.have.status(201); });",
+                  "const body = pm.response.json();",
+                  "pm.test('Task has a past due date', function () { pm.expect(body.dueDate).to.equal(pm.environment.get('pastDayManila')); });",
+                  "pm.environment.set('pastTaskId', String(body.id));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Current-upcoming past due {{runId}}\",\n  \"dueDate\": \"{{pastDayManila}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/tasks",
+              "host": ["{{baseUrl}}"],
+              "path": ["tasks"]
+            }
+          }
+        },
+        {
+          "name": "Setup - Create task with no due date",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 201', function () { pm.response.to.have.status(201); });",
+                  "const body = pm.response.json();",
+                  "pm.test('Task has no due date', function () { pm.expect(body.dueDate).to.equal(null); });",
+                  "pm.environment.set('undatedTaskId', String(body.id));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Current-upcoming no due date {{runId}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/tasks",
+              "host": ["{{baseUrl}}"],
+              "path": ["tasks"]
+            }
+          }
+        },
+        {
+          "name": "Setup - Create completed task due today",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 201', function () { pm.response.to.have.status(201); });",
+                  "const body = pm.response.json();",
+                  "pm.test('Task is completed and dated today', function () { pm.expect(body.isDone).to.equal(true); pm.expect(body.dueDate).to.equal(pm.environment.get('todayManila')); });",
+                  "pm.environment.set('completedTaskId', String(body.id));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Current-upcoming completed {{runId}}\",\n  \"dueDate\": \"{{todayManila}}\",\n  \"isDone\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/tasks",
+              "host": ["{{baseUrl}}"],
+              "path": ["tasks"]
+            }
+          }
+        },
+        {
+          "name": "Setup - Create task in archived project",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 201', function () { pm.response.to.have.status(201); });",
+                  "const body = pm.response.json();",
+                  "pm.test('Task belongs to the archive fixture project', function () { pm.expect(body.projectId).to.equal(Number(pm.environment.get('archivedProjectId'))); });",
+                  "pm.environment.set('archivedTaskId', String(body.id));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Current-upcoming archived task {{runId}}\",\n  \"projectId\": {{archivedProjectId}},\n  \"dueDate\": \"{{todayManila}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/tasks",
+              "host": ["{{baseUrl}}"],
+              "path": ["tasks"]
+            }
+          }
+        },
+        {
+          "name": "Setup - Archive project",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test('Project is archived', function () { pm.expect(body.isArchived).to.equal(true); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"isArchived\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/projects/{{archivedProjectId}}/archive",
+              "host": ["{{baseUrl}}"],
+              "path": ["projects", "{{archivedProjectId}}", "archive"]
+            }
+          }
+        },
+        {
+          "name": "Setup - Create task to soft-delete",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 201', function () { pm.response.to.have.status(201); });",
+                  "const body = pm.response.json();",
+                  "pm.test('Task has the current Manila due date', function () { pm.expect(body.dueDate).to.equal(pm.environment.get('todayManila')); });",
+                  "pm.environment.set('deletedTaskId', String(body.id));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Current-upcoming deleted {{runId}}\",\n  \"dueDate\": \"{{todayManila}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/tasks",
+              "host": ["{{baseUrl}}"],
+              "path": ["tasks"]
+            }
+          }
+        },
+        {
+          "name": "Setup - Soft-delete task",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test('Delete response is successful', function () { pm.expect(body.message).to.equal('Task deleted successfully'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/tasks/{{deletedTaskId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["tasks", "{{deletedTaskId}}"]
+            }
+          }
+        },
+        {
+          "name": "Setup - Create Harvey-owned task due today",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 201', function () { pm.response.to.have.status(201); });",
+                  "const body = pm.response.json();",
+                  "pm.test('Task belongs to Harvey and has a due date', function () { pm.expect(body.dueDate).to.equal(pm.environment.get('todayManila')); });",
+                  "pm.environment.set('harveyTaskId', String(body.id));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenB}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Current-upcoming Harvey task {{runId}}\",\n  \"dueDate\": \"{{todayManila}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/tasks",
+              "host": ["{{baseUrl}}"],
+              "path": ["tasks"]
+            }
+          }
+        },
+        {
+          "name": "Setup - Create Manila task due on Harvey's local date",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 201', function () { pm.response.to.have.status(201); });",
+                  "const body = pm.response.json();",
+                  "pm.test('Task is dated for the far-west local day', function () { pm.expect(body.dueDate).to.equal(pm.environment.get('todayWest')); });",
+                  "pm.environment.set('manilaWestDateTaskId', String(body.id));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Current-upcoming Manila west-date {{runId}}\",\n  \"dueDate\": \"{{todayWest}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/tasks",
+              "host": ["{{baseUrl}}"],
+              "path": ["tasks"]
+            }
+          }
+        },
+        {
+          "name": "Setup - Create Harvey task due on his local date",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 201', function () { pm.response.to.have.status(201); });",
+                  "const body = pm.response.json();",
+                  "pm.test('Task is dated for Harvey local today', function () { pm.expect(body.dueDate).to.equal(pm.environment.get('todayWest')); });",
+                  "pm.environment.set('westTodayTaskId', String(body.id));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenB}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Current-upcoming west today {{runId}}\",\n  \"dueDate\": \"{{todayWest}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/tasks",
+              "host": ["{{baseUrl}}"],
+              "path": ["tasks"]
+            }
+          }
+        },
+        {
+          "name": "Case - Due today is returned by default",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json(); const tasks = Array.isArray(body) ? body : (Array.isArray(body.tasks) ? body.tasks : []);",
+                  "pm.test('Response body has the documented task result shape', function () { pm.expect(Array.isArray(body) || Array.isArray(body.tasks)).to.equal(true); });",
+                  "pm.test('Task due today in Manila is returned', function () { pm.expect(tasks.map((task) => String(task.id))).to.include(pm.environment.get('todayTaskId')); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/dashboard/current-upcoming-tasks",
+              "host": ["{{baseUrl}}"],
+              "path": ["dashboard", "current-upcoming-tasks"]
+            }
+          }
+        },
+        {
+          "name": "Case - Due tomorrow is returned",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json(); const tasks = Array.isArray(body) ? body : (Array.isArray(body.tasks) ? body.tasks : []);",
+                  "pm.test('Response body has the documented task result shape', function () { pm.expect(Array.isArray(body) || Array.isArray(body.tasks)).to.equal(true); });",
+                  "pm.test('Task due tomorrow is returned', function () { pm.expect(tasks.map((task) => String(task.id))).to.include(pm.environment.get('tomorrowTaskId')); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/dashboard/current-upcoming-tasks",
+              "host": ["{{baseUrl}}"],
+              "path": ["dashboard", "current-upcoming-tasks"]
+            }
+          }
+        },
+        {
+          "name": "Case - Default window last day is included",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json(); const tasks = Array.isArray(body) ? body : (Array.isArray(body.tasks) ? body.tasks : []);",
+                  "pm.test('Response body has the documented task result shape', function () { pm.expect(Array.isArray(body) || Array.isArray(body.tasks)).to.equal(true); });",
+                  "pm.test('Task due on the default window last day is returned', function () { pm.expect(tasks.map((task) => String(task.id))).to.include(pm.environment.get('defaultLastTaskId')); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/dashboard/current-upcoming-tasks",
+              "host": ["{{baseUrl}}"],
+              "path": ["dashboard", "current-upcoming-tasks"]
+            }
+          }
+        },
+        {
+          "name": "Case - Maximum window last day is included",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json(); const tasks = Array.isArray(body) ? body : (Array.isArray(body.tasks) ? body.tasks : []);",
+                  "pm.test('Response body has the documented task result shape', function () { pm.expect(Array.isArray(body) || Array.isArray(body.tasks)).to.equal(true); });",
+                  "pm.test('Task due on the maximum window last day is returned', function () { pm.expect(tasks.map((task) => String(task.id))).to.include(pm.environment.get('maxLastTaskId')); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/dashboard/current-upcoming-tasks?days={{maxDays}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["dashboard", "current-upcoming-tasks"],
+              "query": [
+                {
+                  "key": "days",
+                  "value": "{{maxDays}}"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Case - Day after default window is excluded",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json(); const tasks = Array.isArray(body) ? body : (Array.isArray(body.tasks) ? body.tasks : []);",
+                  "pm.test('Response body has the documented task result shape', function () { pm.expect(Array.isArray(body) || Array.isArray(body.tasks)).to.equal(true); });",
+                  "pm.test('Task due the day after the default window is excluded', function () { pm.expect(tasks.map((task) => String(task.id))).not.to.include(pm.environment.get('afterDefaultTaskId')); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/dashboard/current-upcoming-tasks",
+              "host": ["{{baseUrl}}"],
+              "path": ["dashboard", "current-upcoming-tasks"]
+            }
+          }
+        },
+        {
+          "name": "Case - Day after maximum window is excluded",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json(); const tasks = Array.isArray(body) ? body : (Array.isArray(body.tasks) ? body.tasks : []);",
+                  "pm.test('Response body has the documented task result shape', function () { pm.expect(Array.isArray(body) || Array.isArray(body.tasks)).to.equal(true); });",
+                  "pm.test('Task due the day after the maximum window is excluded', function () { pm.expect(tasks.map((task) => String(task.id))).not.to.include(pm.environment.get('afterMaxTaskId')); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/dashboard/current-upcoming-tasks?days={{maxDays}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["dashboard", "current-upcoming-tasks"],
+              "query": [
+                {
+                  "key": "days",
+                  "value": "{{maxDays}}"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Case - Past-due task is excluded",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json(); const tasks = Array.isArray(body) ? body : (Array.isArray(body.tasks) ? body.tasks : []);",
+                  "pm.test('Response body has the documented task result shape', function () { pm.expect(Array.isArray(body) || Array.isArray(body.tasks)).to.equal(true); });",
+                  "pm.test('Past-due task is excluded', function () { pm.expect(tasks.map((task) => String(task.id))).not.to.include(pm.environment.get('pastTaskId')); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/dashboard/current-upcoming-tasks",
+              "host": ["{{baseUrl}}"],
+              "path": ["dashboard", "current-upcoming-tasks"]
+            }
+          }
+        },
+        {
+          "name": "Case - Task with no due date is excluded",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json(); const tasks = Array.isArray(body) ? body : (Array.isArray(body.tasks) ? body.tasks : []);",
+                  "pm.test('Response body has the documented task result shape', function () { pm.expect(Array.isArray(body) || Array.isArray(body.tasks)).to.equal(true); });",
+                  "pm.test('Undated task is excluded', function () { pm.expect(tasks.map((task) => String(task.id))).not.to.include(pm.environment.get('undatedTaskId')); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/dashboard/current-upcoming-tasks",
+              "host": ["{{baseUrl}}"],
+              "path": ["dashboard", "current-upcoming-tasks"]
+            }
+          }
+        },
+        {
+          "name": "Case - Completed task is excluded",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json(); const tasks = Array.isArray(body) ? body : (Array.isArray(body.tasks) ? body.tasks : []);",
+                  "pm.test('Response body has the documented task result shape', function () { pm.expect(Array.isArray(body) || Array.isArray(body.tasks)).to.equal(true); });",
+                  "pm.test('Completed task is excluded', function () { pm.expect(tasks.map((task) => String(task.id))).not.to.include(pm.environment.get('completedTaskId')); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/dashboard/current-upcoming-tasks",
+              "host": ["{{baseUrl}}"],
+              "path": ["dashboard", "current-upcoming-tasks"]
+            }
+          }
+        },
+        {
+          "name": "Case - Task in archived project is excluded",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json(); const tasks = Array.isArray(body) ? body : (Array.isArray(body.tasks) ? body.tasks : []);",
+                  "pm.test('Response body has the documented task result shape', function () { pm.expect(Array.isArray(body) || Array.isArray(body.tasks)).to.equal(true); });",
+                  "pm.test('Task in archived project is excluded', function () { pm.expect(tasks.map((task) => String(task.id))).not.to.include(pm.environment.get('archivedTaskId')); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/dashboard/current-upcoming-tasks",
+              "host": ["{{baseUrl}}"],
+              "path": ["dashboard", "current-upcoming-tasks"]
+            }
+          }
+        },
+        {
+          "name": "Case - Soft-deleted task is excluded",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json(); const tasks = Array.isArray(body) ? body : (Array.isArray(body.tasks) ? body.tasks : []);",
+                  "pm.test('Response body has the documented task result shape', function () { pm.expect(Array.isArray(body) || Array.isArray(body.tasks)).to.equal(true); });",
+                  "pm.test('Soft-deleted task is excluded', function () { pm.expect(tasks.map((task) => String(task.id))).not.to.include(pm.environment.get('deletedTaskId')); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/dashboard/current-upcoming-tasks",
+              "host": ["{{baseUrl}}"],
+              "path": ["dashboard", "current-upcoming-tasks"]
+            }
+          }
+        },
+        {
+          "name": "Case - Only caller's tasks are returned",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json(); const tasks = Array.isArray(body) ? body : (Array.isArray(body.tasks) ? body.tasks : []);",
+                  "pm.test('Response body has the documented task result shape', function () { pm.expect(Array.isArray(body) || Array.isArray(body.tasks)).to.equal(true); });",
+                  "pm.test('Another user task is not returned', function () { pm.expect(tasks.map((task) => String(task.id))).not.to.include(pm.environment.get('harveyTaskId')); });",
+                  "pm.test('Caller-owned task is returned', function () { pm.expect(tasks.map((task) => String(task.id))).to.include(pm.environment.get('todayTaskId')); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/dashboard/current-upcoming-tasks",
+              "host": ["{{baseUrl}}"],
+              "path": ["dashboard", "current-upcoming-tasks"]
+            }
+          }
+        },
+        {
+          "name": "Case - Same instant uses Manila local date",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json(); const tasks = Array.isArray(body) ? body : (Array.isArray(body.tasks) ? body.tasks : []); const ids = tasks.map((task) => String(task.id));",
+                  "pm.test('Response body has the documented task result shape', function () { pm.expect(Array.isArray(body) || Array.isArray(body.tasks)).to.equal(true); });",
+                  "pm.test('Manila date boundary is applied to the same run instant', function () { const manilaDay = pm.environment.get('todayManila'); const westDay = pm.environment.get('todayWest'); const expected = manilaDay === westDay; pm.expect(ids.includes(pm.environment.get('manilaWestDateTaskId'))).to.equal(expected); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/dashboard/current-upcoming-tasks",
+              "host": ["{{baseUrl}}"],
+              "path": ["dashboard", "current-upcoming-tasks"]
+            }
+          }
+        },
+        {
+          "name": "Case - Same instant uses far-west local date",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json(); const tasks = Array.isArray(body) ? body : (Array.isArray(body.tasks) ? body.tasks : []); const ids = tasks.map((task) => String(task.id));",
+                  "pm.test('Response body has the documented task result shape', function () { pm.expect(Array.isArray(body) || Array.isArray(body.tasks)).to.equal(true); });",
+                  "pm.test('Far-west local today is included', function () { pm.expect(ids).to.include(pm.environment.get('westTodayTaskId')); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenB}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/dashboard/current-upcoming-tasks",
+              "host": ["{{baseUrl}}"],
+              "path": ["dashboard", "current-upcoming-tasks"]
+            }
+          }
+        },
+        {
+          "name": "Setup - Soft-delete Harvey timezone fixtures",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Delete response is successful', function () { pm.expect(pm.response.json().message).to.equal('Task deleted successfully'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenB}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/tasks/{{harveyTaskId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["tasks", "{{harveyTaskId}}"]
+            }
+          }
+        },
+        {
+          "name": "Setup - Soft-delete Harvey far-west date fixture",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Delete response is successful', function () { pm.expect(pm.response.json().message).to.equal('Task deleted successfully'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenB}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/tasks/{{westTodayTaskId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["tasks", "{{westTodayTaskId}}"]
+            }
+          }
+        },
+        {
+          "name": "Setup - Ensure clean empty-result account",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Empty-result account is created or already exists', function () { pm.expect(pm.response.code).to.be.oneOf([201, 409]); });",
+                  "if (pm.response.code === 201) { const body = pm.response.json(); pm.test('New account includes its Inbox', function () { pm.expect(body.userId).to.be.a('string').and.not.empty; pm.expect(body.inboxProjectId).to.be.a('number'); }); } else { pm.test('Existing account conflict includes an error', function () { pm.expect(pm.response.json().error).to.be.a('string').and.not.empty; }); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"dashboardempty340\",\n  \"email\": \"dashboardempty340@example.com\",\n  \"password\": \"PostmanPass123\",\n  \"confirmPassword\": \"PostmanPass123\",\n  \"timezone\": \"Asia/Manila\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/signup",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "signup"]
+            }
+          }
+        },
+        {
+          "name": "Setup - Login empty-result account",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test('Login returns a token', function () { pm.expect(body.token).to.be.a('string').and.not.empty; });",
+                  "pm.environment.set('emptyUserToken', body.token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"identifier\": \"dashboardempty340@example.com\",\n  \"password\": \"PostmanPass123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Case - User with no matching tasks gets empty result",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json(); const tasks = Array.isArray(body) ? body : (Array.isArray(body.tasks) ? body.tasks : null);",
+                  "pm.test('Response body has the documented empty task shape', function () { pm.expect(Array.isArray(body) || Array.isArray(body.tasks)).to.equal(true); pm.expect(tasks).to.deep.equal([]); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{emptyUserToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/dashboard/current-upcoming-tasks",
+              "host": ["{{baseUrl}}"],
+              "path": ["dashboard", "current-upcoming-tasks"]
+            }
+          }
+        },
+        {
+          "name": "Case - days=0 returns 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 400', function () { pm.response.to.have.status(400); });",
+                  "const body = pm.response.json();",
+                  "pm.test('Validation response contains an error', function () { pm.expect(body.error).to.be.a('string').and.not.empty; });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/dashboard/current-upcoming-tasks?days=0",
+              "host": ["{{baseUrl}}"],
+              "path": ["dashboard", "current-upcoming-tasks"],
+              "query": [
+                {
+                  "key": "days",
+                  "value": "0"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Case - Negative days returns 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 400', function () { pm.response.to.have.status(400); });",
+                  "const body = pm.response.json();",
+                  "pm.test('Validation response contains an error', function () { pm.expect(body.error).to.be.a('string').and.not.empty; });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/dashboard/current-upcoming-tasks?days=-1",
+              "host": ["{{baseUrl}}"],
+              "path": ["dashboard", "current-upcoming-tasks"],
+              "query": [
+                {
+                  "key": "days",
+                  "value": "-1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Case - Days above maximum returns 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 400', function () { pm.response.to.have.status(400); });",
+                  "const body = pm.response.json();",
+                  "pm.test('Validation response contains an error', function () { pm.expect(body.error).to.be.a('string').and.not.empty; });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/dashboard/current-upcoming-tasks?days={{aboveMaxDays}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["dashboard", "current-upcoming-tasks"],
+              "query": [
+                {
+                  "key": "days",
+                  "value": "{{aboveMaxDays}}"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Case - Non-numeric days returns 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 400', function () { pm.response.to.have.status(400); });",
+                  "const body = pm.response.json();",
+                  "pm.test('Validation response contains an error', function () { pm.expect(body.error).to.be.a('string').and.not.empty; });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/dashboard/current-upcoming-tasks?days=not-a-number",
+              "host": ["{{baseUrl}}"],
+              "path": ["dashboard", "current-upcoming-tasks"],
+              "query": [
+                {
+                  "key": "days",
+                  "value": "not-a-number"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Case - Current-upcoming route without token returns 401",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 401', function () { pm.response.to.have.status(401); });",
+                  "const body = pm.response.json();",
+                  "pm.test('Unauthorized response contains an error', function () { pm.expect(body.error).to.be.a('string').and.not.empty; });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/dashboard/current-upcoming-tasks",
+              "host": ["{{baseUrl}}"],
+              "path": ["dashboard", "current-upcoming-tasks"]
+            }
+          }
+        },
+        {
+          "name": "Cleanup - Restore Harvey timezone",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Profile timezone is restored', function () { const body = pm.response.json(); pm.expect(body.timezone || body.user?.timezone).to.equal(pm.environment.get('harveyOriginalTimezone')); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenB}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"timezone\": \"{{harveyOriginalTimezone}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/profile",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "profile"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

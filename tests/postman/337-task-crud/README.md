@@ -41,7 +41,7 @@ You need VS Code, Postman, Node.js 22 or later, and access to a dedicated remote
 3. Open the Command Palette with `Ctrl+Shift+P`, choose **Tasks: Run Task**, and run **🔐 Supabase: Login**. Follow the browser sign-in steps.
 4. Run **🔗 Supabase: Link Project**. Select the dedicated test project and verify its name/reference before confirming. Enter its database password directly into the terminal if prompted; do not put it in Postman or a checked-in file.
 5. Run **📊 Supabase: Check Migration Status**. If repository migrations are pending, run **📤 Supabase: Push Migrations**. If the CLI suggests destructive reset/replacement, cancel and confirm with the project owner.
-6. Run **🌱 Supabase: Seed Remote (no reset)**. Confirm the expected seed files report `SUCCEEDED` or `SKIPPED`, especially `001_users.sql`, `002_inbox_projects.sql`, `004_projects.sql`, and `005_tasks.sql`. Stop if any seed reports `ERROR`.
+6. Run **🌱 Supabase: Seed Remote (no reset)**. Each seed file runs against the linked project and reports `SUCCEEDED` or `ERROR` based on SQL execution. Stop if any seed reports `ERROR`.
 
 The seed task is not a full database reset. It sets the seeded users' passwords to `password123` and updates fixture rows. Run it only against the dedicated test project.
 

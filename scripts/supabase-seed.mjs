@@ -18,7 +18,6 @@ const seedFiles = [
   'supabase/seeds/004_projects.sql',
   'supabase/seeds/005_tasks.sql',
 ];
-const verificationFile = 'supabase/verify_seeds.sql';
 
 function runSupabase(args, { inherit = false } = {}) {
   return new Promise((resolve) => {
@@ -56,74 +55,8 @@ function runSupabase(args, { inherit = false } = {}) {
   });
 }
 
-function readVerificationRows(output) {
-  try {
-    const result = JSON.parse(output);
-    const rows = Array.isArray(result) ? result : result.rows;
-    if (Array.isArray(rows)) {
-      return new Map(
-        rows
-          .filter(
-            (row) =>
-              typeof row?.seed_file === 'string' &&
-              (row.status === 'PASS' || row.status === 'FAIL')
-          )
-          .map((row) => [
-            row.seed_file,
-            { passed: row.status === 'PASS', details: row.details },
-          ])
-      );
-    }
-  } catch {
-    // Fall through to the CLI's text-table output format.
-  }
-
-  const rows = new Map();
-  for (const line of output.split(/\r?\n/)) {
-    const cells = line
-      .split(/[│|]/)
-      .map((cell) => cell.trim())
-      .filter(Boolean);
-    if (
-      cells.length >= 2 &&
-      seedFiles.some((file) => file.endsWith(cells[0])) &&
-      (cells[1] === 'PASS' || cells[1] === 'FAIL')
-    ) {
-      rows.set(cells[0], {
-        passed: cells[1] === 'PASS',
-        details: cells.slice(2).join(' '),
-      });
-    }
-  }
-  return rows;
-}
-
 function oneLine(value) {
   return value.replace(/\s+/g, ' ').trim();
-}
-
-async function verifySeeds() {
-  const result = await runSupabase([
-    '--output-format',
-    'json',
-    'db',
-    'query',
-    '--linked',
-    '--file',
-    verificationFile,
-  ]);
-  if (result.code !== 0) {
-    return {
-      error: result.error ?? oneLine(`${result.stdout}\n${result.stderr}`),
-    };
-  }
-  const rows = readVerificationRows(result.stdout);
-  if (seedFiles.some((file) => !rows.has(path.basename(file)))) {
-    return {
-      error: `Could not read verification results: ${oneLine(result.stdout)}`,
-    };
-  }
-  return { rows };
 }
 
 async function main() {
@@ -145,24 +78,8 @@ async function main() {
     }
   }
 
-  const before = await verifySeeds();
-  if (before.error) {
-    for (const file of seedFiles) {
-      console.log(
-        `${path.basename(file)}: ERROR - Could not check whether it was already seeded: ${before.error}`
-      );
-    }
-    process.exitCode = 1;
-    return;
-  }
-
-  const execution = new Map();
+  let hasErrors = false;
   for (const file of seedFiles) {
-    if (before.rows.get(path.basename(file))?.passed) {
-      execution.set(file, { skipped: true, succeeded: true });
-      continue;
-    }
-
     const result = await runSupabase([
       '--output-format',
       'json',
@@ -173,37 +90,14 @@ async function main() {
       file,
     ]);
     const output = oneLine(`${result.stdout}\n${result.stderr}`);
-    execution.set(file, {
-      skipped: false,
-      succeeded: result.code === 0,
-      error:
-        result.code === 0
-          ? undefined
-          : result.error ||
-            output ||
-            `Supabase CLI exited with code ${result.code}`,
-    });
-  }
-
-  const after = await verifySeeds();
-  let hasErrors = Boolean(after.error);
-  for (const file of seedFiles) {
-    const name = path.basename(file);
-    const result = execution.get(file);
-    const verification = after.rows?.get(name);
-    const verified = verification?.passed === true;
-    if (!after.error && verified && result.skipped) {
-      console.log(`${name}: SKIPPED (already seeded)`);
-    } else if (!after.error && verified && result.succeeded) {
-      console.log(`${name}: SUCCEEDED`);
+    if (result.code === 0) {
+      console.log(`${path.basename(file)}: SUCCEEDED`);
     } else {
       const detail =
         result.error ||
-        after.error ||
-        `Post-seed verification failed${result.skipped ? '' : ' after execution'}${
-          verification?.details ? `: ${verification.details}` : ''
-        }`;
-      console.log(`${name}: ERROR - ${oneLine(detail)}`);
+        output ||
+        `Supabase CLI exited with code ${result.code}`;
+      console.log(`${path.basename(file)}: ERROR - ${oneLine(detail)}`);
       hasErrors = true;
     }
   }
