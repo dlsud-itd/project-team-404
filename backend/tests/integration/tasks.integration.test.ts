@@ -529,6 +529,33 @@ integrationDescribe('tasks integration', () => {
       { method: 'GET', path: '/api/tasks' },
       { method: 'GET', path: '/api/tasks/1' },
       { method: 'PUT', path: '/api/tasks/1', body: { title: 'Unauthorized' } },
+      {
+        method: 'PUT',
+        path: '/api/tasks/1/due-date',
+        body: { dueDate: '2026-03-10' },
+      },
+      {
+        method: 'PUT',
+        path: '/api/tasks/1/deadline',
+        body: { deadline: '2026-03-10T12:00:00.000Z' },
+      },
+      {
+        method: 'PUT',
+        path: '/api/tasks/1/recurrence',
+        body: { recurrence: 'daily' },
+      },
+      {
+        method: 'PUT',
+        path: '/api/tasks/1/priority',
+        body: { priority: 'high' },
+      },
+      { method: 'GET', path: '/api/tasks/1/labels' },
+      {
+        method: 'POST',
+        path: '/api/tasks/1/labels',
+        body: { labelIds: [1] },
+      },
+      { method: 'DELETE', path: '/api/tasks/1/labels/1' },
       { method: 'DELETE', path: '/api/tasks/1' },
     ];
 
@@ -546,4 +573,685 @@ integrationDescribe('tasks integration', () => {
 
     expect(await prisma.task.count()).toBe(countBefore);
   });
+
+  describe('Task Scheduling', () => {
+    it('sets, changes, and clears due dates and deadlines through their routes', async () => {
+      const account = await createAccount();
+      const project = await seedProject(account.id, 'Scheduling date project');
+      const task = await seedTask(account.id, project.id, {
+        title: 'Change task dates',
+        dueDate: new Date('2026-03-10T00:00:00.000Z'),
+      });
+
+      const dueDateValues = [
+        { value: '2026-03-12', expected: new Date('2026-03-12T00:00:00.000Z') },
+        { value: '2026-03-18', expected: new Date('2026-03-18T00:00:00.000Z') },
+        { value: null, expected: null },
+      ] as const;
+      for (const { value, expected } of dueDateValues) {
+        const response = await taskRequest(
+          'PUT',
+          `/api/tasks/${task.id}/due-date`,
+          account.token,
+          { dueDate: value }
+        );
+        expect(response.status).toBe(200);
+        expect(
+          (await prisma.task.findUniqueOrThrow({ where: { id: task.id } }))
+            .dueDate
+        ).toEqual(expected);
+      }
+
+      const deadlineValues = [
+        {
+          value: '2026-03-20T12:30:00.000Z',
+          expected: new Date('2026-03-20T12:30:00.000Z'),
+        },
+        {
+          value: '2026-03-22T18:45:00.000Z',
+          expected: new Date('2026-03-22T18:45:00.000Z'),
+        },
+        { value: null, expected: null },
+      ] as const;
+      for (const { value, expected } of deadlineValues) {
+        const response = await taskRequest(
+          'PUT',
+          `/api/tasks/${task.id}/deadline`,
+          account.token,
+          { deadline: value }
+        );
+        expect(response.status).toBe(200);
+        expect(
+          (await prisma.task.findUniqueOrThrow({ where: { id: task.id } }))
+            .deadline
+        ).toEqual(expected);
+      }
+    });
+
+    it('rejects a deadline before the due date without changing either value', async () => {
+      const account = await createAccount();
+      const project = await seedProject(
+        account.id,
+        'Deadline validation project'
+      );
+      const task = await seedTask(account.id, project.id, {
+        title: 'Keep valid deadline',
+        dueDate: new Date('2026-03-20T00:00:00.000Z'),
+      });
+      await taskRequest(
+        'PUT',
+        `/api/tasks/${task.id}/deadline`,
+        account.token,
+        {
+          deadline: '2026-03-21T12:00:00.000Z',
+        }
+      );
+      const before = await prisma.task.findUniqueOrThrow({
+        where: { id: task.id },
+      });
+
+      const invalid = await taskRequest(
+        'PUT',
+        `/api/tasks/${task.id}/deadline`,
+        account.token,
+        { deadline: '2026-03-19T23:59:59.000Z' }
+      );
+
+      expect(invalid.status).toBe(400);
+      expect(
+        await prisma.task.findUniqueOrThrow({ where: { id: task.id } })
+      ).toEqual(before);
+    });
+
+    it('persists daily, weekly-interval, and monthly rules and rejects invalid recurrence input', async () => {
+      const account = await createAccount();
+      const project = await seedProject(account.id, 'Recurrence rule project');
+
+      for (const rule of [
+        { recurrence: 'daily' },
+        { recurrence: 'weekly', recurrenceInterval: 2 },
+        { recurrence: 'monthly' },
+      ]) {
+        const task = await seedTask(account.id, project.id, {
+          title: `Rule ${rule.recurrence}`,
+          dueDate: new Date('2026-03-10T00:00:00.000Z'),
+        });
+        const response = await taskRequest(
+          'PUT',
+          `/api/tasks/${task.id}/recurrence`,
+          account.token,
+          rule
+        );
+        expect(response.status).toBe(200);
+        expect(response.body).toMatchObject(rule);
+        expect(
+          await prisma.task.findUniqueOrThrow({ where: { id: task.id } })
+        ).toMatchObject({
+          recurrence: rule.recurrence,
+          ...(rule.recurrence === 'weekly'
+            ? { recurrenceInterval: rule.recurrenceInterval }
+            : {}),
+        });
+      }
+
+      const task = await seedTask(account.id, project.id, {
+        title: 'Reject invalid recurrence',
+      });
+      for (const body of [
+        { recurrence: 'yearly' },
+        { recurrence: 'weekly', recurrenceInterval: 0 },
+      ]) {
+        const response = await taskRequest(
+          'PUT',
+          `/api/tasks/${task.id}/recurrence`,
+          account.token,
+          body
+        );
+        expect(response.status).toBe(400);
+      }
+      expect(
+        await prisma.task.findUniqueOrThrow({ where: { id: task.id } })
+      ).toMatchObject({ recurrence: 'none' });
+    });
+
+    it.each([
+      {
+        recurrence: 'daily',
+        dueDate: '2026-03-10',
+        nextDueDate: '2026-03-11',
+      },
+      {
+        recurrence: 'weekly',
+        recurrenceInterval: 2,
+        dueDate: '2026-03-10',
+        nextDueDate: '2026-03-24',
+      },
+      {
+        recurrence: 'monthly',
+        dueDate: '2026-01-31',
+        nextDueDate: '2026-02-28',
+      },
+      {
+        recurrence: 'monthly',
+        dueDate: '2024-01-31',
+        nextDueDate: '2024-02-29',
+      },
+      {
+        recurrence: 'monthly',
+        dueDate: '2026-03-31',
+        nextDueDate: '2026-04-30',
+      },
+    ])(
+      'completing $recurrence creates exactly one next occurrence',
+      async ({ recurrence, recurrenceInterval, dueDate, nextDueDate }) => {
+        const account = await createAccount();
+        const project = await seedProject(
+          account.id,
+          'Next occurrence project'
+        );
+        const task = await seedTask(account.id, project.id, {
+          title: `Repeat ${recurrence} ${dueDate}`,
+          dueDate: new Date(`${dueDate}T00:00:00.000Z`),
+        });
+        const rule = {
+          recurrence,
+          ...(recurrenceInterval === undefined ? {} : { recurrenceInterval }),
+        };
+        const configured = await taskRequest(
+          'PUT',
+          `/api/tasks/${task.id}/recurrence`,
+          account.token,
+          rule
+        );
+        expect(configured.status).toBe(200);
+
+        const completed = await taskRequest(
+          'PUT',
+          `/api/tasks/${task.id}`,
+          account.token,
+          { isDone: true }
+        );
+        expect(completed.status).toBe(200);
+
+        const occurrences = await prisma.task.findMany({
+          where: {
+            userId: account.id,
+            projectId: project.id,
+            title: task.title,
+            deletedAt: null,
+          },
+          orderBy: { id: 'asc' },
+        });
+        expect(occurrences).toHaveLength(2);
+        expect(occurrences[0]).toMatchObject({
+          id: task.id,
+          isDone: true,
+        });
+        expect(occurrences[1]).toMatchObject({
+          userId: account.id,
+          projectId: project.id,
+          title: task.title,
+          isDone: false,
+          recurrence,
+          ...(recurrenceInterval === undefined ? {} : { recurrenceInterval }),
+          dueDate: new Date(`${nextDueDate}T00:00:00.000Z`),
+        });
+      }
+    );
+
+    it('does not duplicate occurrences for non-recurring, completed, or concurrently completed tasks', async () => {
+      const account = await createAccount();
+      const project = await seedProject(
+        account.id,
+        'Completion idempotency project'
+      );
+
+      const nonRecurring = await seedTask(account.id, project.id, {
+        title: 'One-time task',
+        dueDate: new Date('2026-03-10T00:00:00.000Z'),
+      });
+      expect(
+        (
+          await taskRequest(
+            'PUT',
+            `/api/tasks/${nonRecurring.id}`,
+            account.token,
+            { isDone: true }
+          )
+        ).status
+      ).toBe(200);
+      expect(
+        await prisma.task.count({
+          where: {
+            userId: account.id,
+            projectId: project.id,
+            title: nonRecurring.title,
+            id: { not: nonRecurring.id },
+          },
+        })
+      ).toBe(0);
+
+      const alreadyCompleted = await seedTask(account.id, project.id, {
+        title: 'Already completed recurring task',
+        dueDate: new Date('2026-03-10T00:00:00.000Z'),
+        isDone: true,
+      });
+      expect(
+        (
+          await taskRequest(
+            'PUT',
+            `/api/tasks/${alreadyCompleted.id}/recurrence`,
+            account.token,
+            { recurrence: 'daily' }
+          )
+        ).status
+      ).toBe(200);
+      expect(
+        (
+          await taskRequest(
+            'PUT',
+            `/api/tasks/${alreadyCompleted.id}`,
+            account.token,
+            { isDone: true }
+          )
+        ).status
+      ).toBe(200);
+      expect(
+        await prisma.task.count({
+          where: {
+            userId: account.id,
+            projectId: project.id,
+            title: alreadyCompleted.title,
+            id: { not: alreadyCompleted.id },
+          },
+        })
+      ).toBe(0);
+
+      const concurrent = await seedTask(account.id, project.id, {
+        title: 'Concurrent completion task',
+        dueDate: new Date('2026-03-10T00:00:00.000Z'),
+      });
+      expect(
+        (
+          await taskRequest(
+            'PUT',
+            `/api/tasks/${concurrent.id}/recurrence`,
+            account.token,
+            { recurrence: 'daily' }
+          )
+        ).status
+      ).toBe(200);
+      const completions = await Promise.all([
+        taskRequest('PUT', `/api/tasks/${concurrent.id}`, account.token, {
+          isDone: true,
+        }),
+        taskRequest('PUT', `/api/tasks/${concurrent.id}`, account.token, {
+          isDone: true,
+        }),
+      ]);
+      expect(completions.map(({ status }) => status)).toEqual([200, 200]);
+      expect(
+        await prisma.task.count({
+          where: {
+            userId: account.id,
+            projectId: project.id,
+            title: concurrent.title,
+            id: { not: concurrent.id },
+          },
+        })
+      ).toBe(1);
+    });
+
+    it('uses the owner timezone when interpreting a 23:30 deadline in current/upcoming tasks', async () => {
+      const manila = await createAccount();
+      const honolulu = await createAccount();
+      const timeZone = 'Pacific/Honolulu';
+      const currentHonoluluDay = new Intl.DateTimeFormat('en-CA', {
+        timeZone,
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+      }).format(new Date());
+      const nowInHonolulu = new Intl.DateTimeFormat('en-US', {
+        timeZone,
+        hour: '2-digit',
+        minute: '2-digit',
+        hourCycle: 'h23',
+      }).format(new Date());
+      const deadlineDay =
+        nowInHonolulu < '23:30'
+          ? currentHonoluluDay
+          : addCalendarDays(currentHonoluluDay, 1);
+      const deadline = new Date(`${deadlineDay}T23:30:00-10:00`);
+      const manilaDeadlineDay = new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'Asia/Manila',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+      }).format(deadline);
+      const honoluluDeadlineDay = new Intl.DateTimeFormat('en-CA', {
+        timeZone,
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+      }).format(deadline);
+      expect(manilaDeadlineDay).toBe(addCalendarDays(honoluluDeadlineDay, 1));
+
+      for (const [account, timezone] of [
+        [manila, 'Asia/Manila'],
+        [honolulu, timeZone],
+      ] as const) {
+        await prisma.user.update({
+          where: { id: account.id },
+          data: { timezone },
+        });
+        const project = await seedProject(
+          account.id,
+          'Timezone boundary project'
+        );
+        const task = await seedTask(account.id, project.id, {
+          title: 'Local 23:30 deadline',
+          dueDate: new Date(`${manilaDeadlineDay}T00:00:00.000Z`),
+        });
+        const setDeadline = await taskRequest(
+          'PUT',
+          `/api/tasks/${task.id}/deadline`,
+          account.token,
+          { deadline: deadline.toISOString() }
+        );
+        expect(setDeadline.status).toBe(200);
+
+        const dashboard = await taskRequest(
+          'GET',
+          '/api/dashboard/current-upcoming-tasks?days=30',
+          account.token
+        );
+        expect(dashboard.status).toBe(200);
+        expect(dashboard.body).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({
+              id: task.id,
+              deadline: deadline.toISOString(),
+            }),
+          ])
+        );
+      }
+    });
+
+    it('hides another user’s scheduled task and requires authentication for scheduling and completion', async () => {
+      const account = await createAccount();
+      const otherAccount = await createAccount();
+      const project = await seedProject(
+        otherAccount.id,
+        'Private schedule project'
+      );
+      const task = await seedTask(otherAccount.id, project.id, {
+        title: 'Private scheduled task',
+        dueDate: new Date('2026-03-10T00:00:00.000Z'),
+      });
+      const before = await prisma.task.findUniqueOrThrow({
+        where: { id: task.id },
+      });
+
+      for (const [path, body] of [
+        [`/api/tasks/${task.id}/due-date`, { dueDate: '2026-03-12' }],
+        [
+          `/api/tasks/${task.id}/deadline`,
+          { deadline: '2026-03-12T12:00:00.000Z' },
+        ],
+        [`/api/tasks/${task.id}/recurrence`, { recurrence: 'daily' }],
+        [`/api/tasks/${task.id}`, { isDone: true }],
+      ] as const) {
+        const response = await taskRequest('PUT', path, account.token, body);
+        expect(response.status).toBe(404);
+      }
+      expect(
+        await prisma.task.findUniqueOrThrow({ where: { id: task.id } })
+      ).toEqual(before);
+
+      for (const path of [
+        `/api/tasks/${task.id}/due-date`,
+        `/api/tasks/${task.id}/deadline`,
+        `/api/tasks/${task.id}/recurrence`,
+        `/api/tasks/${task.id}`,
+      ]) {
+        expect((await taskRequest('PUT', path, undefined, {})).status).toBe(
+          401
+        );
+      }
+    });
+  });
+
+  describe('Task Organization', () => {
+    it('sets only supported priorities and filters tasks by priority, label, and both', async () => {
+      const account = await createAccount();
+      const project = await seedProject(account.id, 'Organization filters');
+      const first = await seedTask(account.id, project.id, {
+        title: 'High priority with both labels',
+      });
+      const second = await seedTask(account.id, project.id, {
+        title: 'Medium priority with first label',
+      });
+      const third = await seedTask(account.id, project.id, {
+        title: 'Medium priority with second label',
+      });
+
+      const firstLabelResponse = await taskRequest(
+        'POST',
+        '/api/labels',
+        account.token,
+        { name: 'First filter label', color: '#112233' }
+      );
+      const secondLabelResponse = await taskRequest(
+        'POST',
+        '/api/labels',
+        account.token,
+        { name: 'Second filter label', color: '#445566' }
+      );
+      const emptyLabelResponse = await taskRequest(
+        'POST',
+        '/api/labels',
+        account.token,
+        { name: 'Unused filter label' }
+      );
+      expect(firstLabelResponse.status).toBe(201);
+      expect(secondLabelResponse.status).toBe(201);
+      expect(emptyLabelResponse.status).toBe(201);
+      const firstLabelId = labelId(firstLabelResponse.body);
+      const secondLabelId = labelId(secondLabelResponse.body);
+      const emptyLabelId = labelId(emptyLabelResponse.body);
+
+      for (const [task, labelIds] of [
+        [first, [firstLabelId, secondLabelId]],
+        [second, [firstLabelId]],
+        [third, [secondLabelId]],
+      ] as const) {
+        const attached = await taskRequest(
+          'POST',
+          `/api/tasks/${task.id}/labels`,
+          account.token,
+          { labelIds }
+        );
+        expect(attached.status).toBe(200);
+      }
+
+      const priorityResponse = await taskRequest(
+        'PUT',
+        `/api/tasks/${first.id}/priority`,
+        account.token,
+        { priority: 'high' }
+      );
+      expect(priorityResponse.status).toBe(200);
+      expect(priorityResponse.body).toMatchObject({ priority: 'high' });
+      expect(
+        await prisma.task.findUniqueOrThrow({
+          where: { id: first.id },
+          include: { priorityLevel: true },
+        })
+      ).toMatchObject({
+        priorityLevel: { name: 'high' },
+      });
+
+      const invalidPriority = await taskRequest(
+        'PUT',
+        `/api/tasks/${first.id}/priority`,
+        account.token,
+        { priority: 'urgent' }
+      );
+      expect(invalidPriority.status).toBe(400);
+      expect(
+        await prisma.task.findUniqueOrThrow({
+          where: { id: first.id },
+          include: { priorityLevel: true },
+        })
+      ).toMatchObject({
+        priorityLevel: { name: 'high' },
+      });
+
+      const filteredTaskIds = async (query: URLSearchParams) => {
+        const response = await taskRequest(
+          'GET',
+          `/api/tasks?${query}`,
+          account.token
+        );
+        expect(response.status).toBe(200);
+        return taskIds(response.body).sort((a, b) => a - b);
+      };
+
+      expect(
+        await filteredTaskIds(new URLSearchParams({ priority: 'high' }))
+      ).toEqual([first.id]);
+      expect(
+        await filteredTaskIds(
+          new URLSearchParams({ labelId: String(firstLabelId) })
+        )
+      ).toEqual([first.id, second.id].sort((a, b) => a - b));
+      expect(
+        await filteredTaskIds(
+          new URLSearchParams({
+            priority: 'high',
+            labelId: String(firstLabelId),
+          })
+        )
+      ).toEqual([first.id]);
+      expect(
+        await filteredTaskIds(
+          new URLSearchParams({ labelId: String(emptyLabelId) })
+        )
+      ).toEqual([]);
+    });
+
+    it('attaches and detaches labels idempotently and rejects cross-user links', async () => {
+      const account = await createAccount();
+      const otherAccount = await createAccount();
+      const project = await seedProject(account.id, 'Owned labels project');
+      const foreignProject = await seedProject(
+        otherAccount.id,
+        'Foreign labels project'
+      );
+      const task = await seedTask(account.id, project.id, {
+        title: 'Task with labels',
+      });
+      const foreignTask = await seedTask(otherAccount.id, foreignProject.id, {
+        title: 'Another user task',
+      });
+      const ownLabelResponse = await taskRequest(
+        'POST',
+        '/api/labels',
+        account.token,
+        { name: 'Owned label' }
+      );
+      const foreignLabelResponse = await taskRequest(
+        'POST',
+        '/api/labels',
+        otherAccount.token,
+        { name: 'Foreign label' }
+      );
+      expect(ownLabelResponse.status).toBe(201);
+      expect(foreignLabelResponse.status).toBe(201);
+      const ownLabelId = labelId(ownLabelResponse.body);
+      const foreignLabelId = labelId(foreignLabelResponse.body);
+
+      for (let attempt = 0; attempt < 2; attempt += 1) {
+        const response = await taskRequest(
+          'POST',
+          `/api/tasks/${task.id}/labels`,
+          account.token,
+          { labelIds: [ownLabelId] }
+        );
+        expect(response.status).toBe(200);
+      }
+      expect(
+        await prisma.taskLabel.count({
+          where: { taskId: task.id, labelId: ownLabelId },
+        })
+      ).toBe(1);
+
+      const listedLabels = await taskRequest(
+        'GET',
+        `/api/tasks/${task.id}/labels`,
+        account.token
+      );
+      expect(listedLabels.status).toBe(200);
+      expect(listedLabels.body).toMatchObject([
+        { id: ownLabelId, name: 'Owned label' },
+      ]);
+
+      for (const [taskId, labelIds] of [
+        [task.id, [foreignLabelId]],
+        [foreignTask.id, [ownLabelId]],
+      ] as const) {
+        const response = await taskRequest(
+          'POST',
+          `/api/tasks/${taskId}/labels`,
+          account.token,
+          { labelIds }
+        );
+        expect(response.status).toBe(404);
+      }
+      expect(
+        await prisma.taskLabel.count({
+          where: {
+            OR: [
+              { taskId: task.id, labelId: foreignLabelId },
+              { taskId: foreignTask.id, labelId: ownLabelId },
+            ],
+          },
+        })
+      ).toBe(0);
+
+      for (let attempt = 0; attempt < 2; attempt += 1) {
+        const response = await taskRequest(
+          'DELETE',
+          `/api/tasks/${task.id}/labels/${ownLabelId}`,
+          account.token
+        );
+        expect(response.status).toBe(200);
+      }
+      expect(
+        await prisma.taskLabel.count({
+          where: { taskId: task.id, labelId: ownLabelId },
+        })
+      ).toBe(0);
+    });
+  });
+
+  function addCalendarDays(date: string, days: number): string {
+    const [year, month, day] = date.split('-').map(Number);
+    return new Date(Date.UTC(year, month - 1, day + days))
+      .toISOString()
+      .slice(0, 10);
+  }
+
+  function labelId(body: unknown): number {
+    if (
+      typeof body !== 'object' ||
+      body === null ||
+      !('id' in body) ||
+      typeof body.id !== 'number'
+    ) {
+      throw new Error('Expected label response to include a numeric id');
+    }
+    return body.id;
+  }
 });

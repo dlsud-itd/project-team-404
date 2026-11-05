@@ -17,6 +17,10 @@ export type IntegrationAccount = {
   token: string;
 };
 
+export type RegisteredIntegrationAccount = IntegrationAccount & {
+  signupResult: { userId: string; inboxProjectId: number };
+};
+
 const authUserIds = new Set<string>();
 
 export function configureSupabaseTest(): TestSupabaseConfig | null {
@@ -62,7 +66,7 @@ export async function loginAs(
   app: Express,
   config: TestSupabaseConfig
 ): Promise<IntegrationAccount> {
-  const suffix = randomUUID().replaceAll('-', '');
+  const suffix = randomUUID().replaceAll('-', '').slice(0, 20);
   const username = `integration_${suffix}`;
   const email = `${username}@example.test`;
   const password = randomBytes(32).toString('base64url');
@@ -130,6 +134,60 @@ export async function loginAs(
     timezone: user.timezone,
     inboxProjectId,
     token: response.body.token,
+  };
+}
+
+export async function registerAndLoginAs(
+  app: Express
+): Promise<RegisteredIntegrationAccount> {
+  const suffix = randomUUID().replaceAll('-', '').slice(0, 20);
+  const username = `regression_${suffix}`;
+  const email = `${username}@example.test`;
+  const password = randomBytes(32).toString('base64url');
+  const timezone = 'Asia/Manila';
+
+  const signup = await request(app, '/api/auth/signup', {
+    method: 'POST',
+    body: {
+      username,
+      email,
+      password,
+      confirmPassword: password,
+      timezone,
+    },
+  });
+  if (signup.status !== 201 || !isSignupResponse(signup.body)) {
+    throw new Error(
+      `Could not register regression account (HTTP ${signup.status})`
+    );
+  }
+  authUserIds.add(signup.body.userId);
+
+  const login = await request(app, '/api/auth/login', {
+    method: 'POST',
+    body: { identifier: email, password },
+  });
+  if (login.status !== 200 || !isLoginResponse(login.body)) {
+    throw new Error(
+      `Could not log in regression account (HTTP ${login.status})`
+    );
+  }
+  if (
+    login.body.user.id !== signup.body.userId ||
+    login.body.user.inboxProjectId !== signup.body.inboxProjectId
+  ) {
+    throw new Error('Signup and login returned inconsistent account details');
+  }
+
+  return {
+    id: signup.body.userId,
+    username,
+    email,
+    password,
+    timezone,
+    inboxProjectId: signup.body.inboxProjectId,
+    token: login.body.token,
+    signupResult: signup.body,
   };
 }
 
@@ -255,14 +313,36 @@ async function supabaseRequest<T = unknown>(
   return (text ? JSON.parse(text) : undefined) as T;
 }
 
-function isLoginResponse(
-  body: unknown
-): body is { token: string; user: { id: string } } {
+function isLoginResponse(body: unknown): body is {
+  token: string;
+  user: { id: string; inboxProjectId: number };
+} {
   if (typeof body !== 'object' || body === null) {
     return false;
   }
-  const response = body as { token?: unknown; user?: { id?: unknown } };
+  const response = body as {
+    token?: unknown;
+    user?: { id?: unknown; inboxProjectId?: unknown };
+  };
   return (
-    typeof response.token === 'string' && typeof response.user?.id === 'string'
+    typeof response.token === 'string' &&
+    typeof response.user?.id === 'string' &&
+    typeof response.user.inboxProjectId === 'number'
+  );
+}
+
+function isSignupResponse(
+  body: unknown
+): body is { userId: string; inboxProjectId: number } {
+  if (typeof body !== 'object' || body === null) {
+    return false;
+  }
+  const response = body as {
+    userId?: unknown;
+    inboxProjectId?: unknown;
+  };
+  return (
+    typeof response.userId === 'string' &&
+    typeof response.inboxProjectId === 'number'
   );
 }

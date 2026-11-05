@@ -1,6 +1,6 @@
 # Sprint 2 Test Matrix
 
-Last Updated: October 30, 2026
+Last Updated: November 5, 2026
 
 ## Overview
 
@@ -51,8 +51,8 @@ Status values: `Failing`, `Passing`, `Blocked`.
 
 | ID        | Test Case                                    | Expected Result                                  | Status  |
 | --------- | -------------------------------------------- | ------------------------------------------------ | ------- |
-| BE-LST-18 | List projects for two test users in Supabase | Only the signed-in user's projects are returned. | Blocked |
-| BE-LST-19 | List projects for a new test user            | The user's Inbox is returned.                    | Blocked |
+| BE-LST-18 | List projects for two test users in Supabase | Only the signed-in user's projects are returned. | Passing |
+| BE-LST-19 | List projects for a new test user            | The user's Inbox is returned.                    | Passing |
 
 ### 1.4 Project List UI
 
@@ -113,8 +113,8 @@ Tests: `frontend/tests/integration/features/projects/projects.integration.spec.t
 
 | ID        | Test Case                                   | Expected Result                                                                               | Status  |
 | --------- | ------------------------------------------- | --------------------------------------------------------------------------------------------- | ------- |
-| BE-CRT-12 | Create a project and check its database row | Row belongs to the caller; details are saved, `is_inbox` is false, and `deleted_at` is empty. | Blocked |
-| BE-CRT-13 | Create a project, then list projects        | New project appears in `GET /api/projects`.                                                   | Blocked |
+| BE-CRT-12 | Create a project and check its database row | Row belongs to the caller; details are saved, `is_inbox` is false, and `deleted_at` is empty. | Passing |
+| BE-CRT-13 | Create a project, then list projects        | New project appears in `GET /api/projects`.                                                   | Passing |
 
 ### 2.3 Create Project UI
 
@@ -195,7 +195,7 @@ Tests: `frontend/tests/integration/features/projects/projects.integration.spec.t
 
 | ID        | Test Case                                     | Expected Result                                                                                                                     | Status  |
 | --------- | --------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- | ------- |
-| BE-EDT-23 | Update a project, then re-fetch from database | Values are saved and `updated_at` advances; another user's project returns 404 unchanged; updating the Inbox is rejected unchanged. | Blocked |
+| BE-EDT-23 | Update a project, then re-fetch from database | Values are saved and `updated_at` advances; another user's project returns 404 unchanged; updating the Inbox is rejected unchanged. | Passing |
 
 ### 3.6 Edit Project UI
 
@@ -270,10 +270,10 @@ Tests: `frontend/tests/integration/features/projects/projects.integration.spec.t
 
 | ID        | Test Case                                                 | Expected Result                                                                                                                     | Status  |
 | --------- | --------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- | ------- |
-| BE-ORG-17 | Favorite and unfavorite a project, then check it again    | `is_favorite` is saved and repeated requests keep the requested value.                                                              | Blocked |
-| BE-ORG-18 | Archive and restore a project, then check the lists       | `is_archived` is saved; the project moves between active and archived lists.                                                        | Blocked |
-| BE-ORG-19 | Try to archive the Inbox or change another user's project | Inbox stays unchanged; another user's project returns 404 and stays unchanged.                                                      | Blocked |
-| BE-ORG-20 | Reorder projects and check the database and list          | `sort_order` is saved and the list matches the requested order.                                                                     | Blocked |
+| BE-ORG-17 | Favorite and unfavorite a project, then check it again    | `is_favorite` is saved and repeated requests keep the requested value.                                                              | Passing |
+| BE-ORG-18 | Archive and restore a project, then check the lists       | `is_archived` is saved; the project moves between active and archived lists.                                                        | Passing |
+| BE-ORG-19 | Try to archive the Inbox or change another user's project | Inbox stays unchanged; another user's project returns 404 and stays unchanged.                                                      | Passing |
+| BE-ORG-20 | Reorder projects and check the database and list          | `sort_order` is saved and the list matches the requested order.                                                                     | Passing |
 | BE-ORG-21 | Submit an invalid reorder list                            | Empty or malformed lists return 400; duplicate IDs return 400; unknown or another user's IDs return 404 without changing the order. | Blocked |
 | BE-ORG-22 | Reorder projects at the same time                         | Both requests complete and the final list matches one complete requested order.                                                     | Blocked |
 | BE-ORG-23 | Use organization routes without a token                   | Favorite, archive, reorder, and sort-order requests return 401.                                                                     | Blocked |
@@ -333,7 +333,7 @@ Tests: the `Project Organization (switcher)` block in `frontend/tests/integratio
 
 | ID        | Test Case                                           | Expected Result                                                                                 | Status  |
 | --------- | --------------------------------------------------- | ----------------------------------------------------------------------------------------------- | ------- |
-| BE-DEL-11 | Delete a project against the Supabase test database | `deleted_at` is set; the project stays in the database and other users' projects are unchanged. | Blocked |
+| BE-DEL-11 | Delete a project against the Supabase test database | `deleted_at` is set; the project stays in the database and other users' projects are unchanged. | Passing |
 
 ### 5.3 Delete Project UI
 
@@ -415,15 +415,24 @@ Tests: `frontend/tests/integration/features/home/home.integration.spec.ts`. They
 - The spec does not say whether the Inbox can be renamed, recolored, favorited, or reordered. Only archive and delete are explicitly blocked. Cases for those will be added once the team decides.
 - The spec does not say whether project names must be unique per user. No duplicate-name case is included.
 
+## Regression Gate Results — November 5, 2026
+
+| Matrix area                      | Validation                                                                                                          | Result  |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------- | ------- |
+| Backend — Project CRUD           | Project API regression and existing integration cases; includes signup Inbox creation, CRUD, and ownership checks.  | Passing |
+| Backend — Project Organization   | Favorite/unfavorite, archive/restore, reorder, Inbox rules, and cross-user isolation through the API.               | Passing |
+| Frontend — Sprint 1 and 2 suites | Frontend unit/integration and regression suites completed with no failures.                                         | Passing |
+| Full Sprint 1 + 2 gate           | Reset-and-seeded database run and E2E remain blocked; see [Sprint2_Regression_Log.md](./Sprint2_Regression_Log.md). | Blocked |
+
 ## Summary
 
 | Deliverable                    | Backend Cases | Frontend Cases | Total   | Failing | Passing | Blocked |
 | ------------------------------ | ------------- | -------------- | ------- | ------- | ------- | ------- |
-| Project Listing & Retrieval    | 19            | 15             | 34      | 6       | 9       | 19      |
-| Project Creation               | 13            | 13             | 26      | 6       | 11      | 9       |
-| Project Editing                | 23            | 16             | 39      | 26      | 9       | 4       |
-| Favorite, Archive & Sort Order | 23            | 11             | 34      | 17      | 10      | 7       |
-| Project Deletion               | 11            | 10             | 21      | 3       | 5       | 13      |
+| Project Listing & Retrieval    | 19            | 15             | 34      | 6       | 11      | 17      |
+| Project Creation               | 13            | 13             | 26      | 6       | 13      | 7       |
+| Project Editing                | 23            | 16             | 39      | 26      | 10      | 3       |
+| Favorite, Archive & Sort Order | 23            | 11             | 34      | 17      | 14      | 3       |
+| Project Deletion               | 11            | 10             | 21      | 3       | 6       | 12      |
 | Landing Page                   | 0             | 7              | 7       | 0       | 7       | 0       |
 | Home Dashboard                 | 0             | 8              | 8       | 0       | 8       | 0       |
-| **Total**                      | **89**        | **80**         | **169** | **58**  | **59**  | **52**  |
+| **Total**                      | **89**        | **80**         | **169** | **58**  | **69**  | **42**  |
