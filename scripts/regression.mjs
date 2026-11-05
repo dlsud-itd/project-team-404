@@ -34,6 +34,14 @@ const steps = [
       : 'SUPABASE_TEST_* is not set, so the suite would only skip',
   },
   {
+    name: 'Project API regression',
+    command: 'npm --prefix backend run test:regression:projects',
+    env: backendEnv,
+    missing: backendEnv.SUPABASE_TEST_URL
+      ? null
+      : 'SUPABASE_TEST_* is not set, so the suite would only skip',
+  },
+  {
     name: 'Frontend unit + integration',
     command: 'npm --prefix frontend run test:run',
   },

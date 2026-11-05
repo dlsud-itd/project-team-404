@@ -121,8 +121,9 @@ production or shared development project.
 ## Regression tests
 
 **`🔁 Regression: Run All`** (or `npm run test:regression` from the repository
-root) runs, in order: backend unit tests, backend integration tests, frontend
-unit and integration tests, E2E tests, then the frontend regression specs in
+root) runs, in order: backend unit tests, backend integration tests, the
+Project CRUD and organization API regression specs, frontend unit and
+integration tests, E2E tests, then the frontend regression specs in
 `frontend/src/testing/regression`. It runs every step, prints a table of pass,
 fail and skip counts, and saves it to `reports/regression/summary.md` for the
 sprint regression log. It exits with an error if any step fails, skips tests,
