@@ -67,7 +67,7 @@ The remote project needs the repository's database schema before the seed files 
 
 1. Run **📊 Supabase: Check Migration Status** from **Tasks: Run Task**. Confirm that the CLI is checking the intended test project.
 2. If repository migrations are pending, run **📤 Supabase: Push Migrations**. This applies the repository migrations to the linked remote project. Review any CLI prompt carefully. If it proposes resetting or destructively replacing the database, cancel and ask the project owner before proceeding.
-3. Run **🌱 Supabase: Seed Remote (no reset)**. This task checks whether the expected fixtures are already present, runs missing or incorrect seed files, and checks the results. It should report each of these files as `SUCCEEDED` or `SKIPPED`:
+3. Run **🌱 Supabase: Seed Remote (no reset)**. This task executes each seed file against the linked remote project and reports the SQL execution result as `SUCCEEDED` or `ERROR`:
    - `001_users.sql`
    - `002_inbox_projects.sql`
    - `003_password_reset_tokens.sql`

@@ -368,7 +368,7 @@
       "type": "npm",
       "script": "supabase:reset:remote",
       "path": ".",
-      "detail": "Destructively resets the linked remote database without automatic seeds, then runs each remote seed and reports SUCCEEDED, SKIPPED, or ERROR. Confirm the linked project before running.",
+      "detail": "Destructively resets the linked remote database without automatic seeds, then runs each remote seed and reports SUCCEEDED or ERROR from SQL execution. Confirm the linked project before running.",
       "presentation": {
         "group": "supabase",
         "panel": "shared",
@@ -390,7 +390,7 @@
       "type": "npm",
       "script": "supabase:seed:remote",
       "path": ".",
-      "detail": "Runs SQL files from supabase/seeds against the linked remote database without resetting it. Each file reports SUCCEEDED, SKIPPED, or ERROR. Confirm the linked project before running.",
+      "detail": "Runs SQL files from supabase/seeds against the linked remote database without resetting it. Each file reports SUCCEEDED or ERROR from SQL execution. Confirm the linked project before running.",
       "presentation": {
         "group": "seed",
         "panel": "shared",
