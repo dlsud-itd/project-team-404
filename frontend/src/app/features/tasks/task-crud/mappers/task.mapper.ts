@@ -29,6 +29,8 @@ export function toTask(task: ApiTask): Task {
     dueDate: task.dueDate,
     deadline: task.deadline,
     recurrence,
+    recurrenceDays: recurrence === 'weekly' ? (task.recurrenceDays ?? []) : [],
+    recurrenceEndDate: recurrence === 'none' ? null : (task.recurrenceEndDate ?? null),
     completedAt: task.doneAt ?? (task.isDone ? task.updatedAt : null),
     sortOrder: 0,
     isRecurring: recurrence !== 'none',

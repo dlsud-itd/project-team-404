@@ -13,6 +13,8 @@ export function asApiTask(task: Task): ApiTask {
     dueDate: task.dueDate,
     deadline: task.deadline,
     recurrence: task.recurrence,
+    recurrenceDays: task.recurrenceDays,
+    recurrenceEndDate: task.recurrenceEndDate,
     isDone: task.completedAt !== null,
     doneAt: task.completedAt,
     createdAt: '2026-09-01T00:00:00.000Z',

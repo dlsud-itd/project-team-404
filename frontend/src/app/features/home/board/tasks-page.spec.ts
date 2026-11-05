@@ -40,6 +40,8 @@ const TASK: Task = {
   dueDate: '2026-10-02',
   deadline: null,
   recurrence: 'none',
+  recurrenceDays: [],
+  recurrenceEndDate: null,
   completedAt: null,
   sortOrder: 0,
   isRecurring: false,
@@ -124,6 +126,8 @@ describe('TasksPage', () => {
       dueDate: null,
       deadline: null,
       recurrence: 'none',
+      recurrenceDays: [],
+      recurrenceEndDate: null,
     });
     request.flush(asApiTask(created));
     fixture.detectChanges();

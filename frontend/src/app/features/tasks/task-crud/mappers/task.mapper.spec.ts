@@ -11,6 +11,8 @@ const API_TASK: ApiTask = {
   dueDate: '2026-10-02',
   deadline: '2026-10-05T15:59:59.999Z',
   recurrence: 'weekly',
+  recurrenceDays: [],
+  recurrenceEndDate: null,
   isDone: false,
   doneAt: null,
   createdAt: '2026-09-01T00:00:00.000Z',
@@ -29,6 +31,8 @@ describe('toTask', () => {
       dueDate: '2026-10-02',
       deadline: '2026-10-05T15:59:59.999Z',
       recurrence: 'weekly',
+      recurrenceDays: [],
+      recurrenceEndDate: null,
       completedAt: null,
       sortOrder: 0,
       isRecurring: true,
@@ -48,6 +52,8 @@ describe('toTask', () => {
   it.each(['none', null] as const)('treats a recurrence of %s as not repeating', (recurrence) => {
     expect(toTask({ ...API_TASK, recurrence })).toMatchObject({
       recurrence: 'none',
+      recurrenceDays: [],
+      recurrenceEndDate: null,
       isRecurring: false,
     });
   });
@@ -74,6 +80,8 @@ describe('toCreateTaskBody', () => {
         dueDate: '2026-10-02',
         deadline: '2026-10-03T15:59:59.999Z',
         recurrence: 'daily',
+        recurrenceDays: [],
+        recurrenceEndDate: null,
       }),
     ).toEqual({
       projectId: 10,
@@ -83,6 +91,8 @@ describe('toCreateTaskBody', () => {
       dueDate: '2026-10-02',
       deadline: '2026-10-03T15:59:59.999Z',
       recurrence: 'daily',
+      recurrenceDays: [],
+      recurrenceEndDate: null,
     });
   });
 });

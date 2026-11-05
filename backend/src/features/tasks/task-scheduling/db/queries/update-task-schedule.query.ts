@@ -1,5 +1,6 @@
 import { prisma } from '../../../../../shared/db/prisma.client';
 import type { TaskScheduleUpdateInput } from '../../task-scheduling.types';
+import { toRecurrenceData } from '../../utils/recurrence-data.util';
 
 export async function updateTaskSchedule(
   taskId: number,
@@ -26,9 +27,7 @@ export async function updateTaskSchedule(
       ...(input.deadline !== undefined
         ? { deadline: input.deadline ? new Date(input.deadline) : null }
         : {}),
-      ...(input.recurrence !== undefined
-        ? { recurrence: input.recurrence ?? 'none' }
-        : {}),
+      ...toRecurrenceData(input),
     },
   });
 

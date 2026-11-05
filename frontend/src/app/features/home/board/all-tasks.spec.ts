@@ -110,6 +110,8 @@ describe('AllTasks', () => {
       dueDate: '2026-10-30',
       deadline: null,
       recurrence: 'none',
+      recurrenceDays: [],
+      recurrenceEndDate: null,
     });
     request.flush(asApiTask(task(10, 'Write essay', 4, 2, '2026-10-30')));
     render();

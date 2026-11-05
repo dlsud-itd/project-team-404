@@ -7,7 +7,7 @@ import {
   instantToDate,
   userTimeZone,
 } from '../../../task-scheduling/utils/date-format.util';
-import { recurrenceLabel } from '../../../task-scheduling/utils/recurrence-label.util';
+import { recurrenceSummary } from '../../../task-scheduling/utils/recurrence-label.util';
 
 @Component({
   selector: 'app-task-item',
@@ -208,7 +208,10 @@ export class TaskItem {
   protected readonly priority = computed(
     () => TASK_PRIORITIES.find((p) => p.priorityId === this.task().priorityId)?.label,
   );
-  protected readonly repeats = computed(() => recurrenceLabel(this.task().recurrence));
+  protected readonly repeats = computed(() => {
+    const { recurrence, recurrenceDays, recurrenceEndDate } = this.task();
+    return recurrenceSummary(recurrence, recurrenceDays, recurrenceEndDate);
+  });
   protected readonly due = computed(() => {
     const { dueDate } = this.task();
     return dueDate ? formatDate(dueDate) : null;

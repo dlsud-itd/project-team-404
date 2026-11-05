@@ -63,13 +63,18 @@ export class TaskSchedulingService {
   async setRecurrence(
     task: TaskRecord,
     userId: string,
-    recurrence: 'none' | 'daily' | 'weekly' | 'monthly' | null
+    recurrence: 'none' | 'daily' | 'weekly' | 'monthly' | null,
+    rule: Pick<
+      TaskScheduleUpdateInput,
+      'recurrenceDays' | 'recurrenceEndDate'
+    > = {}
   ) {
     const updated = await this.dependencies.updateTaskSchedule(
       task.id,
       userId,
       {
         recurrence,
+        ...rule,
       }
     );
     if (!updated) {

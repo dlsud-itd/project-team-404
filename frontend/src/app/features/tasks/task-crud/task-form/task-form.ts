@@ -28,7 +28,11 @@ import {
 import { DeadlinePicker } from '../../task-scheduling/components/deadline-picker/deadline-picker';
 import { DueDatePicker } from '../../task-scheduling/components/due-date-picker/due-date-picker';
 import { RecurrencePicker } from '../../task-scheduling/components/recurrence-picker/recurrence-picker';
-import { DEFAULT_TASK_RECURRENCE } from '../../task-scheduling/types/task-scheduling.types';
+import {
+  DEFAULT_TASK_RECURRENCE,
+  type RecurrenceEnds,
+  type Weekday,
+} from '../../task-scheduling/types/task-scheduling.types';
 import {
   deadlineToInstant,
   instantToDate,
@@ -36,6 +40,7 @@ import {
 } from '../../task-scheduling/utils/date-format.util';
 import { deadlineAfterDueDateValidator } from '../../task-scheduling/validators/deadline-after-due-date.validator';
 import { recurrenceRequiresDueDateValidator } from '../../task-scheduling/validators/recurrence-requires-due-date.validator';
+import { recurrenceRuleValidator } from '../../task-scheduling/validators/recurrence-rule.validator';
 import { mapTaskError } from '../mappers/task-error.mapper';
 import { TaskService } from '../services/task.service';
 import { taskTitleValidator } from '../validators/task-title.validator';
@@ -119,8 +124,19 @@ export class TaskForm {
       dueDate: [''],
       deadline: [''],
       recurrence: [DEFAULT_TASK_RECURRENCE],
+      /** Weekly repeats only. */
+      recurrenceDays: [[] as Weekday[]],
+      recurrenceEnds: ['never' as RecurrenceEnds],
+      /** YYYY-MM-DD; only used when recurrenceEnds is 'date'. */
+      recurrenceEndDate: [''],
     },
-    { validators: [deadlineAfterDueDateValidator, recurrenceRequiresDueDateValidator] },
+    {
+      validators: [
+        deadlineAfterDueDateValidator,
+        recurrenceRequiresDueDateValidator,
+        recurrenceRuleValidator,
+      ],
+    },
   );
 
   constructor() {
@@ -207,6 +223,19 @@ export class TaskForm {
     if (field === 'deadline' && this.form.hasError('deadlineBeforeDueDate')) {
       return "The deadline can't be before the due date.";
     }
+    if (field === 'recurrenceDays') {
+      return this.form.hasError('recurrenceDaysRequired') ? 'Pick at least one day.' : null;
+    }
+    if (field === 'recurrenceEndDate') {
+      if (this.form.hasError('recurrenceEndBeforeDueDate')) {
+        return "The end date can't be before the due date.";
+      }
+      // Only once the user has tried to save, so picking "Date" doesn't flash an error.
+      const endDate = this.form.controls.recurrenceEndDate;
+      return this.form.hasError('recurrenceEndDateRequired') && endDate.touched
+        ? 'Pick the date the task stops repeating.'
+        : null;
+    }
 
     const control = this.form.controls[field];
     const errors = control.errors;
@@ -232,6 +261,9 @@ export class TaskForm {
       dueDate: task.dueDate ?? '',
       deadline: this.deadlineDate(task),
       recurrence: task.recurrence,
+      recurrenceDays: task.recurrenceDays,
+      recurrenceEnds: task.recurrenceEndDate ? 'date' : 'never',
+      recurrenceEndDate: task.recurrenceEndDate ?? '',
     });
   }
 
@@ -246,8 +278,18 @@ export class TaskForm {
 
   /** As the API expects them: trimmed, with empty optional fields as null. */
   private values(): CreateTaskRequest {
-    const { title, description, priorityId, projectId, dueDate, deadline, recurrence } =
-      this.form.getRawValue();
+    const {
+      title,
+      description,
+      priorityId,
+      projectId,
+      dueDate,
+      deadline,
+      recurrence,
+      recurrenceDays,
+      recurrenceEnds,
+      recurrenceEndDate,
+    } = this.form.getRawValue();
     return {
       // Left out if the Inbox never loaded; the server then uses the Inbox itself.
       projectId: projectId || undefined,
@@ -257,6 +299,10 @@ export class TaskForm {
       dueDate: dueDate || null,
       deadline: deadline ? deadlineToInstant(deadline, this.timeZone()) : null,
       recurrence,
+      // Hidden parts of the rule are dropped, e.g. the days after switching from weekly to daily.
+      recurrenceDays: recurrence === 'weekly' ? recurrenceDays : [],
+      recurrenceEndDate:
+        recurrence !== 'none' && recurrenceEnds === 'date' ? recurrenceEndDate || null : null,
     };
   }
 
@@ -276,7 +322,16 @@ export class TaskForm {
     if (this.form.controls.deadline.value !== this.deadlineDate(task)) {
       schedule.deadline = values.deadline;
     }
-    if (values.recurrence !== task.recurrence) schedule.recurrence = values.recurrence;
+    // The rule is saved as a whole, so any part changing sends all of it.
+    if (
+      values.recurrence !== task.recurrence ||
+      values.recurrenceDays.join() !== task.recurrenceDays.join() ||
+      values.recurrenceEndDate !== task.recurrenceEndDate
+    ) {
+      schedule.recurrence = values.recurrence;
+      schedule.recurrenceDays = values.recurrenceDays;
+      schedule.recurrenceEndDate = values.recurrenceEndDate;
+    }
     return changes;
   }
 

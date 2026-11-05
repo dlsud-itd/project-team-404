@@ -15,6 +15,8 @@ const STUDY: Task = {
   // Oct 6 in Asia/Manila (UTC+8), though still Oct 5 in UTC.
   deadline: '2026-10-05T17:00:00.000Z',
   recurrence: 'none',
+  recurrenceDays: [],
+  recurrenceEndDate: null,
   completedAt: null,
   sortOrder: 0,
   isRecurring: false,
@@ -84,6 +86,8 @@ describe('TaskItem', () => {
       ...BARE,
       completedAt: '2026-10-01T10:00:00Z',
       recurrence: 'weekly',
+      recurrenceDays: [],
+      recurrenceEndDate: null,
       isRecurring: true,
     });
 

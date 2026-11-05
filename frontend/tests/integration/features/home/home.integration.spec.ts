@@ -213,6 +213,8 @@ describe('Home integration (live dashboard APIs)', () => {
       dueDate: '2026-11-02',
       deadline: null,
       recurrence: 'none',
+      recurrenceDays: [],
+      recurrenceEndDate: null,
     });
     request.flush(asApiTask(task(10, 'Prepare release notes', 4, 2, '2026-11-02')));
     await settle();

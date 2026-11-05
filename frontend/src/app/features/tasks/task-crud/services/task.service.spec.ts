@@ -18,6 +18,8 @@ const STUDY: Task = {
   dueDate: '2026-10-02',
   deadline: '2026-10-02T15:59:59.999Z',
   recurrence: 'none',
+  recurrenceDays: [],
+  recurrenceEndDate: null,
   completedAt: null,
   sortOrder: 0,
   isRecurring: false,
@@ -136,6 +138,8 @@ describe('TaskService', () => {
       dueDate: null,
       deadline: null,
       recurrence: 'weekly',
+      recurrenceDays: [],
+      recurrenceEndDate: null,
     };
     let result: Task | undefined;
     service.create(request).subscribe((task) => (result = task));
@@ -150,6 +154,8 @@ describe('TaskService', () => {
       dueDate: null,
       deadline: null,
       recurrence: 'weekly',
+      recurrenceDays: [],
+      recurrenceEndDate: null,
     });
     req.flush(asApiTask(DOCS));
 

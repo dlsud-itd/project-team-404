@@ -14,4 +14,6 @@ export type TaskScheduleUpdateInput = {
   dueDate?: string | null;
   deadline?: string | null;
   recurrence?: 'none' | 'daily' | 'weekly' | 'monthly' | null;
+  recurrenceDays?: number[];
+  recurrenceEndDate?: string | null;
 };

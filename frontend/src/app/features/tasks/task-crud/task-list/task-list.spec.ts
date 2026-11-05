@@ -36,6 +36,8 @@ const base: Task = {
   dueDate: null,
   deadline: null,
   recurrence: 'none',
+  recurrenceDays: [],
+  recurrenceEndDate: null,
   completedAt: null,
   sortOrder: 0,
   isRecurring: false,

@@ -18,6 +18,10 @@ model Task {
   dueDate       DateTime?       @db.Date @map("due_date")
   deadline      DateTime?       @db.Timestamptz(6) @map("deadline")
   recurrence    TaskRecurrence? @default(none) @map("recurrence")
+  /// Weekdays a weekly task repeats on: 0 = Sunday … 6 = Saturday. Empty for other repeats.
+  recurrenceDays    Int[]       @default([]) @db.SmallInt @map("recurrence_days")
+  /// The last day a repeating task may fall on; null repeats forever.
+  recurrenceEndDate DateTime?   @db.Date @map("recurrence_end_date")
   isDone        Boolean         @default(false) @map("is_done")
   doneAt        DateTime?       @db.Timestamptz(6) @map("done_at")
   createdAt     DateTime        @default(now()) @db.Timestamptz(6) @map("created_at")

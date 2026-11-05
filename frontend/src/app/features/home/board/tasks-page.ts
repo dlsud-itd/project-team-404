@@ -154,6 +154,8 @@ export class TasksPage {
         dueDate: dueDate || null,
         deadline: null,
         recurrence: 'none',
+        recurrenceDays: [],
+        recurrenceEndDate: null,
       })
       .pipe(
         finalize(() => this.submitting.set(false)),

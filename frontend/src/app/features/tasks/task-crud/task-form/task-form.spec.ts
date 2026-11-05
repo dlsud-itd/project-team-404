@@ -44,6 +44,8 @@ const STUDY: Task = {
   // The end of Oct 5 for a user in Asia/Manila (UTC+8).
   deadline: '2026-10-05T15:59:59.999Z',
   recurrence: 'none',
+  recurrenceDays: [],
+  recurrenceEndDate: null,
   completedAt: null,
   sortOrder: 0,
   isRecurring: false,
@@ -73,6 +75,24 @@ describe('TaskForm', () => {
     field.value = input;
     field.dispatchEvent(new Event('input'));
     field.dispatchEvent(new Event('blur'));
+    harness.detectChanges();
+  }
+
+  const dayNames = () =>
+    [...page().querySelectorAll('.day')].map((d) => d.textContent?.trim() ?? '');
+  const checkedDays = () =>
+    [...page().querySelectorAll('.day')]
+      .filter((d) => d.querySelector('input')!.checked)
+      .map((d) => d.textContent?.trim() ?? '');
+  const endsLabels = () =>
+    [...page().querySelectorAll('.end')].map((l) => l.textContent?.trim() ?? '');
+  const endsRadio = (label: string) =>
+    [...page().querySelectorAll('.end')]
+      .find((l) => l.textContent?.trim() === label)!
+      .querySelector('input')!;
+
+  function toggleDay(name: string): void {
+    el<HTMLInputElement>(`.day input[aria-label="${name}"]`).click();
     harness.detectChanges();
   }
 
@@ -205,6 +225,8 @@ describe('TaskForm', () => {
         dueDate: null,
         deadline: null,
         recurrence: 'none',
+        recurrenceDays: [],
+        recurrenceEndDate: null,
       });
       req.flush(TASK_REPLY);
     });
@@ -227,7 +249,115 @@ describe('TaskForm', () => {
         dueDate: '2026-10-02',
         deadline: '2026-10-03T15:59:59.999Z',
         recurrence: 'weekly',
+        // Oct 2, 2026 is a Friday: a new weekly repeat starts on the due date's weekday.
+        recurrenceDays: [5],
+        recurrenceEndDate: null,
       });
+    });
+
+    it('repeats weekly on the days the user ticks, Sunday to Saturday', () => {
+      type('task-title', 'Gym');
+      type('task-due-date', '2026-10-02');
+      repeat('Weekly');
+
+      expect(dayNames()).toEqual(['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']);
+      expect(checkedDays()).toEqual(['Fri']);
+
+      toggleDay('Monday');
+      toggleDay('Wednesday');
+      toggleDay('Friday');
+      expect(checkedDays()).toEqual(['Mon', 'Wed']);
+      expect(text('.summary')).toBe('Repeats every week on Mon and Wed');
+      submit();
+
+      expect(http.expectOne(URL).request.body).toMatchObject({
+        recurrence: 'weekly',
+        recurrenceDays: [1, 3],
+        recurrenceEndDate: null,
+      });
+    });
+
+    it('shows the weekdays only for a weekly repeat, and drops them for another', () => {
+      type('task-title', 'Gym');
+      type('task-due-date', '2026-10-02');
+      expect(dayNames()).toEqual([]);
+
+      repeat('Weekly');
+      toggleDay('Tuesday');
+      repeat('Daily');
+      expect(dayNames()).toEqual([]);
+      submit();
+
+      expect(http.expectOne(URL).request.body).toMatchObject({
+        recurrence: 'daily',
+        recurrenceDays: [],
+      });
+    });
+
+    it('needs at least one day for a weekly repeat', () => {
+      type('task-title', 'Gym');
+      type('task-due-date', '2026-10-02');
+      repeat('Weekly');
+      toggleDay('Friday');
+
+      expect(messageFor('task-recurrence-days')).toBe('Pick at least one day.');
+      submit();
+      http.expectNone(URL);
+    });
+
+    it('offers Never and Date under Ends, and never ends by default', () => {
+      type('task-title', 'Gym');
+      type('task-due-date', '2026-10-02');
+      expect(endsLabels()).toEqual([]);
+
+      repeat('Weekly');
+      expect(endsLabels()).toEqual(['Never', 'Date']);
+      expect(endsRadio('Never').checked).toBe(true);
+      expect(el('#task-recurrence-end-date')).toBeNull();
+      submit();
+
+      expect(http.expectOne(URL).request.body).toMatchObject({ recurrenceEndDate: null });
+    });
+
+    it('ends on the chosen date', () => {
+      type('task-title', 'Gym');
+      type('task-due-date', '2026-10-02');
+      repeat('Weekly');
+      endsRadio('Date').click();
+      harness.detectChanges();
+
+      expect(el<HTMLInputElement>('#task-recurrence-end-date').min).toBe('2026-10-02');
+      type('task-recurrence-end-date', '2026-12-18');
+      expect(text('.summary')).toMatch(/^Repeats every week on Fri, until Dec 18(, 2026)?$/);
+      submit();
+
+      expect(http.expectOne(URL).request.body).toMatchObject({
+        recurrence: 'weekly',
+        recurrenceDays: [5],
+        recurrenceEndDate: '2026-12-18',
+      });
+    });
+
+    it('needs an end date once Date is chosen, no earlier than the due date', () => {
+      type('task-title', 'Gym');
+      type('task-due-date', '2026-10-02');
+      repeat('Daily');
+      endsRadio('Date').click();
+      harness.detectChanges();
+
+      expect(messageFor('task-recurrence-end-date')).toBe('');
+      submit();
+      http.expectNone(URL);
+      expect(messageFor('task-recurrence-end-date')).toBe(
+        'Pick the date the task stops repeating.',
+      );
+
+      type('task-recurrence-end-date', '2026-10-01');
+      expect(messageFor('task-recurrence-end-date')).toBe(
+        "The end date can't be before the due date.",
+      );
+      submit();
+      http.expectNone(URL);
     });
 
     it('reports the new task, without leaving the page', async () => {
@@ -457,17 +587,53 @@ describe('TaskForm', () => {
       submit();
 
       const set = http.expectOne(`${URL}/1/recurrence`);
-      expect(set.request.body).toEqual({ recurrence: 'weekly' });
-      set.flush({ ...TASK_REPLY, recurrence: 'weekly' });
+      expect(set.request.body).toEqual({
+        recurrence: 'weekly',
+        recurrenceDays: [5],
+        recurrenceEndDate: null,
+      });
+      set.flush({ ...TASK_REPLY, recurrence: 'weekly', recurrenceDays: [5] });
       harness.detectChanges();
-      expect(text('.summary')).toBe('Repeats every week');
+      expect(text('.summary')).toBe('Repeats every week on Fri');
 
       repeat('Never');
       submit();
 
       const clear = http.expectOne(`${URL}/1/recurrence`);
-      expect(clear.request.body).toEqual({ recurrence: 'none' });
+      expect(clear.request.body).toEqual({
+        recurrence: 'none',
+        recurrenceDays: [],
+        recurrenceEndDate: null,
+      });
       clear.flush(TASK_REPLY);
+    });
+
+    it("shows a weekly task's days and end date, and saves a change to either", async () => {
+      await open({
+        ...STUDY,
+        recurrence: 'weekly',
+        isRecurring: true,
+        recurrenceDays: [2, 4],
+        recurrenceEndDate: '2026-12-31',
+      });
+
+      expect(checkedDays()).toEqual(['Tue', 'Thu']);
+      expect(endsRadio('Date').checked).toBe(true);
+      expect(value('task-recurrence-end-date')).toBe('2026-12-31');
+      expect(saveButton().disabled).toBe(true);
+
+      toggleDay('Saturday');
+      endsRadio('Never').click();
+      harness.detectChanges();
+      submit();
+
+      const set = http.expectOne(`${URL}/1/recurrence`);
+      expect(set.request.body).toEqual({
+        recurrence: 'weekly',
+        recurrenceDays: [2, 4, 6],
+        recurrenceEndDate: null,
+      });
+      set.flush({ ...TASK_REPLY, recurrence: 'weekly', recurrenceDays: [2, 4, 6] });
     });
 
     it('saves details first, then clears the schedule with nulls', async () => {

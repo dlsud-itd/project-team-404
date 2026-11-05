@@ -80,6 +80,8 @@ export class AllTasks {
         dueDate: due || null,
         deadline: null,
         recurrence: 'none',
+        recurrenceDays: [],
+        recurrenceEndDate: null,
       })
       .pipe(
         finalize(() => this.submitting.set(false)),

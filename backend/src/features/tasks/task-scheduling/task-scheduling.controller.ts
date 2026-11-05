@@ -75,11 +75,16 @@ export function createTaskSchedulingController(
     setRecurrence: async (req, res, next) => {
       try {
         const task = res.locals.ownedTask as TaskRecord;
-        const { recurrence } = res.locals.validated as RecurrenceRuleInput;
+        const { recurrence, recurrenceDays, recurrenceEndDate } = res.locals
+          .validated as RecurrenceRuleInput;
         const result = await service.setRecurrence(
           task,
           req.auth!.userId,
-          recurrence ?? null
+          recurrence ?? null,
+          {
+            ...(recurrenceDays !== undefined ? { recurrenceDays } : {}),
+            ...(recurrenceEndDate !== undefined ? { recurrenceEndDate } : {}),
+          }
         );
         res.status(200).json(result);
       } catch (error) {
