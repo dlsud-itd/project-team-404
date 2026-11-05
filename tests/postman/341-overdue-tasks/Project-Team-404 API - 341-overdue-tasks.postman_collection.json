@@ -1,0 +1,826 @@
+{
+  "info": {
+    "_postman_id": "34100000-0000-4000-8000-000000000001",
+    "name": "Project-Team-404 API - 341-overdue-tasks",
+    "description": "Overdue dashboard API checks. Setup creates disposable tasks and a fresh empty-result account; run only against a dedicated test database.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "341-overdue-tasks",
+      "description": "Run in order. Setup creates relative-deadline fixtures, followed by isolated behavior cases and timezone restoration.",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "let runId = pm.environment.get('runId');",
+              "if (!runId) { runId = pm.variables.replaceIn('{{$guid}}'); pm.environment.set('runId', runId); }",
+              "if (pm.environment.get('dateRunId') !== runId) {",
+              "  const now = new Date();",
+              "  const setOffset = (key, milliseconds) => pm.environment.set(key, new Date(now.getTime() + milliseconds).toISOString());",
+              "  setOffset('deadlineOldest', -3 * 60 * 60 * 1000);",
+              "  const todayParts = new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Manila', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(now);",
+              "  const localToday = todayParts.find((part) => part.type === 'year').value + '-' + todayParts.find((part) => part.type === 'month').value + '-' + todayParts.find((part) => part.type === 'day').value;",
+              "  const localMidnight = new Date(localToday + 'T00:00:00+08:00');",
+              "  pm.environment.set('deadlineEarlierToday', new Date(Math.max(now.getTime() - 60 * 1000, localMidnight.getTime())).toISOString());",
+              "  setOffset('deadlineFuture', 60 * 60 * 1000);",
+              "  setOffset('deadlineCompleted', -20 * 60 * 1000);",
+              "  setOffset('deadlineArchived', -15 * 60 * 1000);",
+              "  setOffset('deadlineDeleted', -10 * 60 * 1000);",
+              "  setOffset('deadlineShared', -5 * 60 * 1000);",
+              "  pm.environment.set('dateRunId', runId);",
+              "}"
+            ]
+          }
+        }
+      ],
+      "item": [
+        {
+          "name": "Login - James (token, Asia/Manila)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test('Response contains James and a token', function () { pm.expect(body.token).to.be.a('string').and.not.empty; pm.expect(body.user.timezone).to.equal('Asia/Manila'); });",
+                  "pm.environment.set('token', body.token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"identifier\": \"james@example.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": "{{baseUrl}}/auth/login"
+          }
+        },
+        {
+          "name": "Login - Harvey (tokenB)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test('Response contains Harvey and a token', function () { pm.expect(body.token).to.be.a('string').and.not.empty; pm.expect(body.user.email).to.equal('harvey@example.com'); });",
+                  "pm.environment.set('tokenB', body.token);",
+                  "pm.environment.set('harveyOriginalTimezone', body.user.timezone || 'Asia/Manila');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"identifier\": \"harvey@example.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": "{{baseUrl}}/auth/login"
+          }
+        },
+        {
+          "name": "Setup - Set Harvey to far-west timezone",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test('Profile uses the configured timezone', function () { pm.expect(body.timezone || body.user?.timezone).to.equal(pm.environment.get('westTimeZone')); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{tokenB}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"timezone\": \"{{westTimeZone}}\"\n}"
+            },
+            "url": "{{baseUrl}}/auth/profile"
+          }
+        },
+        {
+          "name": "Setup - Create archived project",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 201', function () { pm.response.to.have.status(201); });",
+                  "const body = pm.response.json();",
+                  "pm.test('Project response contains an ID', function () { pm.expect(body.id).to.be.a('number'); });",
+                  "pm.environment.set('archivedProjectId', String(body.id));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Overdue 341 archived {{runId}}\",\n  \"description\": \"Overdue exclusion fixture\",\n  \"color\": \"#ef4444\"\n}"
+            },
+            "url": "{{baseUrl}}/projects"
+          }
+        },
+        {
+          "name": "Setup - Create oldest overdue task",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 201', function () { pm.response.to.have.status(201); });",
+                  "const body = pm.response.json();",
+                  "pm.test('Task has the generated overdue deadline', function () { pm.expect(body.deadline).to.equal(pm.environment.get('deadlineOldest')); });",
+                  "pm.environment.set('oldestTaskId', String(body.id));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Overdue 341 oldest {{runId}}\",\n  \"deadline\": \"{{deadlineOldest}}\"\n}"
+            },
+            "url": "{{baseUrl}}/tasks"
+          }
+        },
+        {
+          "name": "Setup - Create task due earlier today",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 201', function () { pm.response.to.have.status(201); });",
+                  "const body = pm.response.json();",
+                  "pm.test('Task deadline is earlier than the current instant', function () { pm.expect(new Date(body.deadline).getTime()).to.be.below(Date.now()); });",
+                  "pm.environment.set('earlierTodayTaskId', String(body.id));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Overdue 341 earlier today {{runId}}\",\n  \"deadline\": \"{{deadlineEarlierToday}}\"\n}"
+            },
+            "url": "{{baseUrl}}/tasks"
+          }
+        },
+        {
+          "name": "Setup - Create task due later today or in future",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 201', function () { pm.response.to.have.status(201); });",
+                  "const body = pm.response.json();",
+                  "pm.test('Task deadline is in the future', function () { pm.expect(new Date(body.deadline).getTime()).to.be.above(Date.now()); });",
+                  "pm.environment.set('futureTaskId', String(body.id));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Overdue 341 future {{runId}}\",\n  \"deadline\": \"{{deadlineFuture}}\"\n}"
+            },
+            "url": "{{baseUrl}}/tasks"
+          }
+        },
+        {
+          "name": "Setup - Create completed overdue task",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 201', function () { pm.response.to.have.status(201); });",
+                  "const body = pm.response.json();",
+                  "pm.test('Task is completed with a past deadline', function () { pm.expect(body.isDone).to.equal(true); pm.expect(body.deadline).to.equal(pm.environment.get('deadlineCompleted')); });",
+                  "pm.environment.set('completedTaskId', String(body.id));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Overdue 341 completed {{runId}}\",\n  \"deadline\": \"{{deadlineCompleted}}\",\n  \"isDone\": true\n}"
+            },
+            "url": "{{baseUrl}}/tasks"
+          }
+        },
+        {
+          "name": "Setup - Create task in archived project",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 201', function () { pm.response.to.have.status(201); });",
+                  "const body = pm.response.json();",
+                  "pm.test('Task belongs to the archive fixture project', function () { pm.expect(body.projectId).to.equal(Number(pm.environment.get('archivedProjectId'))); });",
+                  "pm.environment.set('archivedTaskId', String(body.id));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Overdue 341 archived task {{runId}}\",\n  \"projectId\": {{archivedProjectId}},\n  \"deadline\": \"{{deadlineArchived}}\"\n}"
+            },
+            "url": "{{baseUrl}}/tasks"
+          }
+        },
+        {
+          "name": "Setup - Archive project",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test('Project is archived', function () { pm.expect(body.isArchived).to.equal(true); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"isArchived\": true\n}" },
+            "url": "{{baseUrl}}/projects/{{archivedProjectId}}/archive"
+          }
+        },
+        {
+          "name": "Setup - Create task to soft-delete",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 201', function () { pm.response.to.have.status(201); });",
+                  "const body = pm.response.json();",
+                  "pm.test('Task has a past deadline', function () { pm.expect(new Date(body.deadline).getTime()).to.be.below(Date.now()); });",
+                  "pm.environment.set('deletedTaskId', String(body.id));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Overdue 341 deleted {{runId}}\",\n  \"deadline\": \"{{deadlineDeleted}}\"\n}"
+            },
+            "url": "{{baseUrl}}/tasks"
+          }
+        },
+        {
+          "name": "Setup - Soft-delete task",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test('Delete response is successful', function () { pm.expect(body.message).to.equal('Task deleted successfully'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/tasks/{{deletedTaskId}}"
+          }
+        },
+        {
+          "name": "Setup - Create task without deadline",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 201', function () { pm.response.to.have.status(201); });",
+                  "const body = pm.response.json();",
+                  "pm.test('Task has no deadline', function () { pm.expect(body.deadline).to.equal(null); });",
+                  "pm.environment.set('undatedTaskId', String(body.id));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Overdue 341 no deadline {{runId}}\"\n}"
+            },
+            "url": "{{baseUrl}}/tasks"
+          }
+        },
+        {
+          "name": "Setup - Create Harvey-owned task for timezone case",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 201', function () { pm.response.to.have.status(201); });",
+                  "const body = pm.response.json();",
+                  "pm.test('Harvey task uses the shared deadline instant', function () { pm.expect(body.deadline).to.equal(pm.environment.get('deadlineShared')); });",
+                  "pm.environment.set('harveyTaskId', String(body.id));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{tokenB}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Overdue 341 Harvey shared {{runId}}\",\n  \"deadline\": \"{{deadlineShared}}\"\n}"
+            },
+            "url": "{{baseUrl}}/tasks"
+          }
+        },
+        {
+          "name": "Setup - Create James task at the same deadline instant",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 201', function () { pm.response.to.have.status(201); });",
+                  "const body = pm.response.json();",
+                  "pm.test('James task uses the same absolute deadline instant', function () { pm.expect(body.deadline).to.equal(pm.environment.get('deadlineShared')); });",
+                  "pm.environment.set('manilaSharedTaskId', String(body.id));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Overdue 341 James shared {{runId}}\",\n  \"deadline\": \"{{deadlineShared}}\"\n}"
+            },
+            "url": "{{baseUrl}}/tasks"
+          }
+        },
+        {
+          "name": "Setup - Register a clean empty-result account",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const suffix = pm.environment.get('runId').replace(/-/g, '').slice(0, 10);",
+                  "pm.environment.set('emptyUsername', 'ovd' + suffix);",
+                  "pm.environment.set('emptyEmail', 'overdue.' + suffix + '@example.com');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 201', function () { pm.response.to.have.status(201); });",
+                  "const body = pm.response.json();",
+                  "pm.test('Registration returns a user and inbox', function () { pm.expect(body.userId).to.be.a('string').and.not.empty; pm.expect(body.inboxProjectId).to.be.a('number'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{emptyUsername}}\",\n  \"email\": \"{{emptyEmail}}\",\n  \"password\": \"PostmanPass123\",\n  \"confirmPassword\": \"PostmanPass123\",\n  \"timezone\": \"Asia/Manila\"\n}"
+            },
+            "url": "{{baseUrl}}/auth/signup"
+          }
+        },
+        {
+          "name": "Setup - Login empty-result account",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test('Login returns a token', function () { pm.expect(body.token).to.be.a('string').and.not.empty; });",
+                  "pm.environment.set('emptyToken', body.token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"identifier\": \"{{emptyEmail}}\",\n  \"password\": \"PostmanPass123\"\n}"
+            },
+            "url": "{{baseUrl}}/auth/login"
+          }
+        },
+        {
+          "name": "Case - Earlier today deadline is returned",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json(); const task = body.tasks.find((item) => String(item.id) === pm.environment.get('earlierTodayTaskId'));",
+                  "pm.test('Response has the documented tasks array and earlier deadline', function () { pm.expect(body.tasks).to.be.an('array'); pm.expect(task).to.be.an('object'); pm.expect(new Date(task.deadline).getTime()).to.be.below(Date.now()); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/dashboard/overdue-tasks"
+          }
+        },
+        {
+          "name": "Case - Later today or future deadline is excluded",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test('Response has the tasks array and omits the future task', function () { pm.expect(body.tasks).to.be.an('array'); pm.expect(body.tasks.some((item) => String(item.id) === pm.environment.get('futureTaskId'))).to.equal(false); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/dashboard/overdue-tasks"
+          }
+        },
+        {
+          "name": "Case - Results are ordered oldest deadline first",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json(); const ids = body.tasks.map((item) => String(item.id));",
+                  "pm.test('Both ordered fixture tasks appear in ascending deadline order', function () { pm.expect(body.tasks).to.be.an('array'); pm.expect(ids.indexOf(pm.environment.get('oldestTaskId'))).to.be.at.least(0); pm.expect(ids.indexOf(pm.environment.get('oldestTaskId'))).to.be.below(ids.indexOf(pm.environment.get('earlierTodayTaskId'))); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/dashboard/overdue-tasks"
+          }
+        },
+        {
+          "name": "Case - Completed overdue task is excluded",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test('Completed task is absent from the tasks array', function () { pm.expect(body.tasks).to.be.an('array'); pm.expect(body.tasks.some((item) => String(item.id) === pm.environment.get('completedTaskId'))).to.equal(false); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/dashboard/overdue-tasks"
+          }
+        },
+        {
+          "name": "Case - Task in archived project is excluded",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test('Archived-project task is absent', function () { pm.expect(body.tasks).to.be.an('array'); pm.expect(body.tasks.some((item) => String(item.id) === pm.environment.get('archivedTaskId'))).to.equal(false); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/dashboard/overdue-tasks"
+          }
+        },
+        {
+          "name": "Case - Soft-deleted task is excluded",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test('Soft-deleted task is absent', function () { pm.expect(body.tasks).to.be.an('array'); pm.expect(body.tasks.some((item) => String(item.id) === pm.environment.get('deletedTaskId'))).to.equal(false); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/dashboard/overdue-tasks"
+          }
+        },
+        {
+          "name": "Case - Task without deadline is excluded",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test('Undated task is absent', function () { pm.expect(body.tasks).to.be.an('array'); pm.expect(body.tasks.some((item) => String(item.id) === pm.environment.get('undatedTaskId'))).to.equal(false); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/dashboard/overdue-tasks"
+          }
+        },
+        {
+          "name": "Case - Only caller tasks are returned",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json(); const ids = body.tasks.map((item) => String(item.id));",
+                  "pm.test('James task appears and Harvey task does not', function () { pm.expect(ids).to.include(pm.environment.get('earlierTodayTaskId')); pm.expect(ids).not.to.include(pm.environment.get('harveyTaskId')); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/dashboard/overdue-tasks"
+          }
+        },
+        {
+          "name": "Case - Same instant is overdue for Manila account",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json(); const task = body.tasks.find((item) => String(item.id) === pm.environment.get('manilaSharedTaskId'));",
+                  "pm.test('Manila account includes the shared past instant', function () { pm.expect(task).to.be.an('object'); pm.expect(task.deadline).to.equal(pm.environment.get('deadlineShared')); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/dashboard/overdue-tasks"
+          }
+        },
+        {
+          "name": "Case - Same instant is overdue for far-west account",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json(); const task = body.tasks.find((item) => String(item.id) === pm.environment.get('harveyTaskId'));",
+                  "pm.test('Far-west account includes the identical past instant', function () { pm.expect(task).to.be.an('object'); pm.expect(task.deadline).to.equal(pm.environment.get('deadlineShared')); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{tokenB}}" }
+            ],
+            "url": "{{baseUrl}}/dashboard/overdue-tasks"
+          }
+        },
+        {
+          "name": "Case - User with no overdue tasks gets empty result",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test('Response uses the documented empty tasks shape', function () { pm.expect(body).to.have.property('tasks').that.is.an('array').and.is.empty; });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{emptyToken}}" }
+            ],
+            "url": "{{baseUrl}}/dashboard/overdue-tasks"
+          }
+        },
+        {
+          "name": "Case - Invalid query value returns 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 400', function () { pm.response.to.have.status(400); });",
+                  "const body = pm.response.json();",
+                  "pm.test('Validation response contains an error', function () { pm.expect(body.error).to.be.a('string').and.not.empty; });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/dashboard/overdue-tasks?days=1"
+          }
+        },
+        {
+          "name": "Case - Route without token returns 401",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 401', function () { pm.response.to.have.status(401); });",
+                  "const body = pm.response.json();",
+                  "pm.test('Unauthorized response has the standard error shape', function () { pm.expect(body.error).to.equal('Token invalid or expired'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/dashboard/overdue-tasks"
+          }
+        },
+        {
+          "name": "Cleanup - Restore Harvey timezone",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test('Harvey timezone is restored', function () { pm.expect(body.timezone || body.user?.timezone).to.equal(pm.environment.get('harveyOriginalTimezone')); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{tokenB}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"timezone\": \"{{harveyOriginalTimezone}}\"\n}"
+            },
+            "url": "{{baseUrl}}/auth/profile"
+          }
+        }
+      ]
+    }
+  ]
+}
