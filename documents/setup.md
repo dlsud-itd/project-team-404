@@ -44,6 +44,11 @@ Open the repository root folder in VS Code. Open the Command Palette with
    to the linked Supabase project.
 6. Run **`🚀 Dev: Start All`** to start the frontend and API.
 
+The seed files include 12 demo accounts that share the password `password123`
+and generate projects, tasks, labels, and related test data. Only run the remote
+seed task against a dedicated test project; never seed production or a shared
+development database.
+
 The Angular app is available at `http://localhost:4200`; the Express API is at
 `http://localhost:3000`.
 
