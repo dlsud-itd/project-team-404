@@ -178,3 +178,136 @@ set
   email = excluded.email,
   timezone = excluded.timezone,
   updated_at = now();
+
+with additional_users(username, email, timezone) as (
+  values
+    ('olivia', 'olivia@example.com', 'America/Los_Angeles'),
+    ('ethan', 'ethan@example.com', 'America/New_York'),
+    ('mia', 'mia@example.com', 'America/Chicago'),
+    ('rafael', 'rafael@example.com', 'America/Sao_Paulo'),
+    ('grace', 'grace@example.com', 'Europe/London'),
+    ('felix', 'felix@example.com', 'Europe/Berlin'),
+    ('amina', 'amina@example.com', 'Africa/Nairobi'),
+    ('priya', 'priya@example.com', 'Asia/Kolkata'),
+    ('kenji', 'kenji@example.com', 'Asia/Tokyo'),
+    ('sofia', 'sofia@example.com', 'Asia/Manila'),
+    ('ava', 'ava@example.com', 'Australia/Sydney'),
+    ('noah', 'noah@example.com', 'Pacific/Auckland')
+)
+insert into auth.users (
+  id,
+  instance_id,
+  aud,
+  role,
+  email,
+  encrypted_password,
+  email_confirmed_at,
+  confirmation_token,
+  recovery_token,
+  email_change_token_new,
+  email_change,
+  phone_change_token,
+  phone_change,
+  email_change_token_current,
+  reauthentication_token,
+  raw_app_meta_data,
+  raw_user_meta_data,
+  created_at,
+  updated_at,
+  is_sso_user,
+  is_anonymous
+)
+select
+  gen_random_uuid(),
+  '00000000-0000-0000-0000-000000000000',
+  'authenticated',
+  'authenticated',
+  additional_users.email,
+  extensions.crypt('password123', extensions.gen_salt('bf')),
+  now(),
+  '',
+  '',
+  '',
+  '',
+  '',
+  '',
+  '',
+  '',
+  '{"provider":"email","providers":["email"]}'::jsonb,
+  jsonb_build_object('username', additional_users.username),
+  now(),
+  now(),
+  false,
+  false
+from additional_users
+on conflict do nothing;
+
+with additional_users(username, email, timezone) as (
+  values
+    ('olivia', 'olivia@example.com', 'America/Los_Angeles'),
+    ('ethan', 'ethan@example.com', 'America/New_York'),
+    ('mia', 'mia@example.com', 'America/Chicago'),
+    ('rafael', 'rafael@example.com', 'America/Sao_Paulo'),
+    ('grace', 'grace@example.com', 'Europe/London'),
+    ('felix', 'felix@example.com', 'Europe/Berlin'),
+    ('amina', 'amina@example.com', 'Africa/Nairobi'),
+    ('priya', 'priya@example.com', 'Asia/Kolkata'),
+    ('kenji', 'kenji@example.com', 'Asia/Tokyo'),
+    ('sofia', 'sofia@example.com', 'Asia/Manila'),
+    ('ava', 'ava@example.com', 'Australia/Sydney'),
+    ('noah', 'noah@example.com', 'Pacific/Auckland')
+)
+insert into auth.identities (
+  provider_id,
+  user_id,
+  identity_data,
+  provider,
+  last_sign_in_at,
+  created_at,
+  updated_at
+)
+select
+  auth_user.id::text,
+  auth_user.id,
+  jsonb_build_object(
+    'sub', auth_user.id::text,
+    'email', auth_user.email,
+    'email_verified', true
+  ),
+  'email',
+  now(),
+  now(),
+  now()
+from additional_users
+join auth.users as auth_user on auth_user.email = additional_users.email
+on conflict (provider_id, provider) do update
+set
+  user_id = excluded.user_id,
+  identity_data = excluded.identity_data,
+  updated_at = excluded.updated_at;
+
+with additional_users(username, email, timezone) as (
+  values
+    ('olivia', 'olivia@example.com', 'America/Los_Angeles'),
+    ('ethan', 'ethan@example.com', 'America/New_York'),
+    ('mia', 'mia@example.com', 'America/Chicago'),
+    ('rafael', 'rafael@example.com', 'America/Sao_Paulo'),
+    ('grace', 'grace@example.com', 'Europe/London'),
+    ('felix', 'felix@example.com', 'Europe/Berlin'),
+    ('amina', 'amina@example.com', 'Africa/Nairobi'),
+    ('priya', 'priya@example.com', 'Asia/Kolkata'),
+    ('kenji', 'kenji@example.com', 'Asia/Tokyo'),
+    ('sofia', 'sofia@example.com', 'Asia/Manila'),
+    ('ava', 'ava@example.com', 'Australia/Sydney'),
+    ('noah', 'noah@example.com', 'Pacific/Auckland')
+)
+insert into public.tbl_user (user_id, username, email, timezone)
+select auth_user.id, additional_users.username, additional_users.email, additional_users.timezone
+from additional_users
+join auth.users as auth_user on auth_user.email = additional_users.email
+on conflict (user_id) do update
+set
+  username = excluded.username,
+  email = excluded.email,
+  timezone = excluded.timezone,
+  updated_at = now();
