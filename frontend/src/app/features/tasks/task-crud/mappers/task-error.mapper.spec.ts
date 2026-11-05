@@ -24,12 +24,16 @@ describe('mapTaskError', () => {
     });
   });
 
-  it('keeps a 400 message that names no field, without a field', () => {
-    expect(mapTaskError(httpError(400, { error: 'Invalid request' }))).toEqual({
-      message: 'Invalid request',
-      notFound: false,
-    });
-  });
+  it.each(['Invalid request', 'Invalid task update'])(
+    'keeps the 400 message "%s", which names no field, without a field',
+    (message) => {
+      // "update" contains "date", but it is not about the due date.
+      expect(mapTaskError(httpError(400, { error: message }))).toEqual({
+        message,
+        notFound: false,
+      });
+    },
+  );
 
   it('falls back to a validation message when a 400 has no usable body', () => {
     for (const body of [null, 'text', { error: '' }, { error: 42 }]) {

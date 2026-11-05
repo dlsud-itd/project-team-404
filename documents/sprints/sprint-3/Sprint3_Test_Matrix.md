@@ -72,14 +72,28 @@ Implementation: `backend/tests/integration/tasks.integration.test.ts`. Run with 
 
 ### 2.2 Frontend Integration Tests
 
-| ID        | Test Case                                             | Expected Result                                                                          | Status  |
-| --------- | ----------------------------------------------------- | ---------------------------------------------------------------------------------------- | ------- |
-| FE-SCH-01 | Set a scheduled date while creating or editing a task | The selected date is included in the task request and displayed after success.           | Blocked |
-| FE-SCH-02 | Set, change, or clear a due date                      | The expected date is submitted and the displayed task updates after success.             | Blocked |
-| FE-SCH-03 | Submit an invalid date or schedule value              | Inline validation is shown and no invalid request is sent.                               | Blocked |
-| FE-SCH-04 | View upcoming and overdue task groups                 | Tasks are displayed in the appropriate group using the returned scheduling data.         | Blocked |
-| FE-SCH-05 | Configure, change, or remove task recurrence          | The recurrence selection is sent to the service and reflected in the task after success. | Blocked |
-| FE-SCH-06 | Handle scheduling request failure                     | A visible error is shown and the previously saved schedule remains displayed.            | Blocked |
+| ID        | Test Case                                             | Expected Result                                                                                                                                      | Status  |
+| --------- | ----------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- | ------- |
+| FE-SCH-01 | Set a scheduled date while creating or editing a task | The selected date is included in the task request and displayed after success.                                                                       | Failing |
+| FE-SCH-02 | Set, change, or clear a due date                      | The expected date is submitted and the displayed task updates after success.                                                                         | Passing |
+| FE-SCH-03 | Submit an invalid date or schedule value              | Inline validation is shown and no invalid request is sent.                                                                                           | Passing |
+| FE-SCH-04 | View upcoming and overdue task groups                 | Tasks are displayed in the appropriate group using the returned scheduling data.                                                                     | Blocked |
+| FE-SCH-05 | Configure, change, or remove task recurrence          | The recurrence selection is sent to the service and reflected in the task after success.                                                             | Passing |
+| FE-SCH-06 | Handle scheduling request failure                     | A visible error is shown and the previously saved schedule remains displayed.                                                                        | Passing |
+| FE-SCH-07 | Show and send dates in the session user's timezone    | A deadline shows on its local day for an Asia/Manila or Europe/London user (from `GET /api/auth/me`) and is sent as the end of the chosen day there. | Passing |
+| FE-SCH-08 | Complete a recurring task                             | The task advances to the next occurrence returned by the API and stays in the list.                                                                  | Failing |
+| FE-SCH-09 | A scheduling request returns 404 or 401               | 404 shows "Task not found." and reloads the list; 401 clears the session and returns to `/login`.                                                    | Passing |
+| FE-SCH-10 | Set, change, or clear a deadline                      | The deadline is sent as an ISO instant, or null when cleared, and shown after success.                                                               | Passing |
+
+Tests: `frontend/tests/integration/features/tasks/tasks.integration.spec.ts`; run with `npm run test:run` from `frontend`. They go through the real `/projects/:projectId/tasks` routes behind `authGuard`: the task list, the + New task popup and the edit page with the real task form, due-date, deadline and recurrence pickers and their validators, `TaskService`, `TaskSchedulingService`, `TasksStore` and `authInterceptor`. The user is signed in by restoring a token and answering `GET /api/auth/me`; only the network is faked with `HttpTestingController`, using the bodies of `backend/src/features/tasks` (`toTaskModel`, `validate-request` and `load-owned-task` middleware), and `http.verify()` runs after every test.
+
+- FE-SCH-01 stays Failing: the task form has no scheduled-date control, and the frontend never calls `PUT /api/tasks/{taskId}/schedule`.
+- FE-SCH-02, FE-SCH-05, FE-SCH-10: a new task sends `dueDate` (YYYY-MM-DD), `deadline` (end of the chosen day in the user's timezone, as an ISO instant), `recurrence`, `recurrenceDays` and `recurrenceEndDate` in `POST /api/tasks`. An edit sends only what changed, through `PUT /api/tasks/{taskId}/due-date`, `/deadline` and `/recurrence`, one after another. Clearing sends `null`, and removing a repeat sends `recurrence: "none"` with `recurrenceDays: []` and `recurrenceEndDate: null`.
+- FE-SCH-03: a deadline before the due date, a repeat with no due date, a weekly repeat with no weekday and an end date before the due date each show their message and send no request.
+- FE-SCH-05: list items show the rule, e.g. "Every week on Mon, Wed and Fri" or "Every week on Tue, until Dec 31". The API has no `interval`, so labels such as "Every 2 weeks" cannot appear yet; the Scheduling spec's `interval` field is not implemented.
+- FE-SCH-06: a 400 shows on the field it names (e.g. "Invalid deadline" under Deadline) and keeps the edits; if the due date saves and the deadline then fails, the saved due date is kept and the retry sends only the deadline.
+- FE-SCH-08 stays Failing: the Scheduling spec (IV.D) completes tasks with `PUT /api/tasks/{taskId}/complete`, which returns the next occurrence. Neither the backend nor the frontend has this route, and the project task list has no complete control. The spec file has an `it.todo` for it.
+- These rows were Blocked until Task CRUD passed; the scheduling cases are now verified directly, so their status reflects the tests.
 
 ### 2.3 End-to-End
 
@@ -108,13 +122,21 @@ Implementation: `backend/tests/integration/tasks.integration.test.ts`. Run with 
 
 ### 3.2 Frontend Integration Tests
 
-| ID        | Test Case                                         | Expected Result                                                                                 | Status  |
-| --------- | ------------------------------------------------- | ----------------------------------------------------------------------------------------------- | ------- |
-| FE-ORG-01 | Choose a priority when creating or editing a task | The selected priority is sent to the task service and shown after success.                      | Blocked |
-| FE-ORG-02 | Choose, add, or remove task labels                | The selected labels are sent and rendered on the correct task.                                  | Blocked |
-| FE-ORG-03 | Filter tasks by priority or label                 | The service receives the selected filter and only matching tasks are rendered.                  | Blocked |
-| FE-ORG-04 | Change the task ordering option                   | The service receives the supported ordering selection and the list reflects the response order. | Blocked |
-| FE-ORG-05 | Handle organization update or filter failure      | The UI reports the error and keeps the last successfully saved task state.                      | Blocked |
+| ID        | Test Case                                         | Expected Result                                                                                                                                                            | Status  |
+| --------- | ------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- |
+| FE-ORG-01 | Choose a priority when creating or editing a task | The selected priority is sent to the task service and shown after success.                                                                                                 | Passing |
+| FE-ORG-02 | Choose, add, or remove task labels                | The selected labels are sent and rendered on the correct task.                                                                                                             | Failing |
+| FE-ORG-03 | Filter tasks by priority or label                 | The service receives the selected filter and only matching tasks are rendered.                                                                                             | Failing |
+| FE-ORG-04 | Change the task ordering option                   | The service receives the supported ordering selection and the list reflects the response order.                                                                            | Blocked |
+| FE-ORG-05 | Handle organization update or filter failure      | The UI reports the error and keeps the last successfully saved task state.                                                                                                 | Failing |
+| FE-ORG-06 | Manage labels on the label pages                  | The list loads; creating sends `POST /api/labels` with `{name, color}`; a 409 shows a "name already used" field error; edit and delete (after confirming) update the list. | Failing |
+| FE-ORG-07 | A priority update returns 400, 404 or 401         | 400 shows the server's message and keeps the chosen priority; 404 shows "Task not found." and reloads the list; 401 clears the session and returns to `/login`.            | Passing |
+
+Tests: the `Priority` block in `frontend/tests/integration/features/tasks/tasks.integration.spec.ts`, set up as described in 2.2.
+
+- FE-ORG-01: the task form's Priority dropdown (High, Medium, Low; new tasks start at Low) sends `priority: "high" | "medium" | "low"` in `POST /api/tasks`, and an edit sends only `{priority}` in `PUT /api/tasks/{taskId}`, before any scheduling route. The list item shows the priority badge. There is no separate priority picker, and the frontend does not use `PUT /api/tasks/{taskId}/priority`.
+- FE-ORG-02, FE-ORG-03, FE-ORG-05 and FE-ORG-06 stay Failing because their screens are not built: there are no label pages or routes, no label picker on tasks, and no task filter bar (so no filters in the URL query). The backend routes exist (`/api/labels`, `/api/tasks/{taskId}/labels`, `/api/tasks/{taskId}/priority`). FE-ORG-05's priority-update failures are covered by FE-ORG-07; the row stays Failing until filter failures can be tested. `labels.integration.spec.ts` will be written with those screens.
+- Fixed while testing: a 400 from `PUT /api/tasks/{taskId}` ("Invalid task update", e.g. for a bad priority) was shown under the Due date field, because the error mapper matched "date" inside "update". It now matches "date" only as a whole word; `task-error.mapper.spec.ts` covers this case.
 
 ### 3.3 End-to-End
 
@@ -127,5 +149,5 @@ Implementation: `backend/tests/integration/tasks.integration.test.ts`. Run with 
 
 ## Notes
 
-- Task Scheduling and Task Organization integration cases are Blocked until Task CRUD backend and frontend integration cases pass.
+- Task Scheduling and Task Organization integration cases are Blocked until Task CRUD backend and frontend integration cases pass. Frontend scheduling cases FE-SCH-01 to FE-SCH-10 are the exception: they have their own integration tests (see 2.2).
 - Every end-to-end case is Blocked until Task CRUD and the relevant integration cases pass.
