@@ -28,6 +28,17 @@ export const routes: Routes = [
       import('./features/projects/projects.routes').then((m) => m.PROJECTS_ROUTES),
   },
   {
+    path: 'dashboard',
+    canActivate: [authGuard],
+    loadChildren: () =>
+      import('./features/dashboard/dashboard.routes').then((m) => m.DASHBOARD_ROUTES),
+  },
+  {
+    path: 'labels',
+    canActivate: [authGuard],
+    loadChildren: () => import('./features/labels/labels.routes').then((m) => m.LABELS_ROUTES),
+  },
+  {
     path: 'settings/profile',
     title: 'Profile · HabitTracker',
     canActivate: [authGuard],

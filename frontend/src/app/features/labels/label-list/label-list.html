@@ -1,0 +1,90 @@
+<main class="page">
+  <header>
+    <a class="back" routerLink="/home">← Dashboard</a>
+    <div class="title-row">
+      <h1>Labels</h1>
+      <a class="new" routerLink="/labels/new">+ New label</a>
+    </div>
+  </header>
+
+  @if (notice(); as message) {
+    <p class="form-notice" role="status">{{ message }}</p>
+  }
+  @if (actionError(); as message) {
+    <p class="banner-error" role="alert">{{ message }}</p>
+  }
+
+  @if (store.error(); as message) {
+    <div class="load-error" role="alert">
+      <p>Couldn't load your labels. {{ message }}</p>
+      <button type="button" class="retry" [disabled]="store.loading()" (click)="load()">
+        {{ store.loading() ? 'Retrying…' : 'Try again' }}
+      </button>
+    </div>
+  }
+
+  @if (firstLoad()) {
+    <p class="status" role="status">Loading labels…</p>
+  } @else if (store.loaded()) {
+    @if (store.labels().length) {
+      <ul class="list" aria-label="Your labels">
+        @for (label of store.labels(); track label.labelId) {
+          <li class="row">
+            <app-label-chip [label]="label" />
+            <div class="actions">
+              <a
+                class="action edit"
+                [routerLink]="['/labels', label.labelId, 'edit']"
+                [attr.aria-label]="'Edit ' + label.name"
+                >Edit</a
+              >
+              <button
+                type="button"
+                class="action delete"
+                [attr.aria-label]="'Delete ' + label.name"
+                (click)="askDelete(label)"
+              >
+                Delete
+              </button>
+            </div>
+          </li>
+        }
+      </ul>
+    } @else {
+      <div class="empty">
+        <p class="empty-title">No labels yet.</p>
+        <p>Labels group tasks across projects, like “Study” or “Errands”.</p>
+        <a class="new" routerLink="/labels/new">Add a label</a>
+      </div>
+    }
+  }
+</main>
+
+@if (pendingDelete(); as label) {
+  <div class="dialog-host">
+    <div class="backdrop" (click)="cancelDelete()"></div>
+    <div
+      class="dialog"
+      role="alertdialog"
+      aria-modal="true"
+      aria-labelledby="delete-title"
+      aria-describedby="delete-description"
+    >
+      <h2 id="delete-title">Delete “{{ label.name }}”?</h2>
+      <p id="delete-description">The label will be removed from every task that has it.</p>
+
+      @if (deleteError(); as message) {
+        <p class="error" role="alert">{{ message }}</p>
+      }
+
+      <div class="dialog-actions">
+        <button type="button" class="cancel" [disabled]="deleting()" (click)="cancelDelete()">
+          Cancel
+        </button>
+        <button type="button" class="confirm" [disabled]="deleting()" (click)="confirmDelete()">
+          {{ deleting() ? 'Deleting…' : 'Delete label' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

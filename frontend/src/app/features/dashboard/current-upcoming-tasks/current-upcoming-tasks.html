@@ -1,0 +1,34 @@
+<section class="section" aria-labelledby="current-upcoming-heading">
+  <header class="head">
+    <h2 id="current-upcoming-heading">Current &amp; upcoming</h2>
+    @if (loaded()) {
+      <span class="total">{{ total() }} {{ total() === 1 ? 'task' : 'tasks' }}</span>
+    }
+  </header>
+
+  @if (error(); as message) {
+    <div class="load-error" role="alert">
+      <p>Couldn't load your upcoming tasks. {{ message }}</p>
+      <button type="button" class="retry" [disabled]="loading()" (click)="reload()">
+        Try again
+      </button>
+    </div>
+  }
+
+  @if (loading() && !loaded()) {
+    <p class="status" role="status">Loading tasks…</p>
+  } @else if (loaded()) {
+    @if (total()) {
+      <div class="groups">
+        @for (group of groups(); track group.key) {
+          <app-task-group [group]="group" />
+        }
+      </div>
+    } @else {
+      <div class="empty">
+        <p class="empty-title">You're all caught up.</p>
+        <p>Nothing is due today or coming up. Tasks with a due date will show here.</p>
+      </div>
+    }
+  }
+</section>

@@ -1,0 +1,31 @@
+<main class="page">
+  <header>
+    <a class="back" routerLink="/home">← Home</a>
+    <div class="title-row">
+      <h1>Dashboard</h1>
+      <button type="button" class="refresh" [disabled]="summaryLoading()" (click)="refresh()">
+        Refresh
+      </button>
+    </div>
+  </header>
+
+  @if (summaryError(); as message) {
+    <div class="load-error" role="alert">
+      <p>Couldn't load your task counts. {{ message }}</p>
+      <button type="button" class="retry" [disabled]="summaryLoading()" (click)="loadSummary()">
+        Try again
+      </button>
+    </div>
+  }
+
+  <section class="summary" aria-label="Task counts" [attr.aria-busy]="summaryLoading()">
+    @for (tile of tiles; track tile.key) {
+      <div class="tile" [attr.data-tile]="tile.key">
+        <span class="value">{{ summary()?.[tile.key] ?? '–' }}</span>
+        <span class="label">{{ tile.label }}</span>
+      </div>
+    }
+  </section>
+
+  <app-current-upcoming-tasks />
+</main>

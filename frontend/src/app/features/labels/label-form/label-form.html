@@ -1,0 +1,108 @@
+<main class="page">
+  <a class="back" routerLink="/labels">← Labels</a>
+  <h1>{{ mode === 'create' ? 'New label' : 'Edit label' }}</h1>
+
+  @switch (loadState()) {
+    @case ('loading') {
+      <p class="status" role="status">Loading label…</p>
+    }
+    @case ('not-found') {
+      <div class="message" role="alert">
+        <p>Label not found.</p>
+        <a routerLink="/labels">Back to your labels</a>
+      </div>
+    }
+    @case ('error') {
+      <div class="message" role="alert">
+        <p>Couldn't load this label. Something went wrong. Please try again.</p>
+        <button type="button" class="secondary" (click)="load()">Try again</button>
+      </div>
+    }
+    @default {
+      @if (formError(); as message) {
+        <p class="form-error" role="alert">{{ message }}</p>
+      }
+
+      <form
+        class="card"
+        [formGroup]="form"
+        (ngSubmit)="submit()"
+        (keydown.escape)="cancel()"
+        novalidate
+      >
+        <div class="field">
+          <div class="label-row">
+            <label for="label-name">Name</label>
+            <span class="count" [class.over]="form.controls.name.value.trim().length > nameMax">
+              {{ form.controls.name.value.trim().length }}/{{ nameMax }}
+            </span>
+          </div>
+          <input
+            id="label-name"
+            type="text"
+            formControlName="name"
+            autocomplete="off"
+            placeholder="e.g. Study"
+            [attr.aria-invalid]="!!fieldError('name')"
+            aria-describedby="label-name-status"
+            (input)="clearServerError('name')"
+          />
+          <p id="label-name-status" class="field-message" aria-live="polite">
+            {{ fieldError('name') }}
+          </p>
+        </div>
+
+        <fieldset class="field colors" aria-describedby="label-color-status">
+          <legend>Color <span>(optional)</span></legend>
+          <div class="swatches">
+            <label class="swatch none">
+              <input
+                type="radio"
+                formControlName="color"
+                value=""
+                data-color=""
+                (change)="clearServerError('color')"
+              />
+              <span class="chip" aria-hidden="true"></span>
+              <span class="visually-hidden">No color</span>
+            </label>
+            @for (color of colors; track color.value) {
+              <label class="swatch">
+                <input
+                  type="radio"
+                  formControlName="color"
+                  [value]="color.value"
+                  [attr.data-color]="color.value"
+                  (change)="clearServerError('color')"
+                />
+                <span class="chip" [style.background]="color.value" aria-hidden="true"></span>
+                <span class="visually-hidden">{{ color.label }}</span>
+              </label>
+            }
+          </div>
+          <p id="label-color-status" class="field-message" aria-live="polite">
+            {{ fieldError('color') }}
+          </p>
+        </fieldset>
+
+        <div class="preview">
+          <span class="preview-title">Preview</span>
+          <app-label-chip [label]="preview()" />
+        </div>
+
+        <div class="actions">
+          <button type="button" class="secondary" [disabled]="submitting()" (click)="cancel()">
+            Cancel
+          </button>
+          <button type="submit" class="primary" [disabled]="!canSave()">
+            @if (submitting()) {
+              {{ mode === 'create' ? 'Creating…' : 'Saving…' }}
+            } @else {
+              {{ mode === 'create' ? 'Create label' : 'Save changes' }}
+            }
+          </button>
+        </div>
+      </form>
+    }
+  }
+</main>
