@@ -68,6 +68,53 @@ The Angular app is available at `http://localhost:4200`; the Express API is at
 Run **`✅ CI: Verify All`** after configuring the environment files. Individual
 frontend test and build tasks also use the values in `frontend/.env`.
 
+## Local test database
+
+Backend integration tests can use the local Supabase stack managed by Docker;
+running them locally does not require a remote test project. Docker Desktop must
+be running, and the Supabase CLI is installed with the root npm dependencies.
+
+### Start and configure
+
+1. Start Docker Desktop and wait for its engine to be ready.
+2. Run **`🐳 Supabase: Start Local DB`**. On the first run, Docker downloads the
+   Supabase images. The stack uses ports configured in `supabase/config.toml`.
+3. Run **`📊 Supabase: Local Status`** to view the local API URL, service-role
+   key, and database URL.
+
+Set these values in `backend/.env`:
+
+- `SUPABASE_TEST_URL`: API URL, usually `http://127.0.0.1:55321`.
+- `SUPABASE_TEST_SERVICE_ROLE_KEY`: the local service-role key from status.
+- `SUPABASE_TEST_DATABASE_URL` and `SUPABASE_TEST_DIRECT_URL`: the local
+  database URL, usually `postgresql://postgres:postgres@127.0.0.1:55432/postgres`.
+
+Keep the regular `SUPABASE_URL`, `DATABASE_URL`, and `DIRECT_URL` values as
+configured for normal development. Never put a hosted URL in any
+`SUPABASE_TEST_*` URL: integration tests create and delete accounts, and the
+test harness refuses non-local test targets.
+
+### Reset, seed, and stop
+
+1. Run **`🔄 Supabase: Reset Local DB`** to rebuild the local database from
+   `supabase/migrations/` without demo data. This permanently deletes the
+   existing local database contents.
+2. To load demo data, run **`🌱 Supabase: Seed Local DB`**. This applies the SQL
+   files in `supabase/seeds/` without resetting the database. It also provides
+   the demo fixtures needed by E2E and regression tests.
+3. Run `npm --prefix backend run test:integration`. The full regression task
+   also runs E2E tests against local Supabase. If tests report that they were
+   skipped, check the three `SUPABASE_TEST_*` values above.
+4. At the end of the day, run **`⏹️ Supabase: Stop Local DB`**. This keeps local
+   data. To clear all local data and volumes, use the Supabase CLI's
+   `supabase stop --no-backup` command.
+
+Use **`📥 Supabase: Pull Remote State`** only when you intentionally want to
+pull schema from the linked hosted project into a migration file. It does not
+pull database rows and is not part of local database setup. Review generated
+migrations before committing them. Local schema is rebuilt from the repository
+migrations; never use a linked/remote reset or push command for local testing.
+
 ## Browser E2E tests
 
 The shared Playwright runner exercises registration, login/session handling,
@@ -79,11 +126,11 @@ backend console mailer and does not read or connect to a linked/remote project.
 
 Prerequisites:
 
-- Docker Desktop is installed and running.
+- Docker Desktop is installed and running, and the local Supabase stack is
+  started.
 - Root, frontend, and backend npm dependencies are installed.
-- The local Supabase database has the repository migrations and seed data. For
-  a new local database, run `supabase db reset --local` from the repository
-  root; this is destructive to that local database only.
+- The local Supabase database has the repository migrations and seed data. Use
+  the local reset and seed tasks above if it needs to be rebuilt.
 - Install the Playwright Chromium browser once with
   `npx playwright install chromium`.
 

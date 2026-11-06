@@ -334,6 +334,7 @@
       "type": "npm",
       "script": "supabase:pull",
       "path": ".",
+      "detail": "Pulls schema from the linked remote project into a migration. This does not pull remote data.",
       "presentation": {
         "group": "supabase",
         "panel": "shared",
@@ -354,9 +355,54 @@
     {
       "label": "🔄 Supabase: Reset Local DB",
       "type": "npm",
-      "script": "supabase:reset",
+      "script": "supabase:local:reset",
       "path": ".",
-      "detail": "Recreates the local Supabase database, applies migrations, and runs configured seed SQL. This removes local database data.",
+      "detail": "Destructively recreates only the local database and applies migrations without seed data.",
+      "presentation": {
+        "group": "supabase",
+        "panel": "shared",
+        "reveal": "always"
+      }
+    },
+    {
+      "label": "🌱 Supabase: Seed Local DB",
+      "type": "npm",
+      "script": "supabase:local:seed",
+      "path": ".",
+      "detail": "Applies the repository SQL seed files to the running local database without resetting it.",
+      "presentation": {
+        "group": "supabase",
+        "panel": "shared",
+        "reveal": "always"
+      }
+    },
+    {
+      "label": "🐳 Supabase: Start Local DB",
+      "type": "npm",
+      "script": "supabase:local:start",
+      "path": ".",
+      "presentation": {
+        "group": "supabase",
+        "panel": "shared",
+        "reveal": "always"
+      }
+    },
+    {
+      "label": "📊 Supabase: Local Status",
+      "type": "npm",
+      "script": "supabase:local:status",
+      "path": ".",
+      "presentation": {
+        "group": "supabase",
+        "panel": "shared",
+        "reveal": "always"
+      }
+    },
+    {
+      "label": "⏹️ Supabase: Stop Local DB",
+      "type": "npm",
+      "script": "supabase:local:stop",
+      "path": ".",
       "presentation": {
         "group": "supabase",
         "panel": "shared",
