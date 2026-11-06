@@ -1,6 +1,6 @@
 # Sprint 2 Test Matrix
 
-Last Updated: November 6, 2026
+Last Updated: November 7, 2026
 
 ## Overview
 
@@ -91,15 +91,16 @@ Tests: `frontend/tests/integration/features/projects/projects.integration.spec.t
 
 | ID        | Test Case                                                      | Expected Result                                                                                                   | Status  |
 | --------- | -------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- | ------- |
-| FE-LST-15 | Log in, see the sidebar, and open the Inbox                    | Inbox is listed first and opens in one browser flow.                                                              | Blocked |
-| FE-LST-16 | Open the Projects tab as a seeded user                         | Inbox is first with a Read-only badge and no edit or delete controls; seeded projects show description and color. | Blocked |
-| FE-LST-17 | Another user (james) owns a project; harvey opens the projects | The project is not listed; its edit URL shows "Project not found." and the API returns 404.                       | Blocked |
+| FE-LST-15 | Log in, see the sidebar, and open the Inbox                    | Inbox is listed first and opens in one browser flow.                                                              | Passing |
+| FE-LST-16 | Open the Projects tab as a seeded user                         | Inbox is first with a Read-only badge and no edit or delete controls; seeded projects show description and color. | Passing |
+| FE-LST-17 | Another user (james) owns a project; harvey opens the projects | The project is not listed; its edit URL shows "Project not found." and the API returns 404.                       | Passing |
 
 Tests: `tests/e2e/projects/project-crud.e2e.spec.ts`.
 
 - FE-LST-15: the dashboard sidebar lists Inbox first; the Inbox card on the Projects tab opens `/projects/{inboxId}/tasks` with the heading "Inbox".
 - FE-LST-16 also opens the Inbox's edit URL directly and checks that the read-only message shows instead of a form.
-- E2E rows are Blocked until the suite is run against a local Supabase (Docker) or the isolated remote test project; this has not been done yet. Mark them Passing once `npm run test:e2e` passes twice in a row.
+- Run on November 7, 2026 against local Supabase (Docker) with the seed data: the full `npm run test:e2e` suite (14 auth and 9 Projects tests) passed twice in a row. Afterwards harvey's and james's projects matched the seed (favorite, archive and sort order) and no `E2E …` projects were left in `tbl_project`.
+- Before running E2E, regenerate the backend Prisma client (`npm --prefix backend run prisma:generate`). The runner starts the backend directly, so a client generated before the Tasks schema made `GET /api/tasks` and project delete return 500 ("Cannot read properties of undefined (reading 'findMany')"). `prisma:generate` needs `DATABASE_URL` set; the local value is `postgresql://postgres:postgres@127.0.0.1:55432/postgres`.
 
 ## 2. Project Creation
 
@@ -155,7 +156,7 @@ Tests: `tests/e2e/projects/project-crud.e2e.spec.ts`.
 
 | ID        | Test Case                                    | Expected Result                                | Status  |
 | --------- | -------------------------------------------- | ---------------------------------------------- | ------- |
-| FE-CRT-13 | Create a project, refresh, and find it again | Project is still in the sidebar after refresh. | Blocked |
+| FE-CRT-13 | Create a project, refresh, and find it again | Project is still in the sidebar after refresh. | Passing |
 
 Tests: `tests/e2e/projects/project-crud.e2e.spec.ts`. "E2E Project <run>" is created with a description and color from the + New project popup; the `tbl_project` row belongs to harvey with `is_inbox` false and `deleted_at` empty, and the card shows the same values after a reload.
 
@@ -243,7 +244,7 @@ Tests: `tests/e2e/projects/project-crud.e2e.spec.ts`. "E2E Project <run>" is cre
 
 | ID        | Test Case                                                | Expected Result                               | Status  |
 | --------- | -------------------------------------------------------- | --------------------------------------------- | ------- |
-| FE-EDT-16 | Edit name, description, and color, then refresh the page | Updated values are still shown after refresh. | Blocked |
+| FE-EDT-16 | Edit name, description, and color, then refresh the page | Updated values are still shown after refresh. | Passing |
 
 Tests: `tests/e2e/projects/project-crud.e2e.spec.ts`. The edit page is pre-filled, Save stays disabled until something changes, and the saved name, description and color are checked in the database, on the reloaded edit page and on the project list.
 
@@ -324,10 +325,10 @@ Tests: the `Project Organization (switcher)` block in `frontend/tests/integratio
 
 | ID        | Test Case                                                      | Expected Result                                                                                          | Status  |
 | --------- | -------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- | ------- |
-| FE-ORG-11 | Favorite, archive, restore, and reorder projects, then refresh | All changes persist after refresh in one browser flow.                                                   | Blocked |
-| FE-ORG-12 | Switch between projects in the organize view                   | The chosen project is marked current (`aria-current`); only one project is current at a time.            | Blocked |
-| FE-ORG-13 | Look at the Inbox in the organize view                         | The Inbox has no archive, favorite or move controls.                                                     | Blocked |
-| FE-ORG-14 | The backend favorite or reorder route fails for one call       | The change is undone with "Your change wasn't saved."; the database is unchanged; a retry then succeeds. | Blocked |
+| FE-ORG-11 | Favorite, archive, restore, and reorder projects, then refresh | All changes persist after refresh in one browser flow.                                                   | Passing |
+| FE-ORG-12 | Switch between projects in the organize view                   | The chosen project is marked current (`aria-current`); only one project is current at a time.            | Passing |
+| FE-ORG-13 | Look at the Inbox in the organize view                         | The Inbox has no archive, favorite or move controls.                                                     | Passing |
+| FE-ORG-14 | The backend favorite or reorder route fails for one call       | The change is undone with "Your change wasn't saved."; the database is unchanged; a retry then succeeds. | Passing |
 
 Tests: `tests/e2e/projects/project-organization.e2e.spec.ts`. Each test creates two projects through the API and removes them afterwards.
 
@@ -383,7 +384,7 @@ Tests: `tests/e2e/projects/project-organization.e2e.spec.ts`. Each test creates 
 
 | ID        | Test Case                                        | Expected Result                                     | Status  |
 | --------- | ------------------------------------------------ | --------------------------------------------------- | ------- |
-| FE-DEL-09 | Create a project, delete it, and refresh         | Project is gone after refresh; Inbox remains.       | Blocked |
+| FE-DEL-09 | Create a project, delete it, and refresh         | Project is gone after refresh; Inbox remains.       | Passing |
 | FE-DEL-10 | Delete a project with tasks, then open the Inbox | The deleted project's tasks are shown in the Inbox. | Blocked |
 
 - FE-DEL-09 is in `tests/e2e/projects/project-crud.e2e.spec.ts`: the confirm dialog names the project, the row stays with `deleted_at` set, and after a reload the project is gone while the Inbox and seeded projects remain.
@@ -452,11 +453,11 @@ Tests: `frontend/tests/integration/features/home/home.integration.spec.ts`. They
 
 | Deliverable                    | Backend Cases | Frontend Cases | Total   | Failing | Passing | Blocked |
 | ------------------------------ | ------------- | -------------- | ------- | ------- | ------- | ------- |
-| Project Listing & Retrieval    | 19            | 17             | 36      | 5       | 11      | 20      |
-| Project Creation               | 13            | 13             | 26      | 5       | 13      | 8       |
-| Project Editing                | 23            | 16             | 39      | 25      | 10      | 4       |
-| Favorite, Archive & Sort Order | 23            | 14             | 37      | 16      | 14      | 7       |
-| Project Deletion               | 11            | 10             | 21      | 2       | 6       | 13      |
+| Project Listing & Retrieval    | 19            | 17             | 36      | 5       | 14      | 17      |
+| Project Creation               | 13            | 13             | 26      | 5       | 14      | 7       |
+| Project Editing                | 23            | 16             | 39      | 25      | 11      | 3       |
+| Favorite, Archive & Sort Order | 23            | 14             | 37      | 16      | 18      | 3       |
+| Project Deletion               | 11            | 10             | 21      | 2       | 7       | 12      |
 | Landing Page                   | 0             | 7              | 7       | 0       | 7       | 0       |
 | Home Dashboard                 | 0             | 8              | 8       | 0       | 8       | 0       |
-| **Total**                      | **89**        | **85**         | **174** | **53**  | **69**  | **52**  |
+| **Total**                      | **89**        | **85**         | **174** | **53**  | **79**  | **42**  |
