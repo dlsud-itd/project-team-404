@@ -60,15 +60,22 @@ Implementation: `backend/tests/integration/tasks.integration.test.ts`. Run with 
 
 | ID        | Test Case                                            | Expected Result                                                                                                | Status  |
 | --------- | ---------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- | ------- |
-| BE-SCH-01 | Create a task with a scheduled date                  | The scheduled date is persisted and returned with the task.                                                    | Blocked |
-| BE-SCH-02 | Create a task with a due date                        | The due date is persisted and returned with the task.                                                          | Blocked |
-| BE-SCH-03 | Update or clear a task's scheduled date and due date | Valid date changes persist; clearing optional dates removes them.                                              | Blocked |
-| BE-SCH-04 | Submit an invalid date or unsupported schedule value | The API returns a validation error and leaves the task unchanged.                                              | Blocked |
+| BE-SCH-01 | Create a task with a scheduled date                  | The scheduled date is persisted and returned with the task.                                                    | Passing |
+| BE-SCH-02 | Create a task with a due date                        | The due date is persisted and returned with the task.                                                          | Passing |
+| BE-SCH-03 | Update or clear a task's scheduled date and due date | Valid date changes persist; clearing optional dates removes them.                                              | Passing |
+| BE-SCH-04 | Submit an invalid date or unsupported schedule value | The API returns a validation error and leaves the task unchanged.                                              | Passing |
 | BE-SCH-05 | List tasks for a selected day or date range          | The response includes tasks matching the requested scheduling window and excludes out-of-range tasks.          | Blocked |
 | BE-SCH-06 | List upcoming tasks                                  | Tasks are included according to their scheduled or due dates and are ordered as specified by the API contract. | Blocked |
 | BE-SCH-07 | List overdue tasks                                   | Incomplete tasks whose due dates have passed are included; completed and not-yet-due tasks are excluded.       | Blocked |
-| BE-SCH-08 | Create and retrieve a recurring task                 | The recurrence rule is persisted and returned; generated or subsequent occurrences follow the API contract.    | Blocked |
-| BE-SCH-09 | Update or remove a recurrence rule                   | The changed or cleared recurrence is persisted without changing unrelated task fields.                         | Blocked |
+| BE-SCH-08 | Create and retrieve a recurring task                 | The recurrence rule is persisted and returned; generated or subsequent occurrences follow the API contract.    | Passing |
+| BE-SCH-09 | Update or remove a recurrence rule                   | The changed or cleared recurrence is persisted without changing unrelated task fields.                         | Passing |
+
+Tests: `tests/regression/tasks/task-scheduling.regression.spec.ts` (and `task-crud.regression.spec.ts` for the response shape), run by `npm run test:regression` through the production app against the reset, seeded local Supabase database.
+
+- BE-SCH-01 to BE-SCH-04: a task created with `scheduledDate` and `dueDate` returns and keeps them; `PUT /api/tasks/{taskId}/schedule`, `/due-date`, `/deadline` and `/recurrence` set and clear each value and return the whole task with the same fields as Task CRUD; invalid dates, an unknown repeat, weekdays on a non-weekly repeat, a weekday of 7 and an end date before the due date return 400 and leave the task exactly as it was.
+- BE-SCH-08: completing a weekly task (`PUT /api/tasks/{taskId}` with `isDone: true`) creates exactly one next task, due a week later with the deadline moved by the same amount and the same rule; completing it again creates no second one. No next task is created after the repeat's end date or for a one-off task.
+- BE-SCH-09: changing and removing the rule keeps the title and priority.
+- BE-SCH-05 to BE-SCH-07 stay Blocked: `GET /api/tasks` has no date-range filter, and upcoming and overdue lists are the Sprint 4 dashboard endpoints (BE-CUR and BE-OVD rows).
 
 ### 2.2 Frontend Integration Tests
 
@@ -110,15 +117,23 @@ Tests: `frontend/tests/integration/features/tasks/tasks.integration.spec.ts`; ru
 
 | ID        | Test Case                                           | Expected Result                                                                              | Status  |
 | --------- | --------------------------------------------------- | -------------------------------------------------------------------------------------------- | ------- |
-| BE-ORG-01 | Create a task with a supported priority             | The priority is persisted and returned with the task.                                        | Blocked |
-| BE-ORG-02 | Update or clear a task's priority                   | The requested priority change persists without modifying unrelated fields.                   | Blocked |
-| BE-ORG-03 | Submit an unsupported priority                      | The API returns a validation error and leaves the task unchanged.                            | Blocked |
-| BE-ORG-04 | Add supported labels to a task                      | The labels are persisted and returned without duplicates.                                    | Blocked |
-| BE-ORG-05 | Update or remove task labels                        | The label set matches the submitted change; unrelated task data is unchanged.                | Blocked |
-| BE-ORG-06 | Submit invalid labels or label values               | The API returns a validation error and does not partially apply the update.                  | Blocked |
-| BE-ORG-07 | List or filter tasks by priority and label          | Only tasks matching the requested organization filters are returned.                         | Blocked |
-| BE-ORG-08 | Order tasks using the supported organization option | Tasks are returned in the order specified by the API contract, with stable handling of ties. | Blocked |
-| BE-ORG-09 | Organize tasks belonging to different users         | The operation and filtered results affect only the authenticated user's tasks.               | Blocked |
+| BE-ORG-01 | Create a task with a supported priority             | The priority is persisted and returned with the task.                                        | Passing |
+| BE-ORG-02 | Update or clear a task's priority                   | The requested priority change persists without modifying unrelated fields.                   | Failing |
+| BE-ORG-03 | Submit an unsupported priority                      | The API returns a validation error and leaves the task unchanged.                            | Passing |
+| BE-ORG-04 | Add supported labels to a task                      | The labels are persisted and returned without duplicates.                                    | Passing |
+| BE-ORG-05 | Update or remove task labels                        | The label set matches the submitted change; unrelated task data is unchanged.                | Passing |
+| BE-ORG-06 | Submit invalid labels or label values               | The API returns a validation error and does not partially apply the update.                  | Passing |
+| BE-ORG-07 | List or filter tasks by priority and label          | Only tasks matching the requested organization filters are returned.                         | Passing |
+| BE-ORG-08 | Order tasks using the supported organization option | Tasks are returned in the order specified by the API contract, with stable handling of ties. | Failing |
+| BE-ORG-09 | Organize tasks belonging to different users         | The operation and filtered results affect only the authenticated user's tasks.               | Passing |
+
+Tests: `tests/regression/tasks/task-organization.regression.spec.ts`, run the same way.
+
+- BE-ORG-01, BE-ORG-03: a task keeps the priority it was created with; `PUT /api/tasks/{taskId}/priority` with an unknown priority returns 400 and the task is unchanged.
+- BE-ORG-04 to BE-ORG-06: labels attach (a repeated id once), detach, and are removed from tasks when the label is deleted; an empty list returns 400; a list mixing an own label and another user's returns 404 and attaches nothing. A duplicate label name returns 409 `label-name-taken`; names are unique per user only.
+- BE-ORG-07, BE-ORG-09: `priority` and `labelId` filters return only matching tasks; another user cannot read, change, attach, detach or filter by the owner's labels or tasks.
+- BE-ORG-02 is Failing until verified in full: the new priority persists, but the specs do not yet check that other fields are untouched, and the API has no way to clear a priority (it is always low, medium or high).
+- BE-ORG-08 is Failing until verified in full: `orderBy=title` returns the expected order; tie handling is not checked yet.
 
 ### 3.2 Frontend Integration Tests
 
@@ -149,5 +164,6 @@ Tests: the `Priority` block in `frontend/tests/integration/features/tasks/tasks.
 
 ## Notes
 
-- Task Scheduling and Task Organization integration cases are Blocked until Task CRUD backend and frontend integration cases pass. Frontend scheduling cases FE-SCH-01 to FE-SCH-10 are the exception: they have their own integration tests (see 2.2).
+- Task CRUD backend cases pass, so backend Task Scheduling and Task Organization cases are no longer blocked by it; their statuses come from the API regression specs (see 2.1 and 3.1). Frontend scheduling cases have their own integration tests (see 2.2).
+- The Sprint 3 regression runs are recorded in [Sprint3_Regression_Log.md](./Sprint3_Regression_Log.md).
 - Every end-to-end case is Blocked until Task CRUD and the relevant integration cases pass.
