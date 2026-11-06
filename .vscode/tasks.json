@@ -420,8 +420,7 @@
       }
     },
     {
-      "label": "🌱 Supabase:
-      Remote",
+      "label": "🌱 Supabase: Remote Seed",
       "type": "npm",
       "script": "supabase:remote:seed",
       "path": ".",
