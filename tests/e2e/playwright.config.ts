@@ -12,7 +12,7 @@ export default defineConfig({
   reporter: 'list',
   outputDir: './test-results',
   use: {
-    baseURL: 'http://localhost:4200',
+    baseURL: process.env['E2E_APP_URL'] ?? 'http://localhost:4200',
     browserName: 'chromium',
     headless: true,
     trace: 'retain-on-failure',

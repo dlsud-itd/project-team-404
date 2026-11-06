@@ -424,7 +424,7 @@ export async function waitForResetUrl(
     if (message !== -1) {
       const match = output
         .slice(message)
-        .match(/http:\/\/localhost:4200\/reset-password\?token=[^\s]+/);
+        .match(/http:\/\/localhost:\d+\/reset-password\?token=[^\s]+/);
       if (match) return match[0];
     }
     await new Promise((resolve) => setTimeout(resolve, 100));
