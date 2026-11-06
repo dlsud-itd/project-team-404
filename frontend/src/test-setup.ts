@@ -1,3 +1,9 @@
+import { vi } from 'vitest';
+
+// The first test in an integration spec also loads its lazy routes, which can pass Vitest's
+// 5-second default while every spec file runs in parallel.
+vi.setConfig({ testTimeout: 15_000 });
+
 class MemoryStorage implements Storage {
   private readonly items = new Map<string, string>();
 
