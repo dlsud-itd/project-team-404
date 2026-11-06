@@ -1,0 +1,46 @@
+<section class="card" aria-labelledby="overdue-heading">
+  <h2 id="overdue-heading" class="pill">
+    Overdue
+    @if (loadState() === 'ready') {
+      <span class="visually-hidden">, {{ countLabel() }}</span>
+    }
+  </h2>
+
+  @switch (loadState()) {
+    @case ('loading') {
+      <p class="status" role="status">Loading overdue tasks…</p>
+    }
+    @case ('error') {
+      <div class="error" role="alert">
+        <p>{{ error() }}</p>
+        <button type="button" class="retry" (click)="load()">Try again</button>
+      </div>
+    }
+    @default {
+      <ul class="list">
+        @for (task of tasks(); track task.taskId) {
+          <li class="task">
+            <span class="dot" [style.background]="dotColor(task)" aria-hidden="true"></span>
+            @if (editLink(task); as link) {
+              <a class="title" [routerLink]="link" [title]="task.title">{{ task.title }}</a>
+            } @else {
+              <span class="title" [title]="task.title">{{ task.title }}</span>
+            }
+            <span class="when">
+              <span class="due">{{ deadlineLabel(task) }}</span>
+              @if (task.deadline; as deadline) {
+                <app-overdue-badge
+                  [deadline]="deadline"
+                  [now]="loadedAt()"
+                  [timeZone]="timeZone()"
+                />
+              }
+            </span>
+          </li>
+        } @empty {
+          <li class="empty">Nothing here</li>
+        }
+      </ul>
+    }
+  }
+</section>
