@@ -1,0 +1,30 @@
+:host {
+  display: block;
+}
+
+.page {
+  max-width: 48rem;
+  margin: 0 auto;
+  padding: 2rem 1rem 4rem;
+}
+
+.title-row {
+  margin-bottom: 1.5rem;
+  overflow-wrap: anywhere;
+}
+
+h1 {
+  margin: 0;
+  font-size: clamp(1.75rem, 4vw, 2.25rem);
+  font-weight: 800;
+}
+
+.greeting {
+  margin: 0.25rem 0 0;
+  color: var(--ink-muted);
+}
+
+.sections {
+  display: grid;
+  gap: 2rem;
+}
