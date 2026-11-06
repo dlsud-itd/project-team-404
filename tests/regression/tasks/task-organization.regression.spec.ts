@@ -70,10 +70,14 @@ integrationDescribe('Task Organization API regression', () => {
     expect((await api.get(`/api/tasks/${later.id}`)).body).toMatchObject({
       priority: 'medium',
     });
+    const beforeInvalid = (await api.get(`/api/tasks/${later.id}`)).body;
     expect(
       (await api.put(`/api/tasks/${later.id}/priority`, { priority: 'urgent' }))
         .status
     ).toBe(400);
+    expect((await api.get(`/api/tasks/${later.id}`)).body).toEqual(
+      beforeInvalid
+    );
 
     // Labels
     const school = await createLabel(api, 'School', '#2563EB');
@@ -82,8 +86,9 @@ integrationDescribe('Task Organization API regression', () => {
     expect(duplicate.status).toBe(409);
     expect(duplicate.body).toMatchObject({ code: 'label-name-taken' });
 
+    // A repeated id is attached once.
     const attached = await api.post(`/api/tasks/${urgent.id}/labels`, {
-      labelIds: [school.id],
+      labelIds: [school.id, school.id],
     });
     expect(attached.status).toBe(200);
     expect(attached.body).toMatchObject({
@@ -183,6 +188,19 @@ integrationDescribe('Task Organization API regression', () => {
     ).toBe(404);
     expect(await idsFor(otherApi, `labelId=${label.id}`)).toEqual([]);
     expect(await idsFor(otherApi, 'priority=low')).not.toContain(task.id);
+
+    // A mix of an own label and a foreign one is rejected whole: nothing is attached.
+    const ownLabel = await createLabel(otherApi, 'Mine');
+    expect(
+      (
+        await otherApi.post(`/api/tasks/${otherTask.id}/labels`, {
+          labelIds: [ownLabel.id, label.id],
+        })
+      ).status
+    ).toBe(404);
+    expect(
+      (await otherApi.get(`/api/tasks/${otherTask.id}`)).body
+    ).toMatchObject({ labels: [] });
 
     // Label names are unique per user, not across users.
     expect(

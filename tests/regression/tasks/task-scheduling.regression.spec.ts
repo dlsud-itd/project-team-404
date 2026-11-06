@@ -117,6 +117,23 @@ integrationDescribe('Task Scheduling API regression', () => {
     expect(tasks.every((t) => t.isDone)).toBe(true);
   });
 
+  it('creates a task with a scheduled date and due date and returns them', async () => {
+    const owner = await registerAndLoginAs(app);
+    const api = apiFor(app, owner.token);
+    const projectId = await createProject(api, 'Dates');
+    const task = await createTask(api, {
+      projectId,
+      title: 'Plan the week',
+      scheduledDate: '2026-11-18',
+      dueDate: DUE,
+    });
+    expect(task).toMatchObject({ scheduledDate: '2026-11-18', dueDate: DUE });
+    expect((await api.get(`/api/tasks/${task.id}`)).body).toMatchObject({
+      scheduledDate: '2026-11-18',
+      dueDate: DUE,
+    });
+  });
+
   it('keeps Task CRUD responses whole when the scheduling columns are set and cleared', async () => {
     const owner = await registerAndLoginAs(app);
     const api = apiFor(app, owner.token);
@@ -128,6 +145,11 @@ integrationDescribe('Task Scheduling API regression', () => {
     });
 
     const steps: [string, Record<string, unknown>, Partial<ApiTask>][] = [
+      [
+        'schedule',
+        { scheduledDate: '2026-11-18' },
+        { scheduledDate: '2026-11-18' },
+      ],
       ['due-date', { dueDate: DUE }, { dueDate: DUE }],
       ['deadline', { deadline: DEADLINE }, { deadline: DEADLINE }],
       [
@@ -150,6 +172,7 @@ integrationDescribe('Task Scheduling API regression', () => {
       ],
       ['deadline', { deadline: null }, { deadline: null }],
       ['due-date', { dueDate: null }, { dueDate: null }],
+      ['schedule', { scheduledDate: null }, { scheduledDate: null }],
     ];
     for (const [route, body, expected] of steps) {
       const response = await api.put(`/api/tasks/${task.id}/${route}`, body);
