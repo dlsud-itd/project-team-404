@@ -138,6 +138,16 @@ Prerequisites:
   the local reset and seed tasks above if it needs to be rebuilt.
 - Install the Playwright Chromium browser once with
   `npx playwright install chromium`.
+- Regenerate the backend Prisma client after pulling schema changes. The runner
+  starts the backend directly, so it does not do this for you, and an old client
+  makes task requests fail with 500 ("reading 'findMany'"). `prisma:generate`
+  needs `DATABASE_URL`; with local Supabase, from PowerShell:
+
+  ```powershell
+  $env:DATABASE_URL = 'postgresql://postgres:postgres@127.0.0.1:55432/postgres'
+  npm --prefix backend run prisma:generate
+  Remove-Item Env:DATABASE_URL
+  ```
 
 Run `npm run test:e2e` from the repository root, or choose
 **`🧪 E2E: Tests (run once)`** in VS Code. The runner starts the frontend at

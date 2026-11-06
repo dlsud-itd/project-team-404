@@ -25,7 +25,7 @@ const steps = [
       : 'SUPABASE_TEST_* is not set, so the suite would only skip',
   },
   {
-    name: 'Project API regression (tests/regression)',
+    name: 'Project + Task API regression (tests/regression)',
     command: 'npm --prefix backend run test:regression:projects',
     env: backendEnv,
     missing: backendEnv.SUPABASE_TEST_URL
@@ -149,6 +149,11 @@ function localTestEnv() {
     SUPABASE_TEST_SERVICE_ROLE_KEY: serviceRoleKey,
     SUPABASE_TEST_DATABASE_URL: databaseUrl,
     SUPABASE_TEST_DIRECT_URL: databaseUrl,
+    // Prisma's config needs these even to generate the client (the backend's pretest step), and
+    // backend/.env may not set them. Like CI, point them at the local database; the test helper
+    // replaces them with the SUPABASE_TEST_* values before connecting.
+    DATABASE_URL: databaseUrl,
+    DIRECT_URL: databaseUrl,
   };
 }
 
