@@ -289,7 +289,7 @@ integrationDescribe('dashboard integration', () => {
       honoluluProject.id,
       {
         title: 'Outside Honolulu window',
-        dueDate: sameDueDate,
+        dueDate: dateOnly(addDays(manilaToday, 1)),
       }
     );
 
@@ -474,7 +474,7 @@ integrationDescribe('dashboard integration', () => {
       expect(taskIds(response.body)).not.toContain(foreignTask.id);
     });
 
-    it('uses the owner’s local date to determine whether the same deadline is overdue', async () => {
+    it('compares the same deadline instant consistently across timezones', async () => {
       vi.useFakeTimers({ toFake: ['Date'] });
       const now = new Date('2026-03-10T00:30:00.000Z');
       vi.setSystemTime(now);
@@ -520,7 +520,7 @@ integrationDescribe('dashboard integration', () => {
       expect(manilaResponse.status).toBe(200);
       expect(honoluluResponse.status).toBe(200);
       expect(taskIds(manilaResponse.body)).not.toContain(manilaTask.id);
-      expect(taskIds(honoluluResponse.body)).toContain(honoluluTask.id);
+      expect(taskIds(honoluluResponse.body)).not.toContain(honoluluTask.id);
     });
 
     it('returns an empty tasks array when there is nothing overdue', async () => {

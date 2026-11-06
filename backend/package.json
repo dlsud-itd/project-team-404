@@ -17,7 +17,7 @@
     "test": "vitest run --passWithNoTests",
     "test:report": "vitest run --coverage --passWithNoTests",
     "pretest:integration": "npm run prisma:generate",
-    "test:integration": "node --env-file-if-exists=.env ./node_modules/vitest/vitest.mjs run tests/integration",
+    "test:integration": "node --env-file-if-exists=.env ./node_modules/vitest/vitest.mjs run --config vitest.integration.config.ts",
     "pretest:regression:projects": "npm run prisma:generate",
     "test:regression:projects": "node --env-file-if-exists=.env ./node_modules/vitest/vitest.mjs run --config vitest.regression.config.ts",
     "test:watch": "vitest",

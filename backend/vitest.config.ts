@@ -3,7 +3,7 @@ import { defineConfig } from 'vitest/config';
 export default defineConfig({
   test: {
     environment: 'node',
-    include: ['src/**/*.{test,spec}.ts', 'tests/**/*.{test,spec}.ts'],
+    include: ['src/**/*.{test,spec}.ts'],
     testTimeout: 60_000,
     reporters: ['default', 'html'],
     outputFile: {

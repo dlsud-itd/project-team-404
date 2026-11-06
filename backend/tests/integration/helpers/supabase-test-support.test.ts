@@ -10,6 +10,8 @@ const environmentNames = [
   'SUPABASE_TEST_SERVICE_ROLE_KEY',
   'SUPABASE_TEST_DATABASE_URL',
   'SUPABASE_TEST_DIRECT_URL',
+  'TEST_DATABASE_URL',
+  'TEST_DIRECT_URL',
 ] as const;
 const originalEnvironment = new Map(
   environmentNames.map((name) => [name, process.env[name]])
