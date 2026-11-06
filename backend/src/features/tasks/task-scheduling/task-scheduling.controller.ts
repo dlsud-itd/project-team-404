@@ -1,7 +1,10 @@
 import type { RequestHandler } from 'express';
 import { TaskNotFoundError } from '../task-crud/errors/task-not-found.error';
 import type { TaskRecord } from '../shared/models/task.model';
-import type { TaskSchedulingService } from './task-scheduling.service';
+import {
+  InvalidTaskDeadlineError,
+  type TaskSchedulingService,
+} from './task-scheduling.service';
 import type {
   RecurrenceRuleInput,
   ScheduleTaskDateInput,
@@ -24,6 +27,10 @@ export function createTaskSchedulingController(
   ) => {
     if (error instanceof TaskNotFoundError) {
       res.status(404).json({ error: error.message });
+      return;
+    }
+    if (error instanceof InvalidTaskDeadlineError) {
+      res.status(400).json({ error: error.message });
       return;
     }
     next(error);

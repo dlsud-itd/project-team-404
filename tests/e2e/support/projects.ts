@@ -7,10 +7,9 @@ import {
   projectRowsForUser,
   type ProjectRow,
 } from './database';
-import { baseUrl } from './auth';
+import { apiBaseUrl, baseUrl } from './auth';
 import { seedAccounts } from './seed-data';
 
-export const apiBaseUrl = 'http://localhost:3000';
 export const e2eProjectPrefix = 'E2E ';
 
 type SeedAccount = (typeof seedAccounts)[number];

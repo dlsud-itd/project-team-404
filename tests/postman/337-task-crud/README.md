@@ -12,7 +12,7 @@ Do not reorder or skip the setup requests. If troubleshooting, send requests ind
 
 Use a **dedicated, isolated Supabase project for testing**. Do not use production, a teammate's project, or a shared development project. These tests create real projects and tasks, soft-delete some of them, and do not clean up everything created. Repeated runs add more test rows.
 
-Never run **Supabase: Reset REMOTE DB (destructive)** for this guide. It drops and recreates the linked remote database. Use **Supabase: Seed Remote (no reset)** for the shared fixtures; it does not reset the whole database, but it does create/update the seeded users and other seed data.
+Never run **supabase db reset --linked** for this guide. It drops and recreates the linked remote database. Use **Supabase: Seed Remote** for the shared fixtures; it does not reset the whole database, but it does create/update the seeded users and other seed data.
 
 ## What the collection uses
 
@@ -41,7 +41,7 @@ You need VS Code, Postman, Node.js 22 or later, and access to a dedicated remote
 3. Open the Command Palette with `Ctrl+Shift+P`, choose **Tasks: Run Task**, and run **🔐 Supabase: Login**. Follow the browser sign-in steps.
 4. Run **🔗 Supabase: Link Project**. Select the dedicated test project and verify its name/reference before confirming. Enter its database password directly into the terminal if prompted; do not put it in Postman or a checked-in file.
 5. Run **📊 Supabase: Check Migration Status**. If repository migrations are pending, run **📤 Supabase: Push Migrations**. If the CLI suggests destructive reset/replacement, cancel and confirm with the project owner.
-6. Run **🌱 Supabase: Seed Remote (no reset)**. Each seed file runs against the linked project and reports `SUCCEEDED` or `ERROR` based on SQL execution. Stop if any seed reports `ERROR`.
+6. Run **🌱 Supabase: Seed Remote**. Each seed file runs against the linked project and reports `SUCCEEDED` or `ERROR` based on SQL execution. Stop if any seed reports `ERROR`.
 
 The seed task is not a full database reset. It sets the seeded users' passwords to `password123` and updates fixture rows. Run it only against the dedicated test project.
 
@@ -179,4 +179,4 @@ The collection creates projects and tasks in the remote database. It soft-delete
 | The backend exits after removing Brevo | Remove/comment out Brevo settings instead of leaving empty assignments, then restart the backend. |
 | A migration or seed task reports `ERROR` | Stop and inspect the CLI output and linked project. Do not use the destructive remote reset task. |
 
-At the end, some test rows remain in the dedicated remote project. This collection does not change James's password and does not require manual restoration. Reseeding with **🌱 Supabase: Seed Remote (no reset)** restores shared fixture values but does not delete accumulated CRUD test rows.
+At the end, some test rows remain in the dedicated remote project. This collection does not change James's password and does not require manual restoration. Reseeding with **🌱 Supabase: Seed Remote** restores shared fixture values but does not delete accumulated CRUD test rows.

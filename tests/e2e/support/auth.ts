@@ -2,7 +2,8 @@ import { randomUUID } from 'node:crypto';
 import { expect, type Page } from '@playwright/test';
 import { seedAccounts, tokenStorageKey } from './seed-data';
 
-export const baseUrl = 'http://localhost:4200';
+export const baseUrl = process.env['E2E_APP_URL'] ?? 'http://localhost:4200';
+export const apiBaseUrl = process.env['E2E_API_URL'] ?? 'http://localhost:3000';
 
 export async function logIn(
   page: Page,

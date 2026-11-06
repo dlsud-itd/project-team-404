@@ -14,7 +14,7 @@ Use a **dedicated, isolated Supabase project for testing**. Do not use productio
 
 The collection temporarily changes Harvey's profile timezone and restores the captured value in its final request. If a run stops before cleanup, restore the original timezone manually using the Profile API before using that account elsewhere.
 
-Never run **Supabase: Reset REMOTE DB (destructive)** for this guide. It drops and recreates the linked remote database. Use **Supabase: Seed Remote (no reset)** for shared fixtures; it does not reset the whole database.
+Never run **supabase db reset --linked** for this guide. It drops and recreates the linked remote database. Use **Supabase: Seed Remote** for shared fixtures; it does not reset the whole database.
 
 ## What the collection uses
 
@@ -40,7 +40,7 @@ You need VS Code, Postman, Node.js 22 or later, and access to a dedicated remote
 3. Open the Command Palette with `Ctrl+Shift+P`, choose **Tasks: Run Task**, and run **🔐 Supabase: Login**. Follow the browser sign-in steps.
 4. Run **🔗 Supabase: Link Project**. Select the dedicated test project and verify its name/reference before confirming. Enter its database password directly into the terminal if prompted; do not put it in Postman or a checked-in file.
 5. Run **📊 Supabase: Check Migration Status**. If repository migrations are pending, run **📤 Supabase: Push Migrations**. If the CLI suggests destructive reset/replacement, cancel and confirm with the project owner.
-6. Run **🌱 Supabase: Seed Remote (no reset)**. Each seed file runs against the linked project and reports `SUCCEEDED` or `ERROR` based on SQL execution. Stop if any seed reports `ERROR`.
+6. Run **🌱 Supabase: Seed Remote**. Each seed file runs against the linked project and reports `SUCCEEDED` or `ERROR` based on SQL execution. Stop if any seed reports `ERROR`.
 
 The seed task is not a full database reset. It sets the seeded users' passwords to `password123` and updates fixtures. Run it only against the dedicated test project.
 

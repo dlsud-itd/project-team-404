@@ -39,18 +39,34 @@ jobs:
           cache: npm
           cache-dependency-path: backend/package-lock.json
       - run: npm ci
+      - run: npm ci --prefix ..
+      - name: Start local Supabase
+        run: npm --prefix .. run supabase:local:start
+      - name: Reset local database without demo data
+        run: npm --prefix .. run supabase:local:reset
+      - name: Configure local integration test values
+        shell: bash
+        run: |
+          status="$(../node_modules/.bin/supabase status -o env)"
+          api_url="$(printf '%s\n' "$status" | sed -n 's/^API_URL=//p' | tr -d '"')"
+          db_url="$(printf '%s\n' "$status" | sed -n 's/^DB_URL=//p' | tr -d '"')"
+          service_role_key="$(printf '%s\n' "$status" | sed -n 's/^SERVICE_ROLE_KEY=//p' | tr -d '"')"
+          : "${api_url:?Supabase status did not provide API_URL}"
+          : "${db_url:?Supabase status did not provide DB_URL}"
+          : "${service_role_key:?Supabase status did not provide SERVICE_ROLE_KEY}"
+          echo "::add-mask::$service_role_key"
+          {
+            printf 'SUPABASE_TEST_URL=%s\n' "$api_url"
+            printf 'SUPABASE_TEST_SERVICE_ROLE_KEY=%s\n' "$service_role_key"
+            printf 'SUPABASE_TEST_DATABASE_URL=%s\n' "$db_url"
+            printf 'SUPABASE_TEST_DIRECT_URL=%s\n' "$db_url"
+          } >> "$GITHUB_ENV"
       - run: npm test
         env:
           NODE_ENV: test
           CORS_ALLOWED_ORIGINS: http://localhost:4200
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/postgres
           DIRECT_URL: postgresql://postgres:postgres@localhost:5432/postgres
-          # Isolated Supabase test project for src/testing/integration. Without these the
-          # integration suites skip.
-          SUPABASE_TEST_URL: ${{ secrets.SUPABASE_TEST_URL }}
-          SUPABASE_TEST_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_TEST_SERVICE_ROLE_KEY }}
-          SUPABASE_TEST_DATABASE_URL: ${{ secrets.SUPABASE_TEST_DATABASE_URL }}
-          SUPABASE_TEST_DIRECT_URL: ${{ secrets.SUPABASE_TEST_DIRECT_URL }}
 
   lint-frontend:
     name: Frontend Lint

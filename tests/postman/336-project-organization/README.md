@@ -12,7 +12,7 @@ The order matters: the later favorite/archive/reorder requests use IDs generated
 
 Use a **dedicated, isolated Supabase project for testing**. Do not use production, a teammate's project, or a shared development project. These tests create projects, change their favorite/archive/order fields, and leave the created projects in the database.
 
-Never run **Supabase: Reset REMOTE DB (destructive)** for this guide. It drops and recreates the linked remote database. Use **Supabase: Seed Remote (no reset)** for fixtures; it does not reset the whole database, but it does create/update the seeded users and other seed data.
+Never run **supabase db reset --linked** for this guide. It drops and recreates the linked remote database. Use **Supabase: Seed Remote** for fixtures; it does not reset the whole database, but it does create/update the seeded users and other seed data.
 
 ## What the collection uses
 
@@ -41,7 +41,7 @@ You need VS Code, Postman, Node.js 22 or later, and access to a dedicated remote
 3. Open the Command Palette with `Ctrl+Shift+P`, choose **Tasks: Run Task**, and run **🔐 Supabase: Login**. Follow the browser sign-in steps.
 4. Run **🔗 Supabase: Link Project**. Select the dedicated test project and verify its name/reference before confirming. Enter its database password directly into the terminal if prompted; do not put it in Postman or a checked-in file.
 5. Run **📊 Supabase: Check Migration Status**. If repository migrations are pending, run **📤 Supabase: Push Migrations**. If the CLI suggests destructive reset/replacement, cancel and confirm with the project owner.
-6. Run **🌱 Supabase: Seed Remote (no reset)**. Each seed file runs against the linked project and reports `SUCCEEDED` or `ERROR` based on SQL execution. Stop if any seed reports `ERROR`.
+6. Run **🌱 Supabase: Seed Remote**. Each seed file runs against the linked project and reports `SUCCEEDED` or `ERROR` based on SQL execution. Stop if any seed reports `ERROR`.
 
 The seed task is not a full database reset, but it sets seeded passwords to `password123` and updates fixture rows. Run it only against the dedicated test project.
 

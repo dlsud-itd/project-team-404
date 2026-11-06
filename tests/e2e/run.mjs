@@ -1,4 +1,5 @@
 import { spawn, spawnSync } from 'node:child_process';
+import { createServer } from 'node:net';
 import {
   appendFileSync,
   mkdtempSync,
@@ -81,6 +82,30 @@ function runSupabase(args) {
     env: sanitizedEnvironment(),
     windowsHide: true,
   });
+}
+
+function reservePort(port) {
+  return new Promise((resolve, reject) => {
+    const server = createServer();
+    server.once('error', reject);
+    server.listen(port, 'localhost', () => {
+      const address = server.address();
+      if (!address || typeof address === 'string') {
+        server.close();
+        reject(new Error('Could not determine an available local port.'));
+        return;
+      }
+      server.close((error) => (error ? reject(error) : resolve(address.port)));
+    });
+  });
+}
+
+async function availablePort(preferredPort) {
+  try {
+    return await reservePort(preferredPort);
+  } catch {
+    return reservePort(0);
+  }
 }
 
 function selectedSupabaseEnvironment() {
@@ -191,7 +216,7 @@ function startBackend(env) {
   return child;
 }
 
-function startFrontend(env) {
+function startFrontend(env, port) {
   const angular = join(
     frontend,
     'node_modules',
@@ -217,7 +242,15 @@ function startFrontend(env) {
   }
   return startProcess(
     process.execPath,
-    [angular, 'serve', '--host', 'localhost', '--port', '4200', '--no-open'],
+    [
+      angular,
+      'serve',
+      '--host',
+      'localhost',
+      '--port',
+      String(port),
+      '--no-open',
+    ],
     { cwd: frontend, env }
   );
 }
@@ -276,7 +309,12 @@ function restoreGeneratedEnvironment() {
 async function main() {
   mkdirSync(testResultsDir, { recursive: true });
   const supabase = selectedSupabaseEnvironment();
+  const backendPort = await availablePort(3000);
+  const frontendPort = await availablePort(4200);
+  const apiUrl = `http://localhost:${backendPort}`;
+  const appUrl = `http://localhost:${frontendPort}`;
   const target = process.env['E2E_SUPABASE_TARGET'] ?? 'local';
+  console.log(`E2E services: API ${apiUrl}, frontend ${appUrl}`);
   if (target === 'remote-test') {
     console.log(
       `Using isolated remote Supabase test project (${new URL(supabase.url).hostname}).`
@@ -287,6 +325,8 @@ async function main() {
     E2E_SUPABASE_TARGET: target,
     E2E_STATE_FILE: stateFile,
     E2E_BACKEND_LOG_FILE: backendLog,
+    E2E_API_URL: apiUrl,
+    E2E_APP_URL: appUrl,
     SUPABASE_URL: supabase.url,
     SUPABASE_ANON_KEY: supabase.anonKey,
     SUPABASE_SERVICE_ROLE_KEY: supabase.serviceRoleKey,
@@ -294,19 +334,19 @@ async function main() {
   const backendEnv = {
     ...sharedEnv,
     NODE_ENV: 'development',
-    PORT: '3000',
+    PORT: String(backendPort),
     DATABASE_URL: supabase.databaseUrl,
     DIRECT_URL: supabase.directUrl,
   };
   delete backendEnv['BREVO_API_KEY'];
   delete backendEnv['BREVO_SENDER_EMAIL'];
   delete backendEnv['BREVO_SENDER_NAME'];
-  backendEnv['WEB_APP_URL'] = 'http://localhost:4200';
-  backendEnv['CORS_ALLOWED_ORIGINS'] = 'http://localhost:4200';
+  backendEnv['WEB_APP_URL'] = appUrl;
+  backendEnv['CORS_ALLOWED_ORIGINS'] = appUrl;
 
   const frontendEnv = {
     ...sharedEnv,
-    NG_APP_API_BASE_URL: 'http://localhost:3000',
+    NG_APP_API_BASE_URL: apiUrl,
     NG_APP_SUPABASE_URL: supabase.url,
     NG_APP_SUPABASE_ANON_KEY: supabase.anonKey,
   };
@@ -316,12 +356,12 @@ async function main() {
 
   const backendProcess = startBackend(backendEnv);
   await waitForServer(
-    'http://127.0.0.1:3000/health',
+    `${apiUrl}/health`,
     backendProcess,
-    'Server listening on port 3000'
+    `Server listening on port ${backendPort}`
   );
-  const frontendProcess = startFrontend(frontendEnv);
-  await waitForServer('http://localhost:4200/login', frontendProcess);
+  const frontendProcess = startFrontend(frontendEnv, frontendPort);
+  await waitForServer(`${appUrl}/login`, frontendProcess);
 
   const cli = join(root, 'node_modules', '@playwright', 'test', 'cli.js');
   if (!existsSync(cli))

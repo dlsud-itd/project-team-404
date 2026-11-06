@@ -7,6 +7,7 @@ import {
 } from '../support/database';
 import {
   baseUrl,
+  apiBaseUrl,
   fillRegistration,
   logIn,
   uniqueIdentity,
@@ -35,7 +36,7 @@ test('registers, logs in, and receives exactly one Inbox', async ({ page }) => {
 
   const responsePromise = page.waitForResponse(
     (response) =>
-      response.url() === 'http://localhost:3000/api/auth/signup' &&
+      response.url() === `${apiBaseUrl}/api/auth/signup` &&
       response.request().method() === 'POST'
   );
   await page.getByRole('button', { name: 'Create account' }).click();
@@ -81,7 +82,7 @@ test('rejects a taken username, then allows a corrected signup', async ({
   ).toBeVisible();
   const responsePromise = page.waitForResponse(
     (response) =>
-      response.url() === 'http://localhost:3000/api/auth/signup' &&
+      response.url() === `${apiBaseUrl}/api/auth/signup` &&
       response.request().method() === 'POST'
   );
   await page.getByRole('button', { name: 'Create account' }).click();
@@ -118,8 +119,7 @@ test('rejects mismatched passwords without sending a signup request', async ({
   signupEmail = identity.email;
   let signupRequests = 0;
   page.on('request', (request) => {
-    if (request.url() === 'http://localhost:3000/api/auth/signup')
-      signupRequests += 1;
+    if (request.url() === `${apiBaseUrl}/api/auth/signup`) signupRequests += 1;
   });
 
   await page.goto(`${baseUrl}/register`);
@@ -142,7 +142,7 @@ test('disables submit while the registration request is running', async ({
 }) => {
   const identity = uniqueIdentity();
   let releaseSignup!: () => void;
-  await page.route('http://localhost:3000/api/auth/signup', async (route) => {
+  await page.route(`${apiBaseUrl}/api/auth/signup`, async (route) => {
     await new Promise<void>((resolve) => {
       releaseSignup = resolve;
     });
@@ -159,7 +159,7 @@ test('disables submit while the registration request is running', async ({
   await page.goto(`${baseUrl}/register`);
   await fillRegistration(page, identity.username, identity.email);
   const requestStarted = page.waitForRequest(
-    (request) => request.url() === 'http://localhost:3000/api/auth/signup'
+    (request) => request.url() === `${apiBaseUrl}/api/auth/signup`
   );
   const submit = page.locator('form button[type="submit"]');
   await submit.click();

@@ -1,5 +1,6 @@
 import { spawn } from 'node:child_process';
 import { existsSync } from 'node:fs';
+import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 
@@ -19,7 +20,7 @@ const seedFiles = [
   'supabase/seeds/005_tasks.sql',
 ];
 
-function runSupabase(args, { inherit = false } = {}) {
+function runSupabase(args) {
   return new Promise((resolve) => {
     const child = spawn(process.execPath, [supabaseCliPath, ...args], {
       cwd: repositoryRoot,
@@ -27,16 +28,8 @@ function runSupabase(args, { inherit = false } = {}) {
         ...process.env,
         SUPABASE_DISABLE_UPDATE_CHECK: '1',
       },
-      stdio: inherit ? 'inherit' : ['inherit', 'pipe', 'pipe'],
+      stdio: ['inherit', 'pipe', 'pipe'],
     });
-
-    if (inherit) {
-      child.once('error', (error) =>
-        resolve({ code: 1, error: error.message })
-      );
-      child.once('close', (code) => resolve({ code: code ?? 1 }));
-      return;
-    }
 
     let stdout = '';
     let stderr = '';
@@ -59,6 +52,92 @@ function oneLine(value) {
   return value.replace(/\s+/g, ' ').trim();
 }
 
+function splitStatements(sql) {
+  const statements = [];
+  let start = 0;
+  let state = 'normal';
+  let blockDepth = 0;
+  let dollarTag = '';
+
+  for (let index = 0; index < sql.length; index += 1) {
+    const character = sql[index];
+    const next = sql[index + 1];
+
+    if (state === 'single') {
+      if (character === "'" && next === "'") {
+        index += 1;
+      } else if (character === "'") {
+        state = 'normal';
+      }
+      continue;
+    }
+
+    if (state === 'double') {
+      if (character === '"' && next === '"') {
+        index += 1;
+      } else if (character === '"') {
+        state = 'normal';
+      }
+      continue;
+    }
+
+    if (state === 'line-comment') {
+      if (character === '\n') state = 'normal';
+      continue;
+    }
+
+    if (state === 'block-comment') {
+      if (character === '/' && next === '*') {
+        blockDepth += 1;
+        index += 1;
+      } else if (character === '*' && next === '/') {
+        blockDepth -= 1;
+        index += 1;
+        if (blockDepth === 0) state = 'normal';
+      }
+      continue;
+    }
+
+    if (state === 'dollar') {
+      if (sql.startsWith(dollarTag, index)) {
+        index += dollarTag.length - 1;
+        state = 'normal';
+      }
+      continue;
+    }
+
+    if (character === "'") {
+      state = 'single';
+    } else if (character === '"') {
+      state = 'double';
+    } else if (character === '-' && next === '-') {
+      state = 'line-comment';
+      index += 1;
+    } else if (character === '/' && next === '*') {
+      state = 'block-comment';
+      blockDepth = 1;
+      index += 1;
+    } else if (character === '$') {
+      const tag = sql
+        .slice(index)
+        .match(/^\$[A-Za-z_][A-Za-z\d_]*\$|^\$\$/)?.[0];
+      if (tag) {
+        dollarTag = tag;
+        state = 'dollar';
+        index += tag.length - 1;
+      }
+    } else if (character === ';') {
+      const statement = sql.slice(start, index).trim();
+      if (statement) statements.push(statement);
+      start = index + 1;
+    }
+  }
+
+  const finalStatement = sql.slice(start).trim();
+  if (finalStatement) statements.push(finalStatement);
+  return statements;
+}
+
 async function main() {
   if (!existsSync(supabaseCliPath)) {
     console.error(
@@ -68,36 +147,34 @@ async function main() {
     return;
   }
 
-  if (process.argv.includes('--reset')) {
-    const reset = await runSupabase(['db', 'reset', '--linked', '--no-seed'], {
-      inherit: true,
-    });
-    if (reset.code !== 0) {
-      process.exitCode = reset.code;
-      return;
-    }
-  }
-
+  const target = process.argv.includes('--local') ? '--local' : '--linked';
   let hasErrors = false;
   for (const file of seedFiles) {
-    const result = await runSupabase([
-      '--output-format',
-      'json',
-      'db',
-      'query',
-      '--linked',
-      '--file',
-      file,
-    ]);
-    const output = oneLine(`${result.stdout}\n${result.stderr}`);
-    if (result.code === 0) {
+    const sql = await readFile(path.join(repositoryRoot, file), 'utf8');
+    const statements = splitStatements(sql);
+    let fileError;
+    for (const statement of statements) {
+      const result = await runSupabase([
+        '--output-format',
+        'json',
+        'db',
+        'query',
+        target,
+        statement,
+      ]);
+      if (result.code !== 0) {
+        fileError =
+          result.error ||
+          oneLine(`${result.stdout}\n${result.stderr}`) ||
+          `Supabase CLI exited with code ${result.code}`;
+        break;
+      }
+    }
+
+    if (!fileError) {
       console.log(`${path.basename(file)}: SUCCEEDED`);
     } else {
-      const detail =
-        result.error ||
-        output ||
-        `Supabase CLI exited with code ${result.code}`;
-      console.log(`${path.basename(file)}: ERROR - ${oneLine(detail)}`);
+      console.log(`${path.basename(file)}: ERROR - ${oneLine(fileError)}`);
       hasErrors = true;
     }
   }
