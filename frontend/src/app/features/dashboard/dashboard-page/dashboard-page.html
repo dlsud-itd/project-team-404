@@ -1,0 +1,13 @@
+<main class="page">
+  <header class="title-row">
+    <h1>Dashboard</h1>
+    @if (username(); as username) {
+      <p class="greeting">Welcome back, {{ username }}.</p>
+    }
+  </header>
+
+  <div class="sections">
+    <app-current-upcoming-tasks />
+    <!-- The Overdue section goes here; it shares DashboardService from dashboard/shared. -->
+  </div>
+</main>

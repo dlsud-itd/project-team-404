@@ -1,0 +1,33 @@
+<section class="group" [attr.data-group]="group().key" [attr.aria-labelledby]="headingId()">
+  <h3 class="heading" [id]="headingId()">
+    {{ group().label }}
+    <span class="count" [attr.aria-label]="group().tasks.length + ' tasks'">{{
+      group().tasks.length
+    }}</span>
+  </h3>
+
+  @if (group().tasks.length) {
+    <ul class="tasks">
+      @for (task of group().tasks; track task.taskId) {
+        <li class="task">
+          <span
+            class="priority"
+            [attr.data-priority]="task.priorityId"
+            [attr.aria-label]="priorityLabel(task) + ' priority'"
+            >{{ priorityLabel(task) }}</span
+          >
+          @if (editLink(task); as link) {
+            <a class="title" [routerLink]="link">{{ task.title }}</a>
+          } @else {
+            <span class="title">{{ task.title }}</span>
+          }
+          @if (showDates()) {
+            <span class="due">{{ dueLabel(task) }}</span>
+          }
+        </li>
+      }
+    </ul>
+  } @else {
+    <p class="empty">{{ group().emptyMessage }}</p>
+  }
+</section>
