@@ -71,7 +71,9 @@ frontend test and build tasks also use the values in `frontend/.env`.
 ## Browser E2E tests
 
 The shared Playwright runner exercises registration, login/session handling,
-password recovery, and profile management against the local frontend and API.
+password recovery, profile management, and Projects (create, edit, delete,
+favorite, archive, reorder, and switch) against the local frontend and API.
+Specs live in `tests/e2e/auth/` and `tests/e2e/projects/`.
 By default, it starts local Supabase and uses its seeded database. It forces the
 backend console mailer and does not read or connect to a linked/remote project.
 
@@ -92,6 +94,21 @@ when the suite completes. Supabase remains running so you can run the command
 again against the same database. No real email is sent. Created test users are
 deleted and seeded user profiles, passwords, sessions, and reset tokens are
 restored after each relevant test and again at suite teardown.
+
+The Projects specs sign in as the seeded `harvey` account (and use `james` to
+check that one user's project is hidden from another). Projects they create are
+named `E2E …` and removed from the database after each test; any left by an
+aborted run are removed before the next one. Harvey's seeded projects get their
+favorite, archive, and sort-order values put back through the API after each
+test, and the test fails if they differ from the seed afterwards.
+
+Pass extra Playwright arguments after `--`:
+
+```powershell
+npm run test:e2e -- projects/                 # only the Projects specs
+npm run test:e2e -- projects/project-crud     # one spec file
+npm run test:e2e -- projects/ --repeat-each=2 # each Projects test twice in a row
+```
 
 Failed-test screenshots, videos, and traces are saved under
 `tests/e2e/test-results/` (ignored by Git). The backend's captured console-mail
@@ -115,7 +132,9 @@ it is omitted. For older environment files, `TEST_DATABASE_URL` and
 database. Before running, ensure it already has the current migrations and the
 E2E fixture accounts and reset-token rows from `supabase/seeds/`. The suite
 creates/deletes temporary accounts and modifies then restores the seeded James
-account's password, profile, sessions, and reset tokens. Never point it at a
+account's password, profile, sessions, and reset tokens, and Harvey's sessions
+and project favorite, archive, and order state. It also needs Harvey's seeded
+Inbox and "Client Projects" rows from `supabase/seeds/004_projects.sql`. Never point it at a
 production or shared development project.
 
 ## Regression tests

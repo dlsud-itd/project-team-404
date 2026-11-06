@@ -314,6 +314,71 @@ export async function inboxProjectsForUser(
   return supabaseRequest(`/rest/v1/tbl_project?${query}`);
 }
 
+export type ProjectRow = {
+  project_id: number;
+  user_id: string;
+  name: string;
+  description: string | null;
+  color: string | null;
+  is_inbox: boolean;
+  is_favorite: boolean;
+  is_archived: boolean;
+  sort_order: number;
+  deleted_at: string | null;
+};
+
+const projectColumns =
+  'project_id,user_id,name,description,color,is_inbox,is_favorite,is_archived,sort_order,deleted_at';
+
+/** Every project row the user owns, including soft-deleted ones, oldest first. */
+export async function projectRowsForUser(
+  userId: string
+): Promise<ProjectRow[]> {
+  const query = new URLSearchParams({
+    select: projectColumns,
+    user_id: `eq.${userId}`,
+    order: 'project_id.asc',
+  });
+  return supabaseRequest<ProjectRow[]>(`/rest/v1/tbl_project?${query}`);
+}
+
+export async function projectRow(
+  projectId: number
+): Promise<ProjectRow | null> {
+  const query = new URLSearchParams({
+    select: projectColumns,
+    project_id: `eq.${projectId}`,
+  });
+  const rows = await supabaseRequest<ProjectRow[]>(
+    `/rest/v1/tbl_project?${query}`
+  );
+  return rows[0] ?? null;
+}
+
+/** Hard-deletes project rows the E2E tests created, so reruns start clean. */
+export async function deleteProjectRows(projectIds: number[]): Promise<void> {
+  if (!projectIds.length) return;
+  const query = new URLSearchParams({
+    project_id: `in.(${projectIds.join(',')})`,
+    is_inbox: 'eq.false',
+  });
+  await supabaseRequest(`/rest/v1/tbl_project?${query}`, {
+    method: 'DELETE',
+    headers: { Prefer: 'return=minimal' },
+  });
+}
+
+/** Removes non-Inbox projects whose name starts with the E2E prefix, left by an aborted run. */
+export async function deleteLeftoverE2EProjects(
+  userId: string,
+  prefix: string
+): Promise<void> {
+  const leftovers = (await projectRowsForUser(userId)).filter(
+    (row) => !row.is_inbox && row.name.startsWith(prefix)
+  );
+  await deleteProjectRows(leftovers.map((row) => row.project_id));
+}
+
 export async function profileForUser(email: string): Promise<ProfileRow> {
   return profileForEmail(email);
 }
