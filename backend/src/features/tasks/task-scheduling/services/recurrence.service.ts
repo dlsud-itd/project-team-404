@@ -33,7 +33,8 @@ export class RecurrenceService {
       ...task,
       scheduledDate: next.toISOString().slice(0, 10),
       dueDate: next.toISOString().slice(0, 10),
-      recurrence: 'none',
+      isDone: false,
+      doneAt: null,
     };
   }
 }

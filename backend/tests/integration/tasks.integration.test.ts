@@ -522,8 +522,10 @@ integrationDescribe('tasks integration', () => {
   });
 
   it('requires a valid token on every task route', async () => {
-    await createAccount();
-    const countBefore = await prisma.task.count();
+    const account = await createAccount();
+    const countBefore = await prisma.task.count({
+      where: { userId: account.id },
+    });
     const routes = [
       { method: 'POST', path: '/api/tasks', body: { title: 'Unauthorized' } },
       { method: 'GET', path: '/api/tasks' },
@@ -571,7 +573,9 @@ integrationDescribe('tasks integration', () => {
       }
     }
 
-    expect(await prisma.task.count()).toBe(countBefore);
+    expect(await prisma.task.count({ where: { userId: account.id } })).toBe(
+      countBefore
+    );
   });
 
   describe('Task Scheduling', () => {
@@ -663,13 +667,13 @@ integrationDescribe('tasks integration', () => {
       ).toEqual(before);
     });
 
-    it('persists daily, weekly-interval, and monthly rules and rejects invalid recurrence input', async () => {
+    it('persists daily, weekday-based weekly, and monthly rules and rejects invalid recurrence input', async () => {
       const account = await createAccount();
       const project = await seedProject(account.id, 'Recurrence rule project');
 
       for (const rule of [
         { recurrence: 'daily' },
-        { recurrence: 'weekly', recurrenceInterval: 2 },
+        { recurrence: 'weekly', recurrenceDays: [2, 4] },
         { recurrence: 'monthly' },
       ]) {
         const task = await seedTask(account.id, project.id, {
@@ -689,7 +693,7 @@ integrationDescribe('tasks integration', () => {
         ).toMatchObject({
           recurrence: rule.recurrence,
           ...(rule.recurrence === 'weekly'
-            ? { recurrenceInterval: rule.recurrenceInterval }
+            ? { recurrenceDays: rule.recurrenceDays }
             : {}),
         });
       }
@@ -699,7 +703,7 @@ integrationDescribe('tasks integration', () => {
       });
       for (const body of [
         { recurrence: 'yearly' },
-        { recurrence: 'weekly', recurrenceInterval: 0 },
+        { recurrence: 'daily', recurrenceDays: [1] },
       ]) {
         const response = await taskRequest(
           'PUT',
@@ -722,9 +726,9 @@ integrationDescribe('tasks integration', () => {
       },
       {
         recurrence: 'weekly',
-        recurrenceInterval: 2,
+        recurrenceDays: [2],
         dueDate: '2026-03-10',
-        nextDueDate: '2026-03-24',
+        nextDueDate: '2026-03-17',
       },
       {
         recurrence: 'monthly',
@@ -743,7 +747,7 @@ integrationDescribe('tasks integration', () => {
       },
     ])(
       'completing $recurrence creates exactly one next occurrence',
-      async ({ recurrence, recurrenceInterval, dueDate, nextDueDate }) => {
+      async ({ recurrence, recurrenceDays, dueDate, nextDueDate }) => {
         const account = await createAccount();
         const project = await seedProject(
           account.id,
@@ -755,7 +759,7 @@ integrationDescribe('tasks integration', () => {
         });
         const rule = {
           recurrence,
-          ...(recurrenceInterval === undefined ? {} : { recurrenceInterval }),
+          ...(recurrenceDays === undefined ? {} : { recurrenceDays }),
         };
         const configured = await taskRequest(
           'PUT',
@@ -793,7 +797,7 @@ integrationDescribe('tasks integration', () => {
           title: task.title,
           isDone: false,
           recurrence,
-          ...(recurrenceInterval === undefined ? {} : { recurrenceInterval }),
+          ...(recurrenceDays === undefined ? {} : { recurrenceDays }),
           dueDate: new Date(`${nextDueDate}T00:00:00.000Z`),
         });
       }
@@ -967,7 +971,7 @@ integrationDescribe('tasks integration', () => {
           account.token
         );
         expect(dashboard.status).toBe(200);
-        expect(dashboard.body).toEqual(
+        expect(dashboard.body.tasks).toEqual(
           expect.arrayContaining([
             expect.objectContaining({
               id: task.id,
