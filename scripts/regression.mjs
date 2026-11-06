@@ -1,22 +1,13 @@
 // Runs every regression suite in order and prints a pass-count summary for the regression log.
 // A step only passes when its command succeeds with no failed and no skipped tests.
-import { execSync, spawn } from 'node:child_process';
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-
-const TEST_ENV_KEYS = [
-  'SUPABASE_TEST_URL',
-  'SUPABASE_TEST_SERVICE_ROLE_KEY',
-  'SUPABASE_TEST_DATABASE_URL',
-  'SUPABASE_TEST_DIRECT_URL',
-  'TEST_DATABASE_URL',
-  'TEST_DIRECT_URL',
-];
+import { execSync, spawn, spawnSync } from 'node:child_process';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 
 const rootScripts = JSON.parse(readFileSync('package.json', 'utf8')).scripts;
 const backendEnv = {
   NODE_ENV: 'test',
   CORS_ALLOWED_ORIGINS: 'http://localhost:4200',
-  ...testEnv(),
+  ...localTestEnv(),
 };
 
 const steps = [
@@ -34,7 +25,7 @@ const steps = [
       : 'SUPABASE_TEST_* is not set, so the suite would only skip',
   },
   {
-    name: 'Project API regression',
+    name: 'Project API regression (tests/regression)',
     command: 'npm --prefix backend run test:regression:projects',
     env: backendEnv,
     missing: backendEnv.SUPABASE_TEST_URL
@@ -46,7 +37,7 @@ const steps = [
     command: 'npm --prefix frontend run test:run',
   },
   {
-    name: 'E2E',
+    name: 'E2E (tests/e2e)',
     command: 'npm run test:e2e',
     missing: rootScripts['test:e2e']
       ? null
@@ -97,25 +88,68 @@ writeFileSync('reports/regression/summary.md', `${summary}\n`);
 console.log('Summary saved to reports/regression/summary.md');
 process.exit(results.every((r) => r.status === 'PASS') ? 0 : 1);
 
-/** The Supabase test-project values from the environment or backend/.env, and nothing else. */
-function testEnv() {
-  const fromFile = {};
-  if (existsSync('backend/.env')) {
-    for (const line of readFileSync('backend/.env', 'utf8').split(/\r?\n/)) {
-      const match = line.match(/^\s*([A-Z_]+)\s*=\s*(.*?)\s*$/);
-      if (match && TEST_ENV_KEYS.includes(match[1]) && match[2]) {
-        fromFile[match[1]] = match[2].replace(/^(['"])(.*)\1$/, '$2');
-      }
+/** Supplies local Supabase credentials only; never reads a remote test target from .env. */
+function localTestEnv() {
+  const cli = 'node_modules/supabase/dist/supabase.js';
+  const env = {
+    ...process.env,
+    SUPABASE_DISABLE_UPDATE_CHECK: '1',
+  };
+  const started = spawnSync(process.execPath, [cli, 'start'], {
+    cwd: process.cwd(),
+    env,
+    encoding: 'utf8',
+    windowsHide: true,
+  });
+  if (started.error || started.status !== 0) {
+    throw new Error(
+      'Could not start local Supabase for regression tests. Ensure Docker is running.'
+    );
+  }
+
+  const status = spawnSync(process.execPath, [cli, 'status', '-o', 'env'], {
+    cwd: process.cwd(),
+    env,
+    encoding: 'utf8',
+    windowsHide: true,
+  });
+  if (status.error || status.status !== 0) {
+    throw new Error(
+      'Could not read the local Supabase status for regression tests.'
+    );
+  }
+
+  const values = new Map();
+  for (const line of status.stdout.split(/\r?\n/)) {
+    const match = line.trim().match(/^([A-Z_]+)=(?:"([^"]*)"|'([^']*)'|(.*))$/);
+    if (match) values.set(match[1], match[2] ?? match[3] ?? match[4] ?? '');
+  }
+
+  const apiUrl = values.get('API_URL');
+  const databaseUrl = values.get('DB_URL');
+  const serviceRoleKey = values.get('SERVICE_ROLE_KEY');
+  if (!apiUrl || !databaseUrl || !serviceRoleKey) {
+    throw new Error(
+      'Local Supabase did not provide API_URL, DB_URL, and SERVICE_ROLE_KEY.'
+    );
+  }
+
+  const localHosts = new Set(['localhost', '127.0.0.1', '::1']);
+  for (const [name, value] of [
+    ['API_URL', apiUrl],
+    ['DB_URL', databaseUrl],
+  ]) {
+    if (!localHosts.has(new URL(value).hostname.replace(/^\[|\]$/g, ''))) {
+      throw new Error(`Refusing regression tests: ${name} is not local.`);
     }
   }
-  const values = Object.fromEntries(
-    TEST_ENV_KEYS.map((key) => [key, process.env[key] || fromFile[key]]).filter(
-      ([, v]) => v
-    )
-  );
-  values.SUPABASE_TEST_DATABASE_URL ??= values.TEST_DATABASE_URL;
-  values.SUPABASE_TEST_DIRECT_URL ??= values.TEST_DIRECT_URL;
-  return values;
+
+  return {
+    SUPABASE_TEST_URL: apiUrl,
+    SUPABASE_TEST_SERVICE_ROLE_KEY: serviceRoleKey,
+    SUPABASE_TEST_DATABASE_URL: databaseUrl,
+    SUPABASE_TEST_DIRECT_URL: databaseUrl,
+  };
 }
 
 function run(command, env = {}) {

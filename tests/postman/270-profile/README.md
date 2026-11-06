@@ -12,7 +12,7 @@ Order is important: each request builds on values created by earlier requests. T
 
 Use a **dedicated, isolated Supabase project for testing**. Do not use production, a teammate's project, or a shared development project. These tests modify James's profile and password and create session records in the selected remote project.
 
-Never run **Supabase: Reset REMOTE DB (destructive)** for this guide. It drops and recreates the linked remote database. Use **Supabase: Seed Remote (no reset)** to ensure the seeded users and fixtures exist. That task does not reset the whole database, but it does create or update the specific seeded test users and fixtures.
+Never run **supabase db reset --linked** for this guide. It drops and recreates the linked remote database. Use **Supabase: Seed Remote** to ensure the seeded users and fixtures exist. That task does not reset the whole database, but it does create or update the specific seeded test users and fixtures.
 
 ## What the collection uses
 
@@ -67,7 +67,7 @@ The CLI and backend must both target this same test project. If you cannot confi
 
 1. Run **📊 Supabase: Check Migration Status** from **Tasks: Run Task**. Confirm that the CLI is checking the intended test project.
 2. If repository migrations are pending, run **📤 Supabase: Push Migrations**. Review any CLI prompt carefully. If it proposes resetting or destructively replacing the database, cancel and ask the project owner before proceeding.
-3. Run **🌱 Supabase: Seed Remote (no reset)**. This task executes each seed file against the linked remote project and reports the SQL execution result as `SUCCEEDED` or `ERROR`:
+3. Run **🌱 Supabase: Seed Remote**. This task executes each seed file against the linked remote project and reports the SQL execution result as `SUCCEEDED` or `ERROR`:
    - `001_users.sql`
    - `002_inbox_projects.sql`
    - `003_password_reset_tokens.sql`
@@ -75,7 +75,7 @@ The CLI and backend must both target this same test project. If you cannot confi
    - `005_tasks.sql`
 4. If any seed reports `ERROR`, stop and read the output before using Postman. Do not use the destructive remote reset task to get past a seed error.
 
-The user seed sets James, Harvey, and Alex's passwords to `password123` and resets their seed profile data. This project must be isolated because this is real remote data. Run **🌱 Supabase: Seed Remote (no reset)** before a new full collection run if an earlier run stopped before restoring James's profile or password.
+The user seed sets James, Harvey, and Alex's passwords to `password123` and resets their seed profile data. This project must be isolated because this is real remote data. Run **🌱 Supabase: Seed Remote** before a new full collection run if an earlier run stopped before restoring James's profile or password.
 
 ## 4. Configure the local backend for the remote project
 
@@ -245,9 +245,9 @@ The Collection Runner should already use this order. This list is also the order
 
 The final requests restore James's seeded profile and password only if the run reaches them. If a run stops after a successful profile or password update, James may still have the generated username/timezone or the temporary password `PostmanChanged123!`.
 
-If possible, resume by sending the remaining requests in order using the same environment variables and a still-valid James session. If the session is not usable or you are unsure what state the profile is in, run **🌱 Supabase: Seed Remote (no reset)** again for the confirmed isolated test project. That reapplies the fixture values without dropping the remote database. Then restart the collection from request 1.
+If possible, resume by sending the remaining requests in order using the same environment variables and a still-valid James session. If the session is not usable or you are unsure what state the profile is in, run **🌱 Supabase: Seed Remote** again for the confirmed isolated test project. That reapplies the fixture values without dropping the remote database. Then restart the collection from request 1.
 
-Do not run **Supabase: Reset REMOTE DB (destructive)**. Confirm the CLI and backend point at the dedicated test project before reseeding.
+Do not run **supabase db reset --linked**. Confirm the CLI and backend point at the dedicated test project before reseeding.
 
 ## 13. Common failures
 
@@ -257,7 +257,7 @@ Do not run **Supabase: Reset REMOTE DB (destructive)**. Confirm the CLI and back
 | A seeded login returns `401` | Check `seedPassword`, the account email, whether the remote test project was seeded, and whether `SUPABASE_URL` and `DATABASE_URL` point to the same project. |
 | `Get current James user` fails | Run the earlier **Login as James** request in the same Runner session. It sets `token` and `jamesUserId`. |
 | The duplicate-username test behaves unexpectedly | Ensure **Login as Harvey for duplicate username case** ran successfully first and the test project has Harvey's seeded profile. |
-| Password test requests fail after a previous partial run | James's password may no longer be `password123`. Run **🌱 Supabase: Seed Remote (no reset)** for the confirmed test project, then start from request 1. |
+| Password test requests fail after a previous partial run | James's password may no longer be `password123`. Run **🌱 Supabase: Seed Remote** for the confirmed test project, then start from request 1. |
 | Logout or session assertions fail | Keep requests in order. The password-change test revokes `tokenB`, and the later new-password login replaces `tokenC` with a second James session. |
 | The backend exits after Brevo was removed | Check that `BREVO_API_KEY` and `BREVO_SENDER_EMAIL` are removed/commented out, not present as empty values. Restart the backend. Brevo is not needed for this collection. |
 | A migration or seed task reports an error | Stop. Read the full CLI output and confirm the linked project reference before trying again. Do not use a remote reset to get past the error. |

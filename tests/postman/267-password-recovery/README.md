@@ -10,7 +10,7 @@ This guide explains how to run the password-recovery Postman collection when the
 
 Use a **dedicated, isolated Supabase project for testing**. Do not use production, a teammate's project, or a shared development project. These steps seed and modify real rows in the selected remote database. The tests change James's password, create and invalidate reset tokens, and revoke sessions.
 
-Never run the task named **Supabase: Reset REMOTE DB (destructive)** for this guide. It drops and recreates the linked remote database. This guide uses **Supabase: Seed Remote (no reset)** instead; that task does not reset the database, but it does create or update the specific seeded test accounts and fixtures.
+Never run the task named **supabase db reset --linked** for this guide. It drops and recreates the linked remote database. This guide uses **Supabase: Seed Remote** instead; that task does not reset the database, but it does create or update the specific seeded test accounts and fixtures.
 
 ## What the collection uses
 
@@ -67,7 +67,7 @@ The remote project needs the repository's database schema before the seed files 
 
 1. Run **📊 Supabase: Check Migration Status** from **Tasks: Run Task**. Confirm that the CLI is checking the intended test project.
 2. If repository migrations are pending, run **📤 Supabase: Push Migrations**. This applies the repository migrations to the linked remote project. Review any CLI prompt carefully. If it proposes resetting or destructively replacing the database, cancel and ask the project owner before proceeding.
-3. Run **🌱 Supabase: Seed Remote (no reset)**. This task executes each seed file against the linked remote project and reports the SQL execution result as `SUCCEEDED` or `ERROR`:
+3. Run **🌱 Supabase: Seed Remote**. This task executes each seed file against the linked remote project and reports the SQL execution result as `SUCCEEDED` or `ERROR`:
    - `001_users.sql`
    - `002_inbox_projects.sql`
    - `003_password_reset_tokens.sql`
@@ -77,7 +77,7 @@ The remote project needs the repository's database schema before the seed files 
 
 The remote seed task is intentionally not a database reset. It can still modify fixture rows: `001_users.sql` sets the three seeded account passwords to `password123`, and the other seed files create/update the corresponding profiles, projects, tasks, and reset-token rows. This is why the project must be isolated for tests.
 
-Run **🌱 Supabase: Seed Remote (no reset)** again before each new full collection run. The collection invalidates reset tokens and changes James's password during a successful run. Reseeding restores the expected fixture state without resetting the whole remote database.
+Run **🌱 Supabase: Seed Remote** again before each new full collection run. The collection invalidates reset tokens and changes James's password during a successful run. Reseeding restores the expected fixture state without resetting the whole remote database.
 
 ## 4. Configure the local backend to use the remote project
 
@@ -291,9 +291,9 @@ Preferred recovery:
 
 1. If needed, send **New password works after reset** with `PostmanRecovery123`. A successful response saves a new session token as the environment variable `tokenB`.
 2. Send **Restore seeded James password after recovery checks**. It uses `tokenB` and changes the password back to `password123`.
-3. Before another full collection run, run **🌱 Supabase: Seed Remote (no reset)** again. This restores all expected seed fixtures, including the valid reset token that the previous run invalidated.
+3. Before another full collection run, run **🌱 Supabase: Seed Remote** again. This restores all expected seed fixtures, including the valid reset token that the previous run invalidated.
 
-If you cannot restore the account through Postman, stop and confirm that the CLI and backend still point at the dedicated test project. The remote seed task can restore the fixture state without dropping the database, but it may update the test users and fixture rows. Do not run **Supabase: Reset REMOTE DB (destructive)**.
+If you cannot restore the account through Postman, stop and confirm that the CLI and backend still point at the dedicated test project. The remote seed task can restore the fixture state without dropping the database, but it may update the test users and fixture rows. Do not run **supabase db reset --linked**.
 
 ## 11. Common failures
 

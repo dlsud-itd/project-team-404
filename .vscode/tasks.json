@@ -369,9 +369,9 @@
       "type": "npm",
       "script": "supabase:local:seed",
       "path": ".",
-      "detail": "Applies the repository SQL seed files to the running local database without resetting it.",
+      "detail": "Applies repository seed files to the running local database without resetting it.",
       "presentation": {
-        "group": "supabase",
+        "group": "seed",
         "panel": "shared",
         "reveal": "always"
       }
@@ -410,18 +410,6 @@
       }
     },
     {
-      "label": "⚠️ Supabase: Reset REMOTE DB (destructive)",
-      "type": "npm",
-      "script": "supabase:reset:remote",
-      "path": ".",
-      "detail": "Destructively resets the linked remote database without automatic seeds, then runs each remote seed and reports SUCCEEDED or ERROR from SQL execution. Confirm the linked project before running.",
-      "presentation": {
-        "group": "supabase",
-        "panel": "shared",
-        "reveal": "always"
-      }
-    },
-    {
       "label": "🩹 Supabase: Repair Migration History",
       "type": "shell",
       "command": "npm run supabase:repair -- --status ${input:supabaseMigrationStatus} ${input:supabaseMigrationVersion} --linked",
@@ -432,13 +420,26 @@
       }
     },
     {
-      "label": "🌱 Supabase: Seed Remote (no reset)",
+      "label": "🌱 Supabase:
+      Remote",
       "type": "npm",
-      "script": "supabase:seed:remote",
+      "script": "supabase:remote:seed",
       "path": ".",
-      "detail": "Runs SQL files from supabase/seeds against the linked remote database without resetting it. Each file reports SUCCEEDED or ERROR from SQL execution. Confirm the linked project before running.",
+      "detail": "Applies repository seed files to the linked remote database without resetting it. Use only with a dedicated test project and verify the link first.",
       "presentation": {
         "group": "seed",
+        "panel": "shared",
+        "reveal": "always"
+      }
+    },
+    {
+      "label": "⚠️ Supabase: Reset REMOTE DB (destructive)",
+      "type": "npm",
+      "script": "supabase:remote:reset",
+      "path": ".",
+      "detail": "Destructively resets the linked database and reapplies migrations without seed data. Use only for a dedicated disposable project; verify the link before running.",
+      "presentation": {
+        "group": "supabase",
         "panel": "shared",
         "reveal": "always"
       }

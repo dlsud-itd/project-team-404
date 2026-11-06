@@ -29,10 +29,10 @@
     "supabase:local:status": "supabase status",
     "supabase:local:stop": "supabase stop",
     "supabase:local:reset": "supabase db reset --local --no-seed",
-    "supabase:local:seed": "node scripts/supabase-seed-local.mjs",
-    "supabase:reset:remote": "node scripts/supabase-seed.mjs --reset",
+    "supabase:local:seed": "node scripts/supabase-seed.mjs --local",
+    "supabase:remote:reset": "supabase db reset --linked --no-seed",
     "supabase:repair": "supabase migration repair",
-    "supabase:seed:remote": "node scripts/supabase-seed.mjs",
+    "supabase:remote:seed": "node scripts/supabase-seed.mjs --linked",
     "postman:task-crud:export": "node scripts/generate-task-postman.mjs"
   },
   "devDependencies": {

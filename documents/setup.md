@@ -97,14 +97,13 @@ test harness refuses non-local test targets.
 ### Reset, seed, and stop
 
 1. Run **`🔄 Supabase: Reset Local DB`** to rebuild the local database from
-   `supabase/migrations/` without demo data. This permanently deletes the
-   existing local database contents.
-2. To load demo data, run **`🌱 Supabase: Seed Local DB`**. This applies the SQL
-   files in `supabase/seeds/` without resetting the database. It also provides
-   the demo fixtures needed by E2E and regression tests.
-3. Run `npm --prefix backend run test:integration`. The full regression task
-   also runs E2E tests against local Supabase. If tests report that they were
-   skipped, check the three `SUPABASE_TEST_*` values above.
+   `supabase/migrations/` without seed data. This permanently deletes existing
+   local database contents.
+2. Run **`🌱 Supabase: Seed Local DB`** to apply the SQL files in
+   `supabase/seeds/` without resetting the database. Seed before E2E and
+   regression tests that need demo fixtures.
+3. Run `npm --prefix backend run test:integration`. If tests report that they
+   were skipped, check the three `SUPABASE_TEST_*` values above.
 4. At the end of the day, run **`⏹️ Supabase: Stop Local DB`**. This keeps local
    data. To clear all local data and volumes, use the Supabase CLI's
    `supabase stop --no-backup` command.
@@ -114,6 +113,12 @@ pull schema from the linked hosted project into a migration file. It does not
 pull database rows and is not part of local database setup. Review generated
 migrations before committing them. Local schema is rebuilt from the repository
 migrations; never use a linked/remote reset or push command for local testing.
+
+For remote fixtures, **`🌱 Supabase: Seed Remote`** applies seed SQL without
+resetting the linked database. **`⚠️ Supabase: Reset REMOTE DB (destructive)`**
+resets the linked database and reapplies migrations without seed data. Confirm
+the linked project and use the reset only for a dedicated disposable test
+project, never production or shared development data.
 
 ## Browser E2E tests
 
@@ -195,20 +200,19 @@ fail and skip counts, and saves it to `reports/regression/summary.md` for the
 sprint regression log. It exits with an error if any step fails, skips tests,
 or cannot run.
 
-The backend integration tests need an isolated Supabase test project, never the
-development project. Set `SUPABASE_TEST_URL`, `SUPABASE_TEST_SERVICE_ROLE_KEY`
-and `SUPABASE_TEST_DATABASE_URL` (and optionally `SUPABASE_TEST_DIRECT_URL`) in
-your shell or in `backend/.env`. The runner passes only these `SUPABASE_TEST_*`
-values from `backend/.env` to the tests. In CI the same names are repository
-secrets used by the Backend Tests job.
+The backend integration tests use the local Supabase test stack. Set
+`SUPABASE_TEST_URL`, `SUPABASE_TEST_SERVICE_ROLE_KEY`, and
+`SUPABASE_TEST_DATABASE_URL` (and optionally `SUPABASE_TEST_DIRECT_URL`) in
+`backend/.env`. The runner passes only these `SUPABASE_TEST_*` values from
+`backend/.env` to the tests. CI starts Supabase locally and obtains these values
+from the CLI.
 
 Run only the frontend regression specs with `npm run test:regression` from
 `frontend`.
 
 ## Supabase tasks
 
-The task list also includes tasks to check migration status, pull remote state,
-seed the linked remote database, and reset databases. Confirm the selected
-Supabase project before using any remote operation. The task
-**`⚠️ Supabase: Reset REMOTE DB (destructive)`** resets the linked remote
-database and is destructive.
+The task list has separate seed and reset tasks for local and remote databases.
+The remote seed task updates fixture rows without resetting the linked database.
+Verify the linked project and use it only for a dedicated test project, never
+production or shared development data.

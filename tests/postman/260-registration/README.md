@@ -10,7 +10,7 @@ This guide explains how to run the registration Postman collection against a **d
 
 Use a **dedicated, isolated Supabase project for testing**. Do not use production, a teammate's project, or a shared development project. The first request creates a real Supabase Auth user, profile, and Inbox through the API. Each collection run generates a new username and email, so these rows remain in the project after the run; the collection does not clean them up.
 
-Never run **Supabase: Reset REMOTE DB (destructive)** for this guide. It drops and recreates the linked remote database. Use **Supabase: Seed Remote (no reset)** to ensure the seeded accounts and fixtures exist. That task does not reset the database, but it does create or update its configured fixture rows.
+Never run **supabase db reset --linked** for this guide. It drops and recreates the linked remote database. Use **Supabase: Seed Remote** to ensure the seeded accounts and fixtures exist. That task does not reset the database, but it does create or update its configured fixture rows.
 
 ## What the collection uses
 
@@ -65,7 +65,7 @@ The CLI and backend must both target this same test project. If you cannot confi
 
 1. Run **📊 Supabase: Check Migration Status** from **Tasks: Run Task**. Confirm that the CLI is checking the intended test project.
 2. If repository migrations are pending, run **📤 Supabase: Push Migrations**. Review any CLI prompt carefully. If it proposes resetting or destructively replacing the database, cancel and ask the project owner before proceeding.
-3. Run **🌱 Supabase: Seed Remote (no reset)**. This task executes each seed file against the linked remote project and reports the SQL execution result as `SUCCEEDED` or `ERROR`:
+3. Run **🌱 Supabase: Seed Remote**. This task executes each seed file against the linked remote project and reports the SQL execution result as `SUCCEEDED` or `ERROR`:
    - `001_users.sql`
    - `002_inbox_projects.sql`
    - `003_password_reset_tokens.sql`

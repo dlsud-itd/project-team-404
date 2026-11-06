@@ -12,7 +12,7 @@ The order matters. Later requests use tokens created by earlier login requests, 
 
 Use a **dedicated, isolated Supabase project for testing**. Do not use production, a teammate's project, or a shared development project. These tests make real login requests and create session records in the selected project. The seeded account SQL sets James, Harvey, and Alex's passwords to `password123`.
 
-Never run **Supabase: Reset REMOTE DB (destructive)** for this guide. It drops and recreates the linked remote database. Use **Supabase: Seed Remote (no reset)** to ensure the test accounts and fixtures exist. That task does not reset the whole database, but it does create or update the specific seeded test accounts and other fixtures.
+Never run **supabase db reset --linked** for this guide. It drops and recreates the linked remote database. Use **Supabase: Seed Remote** to ensure the test accounts and fixtures exist. That task does not reset the whole database, but it does create or update the specific seeded test accounts and other fixtures.
 
 ## What the collection uses
 
@@ -67,7 +67,7 @@ The CLI and backend must both target the same test project. If you cannot confid
 
 1. Run **📊 Supabase: Check Migration Status** from **Tasks: Run Task**. Confirm that the CLI is checking the test project.
 2. If repository migrations are pending, run **📤 Supabase: Push Migrations**. Review any CLI prompt carefully. If it proposes resetting or destructively replacing the database, cancel and ask the project owner before proceeding.
-3. Run **🌱 Supabase: Seed Remote (no reset)**. This task executes each seed file against the linked remote project and reports the SQL execution result as `SUCCEEDED` or `ERROR`:
+3. Run **🌱 Supabase: Seed Remote**. This task executes each seed file against the linked remote project and reports the SQL execution result as `SUCCEEDED` or `ERROR`:
    - `001_users.sql`
    - `002_inbox_projects.sql`
    - `003_password_reset_tokens.sql`
@@ -77,7 +77,7 @@ The CLI and backend must both target the same test project. If you cannot confid
 
 The login collection primarily depends on the three Auth accounts and profiles from `001_users.sql`, plus each user's active Inbox project. The seed task also applies and verifies the other repository fixtures. The user seed sets the three passwords to `password123`, which is why this project must be isolated.
 
-If James, Harvey, or Alex login fails because the credentials are stale, run **🌱 Supabase: Seed Remote (no reset)** again for the confirmed test project. The collection itself does not change account passwords.
+If James, Harvey, or Alex login fails because the credentials are stale, run **🌱 Supabase: Seed Remote** again for the confirmed test project. The collection itself does not change account passwords.
 
 ## 4. Configure the local backend to use the remote project
 
@@ -243,7 +243,7 @@ This collection does not change the seeded users' passwords. The remote seed tas
 | What Postman shows | Likely cause and next step |
 | --- | --- |
 | `Could not get any response` or connection refused | The local backend is stopped, or `baseUrl` has the wrong port. Start the backend and check `http://localhost:3000/api`. |
-| One of the seeded logins returns `401` | Check `seedPassword`, the email/username, and whether the remote test project was seeded. Confirm `SUPABASE_URL` and `DATABASE_URL` in the backend belong to the same project. Rerun **🌱 Supabase: Seed Remote (no reset)** for the confirmed test project if needed. |
+| One of the seeded logins returns `401` | Check `seedPassword`, the email/username, and whether the remote test project was seeded. Confirm `SUPABASE_URL` and `DATABASE_URL` in the backend belong to the same project. Rerun **🌱 Supabase: Seed Remote** for the confirmed test project if needed. |
 | Login says `401` even though `password123` is correct | The backend may be using the wrong Supabase Auth project or key, the seeded account may not be in that project, or the database may contain profiles from a different project. Check all three backend connection values and their project references. |
 | `Get current James user` fails but the first login passed | The request may have been sent without first running the login request in this Runner session, or `token`/`jamesUserId` was not populated. Run the collection in order with the correct environment selected. |
 | `Unknown identifier returns identical generic 401` fails | Run **Wrong password returns generic 401** first in the same run so it can populate `invalidLoginResponse`. |
