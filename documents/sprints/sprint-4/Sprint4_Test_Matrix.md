@@ -25,14 +25,28 @@ Status values: `Failing` means the case is planned but not yet passing; `Blocked
 
 ### 1.2 Frontend Integration Tests
 
-| ID        | Test Case                                             | Expected Result                                                                                           | Status  |
-| --------- | ----------------------------------------------------- | --------------------------------------------------------------------------------------------------------- | ------- |
-| FE-CUR-01 | Load the Current & Upcoming tasks view                | The task service requests the current user's upcoming tasks and the UI renders the returned items.        | Blocked |
-| FE-CUR-02 | Show scheduled and due-date tasks together            | The view includes tasks from either scheduled or due dates, with the correct grouping label and ordering. | Blocked |
-| FE-CUR-03 | Exclude completed tasks                               | Completed tasks do not appear in the Current & Upcoming group.                                            | Blocked |
-| FE-CUR-04 | Render empty state for no upcoming items              | The view shows a no-items message and no broken empty rows or stale data.                                 | Blocked |
-| FE-CUR-05 | Handle task retrieval failure                         | The UI shows a visible error and preserves the last successful task data.                                 | Blocked |
-| FE-CUR-06 | Change task scheduling from the task detail or editor | Any saved schedule update is reflected in the Current & Upcoming view after a successful response.        | Blocked |
+| ID        | Test Case                                               | Expected Result                                                                                                                                                     | Status  |
+| --------- | ------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- |
+| FE-CUR-01 | Load the Current & Upcoming tasks view                  | The task service requests the current user's upcoming tasks and the UI renders the returned items.                                                                  | Passing |
+| FE-CUR-02 | Show scheduled and due-date tasks together              | The view includes tasks from either scheduled or due dates, with the correct grouping label and ordering.                                                           | Failing |
+| FE-CUR-03 | Exclude completed tasks                                 | Completed tasks do not appear in the Current & Upcoming group.                                                                                                      | Blocked |
+| FE-CUR-04 | Render empty state for no upcoming items                | The view shows a no-items message and no broken empty rows or stale data.                                                                                           | Passing |
+| FE-CUR-05 | Handle task retrieval failure                           | The UI shows a visible error and preserves the last successful task data.                                                                                           | Failing |
+| FE-CUR-06 | Change task scheduling from the task detail or editor   | Any saved schedule update is reflected in the Current & Upcoming view after a successful response.                                                                  | Blocked |
+| FE-CUR-07 | Group tasks by day in the session timezone              | Tasks fall into Today, Tomorrow and Later by due date in the user's timezone from `GET /api/auth/me`, including a task near midnight; Later is ordered by due date. | Passing |
+| FE-CUR-08 | Show a loading state                                    | "Loading your tasks…" shows until the response arrives, then the groups replace it.                                                                                 | Passing |
+| FE-CUR-09 | The request returns 500, or one dashboard section fails | An error with Try again is shown and the retry loads the groups; a failure in Current & Upcoming does not hide Overdue, and the reverse.                            | Passing |
+| FE-CUR-10 | Visit `/dashboard` while signed out                     | The user is sent to `/login` and no dashboard request is made.                                                                                                      | Passing |
+| FE-CUR-11 | The request returns 401                                 | The session is cleared and the user is redirected to `/login`.                                                                                                      | Passing |
+
+Tests: `frontend/tests/integration/features/dashboard/dashboard.integration.spec.ts`; run with `npm run test:run` from `frontend`. They go through the real `/dashboard` route behind `authGuard` with the dashboard page, the Current & Upcoming section, its task groups and `groupByDay`, the Overdue section, `DashboardService`, `SessionService` and `authInterceptor`. The user is signed in by restoring a token and answering `GET /api/auth/me`. Only the network and the clock (`DASHBOARD_NOW`) are faked; responses are `{ tasks }` built like `toTaskModel` in `backend/src/features/tasks`, and `http.verify()` runs after every test.
+
+- FE-CUR-01: the section sends `GET /api/dashboard/current-upcoming-tasks?days=7` with the token and shows each task's title, priority and, in Later, its date. Tasks link to their edit page unless their project was deleted.
+- FE-CUR-07: the clock is set to 16:30 UTC on 6 November 2026, already 00:30 on 7 November in Manila. A task due 7 November is under Today for an Asia/Manila user and under Tomorrow for a Europe/London user. Try again works out "today" again, so a retry after midnight moves the task. Tasks due before today are left out, since they belong to Overdue.
+- FE-CUR-02 is Failing: the section and the API group by due date only; `scheduledDate` is not used.
+- FE-CUR-03 stays Blocked on the backend: the frontend shows whatever the API returns, and the API leaves out completed tasks (`isDone: false`), which is BE-CUR-04.
+- FE-CUR-05 is Failing: the error and retry work (FE-CUR-09), but the section never reloads after a successful load, so there is no earlier data to keep on a failure.
+- FE-CUR-11: leaving the page also cancels the Overdue request that was still waiting.
 
 ### 1.3 End-to-End
 
@@ -83,5 +97,6 @@ Status values: `Failing` means the case is planned but not yet passing; `Blocked
 ## Notes
 
 - Current & Upcoming tasks and every end-to-end case are blocked until the relevant task scheduling backend and frontend cases pass.
+- FE-OVD-05: an Overdue failure shows its own error and Try again without hiding Current & Upcoming; this is checked in the dashboard spec under FE-CUR-09. The Overdue rows keep their status until the Overdue section has its own integration tests.
 - The Current & Upcoming view should follow the scheduling contract for current/future windows and ordering; the Overdue view should show only incomplete tasks whose due dates precede the current time.
 - Task results must be scoped to the authenticated user and should not expose another user's tasks by ID, date window, or filtering criteria.
