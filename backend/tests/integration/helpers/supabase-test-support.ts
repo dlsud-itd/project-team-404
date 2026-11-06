@@ -47,19 +47,39 @@ export function configureSupabaseTest(): TestSupabaseConfig | null {
     process.env.TEST_DIRECT_URL ??
     databaseUrl;
 
+  assertLocalUrl(url, 'SUPABASE_TEST_URL');
+  assertLocalUrl(databaseUrl, 'SUPABASE_TEST_DATABASE_URL');
+  assertLocalUrl(directUrl, 'SUPABASE_TEST_DIRECT_URL');
+
   if (process.env.SUPABASE_URL === url) {
     throw new Error(
       'Refusing to run integration tests against SUPABASE_URL; use a separate test project'
     );
   }
 
-  new URL(url);
   process.env.SUPABASE_URL = url;
   process.env.SUPABASE_SERVICE_ROLE_KEY = serviceRoleKey;
   process.env.DATABASE_URL = databaseUrl;
   process.env.DIRECT_URL = directUrl;
 
   return { url: url.replace(/\/+$/, ''), serviceRoleKey };
+}
+
+function assertLocalUrl(value: string, name: string): void {
+  let hostname: string;
+  try {
+    hostname = new URL(value).hostname.replace(/^\[|\]$/g, '').toLowerCase();
+  } catch {
+    throw new Error(
+      `Refusing integration tests: ${name} must be a valid local URL`
+    );
+  }
+
+  if (!['localhost', '127.0.0.1', '::1'].includes(hostname)) {
+    throw new Error(
+      `Refusing integration tests: ${name} must point to localhost, 127.0.0.1, or ::1`
+    );
+  }
 }
 
 export async function loginAs(
