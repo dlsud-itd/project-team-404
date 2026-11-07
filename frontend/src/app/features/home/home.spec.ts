@@ -156,45 +156,59 @@ describe('Home tabs', () => {
     expect(router.url).toBe('/home');
   });
 
-  describe('"+ New Task" popup', () => {
-    async function openPopup(): Promise<void> {
-      el<HTMLButtonElement>('button.new-task')!.click();
-      await settle();
-    }
-
-    it('opens the real form over the current tab, with the Inbox picked', async () => {
+  describe('All Tasks creation action', () => {
+    it('opens the inline composer within the dashboard', async () => {
       await harness.navigateByUrl('/home');
       loadDashboardTab();
 
-      await openPopup();
+      el<HTMLButtonElement>('#all-tasks button.new')!.click();
+      await settle();
 
       expect(router.url).toBe('/home');
       expect(el('header.topbar')).toBeTruthy();
+      expect(el('#all-tasks form.composer')).toBeTruthy();
+      expect(el('[role="dialog"]')).toBeNull();
+    });
+  });
+
+  describe('Tasks tab creation action', () => {
+    it('opens the New Task dialog with Inbox selected', async () => {
+      await harness.navigateByUrl('/home?tab=tasks');
+      loadTasksTab();
+
+      el<HTMLButtonElement>('#panel-tasks button.new')!.click();
+      await settle();
+
+      expect(router.url).toBe('/home?tab=tasks');
       expect(el('[role="dialog"] app-recurrence-picker')).toBeTruthy();
       expect(el<HTMLSelectElement>('#task-project')!.selectedOptions[0].textContent).toContain(
         'Inbox',
       );
     });
 
-    it("goes to the task's project after adding, so the task can be seen", async () => {
-      await harness.navigateByUrl('/home');
-      loadDashboardTab();
-      await openPopup();
+    it('saves a task without leaving the Tasks tab', async () => {
+      await harness.navigateByUrl('/home?tab=tasks');
+      loadTasksTab();
 
+      el<HTMLButtonElement>('#panel-tasks button.new')!.click();
+      await settle();
       const title = el<HTMLInputElement>('#task-title')!;
-      title.value = 'Study';
+      title.value = 'Stay on this tab';
       title.dispatchEvent(new Event('input'));
       el('[role="dialog"] form')!.dispatchEvent(new Event('submit'));
+
       http.expectOne(TASKS_URL).flush({
-        id: 7,
+        id: 11,
         projectId: 1,
-        title: 'Study',
+        title: 'Stay on this tab',
         description: null,
         priority: 'low',
         scheduledDate: null,
         dueDate: null,
         deadline: null,
         recurrence: 'none',
+        recurrenceDays: [],
+        recurrenceEndDate: null,
         isDone: false,
         doneAt: null,
         createdAt: '2026-09-01T00:00:00.000Z',
@@ -203,7 +217,8 @@ describe('Home tabs', () => {
       });
       await settle();
 
-      expect(router.url).toBe('/projects/1/tasks');
+      expect(router.url).toBe('/home?tab=tasks');
+      expect(el('#panel-tasks .task .title')?.textContent).toContain('Stay on this tab');
     });
   });
 

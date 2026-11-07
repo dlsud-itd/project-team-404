@@ -1,6 +1,8 @@
 <div class="page" [attr.role]="dialog ? null : 'main'">
   @if (dialog) {
-    <h2 id="new-task-title" class="dialog-title">New task</h2>
+    <h2 id="new-task-title" class="dialog-title">
+      {{ mode === 'create' ? 'New task' : 'Edit task' }}
+    </h2>
   } @else {
     <a class="back" [routerLink]="listUrl">← Tasks</a>
     <h1>{{ mode === 'create' ? 'New task' : 'Edit task' }}</h1>

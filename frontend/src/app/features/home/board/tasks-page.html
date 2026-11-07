@@ -1,56 +1,13 @@
 <section class="panel" aria-labelledby="all-tasks-heading">
   <header class="heading-row">
     <h2 id="all-tasks-heading" class="heading">All Tasks</h2>
-    <button type="button" class="new" [disabled]="loading()" (click)="openComposer()">
+    <button type="button" class="new" [disabled]="loading()" (click)="openNewTaskDialog()">
       + New task
     </button>
   </header>
 
   @if (actionError(); as message) {
     <p class="error" role="alert">{{ message }}</p>
-  }
-
-  @if (composing()) {
-    <form class="composer" [formGroup]="form" (ngSubmit)="create()" novalidate>
-      <label class="title-field">
-        <span class="visually-hidden">Task title</span>
-        <input
-          class="title-input"
-          formControlName="title"
-          aria-label="Task title"
-          placeholder="What needs doing?"
-          [attr.aria-invalid]="form.controls.title.touched && form.controls.title.invalid"
-        />
-      </label>
-      @if (form.controls.title.touched && form.controls.title.hasError('required')) {
-        <p class="error" role="alert">Enter a task title.</p>
-      } @else if (form.controls.title.touched && form.controls.title.hasError('maxlength')) {
-        <p class="error" role="alert">Task titles can be up to 200 characters.</p>
-      }
-      <select formControlName="projectId" aria-label="Project">
-        @for (project of projectsStore.active(); track project.projectId) {
-          <option [ngValue]="project.projectId">{{ project.name }}</option>
-        }
-      </select>
-      <select formControlName="priorityId" aria-label="Priority">
-        @for (priority of priorities; track priority.priorityId) {
-          <option [ngValue]="priority.priorityId">{{ priority.label }}</option>
-        }
-      </select>
-      <label class="due-field">
-        <span class="visually-hidden">Due date</span>
-        <input type="date" formControlName="dueDate" aria-label="Due date" />
-      </label>
-      <button type="submit" class="save" [disabled]="submitting()">
-        {{ submitting() ? 'Adding…' : 'Add task' }}
-      </button>
-      <button type="button" class="cancel" [disabled]="submitting()" (click)="composing.set(false)">
-        Cancel
-      </button>
-      @if (formError(); as message) {
-        <p class="error" role="alert">{{ message }}</p>
-      }
-    </form>
   }
 
   @if (loading()) {
@@ -115,4 +72,8 @@
     (confirmed)="confirmDelete()"
     (cancelled)="cancelDelete()"
   />
+}
+
+@if (tasksStore.creating()) {
+  <app-new-task-dialog (created)="addCreatedTask($event)" />
 }

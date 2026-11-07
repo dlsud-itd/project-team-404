@@ -5,8 +5,10 @@ import {
   computed,
   effect,
   inject,
+  input,
   output,
   signal,
+  type OnInit,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
@@ -60,11 +62,15 @@ type LoadState = 'loading' | 'ready' | 'not-found' | 'error';
   },
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class TaskForm {
+export class TaskForm implements OnInit {
   /** The popup was cancelled. */
   readonly closed = output<void>();
   /** The popup saved a new task. */
   readonly created = output<Task>();
+  /** The edit form saved a task. */
+  readonly updated = output<Task>();
+  /** The task to edit when this form is used in a modal. */
+  readonly editTaskId = input<number | null>(null);
 
   private readonly tasks = inject(TaskService);
   private readonly tasksStore = inject(TasksStore);
@@ -77,16 +83,14 @@ export class TaskForm {
 
   /** What the new-task popup asked for; null on the edit page. */
   private readonly popup = this.tasksStore.creating();
-  protected readonly dialog = this.popup !== null;
+  protected dialog = false;
 
-  /** The `.../tasks/:taskId/edit` route edits; without its data, the form creates. */
-  protected readonly mode: TaskFormMode = this.route.data['mode'] === 'edit' ? 'edit' : 'create';
+  /** The route or modal can select edit mode. */
+  protected mode: TaskFormMode = 'create';
   /** New tasks go here unless the user picks another; 0 until the Inbox is known. */
-  protected readonly projectId = this.popup
-    ? (this.popup.projectId ?? 0)
-    : Number(this.route.paramMap.get('projectId'));
-  private readonly taskId = Number(this.route.paramMap.get('taskId'));
-  protected readonly listUrl = `/projects/${this.route.paramMap.get('projectId')}/tasks`;
+  protected projectId = 0;
+  private taskId = 0;
+  protected listUrl = '/projects';
 
   protected readonly titleMax = TASK_TITLE_MAX_LENGTH;
   protected readonly priorities = TASK_PRIORITIES;
@@ -95,7 +99,7 @@ export class TaskForm {
   protected readonly task = computed(() =>
     this.mode === 'edit' ? (this.tasksStore.byId(this.taskId) ?? null) : null,
   );
-  protected readonly loadState = signal<LoadState>(this.mode === 'edit' ? 'loading' : 'ready');
+  protected readonly loadState = signal<LoadState>('ready');
 
   /** Active projects, plus the URL's and the task's project if they are not among them. */
   protected readonly projectOptions = computed(() => {
@@ -140,15 +144,29 @@ export class TaskForm {
   );
 
   constructor() {
-    if (!this.dialog && !this.validId(this.projectId)) {
-      this.loadState.set('not-found');
-      return;
-    }
     effect(() => {
       const inbox = this.projectsStore.inbox();
       const project = this.form.controls.projectId;
       if (inbox && !project.value) project.setValue(inbox.projectId);
     });
+  }
+
+  ngOnInit(): void {
+    const modalTaskId = this.editTaskId();
+    this.dialog = this.popup !== null || modalTaskId !== null;
+    this.mode = modalTaskId !== null || this.route.data['mode'] === 'edit' ? 'edit' : 'create';
+    this.projectId = this.popup
+      ? (this.popup.projectId ?? 0)
+      : Number(this.route.paramMap.get('projectId')) || 0;
+    this.taskId = modalTaskId ?? Number(this.route.paramMap.get('taskId'));
+    this.listUrl = `/projects/${this.route.paramMap.get('projectId')}/tasks`;
+    this.form.controls.projectId.setValue(this.projectId);
+    this.loadState.set(this.mode === 'edit' ? 'loading' : 'ready');
+
+    if (!this.dialog && !this.validId(this.projectId)) {
+      this.loadState.set('not-found');
+      return;
+    }
     if (!this.projectsStore.loaded()) {
       // Only fills the project picker; the form still works without it.
       this.projects
@@ -364,7 +382,10 @@ export class TaskForm {
       .subscribe({
         next: () => {
           const updated = this.task();
-          if (updated) this.fill(updated);
+          if (updated) {
+            this.fill(updated);
+            this.updated.emit(updated);
+          }
           this.saved.set('Changes saved.');
         },
         // The store keeps whatever part did save, so Save then offers only what is left.

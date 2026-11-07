@@ -7,7 +7,6 @@ import {
   signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { FormBuilder, ReactiveFormsModule, Validators, type ValidatorFn } from '@angular/forms';
 import { forkJoin, finalize } from 'rxjs';
 import { mapProjectError } from '../../projects/project-crud/mappers/project-error.mapper';
 import { ProjectService } from '../../projects/project-crud/services/project.service';
@@ -15,14 +14,13 @@ import { ProjectsStore } from '../../projects/shared/state/projects.store';
 import { ConfirmDeleteTaskDialog } from '../../tasks/task-crud/components/confirm-delete-dialog/confirm-delete-dialog';
 import { mapTaskError } from '../../tasks/task-crud/mappers/task-error.mapper';
 import { TaskService } from '../../tasks/task-crud/services/task.service';
+import { NewTaskDialog } from '../../tasks/task-crud/components/new-task-dialog/new-task-dialog';
+import { TasksStore } from '../../tasks/shared/state/tasks.store';
 import { TASK_PRIORITIES, type Task } from '../../tasks/shared/types/task.types';
-
-const nonBlank: ValidatorFn = ({ value }) =>
-  typeof value === 'string' && value.trim().length > 0 ? null : { required: true };
 
 @Component({
   selector: 'app-tasks-page',
-  imports: [ReactiveFormsModule, ConfirmDeleteTaskDialog],
+  imports: [ConfirmDeleteTaskDialog, NewTaskDialog],
   templateUrl: './tasks-page.html',
   styleUrl: './tasks-page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -33,6 +31,7 @@ export class TasksPage {
 
   private readonly projects = inject(ProjectService);
   private readonly tasksApi = inject(TaskService);
+  protected readonly tasksStore = inject(TasksStore);
   private readonly destroyRef = inject(DestroyRef);
 
   private readonly taskList = signal<Task[]>([]);
@@ -48,19 +47,9 @@ export class TasksPage {
   protected readonly loadError = signal<string | null>(null);
   protected readonly actionError = signal<string | null>(null);
   protected readonly busyTasks = signal<ReadonlySet<number>>(new Set());
-  protected readonly composing = signal(false);
-  protected readonly submitting = signal(false);
-  protected readonly formError = signal<string | null>(null);
   protected readonly pendingDelete = signal<Task | null>(null);
   protected readonly deleting = signal(false);
   protected readonly deleteError = signal<string | null>(null);
-
-  protected readonly form = inject(FormBuilder).nonNullable.group({
-    title: ['', [Validators.required, nonBlank, Validators.maxLength(200)]],
-    projectId: [0, Validators.min(0)],
-    priorityId: [3],
-    dueDate: [''],
-  });
 
   constructor() {
     this.load();
@@ -80,7 +69,6 @@ export class TasksPage {
       .subscribe({
         next: ({ tasks }) => {
           this.taskList.set(tasks);
-          this.form.controls.projectId.setValue(this.projectsStore.inbox()?.projectId ?? 0);
         },
         error: (error: unknown) => {
           const taskError = mapTaskError(error);
@@ -130,50 +118,16 @@ export class TasksPage {
       });
   }
 
-  protected openComposer(): void {
-    this.formError.set(null);
-    this.composing.set(true);
-    this.form.controls.projectId.setValue(this.projectsStore.inbox()?.projectId ?? 0);
+  protected openNewTaskDialog(): void {
+    this.tasksStore.creating.set({
+      projectId: this.projectsStore.inbox()?.projectId ?? null,
+    });
   }
 
-  protected create(): void {
-    this.formError.set(null);
-    const { title, projectId, priorityId, dueDate } = this.form.getRawValue();
-    if (this.form.invalid || !title.trim()) {
-      this.form.markAllAsTouched();
-      return;
-    }
-
-    this.submitting.set(true);
-    this.tasksApi
-      .create({
-        ...(projectId > 0 ? { projectId } : {}),
-        priorityId,
-        title: title.trim(),
-        description: null,
-        dueDate: dueDate || null,
-        deadline: null,
-        recurrence: 'none',
-        recurrenceDays: [],
-        recurrenceEndDate: null,
-      })
-      .pipe(
-        finalize(() => this.submitting.set(false)),
-        takeUntilDestroyed(this.destroyRef),
-      )
-      .subscribe({
-        next: (task) => {
-          this.taskList.update((tasks) => [...tasks, task]);
-          this.form.reset({
-            title: '',
-            projectId: this.projectsStore.inbox()?.projectId ?? 0,
-            priorityId: 3,
-            dueDate: '',
-          });
-          this.composing.set(false);
-        },
-        error: (error: unknown) => this.formError.set(mapTaskError(error).message),
-      });
+  protected addCreatedTask(task: Task): void {
+    this.taskList.update((tasks) =>
+      tasks.some((item) => item.taskId === task.taskId) ? tasks : [...tasks, task],
+    );
   }
 
   protected askDelete(task: Task): void {

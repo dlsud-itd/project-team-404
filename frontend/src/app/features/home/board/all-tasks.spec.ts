@@ -1,6 +1,7 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 import { environment } from '../../../../environments/environment';
 import { DASHBOARD_PROJECTS, DASHBOARD_TASKS, task } from '../testing/dashboard-fixture';
 import { DashboardStore } from '../dashboard.store';
@@ -8,6 +9,7 @@ import { asApiTask } from '../../tasks/shared/testing/api-task';
 import { AllTasks } from './all-tasks';
 
 const TASKS_URL = `${environment.apiBaseUrl}/api/tasks`;
+const PROJECTS_URL = `${environment.apiBaseUrl}/api/projects`;
 
 describe('AllTasks', () => {
   let fixture: ComponentFixture<AllTasks>;
@@ -50,7 +52,12 @@ describe('AllTasks', () => {
 
     await TestBed.configureTestingModule({
       imports: [AllTasks],
-      providers: [DashboardStore, provideHttpClient(), provideHttpClientTesting()],
+      providers: [
+        DashboardStore,
+        provideRouter([]),
+        provideHttpClient(),
+        provideHttpClientTesting(),
+      ],
     }).compileComponents();
     store = TestBed.inject(DashboardStore);
     store.setData(DASHBOARD_PROJECTS, DASHBOARD_TASKS);
@@ -80,6 +87,14 @@ describe('AllTasks', () => {
 
     expect(el<HTMLInputElement>('input[aria-label="Due date"]')!.value).toBe('2026-10-30');
     expect(el<HTMLSelectElement>('select[aria-label="Priority"]')!.value).toBe('medium');
+  });
+
+  it('opens the composer from the All Tasks action', () => {
+    el<HTMLButtonElement>('button.new')!.click();
+    render();
+
+    expect(el('form.composer')).toBeTruthy();
+    expect(dueInput()?.value).toBe('2026-10-30');
   });
 
   it.each([
@@ -140,14 +155,59 @@ describe('AllTasks', () => {
     expect(store.tasks().find((item) => item.title === 'Submit lab report')?.done).toBe(true);
 
     labReport
-      .querySelector<HTMLButtonElement>('button[aria-label="Delete Submit lab report"]')!
+      .querySelector<HTMLButtonElement>('button[aria-label="Actions for Submit lab report"]')!
       .click();
+    render();
+    labReport.querySelector<HTMLButtonElement>('.task-menu-item.delete')!.click();
+    render();
+    expect(el('[role="alertdialog"]')).toBeTruthy();
+    el<HTMLButtonElement>('[role="alertdialog"] .confirm')!.click();
     render();
     const deletion = http.expectOne(`${TASKS_URL}/1`);
     expect(deletion.request.method).toBe('DELETE');
     deletion.flush({ message: 'Task deleted successfully' });
     render();
     expect(titles()).not.toContain('Submit lab report');
+  });
+
+  it('opens the edit dialog from the task context menu', () => {
+    const listedTask = store.tasks()[0];
+    const row = [...page.querySelectorAll<HTMLElement>('.task')].find((item) =>
+      item.textContent?.includes(listedTask.title),
+    )!;
+
+    row.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true }));
+    render();
+    expect(row.querySelector('[role="menu"]')).toBeTruthy();
+    row.querySelector<HTMLButtonElement>('.task-menu-item:not(.delete)')!.click();
+    render();
+
+    expect(el('[role="dialog"] #new-task-title')?.textContent?.trim()).toBe('Edit task');
+    http.expectOne(PROJECTS_URL).flush([]);
+    const taskToEdit = task(
+      listedTask.id,
+      listedTask.title,
+      listedTask.projectId ?? 4,
+      listedTask.priority === 'high' ? 1 : listedTask.priority === 'medium' ? 2 : 3,
+      listedTask.due,
+      listedTask.done,
+    );
+    http.expectOne(`${TASKS_URL}/${listedTask.id}`).flush(asApiTask(taskToEdit));
+    render();
+    expect(el<HTMLInputElement>('#task-title')?.value).toBe(listedTask.title);
+
+    const updatedTitle = `Updated ${listedTask.title}`;
+    type('#task-title', updatedTitle);
+    el<HTMLFormElement>('[role="dialog"] form')!.dispatchEvent(new Event('submit'));
+    render();
+    const update = http.expectOne(`${TASKS_URL}/${listedTask.id}`);
+    expect(update.request.method).toBe('PUT');
+    expect(update.request.body).toEqual({ title: updatedTitle });
+    update.flush({ taskId: listedTask.id, message: 'Task updated successfully' });
+    render();
+
+    expect(titles()).toContain(updatedTitle);
+    expect(el('[role="dialog"]')).toBeNull();
   });
 
   it('says so when no task matches the filter', () => {

@@ -76,22 +76,6 @@
   font-weight: 600;
 }
 
-.new-task {
-  padding: 0.375rem 1.25rem;
-  border: 0;
-  border-radius: 999px;
-  background: #f39a7a;
-  color: #fff;
-  font: inherit;
-  font-size: 0.8125rem;
-  font-weight: 600;
-  cursor: pointer;
-
-  &:hover {
-    filter: brightness(1.05);
-  }
-}
-
 .account {
   position: relative;
   margin-left: 2rem;
