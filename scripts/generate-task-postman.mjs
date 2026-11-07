@@ -613,6 +613,102 @@ const taskFolder = {
       assertions: [hasError],
     }),
     item({
+      name: 'Setup - Create recurring task',
+      method: 'POST',
+      path: '/tasks',
+      status: 201,
+      body: {
+        title: 'Postman recurring task',
+        projectId: '{{projectId}}',
+        dueDate: '2099-01-05',
+        recurrence: 'weekly',
+        recurrenceDays: [1, 3],
+        recurrenceEndDate: '2099-12-31',
+      },
+      assertions: [
+        'const response = pm.response.json();',
+        bodyCheck(
+          'Created task includes its weekly recurrence rule',
+          "pm.expect(response.recurrence).to.equal('weekly'); pm.expect(response.recurrenceDays).to.deep.equal([1, 3]); pm.expect(response.recurrenceEndDate).to.equal('2099-12-31'); pm.expect(response.dueDate).to.equal('2099-01-05');"
+        ),
+        "pm.environment.set('recurrenceTaskId', String(response.id));",
+      ],
+    }),
+    item({
+      name: 'Set weekly recurrence through scheduling API',
+      method: 'PUT',
+      path: '/tasks/{{recurrenceTaskId}}/recurrence',
+      status: 200,
+      body: {
+        recurrence: 'weekly',
+        recurrenceDays: [5, 1, 3, 1],
+        recurrenceEndDate: '2099-12-31',
+      },
+      assertions: [
+        'const response = pm.response.json();',
+        bodyCheck(
+          'Weekdays are normalized and end date persists',
+          "pm.expect(response.recurrence).to.equal('weekly'); pm.expect(response.recurrenceDays).to.deep.equal([1, 3, 5]); pm.expect(response.recurrenceEndDate).to.equal('2099-12-31');"
+        ),
+      ],
+    }),
+    item({
+      name: 'Update recurrence through task CRUD',
+      method: 'PUT',
+      path: '/tasks/{{recurrenceTaskId}}',
+      status: 200,
+      body: {
+        recurrence: 'weekly',
+        recurrenceDays: [0, 6],
+        recurrenceEndDate: '2099-12-30',
+      },
+      assertions: [
+        'const response = pm.response.json();',
+        bodyCheck(
+          'Task update succeeds',
+          "pm.expect(response.taskId).to.equal(Number(pm.environment.get('recurrenceTaskId'))); pm.expect(response.message).to.equal('Task updated successfully');"
+        ),
+      ],
+    }),
+    item({
+      name: 'Recurrence fields persist after CRUD update',
+      method: 'GET',
+      path: '/tasks/{{recurrenceTaskId}}',
+      status: 200,
+      assertions: [
+        'const response = pm.response.json();',
+        bodyCheck(
+          'Updated weekdays and end date persist',
+          "pm.expect(response.recurrence).to.equal('weekly'); pm.expect(response.recurrenceDays).to.deep.equal([0, 6]); pm.expect(response.recurrenceEndDate).to.equal('2099-12-30');"
+        ),
+      ],
+    }),
+    item({
+      name: 'Reject invalid recurrence weekday',
+      method: 'PUT',
+      path: '/tasks/{{recurrenceTaskId}}/recurrence',
+      status: 400,
+      body: { recurrence: 'weekly', recurrenceDays: [7] },
+      assertions: [hasError],
+    }),
+    item({
+      name: 'Reject recurrence update for another user task',
+      method: 'PUT',
+      path: '/tasks/{{taskIdB}}/recurrence',
+      status: 404,
+      body: { recurrence: 'weekly', recurrenceDays: [1] },
+      assertions: [hasError],
+    }),
+    item({
+      name: 'Set recurrence without token returns 401',
+      method: 'PUT',
+      path: '/tasks/{{recurrenceTaskId}}/recurrence',
+      token: null,
+      status: 401,
+      body: { recurrence: 'weekly', recurrenceDays: [1] },
+      assertions: [hasError],
+    }),
+    item({
       name: 'Create task without token returns 401',
       method: 'POST',
       path: '/tasks',
@@ -1154,6 +1250,12 @@ const collection = {
       type: 'string',
       description: 'Sample only; setup replaces it.',
     },
+    {
+      key: 'recurrenceTaskId',
+      value: '7',
+      type: 'string',
+      description: 'Sample only; recurring task setup replaces it.',
+    },
     { key: 'missingProjectId', value: '999999999', type: 'string' },
     { key: 'missingTaskId', value: '999999999', type: 'string' },
     { key: 'runId', value: 'organization-test', type: 'string' },
@@ -1192,6 +1294,7 @@ const environment = {
     ['pageTaskTwoId', '5', 'Sample only; setup replaces it.'],
     ['firstPageTaskId', '4', 'Sample only; paging request replaces it.'],
     ['completedTaskId', '6', 'Sample only; setup replaces it.'],
+    ['recurrenceTaskId', '7', 'Sample only; recurring task setup replaces it.'],
     [
       'missingProjectId',
       '999999999',
