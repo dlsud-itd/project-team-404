@@ -156,20 +156,19 @@ of truth; do not use Prisma migrations for deployment.
 ### Setup and planning
 
 - [Local setup guide](documents/setup.md)
-- [Project proposal](<documents/main/Team-404 - Project Proposal.pdf>)
-- [Project team constitution](<documents/main/Team-404 - Project Team Constitution.pdf>)
-- [Development timeline (PERT)](<documents/main/Team-404 - Timeline Development - PERT.pdf>)
-- [Development timeline (Notion)](<documents/main/Team-404 - Timeline Development - Notion.pdf>)
-- [Work breakdown structure (document)](<documents/main/Team-404 - WBS - Document.pdf>)
-- [Work breakdown structure (diagram)](<documents/main/Team-404 - WBS - Diagram.png>)
+- [Project proposal](documents/main/Project_Proposal.pdf)
+- [Project team constitution](documents/main/Project_Team_Constitution.pdf)
+- [Development timeline (PERT)](documents/main/Timeline_Development_PERT.pdf)
+- [Development timeline (Notion)](documents/main/Timeline_Development_Notion.pdf)
+- [Work breakdown structure (document)](documents/main/WBS_Document.md)
+- [Work breakdown structure (diagram)](documents/main/WBS_Diagram.md)
 
 ### Requirements and design
 
-- [User stories](<documents/main/Team-404 - User Story.pdf>)
-- [Use case diagram](<documents/main/Team-404 - Use Case Diagram.pdf>)
-- [UI/UX mockup](<documents/main/Team-404 - UI UX Mockup.pdf>)
-- [Database schema (PDF)](<documents/main/Team-404 - Database Schema.pdf>)
-- [Database schema (image)](<documents/main/Team-404 - Database Schema.png>)
+- [User stories](documents/main/User_Story.pdf)
+- [Use case diagram](documents/main/Use_Case_Diagram.pdf)
+- [UI/UX mockup](documents/main/UI_UX_Mockup.pdf)
+- [Database schema](documents/main/Database_Schema.md)
 
 ### API specifications
 
