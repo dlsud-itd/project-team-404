@@ -2,7 +2,7 @@
 
 Team-404
 Version 1.1
-Last Updated: 2026, Nov. 06
+Last Updated: 2026, Nov. 07
 Prepared by: Team-404 API Review
 
 Endpoints marked with an Authorization parameter require the header `Authorization: Bearer <token>` from `/api/auth/login`.
@@ -67,7 +67,7 @@ Every authenticated request only sees data owned by that user.
   "scheduledDate": "2026-11-07",
   "dueDate": "2026-11-10",
   "deadline": null,
-  "recurrence": null,
+  "recurrence": "none",
   "recurrenceDays": [],
   "recurrenceEndDate": null,
   "isDone": false,
@@ -117,7 +117,7 @@ Every authenticated request only sees data owned by that user.
     "scheduledDate": "2026-11-07",
     "dueDate": "2026-11-10",
     "deadline": null,
-    "recurrence": null,
+    "recurrence": "none",
     "recurrenceDays": [],
     "recurrenceEndDate": null,
     "isDone": false,
@@ -179,20 +179,15 @@ Every authenticated request only sees data owned by that user.
 
 #### Success Response
 
-| Status | Type   | Field         | Description          |
-| ------ | ------ | ------------- | -------------------- |
-| `200`  | `json` | `id`          | Updated task ID.     |
-| `200`  | `json` | `title`       | Updated title.       |
-| `200`  | `json` | `description` | Updated description. |
-| `200`  | `json` | `updatedAt`   | Updated timestamp.   |
+| Status | Type   | Field     | Description                  |
+| ------ | ------ | --------- | ---------------------------- |
+| `200`  | `json` | `taskId`  | ID of the updated task.      |
+| `200`  | `json` | `message` | `Task updated successfully`. |
 
 ```json
 {
-  "id": 41,
-  "title": "Draft sprint recap",
-  "description": "Updated summary for the handoff",
-  "priority": "high",
-  "updatedAt": "2026-11-06T15:22:00.000Z"
+  "taskId": 41,
+  "message": "Task updated successfully"
 }
 ```
 
@@ -206,9 +201,15 @@ Every authenticated request only sees data owned by that user.
 
 #### Success Response
 
-| Status | Type    | Field | Description |
-| ------ | ------- | ----- | ----------- |
-| `204`  | `empty` | —     | No content. |
+| Status | Type   | Field     | Description                  |
+| ------ | ------ | --------- | ---------------------------- |
+| `200`  | `json` | `message` | `Task deleted successfully`. |
+
+```json
+{
+  "message": "Task deleted successfully"
+}
+```
 
 #### Failure Response
 
