@@ -12,6 +12,8 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, type ValidatorFn, Validators } from '@angular/forms';
 import { finalize } from 'rxjs';
+import { ConfirmDeleteTaskDialog } from '../../tasks/task-crud/components/confirm-delete-dialog/confirm-delete-dialog';
+import { NewTaskDialog } from '../../tasks/task-crud/components/new-task-dialog/new-task-dialog';
 import { DashboardStore, PRIORITIES, type Priority, type Task } from '../dashboard.store';
 import { mapTaskError } from '../../tasks/task-crud/mappers/task-error.mapper';
 import { TaskService } from '../../tasks/task-crud/services/task.service';
@@ -22,9 +24,13 @@ const notBlank: ValidatorFn = ({ value }) =>
 
 @Component({
   selector: 'app-all-tasks',
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, ConfirmDeleteTaskDialog, NewTaskDialog],
   templateUrl: './all-tasks.html',
   styleUrl: './all-tasks.scss',
+  host: {
+    '(document:click)': 'closeTaskMenu()',
+    '(document:keydown.escape)': 'closeTaskMenu()',
+  },
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AllTasks {
@@ -33,6 +39,10 @@ export class AllTasks {
   protected readonly actionError = signal<string | null>(null);
   protected readonly submitting = signal(false);
   protected readonly busyTasks = signal<ReadonlySet<number>>(new Set());
+  protected readonly openTaskMenuId = signal<number | null>(null);
+  protected readonly pendingDelete = signal<Task | null>(null);
+  protected readonly deleteError = signal<string | null>(null);
+  protected readonly editingTaskId = signal<number | null>(null);
   private readonly tasksApi = inject(TaskService);
   private readonly destroyRef = inject(DestroyRef);
 
@@ -118,10 +128,43 @@ export class AllTasks {
       });
   }
 
-  protected deleteTask(task: Task): void {
-    if (this.isBusy(task)) return;
-    this.setBusy(task.id, true);
+  protected toggleTaskMenu(taskId: number, event: MouseEvent): void {
+    event.stopPropagation();
+    this.openTaskMenuId.update((current) => (current === taskId ? null : taskId));
+  }
+
+  protected showContextMenu(event: MouseEvent, taskId: number): void {
+    event.preventDefault();
+    this.openTaskMenuId.set(taskId);
+  }
+
+  protected closeTaskMenu(): void {
+    this.openTaskMenuId.set(null);
+  }
+
+  protected editTask(task: Task, event: MouseEvent): void {
+    event.stopPropagation();
+    this.closeTaskMenu();
     this.actionError.set(null);
+    this.editingTaskId.set(task.id);
+  }
+
+  protected askDelete(task: Task, event: MouseEvent): void {
+    event.stopPropagation();
+    this.closeTaskMenu();
+    this.deleteError.set(null);
+    this.pendingDelete.set(task);
+  }
+
+  protected cancelDelete(): void {
+    this.pendingDelete.set(null);
+  }
+
+  protected confirmDelete(): void {
+    const task = this.pendingDelete();
+    if (!task || this.isBusy(task)) return;
+    this.setBusy(task.id, true);
+    this.deleteError.set(null);
     this.tasksApi
       .delete(task.id)
       .pipe(
@@ -129,8 +172,11 @@ export class AllTasks {
         takeUntilDestroyed(this.destroyRef),
       )
       .subscribe({
-        next: () => this.store.removeTask(task.id),
-        error: (error: unknown) => this.actionError.set(mapTaskError(error).message),
+        next: () => {
+          this.store.removeTask(task.id);
+          this.pendingDelete.set(null);
+        },
+        error: (error: unknown) => this.deleteError.set(mapTaskError(error).message),
       });
   }
 

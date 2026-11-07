@@ -1,5 +1,10 @@
 <section class="panel" aria-labelledby="all-tasks-heading">
-  <h2 id="all-tasks-heading" class="heading">{{ heading() }}</h2>
+  <header class="heading-row">
+    <h2 id="all-tasks-heading" class="heading">{{ heading() }}</h2>
+    <button type="button" class="new" [disabled]="store.loading()" (click)="composing.set(true)">
+      + New task
+    </button>
+  </header>
 
   @if (actionError(); as message) {
     <p class="error" role="alert">{{ message }}</p>
@@ -37,7 +42,7 @@
 
   <ul class="list">
     @for (task of store.filteredTasks(); track task.id) {
-      <li class="task" [class.done]="task.done">
+      <li class="task" [class.done]="task.done" (contextmenu)="showContextMenu($event, task.id)">
         <label class="check">
           <input
             type="checkbox"
@@ -58,20 +63,64 @@
         <span class="due" [class.overdue]="store.statusOf(task) === 'overdue'">
           {{ shortDate(task.due) }}
         </span>
-        <button
-          type="button"
-          class="delete"
-          [disabled]="isBusy(task)"
-          [attr.aria-label]="'Delete ' + task.title"
-          (click)="deleteTask(task)"
-        >
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6" />
-          </svg>
-        </button>
+        <div class="task-actions">
+          <button
+            type="button"
+            class="task-actions-trigger"
+            [disabled]="isBusy(task)"
+            [attr.aria-label]="'Actions for ' + task.title"
+            aria-haspopup="menu"
+            [attr.aria-expanded]="openTaskMenuId() === task.id"
+            (click)="toggleTaskMenu(task.id, $event)"
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="5" cy="12" r="1" />
+              <circle cx="12" cy="12" r="1" />
+              <circle cx="19" cy="12" r="1" />
+            </svg>
+          </button>
+          @if (openTaskMenuId() === task.id) {
+            <div class="task-menu" role="menu" [attr.aria-label]="'Actions for ' + task.title">
+              <button
+                type="button"
+                class="task-menu-item"
+                role="menuitem"
+                (click)="editTask(task, $event)"
+              >
+                Edit
+              </button>
+              <button
+                type="button"
+                class="task-menu-item delete"
+                role="menuitem"
+                (click)="askDelete(task, $event)"
+              >
+                Delete
+              </button>
+            </div>
+          }
+        </div>
       </li>
     } @empty {
       <li class="empty">No tasks match. Add one with “+ New Task”.</li>
     }
   </ul>
 </section>
+
+@if (pendingDelete(); as task) {
+  <app-confirm-delete-task-dialog
+    [task]="task"
+    [busy]="isBusy(task)"
+    [error]="deleteError()"
+    (confirmed)="confirmDelete()"
+    (cancelled)="cancelDelete()"
+  />
+}
+
+@if (editingTaskId(); as taskId) {
+  <app-new-task-dialog
+    [taskId]="taskId"
+    (updated)="store.upsertTask($event)"
+    (closed)="editingTaskId.set(null)"
+  />
+}

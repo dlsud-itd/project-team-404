@@ -9,6 +9,8 @@ import {
 } from '@angular/core';
 import type { Task } from '../../../shared/types/task.types';
 
+export type DeleteTaskPrompt = Pick<Task, 'title'> & { isRecurring?: boolean };
+
 /** Asks before deleting a task. The parent shows it, runs the delete and closes it. */
 @Component({
   selector: 'app-confirm-delete-task-dialog',
@@ -115,7 +117,7 @@ import type { Task } from '../../../shared/types/task.types';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ConfirmDeleteTaskDialog {
-  readonly task = input.required<Task>();
+  readonly task = input.required<DeleteTaskPrompt>();
   /** True while the delete request runs; blocks both buttons and Escape. */
   readonly busy = input(false);
   readonly error = input<string | null>(null);

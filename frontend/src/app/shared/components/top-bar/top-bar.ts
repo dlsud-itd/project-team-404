@@ -21,7 +21,7 @@ export function asTab(value: string | null | undefined): HomeTab {
   return HOME_TABS.find((t) => t.id === value)?.id ?? 'dashboard';
 }
 
-/** The bar above every signed-in page: tabs, "+ New Task" and the account menu. */
+/** The bar above every signed-in page: tabs and the account menu. */
 @Component({
   selector: 'app-top-bar',
   imports: [RouterLink, NewTaskDialog],
@@ -90,12 +90,6 @@ export class TopBar {
     this.select(HOME_TABS[next].id);
     const tablist = event.currentTarget as HTMLElement | null;
     tablist?.querySelectorAll<HTMLElement>('[role="tab"]')[next]?.focus();
-  }
-
-  /** Opens the new-task popup on the project on screen, or the Inbox on any other page. */
-  protected newTask(): void {
-    const project = /^\/projects\/(\d+)\//.exec(this.path());
-    this.tasksStore.creating.set({ projectId: project ? Number(project[1]) : null });
   }
 
   /** The dashboard still shows sample data, so go to where the saved task appears. */

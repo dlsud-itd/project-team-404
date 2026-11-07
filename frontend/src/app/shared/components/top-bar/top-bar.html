@@ -30,7 +30,6 @@
 
   <div class="actions">
     <span class="streak">Streak <span aria-hidden="true">🔥</span></span>
-    <button type="button" class="new-task" (click)="newTask()">+ New Task</button>
 
     <div class="account">
       <button
@@ -62,6 +61,6 @@
   </div>
 </header>
 
-@if (tasksStore.creating()) {
+@if (tasksStore.creating() && tab() !== 'tasks') {
   <app-new-task-dialog (created)="showTask($event)" />
 }

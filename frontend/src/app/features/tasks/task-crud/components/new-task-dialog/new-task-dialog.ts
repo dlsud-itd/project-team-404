@@ -7,6 +7,7 @@ import {
   type OnDestroy,
   afterNextRender,
   inject,
+  input,
   output,
 } from '@angular/core';
 import { TasksStore } from '../../../shared/state/tasks.store';
@@ -14,8 +15,8 @@ import type { Task } from '../../../shared/types/task.types';
 import { TaskForm } from '../../task-form/task-form';
 
 /**
- * The new-task form as a popup, shown while TasksStore.creating is set. Clicking outside does
- * nothing, so a stray click can't lose what was typed; Cancel and Escape close it.
+ * The task form as a popup. Clicking outside does nothing, so a stray click can't lose what was
+ * typed; Cancel and Escape close it.
  */
 @Component({
   selector: 'app-new-task-dialog',
@@ -29,7 +30,12 @@ import { TaskForm } from '../../task-form/task-form';
       aria-labelledby="new-task-title"
       cdkTrapFocus
     >
-      <app-task-form (closed)="close()" (created)="close(); created.emit($event)" />
+      <app-task-form
+        [editTaskId]="taskId()"
+        (closed)="closeAndEmit()"
+        (created)="close(); created.emit($event)"
+        (updated)="closeAndEmit(); updated.emit($event)"
+      />
     </div>
   `,
   styles: `
@@ -63,6 +69,9 @@ import { TaskForm } from '../../task-form/task-form';
 export class NewTaskDialog implements OnDestroy {
   /** The task was saved. The popup has already closed. */
   readonly created = output<Task>();
+  readonly updated = output<Task>();
+  readonly closed = output<void>();
+  readonly taskId = input<number | null>(null);
 
   private readonly store = inject(TasksStore);
   /** What had focus when the popup opened, so closing can hand it back. */
@@ -80,5 +89,10 @@ export class NewTaskDialog implements OnDestroy {
 
   protected close(): void {
     this.store.creating.set(null);
+  }
+
+  protected closeAndEmit(): void {
+    this.close();
+    this.closed.emit();
   }
 }

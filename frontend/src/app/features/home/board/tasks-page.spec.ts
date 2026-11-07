@@ -1,10 +1,12 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 import { environment } from '../../../../environments/environment';
 import { apiProject } from '../../projects/testing/helpers/api-project';
 import type { Project } from '../../projects/shared/types/project.types';
 import { asApiTask } from '../../tasks/shared/testing/api-task';
+import { TasksStore } from '../../tasks/shared/state/tasks.store';
 import type { Task } from '../../tasks/shared/types/task.types';
 import { TasksPage } from './tasks-page';
 
@@ -65,7 +67,7 @@ describe('TasksPage', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
       imports: [TasksPage],
-      providers: [provideHttpClient(), provideHttpClientTesting()],
+      providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting()],
     });
     http = TestBed.inject(HttpTestingController);
     fixture = TestBed.createComponent(TasksPage);
@@ -102,52 +104,12 @@ describe('TasksPage', () => {
     expect(element('li.task')?.classList.contains('done')).toBe(true);
   });
 
-  it('creates a task in the selected real project', () => {
+  it('opens the new-task dialog for the Inbox project', () => {
     load([]);
     element<HTMLButtonElement>('.new')!.click();
     fixture.detectChanges();
 
-    const title = element<HTMLInputElement>('input[formControlName="title"]')!;
-    title.value = 'Prepare prototype';
-    title.dispatchEvent(new Event('input'));
-    const project = element<HTMLSelectElement>('select[formControlName="projectId"]')!;
-    project.selectedIndex = 1;
-    project.dispatchEvent(new Event('change'));
-    element<HTMLFormElement>('form')!.dispatchEvent(new Event('submit'));
-
-    const created: Task = { ...TASK, taskId: 11, title: 'Prepare prototype' };
-    const request = http.expectOne(TASKS_URL);
-    expect(request.request.method).toBe('POST');
-    expect(request.request.body).toEqual({
-      projectId: DESIGN.projectId,
-      priority: 'low',
-      title: 'Prepare prototype',
-      description: null,
-      dueDate: null,
-      deadline: null,
-      recurrence: 'none',
-      recurrenceDays: [],
-      recurrenceEndDate: null,
-    });
-    request.flush(asApiTask(created));
-    fixture.detectChanges();
-
-    expect(element('li.task .title')?.textContent).toContain('Prepare prototype');
-  });
-
-  it('rejects a blank task title without calling the API', () => {
-    load([]);
-    element<HTMLButtonElement>('.new')!.click();
-    fixture.detectChanges();
-
-    const title = element<HTMLInputElement>('input[formControlName="title"]')!;
-    title.value = '   ';
-    title.dispatchEvent(new Event('input'));
-    element<HTMLFormElement>('form')!.dispatchEvent(new Event('submit'));
-    fixture.detectChanges();
-
-    expect(element('[role="alert"]')?.textContent).toContain('Enter a task title');
-    http.expectNone(TASKS_URL);
+    expect(TestBed.inject(TasksStore).creating()).toEqual({ projectId: INBOX.projectId });
   });
 
   it('deletes a task through the confirmation dialog and API', () => {

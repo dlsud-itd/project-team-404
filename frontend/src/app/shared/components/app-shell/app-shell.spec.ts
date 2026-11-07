@@ -4,8 +4,6 @@ import { Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
-import { environment } from '../../../../environments/environment';
-import { TasksStore } from '../../../features/tasks/shared/state/tasks.store';
 import { AppShell } from './app-shell';
 
 @Component({ template: '<p class="page-content">Page</p>' })
@@ -101,25 +99,12 @@ describe('AppShell', () => {
     expect(router.url).toBe(url);
   });
 
-  it('starts a new task in the project on screen', async () => {
-    await harness.navigateByUrl('/projects/10/tasks');
+  it.each(['/projects/10/tasks', '/projects/10/edit', '/settings/profile'])(
+    'does not show a global task action on %s',
+    async (url) => {
+      await harness.navigateByUrl(url);
 
-    el<HTMLButtonElement>('button.new-task')!.click();
-    await settle();
-    http.expectOne(`${environment.apiBaseUrl}/api/projects`).flush([]);
-    await settle();
-
-    expect(TestBed.inject(TasksStore).creating()).toEqual({ projectId: 10 });
-    expect(el('[role="dialog"]')).toBeTruthy();
-  });
-
-  it('starts a new task in the Inbox on other pages', async () => {
-    await harness.navigateByUrl('/settings/profile');
-
-    el<HTMLButtonElement>('button.new-task')!.click();
-    await settle();
-    http.expectOne(`${environment.apiBaseUrl}/api/projects`).flush([]);
-
-    expect(TestBed.inject(TasksStore).creating()).toEqual({ projectId: null });
-  });
+      expect(el('button.new-task')).toBeNull();
+    },
+  );
 });

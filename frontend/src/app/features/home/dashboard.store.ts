@@ -19,6 +19,7 @@ export interface Task {
   /** Local date, YYYY-MM-DD, or null when the task has no due date. */
   due: string | null;
   done: boolean;
+  isRecurring?: boolean;
   /** Local date the task was completed, YYYY-MM-DD. */
   doneOn?: string;
 }
@@ -60,6 +61,7 @@ function fromApiTask(task: ApiTask): Task {
     priority: PRIORITY_BY_ID[task.priorityId] ?? 'low',
     due: task.dueDate,
     done: task.completedAt !== null,
+    isRecurring: task.recurrence !== 'none',
     doneOn: completionDate(task.completedAt),
   };
 }
