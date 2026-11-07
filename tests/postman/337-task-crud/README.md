@@ -3,7 +3,7 @@
 This guide explains how to run the Postman export in this folder against a **dedicated remote Supabase test project**. It assumes you are new to Postman and Supabase. You do not need Docker, and you must not start local Supabase.
 
 ## Can I run the collection all at once?
-**Yes. Run all 42 requests in the 337 collection in one Collection Runner session.** Setup requests log in, create projects/tasks, and capture their returned IDs in the selected Postman environment. You do not need to copy IDs or tokens manually.
+**Yes. Run all 49 requests in the 337 collection in one Collection Runner session.** Setup requests log in, create projects/tasks, and capture their returned IDs in the selected Postman environment. You do not need to copy IDs or tokens manually.
 
 Do not reorder or skip the setup requests. If troubleshooting, send requests individually but start at the beginning and keep the order. Many later requests use variables produced by earlier requests.
 
@@ -93,7 +93,7 @@ The collection's **Variables** tab may be empty; its requests use the selected e
    | `baseUrl` | `http://localhost:3000/api` |
    | `token`, `tokenB` | Leave blank; login requests set them. |
    | `projectId`, `projectId2`, `projectIdB`, `deletedProjectId` | Leave blank; project setup requests set them. |
-   | `taskId`, `taskIdB`, `deleteTaskId`, `pageTaskId`, `pageTaskTwoId`, `completedTaskId` | Leave blank; task setup requests set them. |
+   | `taskId`, `taskIdB`, `deleteTaskId`, `pageTaskId`, `pageTaskTwoId`, `completedTaskId`, `recurrenceTaskId` | Leave blank; task setup requests set them. |
    | `firstPageTaskId` | Leave blank; the task list request sets it. |
    | `missingProjectId`, `missingTaskId` | Keep `999999999`; these are deliberate nonexistent IDs for 404 tests. |
 
@@ -107,7 +107,7 @@ If you imported the old combined 337/339 collection, remove that collection and 
 1. Confirm the backend is running and the 337 environment is selected.
 2. In Postman's **Collections** sidebar, find **Project-Team-404 API - 337-task-crud**.
 3. Click **Run** on the collection, or click the collection's `...` menu and choose **Run**.
-4. In Collection Runner, select all 42 requests and confirm the 337 environment.
+4. In Collection Runner, select all 49 requests and confirm the 337 environment.
 5. Keep the requests in their existing order.
 6. Click **Run 337-task-crud** (or the equivalent **Run** button in your Postman version). Wait for the run summary.
 
@@ -119,7 +119,7 @@ To inspect a failing request individually, click it in the expanded collection a
 
 ## 7. Request order and expected results
 
-### Request list: 42 requests
+### Request list: 49 requests
 
 | Order | Request | Expected result/action |
 | ---: | --- | --- |
@@ -160,11 +160,18 @@ To inspect a failing request individually, click it in the expanded collection a
 | 35 | Soft-deleted task leaves the list | `200`. |
 | 36 | Get soft-deleted task returns 404 | `404`. |
 | 37 | Second delete returns 404 | `404`. |
-| 38 | Create task without token returns 401 | `401`. |
-| 39 | List tasks without token returns 401 | `401`. |
-| 40 | Get task without token returns 401 | `401`. |
-| 41 | Update task without token returns 401 | `401`. |
-| 42 | Delete task without token returns 401 | `401`. |
+| 38 | Setup - Create recurring task | `201`; sets `recurrenceTaskId` and verifies weekly weekdays, due date, and end date. |
+| 39 | Set weekly recurrence through scheduling API | `200`; weekdays are sorted and duplicates removed. |
+| 40 | Update recurrence through task CRUD | `200`. |
+| 41 | Recurrence fields persist after CRUD update | `200`; verifies updated weekdays and end date. |
+| 42 | Reject invalid recurrence weekday | `400`. |
+| 43 | Reject recurrence update for another user task | `404`. |
+| 44 | Set recurrence without token returns 401 | `401`. |
+| 45 | Create task without token returns 401 | `401`. |
+| 46 | List tasks without token returns 401 | `401`. |
+| 47 | Get task without token returns 401 | `401`. |
+| 48 | Update task without token returns 401 | `401`. |
+| 49 | Delete task without token returns 401 | `401`. |
 
 
 ## 8. Data left behind and common failures
