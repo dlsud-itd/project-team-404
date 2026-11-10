@@ -177,6 +177,7 @@ of truth; do not use Prisma migrations for deployment.
 - [Task scheduling](<documents/main/api-spec/Team-404 - API Specification - Tasks - Scheduling.pdf>)
 - [Task organization](<documents/main/api-spec/Team-404 - API Specification - Tasks - Organization.pdf>)
 - [Dashboard](<documents/main/api-spec/Team-404 - API Specification - Dashboard.pdf>)
+- [Filtering, Archive, Labels & Priorities, Settings & Search](<documents/sprints/sprint-5/Team-404 - API Specification - Filtering, Archive, Labels & Priorities, Settings & Search.md>)
 
 ### Sprint 1
 
