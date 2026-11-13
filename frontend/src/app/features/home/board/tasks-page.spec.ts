@@ -61,7 +61,10 @@ describe('TasksPage', () => {
     fixture.nativeElement.querySelector(selector) as T | null;
 
   function load(tasks: Task[] = [TASK]): void {
-    http.expectOne(PROJECTS_URL).flush([apiProject(INBOX), apiProject(DESIGN)]);
+    http
+      .expectOne(`${PROJECTS_URL}?isArchived=false`)
+      .flush([apiProject(INBOX), apiProject(DESIGN)]);
+    http.expectOne(`${PROJECTS_URL}?isArchived=true`).flush([]);
     http.expectOne(LIST_URL).flush(tasks.map(asApiTask));
     fixture.detectChanges();
   }

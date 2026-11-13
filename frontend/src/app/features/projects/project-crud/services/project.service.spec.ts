@@ -72,9 +72,7 @@ describe('ProjectService', () => {
       service.refresh().subscribe();
       expect(store.loading()).toBe(true);
 
-      http
-        .expectOne(`${URL}?isArchived=false`)
-        .flush([INBOX, CAPSTONE].map(apiProject));
+      http.expectOne(`${URL}?isArchived=false`).flush([INBOX, CAPSTONE].map(apiProject));
       http
         .expectOne(`${URL}?isArchived=true`)
         .flush([apiProject({ ...CAPSTONE, isArchived: true, projectId: 11, name: 'Old' })]);

@@ -125,7 +125,8 @@ describe('TaskForm', () => {
   }
 
   function flushProjects(): void {
-    http.expectOne(PROJECTS_URL).flush(PROJECTS.map(asApi));
+    http.expectOne(`${PROJECTS_URL}?isArchived=false`).flush(PROJECTS.map(asApi));
+    http.expectOne(`${PROJECTS_URL}?isArchived=true`).flush([]);
     http.expectOne(LABELS_URL).flush([]);
     harness.detectChanges();
   }
@@ -491,7 +492,10 @@ describe('TaskForm', () => {
     });
 
     it('lets the server use the Inbox when the projects could not load', () => {
-      http.expectOne(PROJECTS_URL).flush(null, { status: 500, statusText: 'Error' });
+      http
+        .expectOne(`${PROJECTS_URL}?isArchived=false`)
+        .flush(null, { status: 500, statusText: 'Error' });
+      expect(http.expectOne(`${PROJECTS_URL}?isArchived=true`).cancelled).toBe(true);
       http.expectOne(LABELS_URL).flush([]);
       harness.detectChanges();
       type('task-title', 'Study');

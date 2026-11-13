@@ -71,7 +71,8 @@ describe('OverdueTasks', () => {
   }
 
   function respondProjects(projects: ApiProject[] = []): void {
-    http.expectOne(PROJECTS_URL).flush(projects);
+    http.expectOne(`${PROJECTS_URL}?isArchived=false`).flush(projects);
+    http.expectOne(`${PROJECTS_URL}?isArchived=true`).flush([]);
     fixture.detectChanges();
   }
 
@@ -157,7 +158,10 @@ describe('OverdueTasks', () => {
 
   it('keeps working with grey dots when projects fail to load', () => {
     create();
-    http.expectOne(PROJECTS_URL).flush('down', { status: 500, statusText: 'Server Error' });
+    http
+      .expectOne(`${PROJECTS_URL}?isArchived=false`)
+      .flush('down', { status: 500, statusText: 'Server Error' });
+    expect(http.expectOne(`${PROJECTS_URL}?isArchived=true`).cancelled).toBe(true);
     respond([task(1, '2026-11-05T15:59:59.999Z')]);
 
     expect(rows()).toHaveLength(1);

@@ -134,7 +134,7 @@ describe('Dashboard integration (Current & Upcoming + API)', () => {
 
   /** The Overdue section also loads projects for its dot colors. */
   function answerProjects(): void {
-    http.match(PROJECTS_API).forEach((req) => req.flush([]));
+    http.match((req) => req.url === PROJECTS_API).forEach((req) => req.flush([]));
   }
 
   /** Opens /dashboard; its two sections send their requests straight away. */

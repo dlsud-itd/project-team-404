@@ -68,7 +68,8 @@ describe('NewTaskDialog', () => {
     document.body.appendChild(page);
     fixture.detectChanges();
     await fixture.whenStable();
-    http.expectOne(PROJECTS_URL).flush([]);
+    http.expectOne(`${PROJECTS_URL}?isArchived=false`).flush([]);
+    http.expectOne(`${PROJECTS_URL}?isArchived=true`).flush([]);
     http.expectOne(LABELS_URL).flush([]);
     fixture.detectChanges();
   });

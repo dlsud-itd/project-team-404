@@ -127,6 +127,11 @@ describe('Projects integration (Project CRUD screens + API)', () => {
     )!;
   }
 
+  function flushProjectLists(active: object[], archived: object[] = []): void {
+    http.expectOne(`${API}?isArchived=false`).flush(active);
+    http.expectOne(`${API}?isArchived=true`).flush(archived);
+  }
+
   function storedToken(): string | null {
     return sessionStorage.getItem(TOKEN_STORAGE_KEY) ?? localStorage.getItem(TOKEN_STORAGE_KEY);
   }
@@ -150,10 +155,12 @@ describe('Projects integration (Project CRUD screens + API)', () => {
   /** Opens /projects and answers its GET /api/projects. */
   async function openList(projects: object[] = [INBOX, CAPSTONE, THESIS]): Promise<void> {
     await open('/projects');
-    const req = http.expectOne(API);
-    expect(req.request.method).toBe('GET');
-    expect(req.request.headers.get('Authorization')).toBe(`Bearer ${TOKEN}`);
-    req.flush(projects);
+    const active = http.expectOne(`${API}?isArchived=false`);
+    const archived = http.expectOne(`${API}?isArchived=true`);
+    expect(active.request.method).toBe('GET');
+    expect(active.request.headers.get('Authorization')).toBe(`Bearer ${TOKEN}`);
+    active.flush(projects);
+    archived.flush([]);
     await settle();
   }
 
@@ -236,7 +243,7 @@ describe('Projects integration (Project CRUD screens + API)', () => {
       expect(text('[role="status"]')).toBe('Loading projects…');
       expect(all('app-project-card')).toHaveLength(0);
 
-      http.expectOne(API).flush([INBOX]);
+      flushProjectLists([INBOX]);
       await settle();
       expect(el('[role="status"]')).toBeNull();
     });
@@ -255,7 +262,10 @@ describe('Projects integration (Project CRUD screens + API)', () => {
     it('shows an error with a retry that loads the list again', async () => {
       await startSignedIn();
       await open('/projects');
-      http.expectOne(API).flush({ error: 'Internal server error' }, status(500));
+      http
+        .expectOne(`${API}?isArchived=false`)
+        .flush({ error: 'Internal server error' }, status(500));
+      expect(http.expectOne(`${API}?isArchived=true`).cancelled).toBe(true);
       await settle();
 
       expect(text('.load-error p')).toBe(
@@ -266,7 +276,7 @@ describe('Projects integration (Project CRUD screens + API)', () => {
 
       // Retrying clears the error and sends the list request again.
       expect(el('.load-error')).toBeNull();
-      http.expectOne(API).flush([INBOX, CAPSTONE]);
+      flushProjectLists([INBOX, CAPSTONE]);
       await settle();
       expect(el('.load-error')).toBeNull();
       expect(cardNames()).toEqual(['Inbox', 'Capstone']);
@@ -528,7 +538,7 @@ describe('Projects integration (Project CRUD screens + API)', () => {
       await settle();
 
       expect(router.url).toBe('/home?tab=projects');
-      http.expectOne(API).flush([INBOX, THESIS]);
+      flushProjectLists([INBOX, THESIS]);
       await settle();
       expect(text('.banner-error')).toBe('Project not found.');
       expect(cardNames()).toEqual(['Inbox', 'Thesis']);
@@ -619,7 +629,7 @@ describe('Projects integration (Project CRUD screens + API)', () => {
       http.expectOne(`${API}/10`).flush(NOT_FOUND, status(404, 'Not Found'));
       await settle();
 
-      http.expectOne(API).flush([INBOX, THESIS]);
+      flushProjectLists([INBOX, THESIS]);
       await settle();
       expect(el('[role="alertdialog"]')).toBeNull();
       expect(text('.banner-error')).toBe('Project not found.');
@@ -631,7 +641,16 @@ describe('Projects integration (Project CRUD screens + API)', () => {
   describe('Expired session', () => {
     // FE-LST-14
     it.each([
-      ['loading the list', async () => open('/projects'), () => http.expectOne(API)],
+      [
+        'loading the list',
+        async () => open('/projects'),
+        () => {
+          const req = http.expectOne(`${API}?isArchived=false`);
+          req.flush(TOKEN_REJECTED, status(401, 'Unauthorized'));
+          expect(http.expectOne(`${API}?isArchived=true`).cancelled).toBe(true);
+          return req;
+        },
+      ],
       [
         'loading a project to edit',
         async () => open('/projects/10/edit'),
@@ -640,7 +659,8 @@ describe('Projects integration (Project CRUD screens + API)', () => {
     ])('clears the session and goes to /login on a 401 when %s', async (_, go, request) => {
       await startSignedIn();
       await go();
-      request().flush(TOKEN_REJECTED, status(401, 'Unauthorized'));
+      const req = request();
+      if (req.request.url === `${API}/10`) req.flush(TOKEN_REJECTED, status(401, 'Unauthorized'));
       await settle();
 
       expect(router.url).toBe('/login');
@@ -713,7 +733,10 @@ describe('Projects integration (Project CRUD screens + API)', () => {
 
     async function openSwitcher(projects: object[] = ALL): Promise<void> {
       await open('/projects/organize');
-      http.expectOne(API).flush(projects);
+      flushProjectLists(
+        projects.filter((project) => !(project as { isArchived?: boolean }).isArchived),
+        projects.filter((project) => (project as { isArchived?: boolean }).isArchived),
+      );
       await settle();
     }
 
