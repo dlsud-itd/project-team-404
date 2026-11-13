@@ -30,13 +30,8 @@ export class LabelService {
     return this.http.post<ApiLabel>(this.baseUrl, input).pipe(map(toLabel));
   }
 
-  update(
-    labelId: number,
-    input: { name: string; color: string | null },
-  ): Observable<Label> {
-    return this.http
-      .put<ApiLabel>(`${this.baseUrl}/${labelId}`, input)
-      .pipe(map(toLabel));
+  update(labelId: number, input: { name: string; color: string | null }): Observable<Label> {
+    return this.http.put<ApiLabel>(`${this.baseUrl}/${labelId}`, input).pipe(map(toLabel));
   }
 
   delete(labelId: number): Observable<void> {
@@ -65,11 +60,7 @@ export class LabelService {
         .get<ApiLabel[]>(`${this.tasksUrl}/${taskId}/labels`)
         .pipe(map((labels) => labels.map(toTaskLabel)));
     if (!requests.length) return fetchLabels();
-    return concat(...requests).pipe(
-      ignoreElements(),
-      endWith(null),
-      switchMap(fetchLabels),
-    );
+    return concat(...requests).pipe(ignoreElements(), endWith(null), switchMap(fetchLabels));
   }
 }
 

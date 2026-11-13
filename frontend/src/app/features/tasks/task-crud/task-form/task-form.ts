@@ -219,9 +219,7 @@ export class TaskForm implements OnInit {
     if (this.mode === 'create') return true;
     const { details, schedule } = this.changes();
     return (
-      Object.keys(details).length > 0 ||
-      Object.keys(schedule).length > 0 ||
-      this.labelsChanged()
+      Object.keys(details).length > 0 || Object.keys(schedule).length > 0 || this.labelsChanged()
     );
   }
 
@@ -392,8 +390,7 @@ export class TaskForm implements OnInit {
     const current = this.task()?.labels.map((label) => label.labelId) ?? [];
     const selected = this.form.controls.labelIds.value;
     return (
-      [...current].sort((a, b) => a - b).join(',') !==
-      [...selected].sort((a, b) => a - b).join(',')
+      [...current].sort((a, b) => a - b).join(',') !== [...selected].sort((a, b) => a - b).join(',')
     );
   }
 
@@ -438,9 +435,7 @@ export class TaskForm implements OnInit {
       .save(task.taskId, this.changes())
       .pipe(
         switchMap(() =>
-          syncLabels.pipe(
-            tap((labels) => this.tasksStore.patch(task.taskId, { labels })),
-          ),
+          syncLabels.pipe(tap((labels) => this.tasksStore.patch(task.taskId, { labels }))),
         ),
         finalize(() => this.submitting.set(false)),
         takeUntilDestroyed(this.destroyRef),

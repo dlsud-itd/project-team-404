@@ -39,7 +39,10 @@ describe('LabelManagement', () => {
     const request = http.expectOne(LABELS_URL);
     expect(request.request.method).toBe('POST');
     expect(request.request.body).toEqual({ name: 'Study', color: '#2563EB' });
-    request.flush({ id: 8, name: 'Study', color: '#2563EB' }, { status: 201, statusText: 'Created' });
+    request.flush(
+      { id: 8, name: 'Study', color: '#2563EB' },
+      { status: 201, statusText: 'Created' },
+    );
     fixture.detectChanges();
     expect(page.textContent).toContain('Study');
 
@@ -47,10 +50,12 @@ describe('LabelManagement', () => {
     name.dispatchEvent(new Event('input'));
     fixture.detectChanges();
     el<HTMLFormElement>('form').dispatchEvent(new Event('submit'));
-    http.expectOne(LABELS_URL).flush(
-      { code: 'label-name-taken', error: 'A label with this name already exists.' },
-      { status: 409, statusText: 'Conflict' },
-    );
+    http
+      .expectOne(LABELS_URL)
+      .flush(
+        { code: 'label-name-taken', error: 'A label with this name already exists.' },
+        { status: 409, statusText: 'Conflict' },
+      );
     fixture.detectChanges();
 
     expect(page.querySelector('[role="alert"]')?.textContent).toContain(
@@ -63,10 +68,9 @@ describe('LabelManagement', () => {
     el<HTMLInputElement>('#label-name').dispatchEvent(new Event('input'));
     fixture.detectChanges();
     el<HTMLFormElement>('form').dispatchEvent(new Event('submit'));
-    http.expectOne(LABELS_URL).flush(
-      { id: 8, name: 'Study', color: '#2563EB' },
-      { status: 201, statusText: 'Created' },
-    );
+    http
+      .expectOne(LABELS_URL)
+      .flush({ id: 8, name: 'Study', color: '#2563EB' }, { status: 201, statusText: 'Created' });
     fixture.detectChanges();
     el<HTMLButtonElement>('button[aria-label="Edit Study"]')?.click();
     fixture.detectChanges();

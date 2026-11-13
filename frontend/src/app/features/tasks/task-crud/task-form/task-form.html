@@ -126,8 +126,11 @@
             <div class="label-options">
               @for (label of labels(); track label.labelId) {
                 <label class="label-option">
-                  <input type="checkbox" [checked]="form.controls.labelIds.value.includes(label.labelId)"
-                    (change)="toggleLabel(label.labelId, $event)" />
+                  <input
+                    type="checkbox"
+                    [checked]="form.controls.labelIds.value.includes(label.labelId)"
+                    (change)="toggleLabel(label.labelId, $event)"
+                  />
                   {{ label.name }}
                 </label>
               }

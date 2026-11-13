@@ -50,16 +50,14 @@ export class TaskService {
     if (filter.orderBy) params = params.set('orderBy', filter.orderBy);
     if (filter.orderDirection) params = params.set('orderDirection', filter.orderDirection);
     if (filter.page !== undefined) params = params.set('page', filter.page);
-    return this.http
-      .get<ApiTask[]>(this.baseUrl, { params })
-      .pipe(
-        map((tasks) =>
-          tasks.map((task, index) => ({
-            ...toTask(task),
-            ...(filter.orderBy ? { sortOrder: index } : {}),
-          })),
-        ),
-      );
+    return this.http.get<ApiTask[]>(this.baseUrl, { params }).pipe(
+      map((tasks) =>
+        tasks.map((task, index) => ({
+          ...toTask(task),
+          ...(filter.orderBy ? { sortOrder: index } : {}),
+        })),
+      ),
+    );
   }
 
   /** Loads all API pages, rather than silently truncating the list at the page-size limit. */

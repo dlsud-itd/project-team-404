@@ -36,8 +36,22 @@ import { LabelService, type Label } from '../task-organization/services/label.se
             <li>
               <span class="swatch" [style.background-color]="label.color ?? '#d6d3d1'"></span>
               <span>{{ label.name }}</span>
-              <button type="button" [disabled]="busy()" [attr.aria-label]="'Edit ' + label.name" (click)="edit(label)">Edit {{ label.name }}</button>
-              <button type="button" [disabled]="busy()" [attr.aria-label]="'Delete ' + label.name" (click)="askDelete(label)">Delete {{ label.name }}</button>
+              <button
+                type="button"
+                [disabled]="busy()"
+                [attr.aria-label]="'Edit ' + label.name"
+                (click)="edit(label)"
+              >
+                Edit {{ label.name }}
+              </button>
+              <button
+                type="button"
+                [disabled]="busy()"
+                [attr.aria-label]="'Delete ' + label.name"
+                (click)="askDelete(label)"
+              >
+                Delete {{ label.name }}
+              </button>
             </li>
           } @empty {
             <li>No labels yet.</li>
@@ -49,17 +63,38 @@ import { LabelService, type Label } from '../task-organization/services/label.se
         <section role="dialog" aria-modal="true" [attr.aria-label]="'Delete ' + label.name">
           <p>Delete label “{{ label.name }}”?</p>
           <button type="button" [disabled]="busy()" (click)="confirmDelete()">Delete label</button>
-          <button type="button" [disabled]="busy()" (click)="pendingDelete.set(null)">Cancel</button>
+          <button type="button" [disabled]="busy()" (click)="pendingDelete.set(null)">
+            Cancel
+          </button>
         </section>
       }
     </main>
   `,
   styles: `
-    .page { max-width: 48rem; margin: 0 auto; padding: 2rem; }
-    form, li { display: flex; align-items: center; gap: 0.75rem; margin-block: 0.75rem; }
-    ul { padding: 0; list-style: none; }
-    .swatch { width: 1rem; height: 1rem; border-radius: 50%; }
-    [role='alert'] { color: #b91c1c; }
+    .page {
+      max-width: 48rem;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+    form,
+    li {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-block: 0.75rem;
+    }
+    ul {
+      padding: 0;
+      list-style: none;
+    }
+    .swatch {
+      width: 1rem;
+      height: 1rem;
+      border-radius: 50%;
+    }
+    [role='alert'] {
+      color: #b91c1c;
+    }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -87,7 +122,10 @@ export class LabelManagement {
     this.error.set(null);
     this.service
       .list()
-      .pipe(finalize(() => this.loading.set(false)), takeUntilDestroyed(this.destroyRef))
+      .pipe(
+        finalize(() => this.loading.set(false)),
+        takeUntilDestroyed(this.destroyRef),
+      )
       .subscribe({
         next: (labels) => this.labels.set(labels),
         error: () => this.error.set('Could not load labels. Please try again.'),
@@ -113,7 +151,10 @@ export class LabelManagement {
     this.busy.set(true);
     this.error.set(null);
     (labelId === null ? this.service.create(input) : this.service.update(labelId, input))
-      .pipe(finalize(() => this.busy.set(false)), takeUntilDestroyed(this.destroyRef))
+      .pipe(
+        finalize(() => this.busy.set(false)),
+        takeUntilDestroyed(this.destroyRef),
+      )
       .subscribe({
         next: (label) => {
           this.labels.update((labels) =>
@@ -139,7 +180,10 @@ export class LabelManagement {
     this.error.set(null);
     this.service
       .delete(label.labelId)
-      .pipe(finalize(() => this.busy.set(false)), takeUntilDestroyed(this.destroyRef))
+      .pipe(
+        finalize(() => this.busy.set(false)),
+        takeUntilDestroyed(this.destroyRef),
+      )
       .subscribe({
         next: () => {
           this.labels.update((labels) => labels.filter((item) => item.labelId !== label.labelId));
@@ -151,12 +195,7 @@ export class LabelManagement {
 }
 
 function labelError(error: unknown): string {
-  if (
-    typeof error === 'object' &&
-    error !== null &&
-    'status' in error &&
-    error.status === 409
-  ) {
+  if (typeof error === 'object' && error !== null && 'status' in error && error.status === 409) {
     return 'A label with this name already exists.';
   }
   return 'Could not save the label. Please try again.';
