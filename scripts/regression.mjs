@@ -3,7 +3,6 @@
 import { execSync, spawn, spawnSync } from 'node:child_process';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 
-const rootScripts = JSON.parse(readFileSync('package.json', 'utf8')).scripts;
 const backendEnv = {
   NODE_ENV: 'test',
   CORS_ALLOWED_ORIGINS: 'http://localhost:4200',
@@ -35,13 +34,6 @@ const steps = [
   {
     name: 'Frontend unit + integration',
     command: 'npm --prefix frontend run test:run',
-  },
-  {
-    name: 'E2E (tests/e2e)',
-    command: 'npm run test:e2e',
-    missing: rootScripts['test:e2e']
-      ? null
-      : 'no root test:e2e script exists yet',
   },
   {
     name: 'Frontend regression',

@@ -201,14 +201,15 @@ production or shared development project.
 
 ## Regression tests
 
-**`🔁 Regression: Run All`** (or `npm run test:regression` from the repository
-root) runs, in order: backend unit tests, backend integration tests, the
-Project CRUD and organization API regression specs, frontend unit and
-integration tests, E2E tests, then the frontend regression specs in
-`frontend/src/testing/regression`. It runs every step, prints a table of pass,
-fail and skip counts, and saves it to `reports/regression/summary.md` for the
-sprint regression log. It exits with an error if any step fails, skips tests,
-or cannot run.
+**`🧪 Regression: Tests (run once)`** (or `npm run test:regression` from the
+repository root) runs, in order: backend unit tests, backend integration tests,
+the Project CRUD and organization API regression specs, frontend unit and
+integration tests, then the frontend regression specs in
+`frontend/src/app/features/auth/testing/regression`. E2E runs separately with
+`npm run test:e2e` or the **`🧪 E2E: Tests (run once)`** task. The regression
+runner prints a table of pass, fail and skip counts, saves it to
+`reports/regression/summary.md` for the sprint regression log, and exits with
+an error if any step fails, skips tests, or cannot run.
 
 The backend integration tests use the local Supabase test stack. Set
 `SUPABASE_TEST_URL`, `SUPABASE_TEST_SERVICE_ROLE_KEY`, and
