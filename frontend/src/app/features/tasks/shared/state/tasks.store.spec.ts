@@ -8,6 +8,7 @@ const task = (overrides: Partial<Task>): Task => ({
   priorityId: 3,
   title: 'Task',
   description: null,
+  scheduledDate: null,
   dueDate: null,
   deadline: null,
   recurrence: 'none',

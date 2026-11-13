@@ -11,6 +11,7 @@ const STUDY: Task = {
   priorityId: 1,
   title: 'Study ILT Module 4',
   description: 'Read all lessons',
+  scheduledDate: null,
   dueDate: '2026-10-02',
   // Oct 6 in Asia/Manila (UTC+8), though still Oct 5 in UTC.
   deadline: '2026-10-05T17:00:00.000Z',
@@ -71,6 +72,12 @@ describe('TaskItem', () => {
 
     expect(text('.due')).toBe(`Due ${formatDate('2026-10-02')}`);
     expect(text('.deadline')).toBe(`Deadline ${formatDate('2026-10-06')}`);
+  });
+
+  it('shows a scheduled date even when the task has no due date or deadline', () => {
+    render({ ...BARE, scheduledDate: '2026-10-03' });
+
+    expect(text('.scheduled')).toBe(`Scheduled ${formatDate('2026-10-03')}`);
   });
 
   it('leaves out the parts a task does not have', () => {

@@ -9,7 +9,7 @@ export function asApiTask(task: Task): ApiTask {
     title: task.title,
     description: task.description,
     priority: PRIORITY_NAMES[task.priorityId],
-    scheduledDate: null,
+    scheduledDate: task.scheduledDate,
     dueDate: task.dueDate,
     deadline: task.deadline,
     recurrence: task.recurrence,

@@ -15,6 +15,7 @@ const STUDY: Task = {
   priorityId: 3,
   title: 'Study ILT Module 4',
   description: null,
+  scheduledDate: null,
   dueDate: '2026-10-02',
   deadline: null,
   recurrence: 'none',
@@ -57,6 +58,17 @@ describe('TaskSchedulingService', () => {
     expect(store.byId(1)?.dueDate).toBe('2026-10-09');
   });
 
+  it('sets the scheduled date and stores the task the server returns', () => {
+    service.setScheduledDate(1, '2026-10-09').subscribe();
+
+    const req = http.expectOne(`${URL}/schedule`);
+    expect(req.request.method).toBe('PUT');
+    expect(req.request.body).toEqual({ scheduledDate: '2026-10-09' });
+    req.flush(asApiTask({ ...STUDY, scheduledDate: '2026-10-09' }));
+
+    expect(store.byId(1)?.scheduledDate).toBe('2026-10-09');
+  });
+
   it('sets the deadline', () => {
     service.setDeadline(1, DEADLINE).subscribe();
 
@@ -91,15 +103,23 @@ describe('TaskSchedulingService', () => {
     it('sends each change in turn and finishes after the last', () => {
       let done = false;
       service
-        .save(1, { dueDate: '2026-10-09', deadline: DEADLINE, recurrence: 'daily' })
+        .save(1, {
+          scheduledDate: '2026-10-01',
+          dueDate: '2026-10-09',
+          deadline: DEADLINE,
+          recurrence: 'daily',
+        })
         .subscribe(() => (done = true));
 
+      http.expectOne(`${URL}/schedule`).flush(asApiTask({ ...STUDY, scheduledDate: '2026-10-01' }));
       http.expectNone(`${URL}/deadline`);
-      http.expectOne(`${URL}/due-date`).flush(asApiTask(STUDY));
+      http.expectOne(`${URL}/due-date`).flush(asApiTask({ ...STUDY, scheduledDate: '2026-10-01' }));
       http.expectNone(`${URL}/recurrence`);
-      http.expectOne(`${URL}/deadline`).flush(asApiTask(STUDY));
+      http.expectOne(`${URL}/deadline`).flush(asApiTask({ ...STUDY, scheduledDate: '2026-10-01' }));
       expect(done).toBe(false);
-      http.expectOne(`${URL}/recurrence`).flush(asApiTask(STUDY));
+      http
+        .expectOne(`${URL}/recurrence`)
+        .flush(asApiTask({ ...STUDY, scheduledDate: '2026-10-01' }));
 
       expect(done).toBe(true);
     });
@@ -108,6 +128,7 @@ describe('TaskSchedulingService', () => {
       service.save(1, { deadline: null }).subscribe();
 
       expect(http.expectOne(`${URL}/deadline`).request.body).toEqual({ deadline: null });
+      http.expectNone(`${URL}/schedule`);
       http.expectNone(`${URL}/due-date`);
       http.expectNone(`${URL}/recurrence`);
     });

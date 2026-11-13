@@ -26,6 +26,7 @@ export function toTask(task: ApiTask): Task {
     priorityId: toPriorityId(task.priority),
     title: task.title,
     description: task.description,
+    scheduledDate: task.scheduledDate,
     dueDate: task.dueDate,
     deadline: task.deadline,
     recurrence,

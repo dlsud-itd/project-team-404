@@ -29,6 +29,7 @@ import { environment } from '../../../../src/environments/environment';
 
 const AUTH_API = `${environment.apiBaseUrl}/api/auth`;
 const PROJECTS_API = `${environment.apiBaseUrl}/api/projects`;
+const LABELS_API = `${environment.apiBaseUrl}/api/labels`;
 const TASKS_API = `${environment.apiBaseUrl}/api/tasks`;
 const TOKEN = 'session-token';
 
@@ -182,21 +183,25 @@ describe('Tasks integration (Task Scheduling screens + API)', () => {
   async function openList(tasks: ApiTask[] = []): Promise<void> {
     await harness.navigateByUrl(`/projects/${CAPSTONE.id}/tasks`);
     await settle();
+    http.expectOne(LABELS_API).flush([]);
     http.expectOne(`${PROJECTS_API}/${CAPSTONE.id}`).flush(CAPSTONE);
     expectTaskList(CAPSTONE.id).flush(tasks);
     await settle();
   }
 
   /** Answers the project picker's GET /api/projects if the form asked for it. */
-  function answerProjects(): void {
+  function answerProjects(labels: { id: number; name: string; color: string | null }[] = []): void {
     http.match(PROJECTS_API).forEach((req) => req.flush([INBOX, CAPSTONE]));
+    http.match(LABELS_API).forEach((req) => req.flush(labels));
   }
 
   /** Opens the + New task popup from the list. */
-  async function openNewTask(): Promise<void> {
+  async function openNewTask(
+    labels: { id: number; name: string; color: string | null }[] = [],
+  ): Promise<void> {
     click('app-task-list button.new');
     await settle();
-    answerProjects();
+    answerProjects(labels);
     await settle();
     expect(el('[role="dialog"] app-task-form')).toBeTruthy();
   }
@@ -246,13 +251,14 @@ describe('Tasks integration (Task Scheduling screens + API)', () => {
 
   // Case 1: the pickers' values reach the API in the backend's formats.
   describe('Sending the schedule', () => {
-    // FE-SCH-02, FE-SCH-05, FE-SCH-10
+    // FE-SCH-01, FE-SCH-02, FE-SCH-05, FE-SCH-10
     it('creates a task with its due date, deadline and weekly recurrence and shows it in the list', async () => {
       await startSignedIn();
       await openList();
       await openNewTask();
 
       type('#task-title', 'Gym');
+      type('#task-scheduled-date', '2026-11-18');
       type('#task-due-date', '2026-11-20');
       type('#task-deadline', '2026-11-21');
       repeat('weekly');
@@ -273,6 +279,7 @@ describe('Tasks integration (Task Scheduling screens + API)', () => {
         priority: 'low',
         title: 'Gym',
         description: null,
+        scheduledDate: '2026-11-18',
         dueDate: '2026-11-20',
         // The end of 21 November in Manila (UTC+8), as an ISO instant.
         deadline: '2026-11-21T15:59:59.999Z',
@@ -284,6 +291,7 @@ describe('Tasks integration (Task Scheduling screens + API)', () => {
         apiTask({
           id: 6,
           title: 'Gym',
+          scheduledDate: '2026-11-18',
           dueDate: '2026-11-20',
           deadline: '2026-11-21T15:59:59.999Z',
           recurrence: 'weekly',
@@ -296,6 +304,7 @@ describe('Tasks integration (Task Scheduling screens + API)', () => {
 
       expect(el('[role="dialog"]')).toBeNull();
       expect(text('app-task-item .title')).toBe('Gym');
+      expect(itemMeta()).toContain('Scheduled Nov 18');
       expect(itemMeta()).toContain('Due Nov 20');
       expect(itemMeta()).toContain('Deadline Nov 21');
       expect(text('app-task-item .badge')).toBe('Every week on Mon and Fri, until Dec 31');
@@ -308,26 +317,39 @@ describe('Tasks integration (Task Scheduling screens + API)', () => {
 
       expect(el<HTMLInputElement>('#task-due-date').value).toBe('2026-11-20');
       expect(el<HTMLInputElement>('#task-deadline').value).toBe('2026-11-20');
+      expect(el<HTMLInputElement>('#task-scheduled-date').value).toBe('');
       expect(checkedDays()).toEqual(['Monday', 'Thursday']);
       expect(el<HTMLInputElement>('#task-recurrence-end-date').value).toBe('2026-12-31');
       // Nothing changed yet, so there is nothing to save.
       expect(el<HTMLButtonElement>('button[type="submit"]').disabled).toBe(true);
 
+      type('#task-scheduled-date', '2026-11-19');
       type('#task-due-date', '2026-11-23');
       type('#task-deadline', '2026-11-25');
       repeat('daily');
       await submit();
 
       // Details did not change, so only the schedule routes are called, in order.
+      const scheduled = expectPut('schedule');
+      expect(scheduled.request.body).toEqual({ scheduledDate: '2026-11-19' });
+      http.expectNone(`${TASKS_API}/${SCHEDULED.id}/due-date`);
+      scheduled.flush({ ...SCHEDULED, scheduledDate: '2026-11-19' });
+      await settle();
+
       const due = expectPut('due-date');
       expect(due.request.body).toEqual({ dueDate: '2026-11-23' });
       http.expectNone(`${TASKS_API}/${SCHEDULED.id}/deadline`);
-      due.flush({ ...SCHEDULED, dueDate: '2026-11-23' });
+      due.flush({ ...SCHEDULED, scheduledDate: '2026-11-19', dueDate: '2026-11-23' });
       await settle();
 
       const deadline = expectPut('deadline');
       expect(deadline.request.body).toEqual({ deadline: '2026-11-25T15:59:59.999Z' });
-      deadline.flush({ ...SCHEDULED, dueDate: '2026-11-23', deadline: '2026-11-25T15:59:59.999Z' });
+      deadline.flush({
+        ...SCHEDULED,
+        scheduledDate: '2026-11-19',
+        dueDate: '2026-11-23',
+        deadline: '2026-11-25T15:59:59.999Z',
+      });
       await settle();
 
       const recurrence = expectPut('recurrence');
@@ -339,6 +361,7 @@ describe('Tasks integration (Task Scheduling screens + API)', () => {
       });
       recurrence.flush({
         ...SCHEDULED,
+        scheduledDate: '2026-11-19',
         dueDate: '2026-11-23',
         deadline: '2026-11-25T15:59:59.999Z',
         recurrence: 'daily',
@@ -347,6 +370,7 @@ describe('Tasks integration (Task Scheduling screens + API)', () => {
       await settle();
 
       expect(text('.form-notice')).toBe('Changes saved.');
+      expect(el<HTMLInputElement>('#task-scheduled-date').value).toBe('2026-11-19');
       expect(el<HTMLInputElement>('#task-due-date').value).toBe('2026-11-23');
       expect(el<HTMLInputElement>('#task-deadline').value).toBe('2026-11-25');
       expect(radio('task-recurrence', 'daily').checked).toBe(true);
@@ -821,6 +845,39 @@ describe('Tasks integration (Task Scheduling screens + API)', () => {
 
       expect(router.url).toBe('/login');
       expect(localStorage.getItem(TOKEN_STORAGE_KEY)).toBeNull();
+    });
+
+    describe('Labels', () => {
+      it('attaches a selected label when creating a task and shows it in the list', async () => {
+        await startSignedIn();
+        await openList();
+        await openNewTask([{ id: 7, name: 'Study', color: '#2563EB' }]);
+
+        type('#task-title', 'Review notes');
+        click('section[aria-labelledby="task-labels-heading"] input[type="checkbox"]');
+        await submit();
+        http.expectOne(TASKS_API).flush(
+          apiTask({
+            id: 6,
+            title: 'Review notes',
+            labels: [],
+          }),
+          status(201, 'Created'),
+        );
+        await settle();
+
+        const attach = http.expectOne(`${TASKS_API}/6/labels`);
+        expect(attach.request.method).toBe('POST');
+        expect(attach.request.body).toEqual({ labelIds: [7] });
+        attach.flush({ labels: [{ id: 7, name: 'Study', color: '#2563EB' }] });
+        const labels = http.expectOne(`${TASKS_API}/6/labels`);
+        expect(labels.request.method).toBe('GET');
+        labels.flush([{ id: 7, name: 'Study', color: '#2563EB' }]);
+        await settle();
+
+        expect(text('app-task-item .title')).toBe('Review notes');
+        expect(text('app-task-item .label')).toBe('Study');
+      });
     });
   });
 });

@@ -46,6 +46,8 @@ export interface Task {
   title: string;
   description: string | null;
   /** YYYY-MM-DD, or null when the task is unscheduled. */
+  scheduledDate: string | null;
+  /** YYYY-MM-DD, or null when the task has no due date. */
   dueDate: string | null;
   /** ISO instant, never on a day before dueDate; instantToDate gives the day to show. */
   deadline: string | null;
@@ -69,6 +71,7 @@ export interface CreateTaskRequest {
   priorityId: number;
   title: string;
   description: string | null;
+  scheduledDate?: string | null;
   dueDate: string | null;
   deadline: string | null;
   recurrence: TaskRecurrence;
@@ -117,6 +120,7 @@ export type TaskField =
   | 'description'
   | 'priorityId'
   | 'projectId'
+  | 'scheduledDate'
   | 'dueDate'
   | 'deadline'
   | 'recurrence'

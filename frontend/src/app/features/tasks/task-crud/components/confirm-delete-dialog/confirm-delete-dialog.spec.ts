@@ -8,6 +8,7 @@ const STUDY: Task = {
   priorityId: 3,
   title: 'Study ILT Module 4',
   description: null,
+  scheduledDate: null,
   dueDate: null,
   deadline: null,
   recurrence: 'none',

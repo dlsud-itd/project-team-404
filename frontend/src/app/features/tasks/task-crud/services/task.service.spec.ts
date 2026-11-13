@@ -15,6 +15,7 @@ const STUDY: Task = {
   priorityId: 3,
   title: 'Study ILT Module 4',
   description: 'Read all lessons',
+  scheduledDate: null,
   dueDate: '2026-10-02',
   deadline: '2026-10-02T15:59:59.999Z',
   recurrence: 'none',
@@ -60,6 +61,27 @@ describe('TaskService', () => {
       service.list({ projectId: 10 }).subscribe();
 
       http.expectOne(`${URL}?projectId=10&${LIST_QUERY}`).flush([]);
+    });
+
+    it('sends task filters and sorting, preserving the returned order', () => {
+      let result: Task[] | undefined;
+      service
+        .list({
+          projectId: 10,
+          priority: 'high',
+          labelId: 3,
+          orderBy: 'title',
+          orderDirection: 'desc',
+        })
+        .subscribe((tasks) => (result = tasks));
+
+      const req = http.expectOne(
+        `${URL}?projectId=10&status=all&pageSize=100&priority=high&labelId=3&orderBy=title&orderDirection=desc`,
+      );
+      req.flush([asApiTask({ ...STUDY, taskId: 2, title: 'Zebra' }), asApiTask(STUDY)]);
+
+      expect(result?.map((task) => task.title)).toEqual(['Zebra', 'Study ILT Module 4']);
+      expect(result?.map((task) => task.sortOrder)).toEqual([0, 1]);
     });
   });
 

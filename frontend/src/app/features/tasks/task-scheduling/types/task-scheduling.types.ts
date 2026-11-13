@@ -37,6 +37,8 @@ export const RECURRENCE_ENDS_OPTIONS: readonly { value: RecurrenceEnds; label: s
 /** The schedule fields that changed. A field set to null is cleared; a missing one is left alone. */
 export interface TaskScheduleChanges {
   /** YYYY-MM-DD. */
+  scheduledDate?: string | null;
+  /** YYYY-MM-DD. */
   dueDate?: string | null;
   /** ISO instant. */
   deadline?: string | null;

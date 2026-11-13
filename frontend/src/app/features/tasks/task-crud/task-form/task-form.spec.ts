@@ -18,6 +18,7 @@ class Blank {}
 const URL = `${environment.apiBaseUrl}/api/tasks`;
 const LIST_QUERY = 'status=all&pageSize=100';
 const PROJECTS_URL = `${environment.apiBaseUrl}/api/projects`;
+const LABELS_URL = `${environment.apiBaseUrl}/api/labels`;
 
 /** Projects as the API sends them: `id` instead of `projectId`. */
 const asApi = ({ projectId, ...rest }: Project): ApiProject => ({ id: projectId, ...rest });
@@ -40,6 +41,7 @@ const STUDY: Task = {
   priorityId: 2,
   title: 'Study ILT Module 4',
   description: 'Read all lessons',
+  scheduledDate: null,
   dueDate: '2026-10-02',
   // The end of Oct 5 for a user in Asia/Manila (UTC+8).
   deadline: '2026-10-05T15:59:59.999Z',
@@ -124,6 +126,7 @@ describe('TaskForm', () => {
 
   function flushProjects(): void {
     http.expectOne(PROJECTS_URL).flush(PROJECTS.map(asApi));
+    http.expectOne(LABELS_URL).flush([]);
     harness.detectChanges();
   }
 
@@ -180,6 +183,7 @@ describe('TaskForm', () => {
         'task-description',
         'task-priority',
         'task-project',
+        'task-scheduled-date',
         'task-due-date',
         'task-deadline',
       ]) {
@@ -222,6 +226,7 @@ describe('TaskForm', () => {
         priority: 'low',
         title: 'Study ILT Module 4',
         description: null,
+        scheduledDate: null,
         dueDate: null,
         deadline: null,
         recurrence: 'none',
@@ -236,6 +241,7 @@ describe('TaskForm', () => {
       type('task-description', 'Leg day');
       choose('task-priority', 'High');
       choose('task-project', 'Gym');
+      type('task-scheduled-date', '2026-10-01');
       type('task-due-date', '2026-10-02');
       type('task-deadline', '2026-10-03');
       repeat('Weekly');
@@ -246,6 +252,7 @@ describe('TaskForm', () => {
         priority: 'high',
         title: 'Gym session',
         description: 'Leg day',
+        scheduledDate: '2026-10-01',
         dueDate: '2026-10-02',
         deadline: '2026-10-03T15:59:59.999Z',
         recurrence: 'weekly',
@@ -485,6 +492,7 @@ describe('TaskForm', () => {
 
     it('lets the server use the Inbox when the projects could not load', () => {
       http.expectOne(PROJECTS_URL).flush(null, { status: 500, statusText: 'Error' });
+      http.expectOne(LABELS_URL).flush([]);
       harness.detectChanges();
       type('task-title', 'Study');
       submit();

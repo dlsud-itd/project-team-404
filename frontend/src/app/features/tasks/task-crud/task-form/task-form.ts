@@ -13,7 +13,7 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { finalize } from 'rxjs';
+import { finalize, map, of, switchMap, tap } from 'rxjs';
 import { SessionService } from '../../../auth/session/session.service';
 import { ProjectService } from '../../../projects/project-crud/services/project.service';
 import { ProjectsStore } from '../../../projects/shared/state/projects.store';
@@ -46,6 +46,7 @@ import { recurrenceRuleValidator } from '../../task-scheduling/validators/recurr
 import { mapTaskError } from '../mappers/task-error.mapper';
 import { TaskService } from '../services/task.service';
 import { taskTitleValidator } from '../validators/task-title.validator';
+import { LabelService, type Label } from '../../task-organization/services/label.service';
 
 export type TaskFormMode = 'create' | 'edit';
 
@@ -74,6 +75,7 @@ export class TaskForm implements OnInit {
 
   private readonly tasks = inject(TaskService);
   private readonly tasksStore = inject(TasksStore);
+  private readonly labelsApi = inject(LabelService);
   private readonly projects = inject(ProjectService);
   private readonly projectsStore = inject(ProjectsStore);
   private readonly session = inject(SessionService);
@@ -118,6 +120,8 @@ export class TaskForm implements OnInit {
   protected readonly formError = signal<string | null>(null);
   protected readonly saved = signal<string | null>(null);
   protected readonly serverErrors = signal<Partial<Record<TaskField, string>>>({});
+  protected readonly labels = signal<Label[]>([]);
+  protected readonly labelsError = signal<string | null>(null);
 
   protected readonly form = inject(FormBuilder).nonNullable.group(
     {
@@ -125,6 +129,8 @@ export class TaskForm implements OnInit {
       description: [''],
       priorityId: [DEFAULT_TASK_PRIORITY],
       projectId: [this.projectId],
+      labelIds: [[] as number[]],
+      scheduledDate: [''],
       dueDate: [''],
       deadline: [''],
       recurrence: [DEFAULT_TASK_RECURRENCE],
@@ -174,7 +180,18 @@ export class TaskForm implements OnInit {
         .pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe({ error: () => {} });
     }
+    this.loadLabels();
     if (this.mode === 'edit') this.load();
+  }
+
+  private loadLabels(): void {
+    this.labelsApi
+      .list()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (labels) => this.labels.set(labels),
+        error: () => this.labelsError.set('Could not load labels. Please try again.'),
+      });
   }
 
   protected load(): void {
@@ -201,7 +218,9 @@ export class TaskForm implements OnInit {
     if (this.submitting()) return false;
     if (this.mode === 'create') return true;
     const { details, schedule } = this.changes();
-    return Object.keys(details).length > 0 || Object.keys(schedule).length > 0;
+    return (
+      Object.keys(details).length > 0 || Object.keys(schedule).length > 0 || this.labelsChanged()
+    );
   }
 
   protected submit(): void {
@@ -228,6 +247,15 @@ export class TaskForm implements OnInit {
     if (this.serverErrors()[field]) {
       this.serverErrors.update((errors) => ({ ...errors, [field]: undefined }));
     }
+  }
+
+  protected toggleLabel(labelId: number, event: Event): void {
+    const target = event.target;
+    if (!(target instanceof HTMLInputElement)) return;
+    const selected = new Set(this.form.controls.labelIds.value);
+    if (target.checked) selected.add(labelId);
+    else selected.delete(labelId);
+    this.form.controls.labelIds.setValue([...selected]);
   }
 
   /** Message for a field, or null. Length and schedule errors show at once; required after leaving. */
@@ -276,6 +304,8 @@ export class TaskForm implements OnInit {
       description: task.description ?? '',
       priorityId: task.priorityId,
       projectId: task.projectId,
+      labelIds: task.labels.map((label) => label.labelId),
+      scheduledDate: task.scheduledDate ?? '',
       dueDate: task.dueDate ?? '',
       deadline: this.deadlineDate(task),
       recurrence: task.recurrence,
@@ -301,6 +331,7 @@ export class TaskForm implements OnInit {
       description,
       priorityId,
       projectId,
+      scheduledDate,
       dueDate,
       deadline,
       recurrence,
@@ -314,6 +345,7 @@ export class TaskForm implements OnInit {
       priorityId,
       title: title.trim(),
       description: description.trim() || null,
+      scheduledDate: scheduledDate || null,
       dueDate: dueDate || null,
       deadline: deadline ? deadlineToInstant(deadline, this.timeZone()) : null,
       recurrence,
@@ -335,6 +367,7 @@ export class TaskForm implements OnInit {
     if (values.description !== task.description) details.description = values.description;
     if (values.priorityId !== task.priorityId) details.priorityId = values.priorityId;
     if (values.projectId !== task.projectId) details.projectId = values.projectId;
+    if (values.scheduledDate !== task.scheduledDate) schedule.scheduledDate = values.scheduledDate;
     if (values.dueDate !== task.dueDate) schedule.dueDate = values.dueDate;
     // Compared by day: a deadline set elsewhere may be any time of day, and that isn't a change.
     if (this.form.controls.deadline.value !== this.deadlineDate(task)) {
@@ -353,12 +386,29 @@ export class TaskForm implements OnInit {
     return changes;
   }
 
+  private labelsChanged(): boolean {
+    const current = this.task()?.labels.map((label) => label.labelId) ?? [];
+    const selected = this.form.controls.labelIds.value;
+    return (
+      [...current].sort((a, b) => a - b).join(',') !== [...selected].sort((a, b) => a - b).join(',')
+    );
+  }
+
   private create(): void {
     const request = this.values();
+    const labelIds = this.form.controls.labelIds.value;
     this.submitting.set(true);
     this.tasks
       .create(request)
       .pipe(
+        switchMap((task) =>
+          labelIds.length
+            ? this.labelsApi
+                .syncTaskLabels(task.taskId, [], labelIds)
+                .pipe(map((labels) => ({ ...task, labels })))
+            : of(task),
+        ),
+        tap((task) => this.tasksStore.patch(task.taskId, { labels: task.labels })),
         finalize(() => this.submitting.set(false)),
         takeUntilDestroyed(this.destroyRef),
       )
@@ -371,11 +421,22 @@ export class TaskForm implements OnInit {
   private update(): void {
     const task = this.task();
     if (!task || !this.canSave()) return;
+    const labelIds = this.form.controls.labelIds.value;
+    const syncLabels = this.labelsChanged()
+      ? this.labelsApi.syncTaskLabels(
+          task.taskId,
+          task.labels.map((label) => label.labelId),
+          labelIds,
+        )
+      : of(task.labels);
 
     this.submitting.set(true);
     this.tasks
       .save(task.taskId, this.changes())
       .pipe(
+        switchMap(() =>
+          syncLabels.pipe(tap((labels) => this.tasksStore.patch(task.taskId, { labels }))),
+        ),
         finalize(() => this.submitting.set(false)),
         takeUntilDestroyed(this.destroyRef),
       )

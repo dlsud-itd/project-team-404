@@ -23,6 +23,11 @@ export class TaskSchedulingService {
   private readonly store = inject(TasksStore);
   private readonly baseUrl = `${environment.apiBaseUrl}/api/tasks`;
 
+  /** PUT /api/tasks/{id}/schedule with a YYYY-MM-DD date, or null to clear it. */
+  setScheduledDate(taskId: number, scheduledDate: string | null): Observable<Task> {
+    return this.put(taskId, 'schedule', { scheduledDate });
+  }
+
   /** PUT /api/tasks/{id}/due-date with a YYYY-MM-DD date, or null to clear it. */
   setDueDate(taskId: number, dueDate: string | null): Observable<Task> {
     return this.put(taskId, 'due-date', { dueDate });
@@ -45,7 +50,9 @@ export class TaskSchedulingService {
   /** Sends each change in turn. If one fails the rest are not sent; earlier ones stay saved. */
   save(taskId: number, changes: TaskScheduleChanges): Observable<void> {
     const requests: Observable<Task>[] = [];
-    const { dueDate, deadline, recurrence, recurrenceDays, recurrenceEndDate } = changes;
+    const { scheduledDate, dueDate, deadline, recurrence, recurrenceDays, recurrenceEndDate } =
+      changes;
+    if (scheduledDate !== undefined) requests.push(this.setScheduledDate(taskId, scheduledDate));
     if (dueDate !== undefined) requests.push(this.setDueDate(taskId, dueDate));
     if (deadline !== undefined) requests.push(this.setDeadline(taskId, deadline));
     if (recurrence !== undefined) {

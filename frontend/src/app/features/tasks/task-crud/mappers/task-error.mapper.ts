@@ -10,6 +10,7 @@ const NOT_FOUND = 'Task not found.';
  */
 function fieldFor(message: string): TaskField | undefined {
   if (/deadline/i.test(message)) return 'deadline';
+  if (/scheduled/i.test(message)) return 'scheduledDate';
   if (/recurrence/i.test(message)) return 'recurrence';
   // A whole word, so "Invalid task update" is not taken for a date.
   if (/\bdate\b/i.test(message)) return 'dueDate';

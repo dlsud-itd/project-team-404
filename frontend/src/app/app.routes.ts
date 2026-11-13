@@ -45,6 +45,14 @@ export const routes: Routes = [
             (m) => m.ProfileSettings,
           ),
       },
+      {
+        path: 'settings/labels',
+        title: 'Labels · HabitTracker',
+        loadComponent: () =>
+          import('./features/tasks/label-management/label-management').then(
+            (m) => m.LabelManagement,
+          ),
+      },
     ],
   },
   {

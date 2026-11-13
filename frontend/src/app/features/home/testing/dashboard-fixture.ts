@@ -70,6 +70,7 @@ export function task(
     priorityId,
     title,
     description: null,
+    scheduledDate: null,
     dueDate,
     deadline: null,
     recurrence: 'none',

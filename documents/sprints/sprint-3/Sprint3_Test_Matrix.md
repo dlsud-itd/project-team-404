@@ -35,24 +35,24 @@ Implementation: `backend/tests/integration/tasks.integration.test.ts`. Run with 
 
 | ID         | Test Case                                                    | Expected Result                                                                                                    | Status  |
 | ---------- | ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------ | ------- |
-| FE-CRUD-01 | Submit the task creation form with valid values              | The task service sends the expected request once; success displays the new task and clears or closes the form.     | Failing |
-| FE-CRUD-02 | Submit the task creation form with invalid or missing values | Validation feedback is shown and no request is sent.                                                               | Failing |
-| FE-CRUD-03 | Load the task list                                           | The task service requests the current user's tasks and the UI renders the response.                                | Failing |
-| FE-CRUD-04 | Open a task for editing and save changes                     | The form is populated from the selected task and the service sends the update; the rendered task reflects success. | Failing |
-| FE-CRUD-05 | Cancel task editing or creation                              | The form closes or resets without sending a mutation request.                                                      | Failing |
-| FE-CRUD-06 | Delete a task and confirm                                    | The service sends one delete request and the task is removed from the rendered list on success.                    | Failing |
-| FE-CRUD-07 | Handle task load or mutation failure                         | The error is shown, existing task data is preserved, and the user can retry where supported.                       | Failing |
+| FE-CRUD-01 | Submit the task creation form with valid values              | The task service sends the expected request once; success displays the new task and clears or closes the form.     | Passing |
+| FE-CRUD-02 | Submit the task creation form with invalid or missing values | Validation feedback is shown and no request is sent.                                                               | Passing |
+| FE-CRUD-03 | Load the task list                                           | The task service requests the current user's tasks and the UI renders the response.                                | Passing |
+| FE-CRUD-04 | Open a task for editing and save changes                     | The form is populated from the selected task and the service sends the update; the rendered task reflects success. | Passing |
+| FE-CRUD-05 | Cancel task editing or creation                              | The form closes or resets without sending a mutation request.                                                      | Passing |
+| FE-CRUD-06 | Delete a task and confirm                                    | The service sends one delete request and the task is removed from the rendered list on success.                    | Passing |
+| FE-CRUD-07 | Handle task load or mutation failure                         | The error is shown, existing task data is preserved, and the user can retry where supported.                       | Passing |
 
 ### 1.3 End-to-End
 
 | ID          | Test Case                                            | Expected Result                                                                   | Status  |
 | ----------- | ---------------------------------------------------- | --------------------------------------------------------------------------------- | ------- |
-| E2E-CRUD-01 | Sign in, create a task, and reload the task view     | The created task appears and remains after reload.                                | Blocked |
-| E2E-CRUD-02 | Create a task with a description and project         | The task appears with the submitted description in the selected project.          | Blocked |
-| E2E-CRUD-03 | Edit a task and reload the task view                 | Updated values appear and remain after reload.                                    | Blocked |
-| E2E-CRUD-04 | Submit an invalid task and correct the form          | Validation prevents the invalid save; the corrected task is created successfully. | Blocked |
-| E2E-CRUD-05 | Delete a task and reload the task view               | The task is absent after deletion and reload.                                     | Blocked |
-| E2E-CRUD-06 | Sign in as a different user and try to open the task | The other user's task is not shown or accessible.                                 | Blocked |
+| E2E-CRUD-01 | Sign in, create a task, and reload the task view     | The created task appears and remains after reload.                                | Passing |
+| E2E-CRUD-02 | Create a task with a description and project         | The task appears with the submitted description in the selected project.          | Passing |
+| E2E-CRUD-03 | Edit a task and reload the task view                 | Updated values appear and remain after reload.                                    | Passing |
+| E2E-CRUD-04 | Submit an invalid task and correct the form          | Validation prevents the invalid save; the corrected task is created successfully. | Passing |
+| E2E-CRUD-05 | Delete a task and reload the task view               | The task is absent after deletion and reload.                                     | Passing |
+| E2E-CRUD-06 | Sign in as a different user and try to open the task | The other user's task is not shown or accessible.                                 | Passing |
 
 ## 2. Task Scheduling
 
@@ -81,7 +81,7 @@ Tests: `tests/regression/tasks/task-scheduling.regression.spec.ts` (and `task-cr
 
 | ID        | Test Case                                             | Expected Result                                                                                                                                      | Status  |
 | --------- | ----------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- | ------- |
-| FE-SCH-01 | Set a scheduled date while creating or editing a task | The selected date is included in the task request and displayed after success.                                                                       | Failing |
+| FE-SCH-01 | Set a scheduled date while creating or editing a task | The selected date is included in the task request and displayed after success.                                                                       | Passing |
 | FE-SCH-02 | Set, change, or clear a due date                      | The expected date is submitted and the displayed task updates after success.                                                                         | Passing |
 | FE-SCH-03 | Submit an invalid date or schedule value              | Inline validation is shown and no invalid request is sent.                                                                                           | Passing |
 | FE-SCH-04 | View upcoming and overdue task groups                 | Tasks are displayed in the appropriate group using the returned scheduling data.                                                                     | Blocked |
@@ -140,30 +140,30 @@ Tests: `tests/regression/tasks/task-organization.regression.spec.ts`, run the sa
 | ID        | Test Case                                         | Expected Result                                                                                                                                                            | Status  |
 | --------- | ------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- |
 | FE-ORG-01 | Choose a priority when creating or editing a task | The selected priority is sent to the task service and shown after success.                                                                                                 | Passing |
-| FE-ORG-02 | Choose, add, or remove task labels                | The selected labels are sent and rendered on the correct task.                                                                                                             | Failing |
-| FE-ORG-03 | Filter tasks by priority or label                 | The service receives the selected filter and only matching tasks are rendered.                                                                                             | Failing |
-| FE-ORG-04 | Change the task ordering option                   | The service receives the supported ordering selection and the list reflects the response order.                                                                            | Blocked |
+| FE-ORG-02 | Choose, add, or remove task labels                | The selected labels are sent and rendered on the correct task.                                                                                                             | Passing |
+| FE-ORG-03 | Filter tasks by priority or label                 | The service receives the selected filter and only matching tasks are rendered.                                                                                             | Passing |
+| FE-ORG-04 | Change the task ordering option                   | The service receives the supported ordering selection and the list reflects the response order.                                                                            | Passing |
 | FE-ORG-05 | Handle organization update or filter failure      | The UI reports the error and keeps the last successfully saved task state.                                                                                                 | Failing |
-| FE-ORG-06 | Manage labels on the label pages                  | The list loads; creating sends `POST /api/labels` with `{name, color}`; a 409 shows a "name already used" field error; edit and delete (after confirming) update the list. | Failing |
+| FE-ORG-06 | Manage labels on the label pages                  | The list loads; creating sends `POST /api/labels` with `{name, color}`; a 409 shows a "name already used" field error; edit and delete (after confirming) update the list. | Passing |
 | FE-ORG-07 | A priority update returns 400, 404 or 401         | 400 shows the server's message and keeps the chosen priority; 404 shows "Task not found." and reloads the list; 401 clears the session and returns to `/login`.            | Passing |
 
 Tests: the `Priority` block in `frontend/tests/integration/features/tasks/tasks.integration.spec.ts`, set up as described in 2.2.
 
 - FE-ORG-01: the task form's Priority dropdown (High, Medium, Low; new tasks start at Low) sends `priority: "high" | "medium" | "low"` in `POST /api/tasks`, and an edit sends only `{priority}` in `PUT /api/tasks/{taskId}`, before any scheduling route. The list item shows the priority badge. There is no separate priority picker, and the frontend does not use `PUT /api/tasks/{taskId}/priority`.
-- FE-ORG-02, FE-ORG-03, FE-ORG-05 and FE-ORG-06 stay Failing because their screens are not built: there are no label pages or routes, no label picker on tasks, and no task filter bar (so no filters in the URL query). The backend routes exist (`/api/labels`, `/api/tasks/{taskId}/labels`, `/api/tasks/{taskId}/priority`). FE-ORG-05's priority-update failures are covered by FE-ORG-07; the row stays Failing until filter failures can be tested. `labels.integration.spec.ts` will be written with those screens.
+- FE-ORG-02, FE-ORG-03, FE-ORG-04 and FE-ORG-06 now pass: the task form supports labels, the label-management route supports create/edit/delete, and list filters and ordering are reflected in the URL and retained after reload. FE-ORG-05 remains Failing; filter failure behavior still needs focused verification. FE-ORG-07 covers priority-update failures.
 - Fixed while testing: a 400 from `PUT /api/tasks/{taskId}` ("Invalid task update", e.g. for a bad priority) was shown under the Due date field, because the error mapper matched "date" inside "update". It now matches "date" only as a whole word; `task-error.mapper.spec.ts` covers this case.
 
 ### 3.3 End-to-End
 
 | ID         | Test Case                              | Expected Result                                                                   | Status  |
 | ---------- | -------------------------------------- | --------------------------------------------------------------------------------- | ------- |
-| E2E-ORG-01 | Assign a priority to a task and reload | The selected priority is displayed after reload.                                  | Blocked |
-| E2E-ORG-02 | Add and remove labels on a task        | The task displays the saved label set and reflects removal after reload.          | Blocked |
-| E2E-ORG-03 | Filter tasks by priority or label      | The result list contains only tasks matching the selected filter.                 | Blocked |
-| E2E-ORG-04 | Change task ordering and reload        | Tasks appear in the selected order and retain the ordering behavior after reload. | Blocked |
+| E2E-ORG-01 | Assign a priority to a task and reload | The selected priority is displayed after reload.                                  | Passing |
+| E2E-ORG-02 | Add and remove labels on a task        | The task displays the saved label set and reflects removal after reload.          | Passing |
+| E2E-ORG-03 | Filter tasks by priority or label      | The result list contains only tasks matching the selected filter.                 | Passing |
+| E2E-ORG-04 | Change task ordering and reload        | Tasks appear in the selected order and retain the ordering behavior after reload. | Passing |
 
 ## Notes
 
 - Task CRUD backend cases pass, so backend Task Scheduling and Task Organization cases are no longer blocked by it; their statuses come from the API regression specs (see 2.1 and 3.1). Frontend scheduling cases have their own integration tests (see 2.2).
 - The Sprint 3 regression runs are recorded in [Sprint3_Regression_Log.md](./Sprint3_Regression_Log.md).
-- Every end-to-end case is Blocked until Task CRUD and the relevant integration cases pass.
+- Task CRUD and organization E2E rows now pass. Scheduling E2E rows remain Blocked where they depend on the Current & Upcoming or Overdue dashboard flows; other open Failing or Blocked rows retain their status until separately verified.

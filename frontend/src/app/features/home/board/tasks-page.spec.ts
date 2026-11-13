@@ -13,6 +13,7 @@ import { TasksPage } from './tasks-page';
 const PROJECTS_URL = `${environment.apiBaseUrl}/api/projects`;
 const TASKS_URL = `${environment.apiBaseUrl}/api/tasks`;
 const LIST_URL = `${TASKS_URL}?status=all&pageSize=100&page=1`;
+const LABELS_URL = `${environment.apiBaseUrl}/api/labels`;
 const INBOX: Project = {
   projectId: 1,
   name: 'Inbox',
@@ -39,6 +40,7 @@ const TASK: Task = {
   priorityId: 1,
   title: 'Review actual project work',
   description: null,
+  scheduledDate: null,
   dueDate: '2026-10-02',
   deadline: null,
   recurrence: 'none',
@@ -108,6 +110,7 @@ describe('TasksPage', () => {
     load([]);
     element<HTMLButtonElement>('.new')!.click();
     fixture.detectChanges();
+    http.expectOne(LABELS_URL).flush([]);
 
     expect(TestBed.inject(TasksStore).creating()).toEqual({ projectId: INBOX.projectId });
   });

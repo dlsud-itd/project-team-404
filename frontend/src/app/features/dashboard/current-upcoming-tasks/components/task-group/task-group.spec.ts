@@ -11,6 +11,7 @@ function task(taskId: number, overrides: Partial<Task> = {}): Task {
     priorityId: 3,
     title: `Task ${taskId}`,
     description: null,
+    scheduledDate: null,
     dueDate: '2026-11-06',
     deadline: null,
     recurrence: 'none',
