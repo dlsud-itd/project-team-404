@@ -222,7 +222,8 @@ describe('AllTasks', () => {
 
     http.expectOne(LABELS_URL).flush([]);
     expect(el('[role="dialog"] #new-task-title')?.textContent?.trim()).toBe('Edit task');
-    http.expectOne(PROJECTS_URL).flush([]);
+    http.expectOne(`${PROJECTS_URL}?isArchived=false`).flush([]);
+    http.expectOne(`${PROJECTS_URL}?isArchived=true`).flush([]);
     const taskToEdit = task(
       listedTask.id,
       listedTask.title,

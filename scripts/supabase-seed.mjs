@@ -18,7 +18,9 @@ const seedFiles = [
   'supabase/seeds/003_password_reset_tokens.sql',
   'supabase/seeds/004_projects.sql',
   'supabase/seeds/005_tasks.sql',
+  'supabase/seeds/006_filtering.sql',
 ];
+const verificationFile = 'supabase/verify_seeds.sql';
 
 function runSupabase(args) {
   return new Promise((resolve) => {
@@ -177,6 +179,42 @@ async function main() {
       console.log(`${path.basename(file)}: ERROR - ${oneLine(fileError)}`);
       hasErrors = true;
     }
+  }
+
+  if (!hasErrors) {
+    const sql = await readFile(
+      path.join(repositoryRoot, verificationFile),
+      'utf8'
+    );
+    let fileError;
+    for (const statement of splitStatements(sql)) {
+      const result = await runSupabase([
+        '--output-format',
+        'json',
+        'db',
+        'query',
+        target,
+        statement,
+      ]);
+      if (result.code !== 0) {
+        fileError =
+          result.error ||
+          oneLine(`${result.stdout}\n${result.stderr}`) ||
+          `Supabase CLI exited with code ${result.code}`;
+        break;
+      }
+    }
+
+    if (!fileError) {
+      console.log(`${path.basename(verificationFile)}: PASS`);
+    } else {
+      console.log(
+        `${path.basename(verificationFile)}: FAIL - ${oneLine(fileError)}`
+      );
+      hasErrors = true;
+    }
+  } else {
+    console.log(`${path.basename(verificationFile)}: SKIPPED - seed failed`);
   }
 
   if (hasErrors) {

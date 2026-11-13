@@ -49,7 +49,12 @@ describe('ProjectList', () => {
   const render = () => fixture.detectChanges();
 
   function loadWith(projects: Project[]): void {
-    http.expectOne(URL).flush(projects.map(apiProject));
+    http
+      .expectOne(`${URL}?isArchived=false`)
+      .flush(projects.filter((project) => !project.isArchived).map(apiProject));
+    http
+      .expectOne(`${URL}?isArchived=true`)
+      .flush(projects.filter((project) => project.isArchived).map(apiProject));
     render();
   }
 
@@ -109,7 +114,10 @@ describe('ProjectList', () => {
   });
 
   it('shows an error with a retry action when the list fails', () => {
-    http.expectOne(URL).flush(null, { status: 500, statusText: 'Server Error' });
+    http
+      .expectOne(`${URL}?isArchived=false`)
+      .flush(null, { status: 500, statusText: 'Server Error' });
+    expect(http.expectOne(`${URL}?isArchived=true`).cancelled).toBe(true);
     render();
 
     expect(text('.load-error p')).toContain('Something went wrong. Please try again.');

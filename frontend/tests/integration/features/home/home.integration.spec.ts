@@ -89,9 +89,10 @@ describe('Home integration (live dashboard APIs)', () => {
     http.expectOne(`${AUTH_API}/me`).flush(USER);
     await harness.navigateByUrl('/home');
     await settle();
-    const projectRequest = http.expectOne(PROJECTS_API);
+    const projectRequest = http.expectOne(`${PROJECTS_API}?isArchived=false`);
     expect(projectRequest.request.method).toBe('GET');
     projectRequest.flush(apiProjects());
+    http.expectOne(`${PROJECTS_API}?isArchived=true`).flush([]);
     const taskRequest = http.expectOne(TASKS_LIST);
     expect(taskRequest.request.method).toBe('GET');
     taskRequest.flush(apiTasks());
@@ -239,7 +240,8 @@ describe('Home integration (live dashboard APIs)', () => {
     await harness.navigateByUrl('/home');
     await settle();
 
-    http.expectOne(PROJECTS_API).flush(apiProjects());
+    http.expectOne(`${PROJECTS_API}?isArchived=false`).flush(apiProjects());
+    http.expectOne(`${PROJECTS_API}?isArchived=true`).flush([]);
     http
       .expectOne(TASKS_LIST)
       .flush({ error: 'Service unavailable' }, { status: 500, statusText: 'Server Error' });
@@ -248,7 +250,8 @@ describe('Home integration (live dashboard APIs)', () => {
 
     el<HTMLButtonElement>('.dashboard-error button.retry').click();
     await settle();
-    http.expectOne(PROJECTS_API).flush(apiProjects());
+    http.expectOne(`${PROJECTS_API}?isArchived=false`).flush(apiProjects());
+    http.expectOne(`${PROJECTS_API}?isArchived=true`).flush([]);
     http.expectOne(TASKS_LIST).flush(apiTasks());
     await settle();
     expect(column('overdue')).toHaveLength(2);

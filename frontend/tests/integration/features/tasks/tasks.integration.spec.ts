@@ -191,7 +191,11 @@ describe('Tasks integration (Task Scheduling screens + API)', () => {
 
   /** Answers the project picker's GET /api/projects if the form asked for it. */
   function answerProjects(labels: { id: number; name: string; color: string | null }[] = []): void {
-    http.match(PROJECTS_API).forEach((req) => req.flush([INBOX, CAPSTONE]));
+    http
+      .match((req) => req.url === PROJECTS_API)
+      .forEach((req) =>
+        req.flush(req.request.params.get('isArchived') === 'true' ? [] : [INBOX, CAPSTONE]),
+      );
     http.match(LABELS_API).forEach((req) => req.flush(labels));
   }
 

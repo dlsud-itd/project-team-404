@@ -215,7 +215,8 @@ describe('TaskList', () => {
       el<HTMLButtonElement>(selector)!.click();
       harness.detectChanges();
       // The form's project picker loads the projects.
-      http.expectOne(PROJECTS_URL).flush([asApi(CAPSTONE)]);
+      http.expectOne(`${PROJECTS_URL}?isArchived=false`).flush([asApi(CAPSTONE)]);
+      http.expectOne(`${PROJECTS_URL}?isArchived=true`).flush([]);
       http.expectOne(LABELS_URL).flush([]);
       await harness.fixture.whenStable();
       harness.detectChanges();
@@ -284,7 +285,8 @@ describe('TaskList', () => {
 
     el<HTMLButtonElement>('.empty button.new')!.click();
     harness.detectChanges();
-    http.expectOne(PROJECTS_URL).flush([asApi(CAPSTONE)]);
+    http.expectOne(`${PROJECTS_URL}?isArchived=false`).flush([asApi(CAPSTONE)]);
+    http.expectOne(`${PROJECTS_URL}?isArchived=true`).flush([]);
     http.expectOne(LABELS_URL).flush([]);
 
     expect(el('[role="dialog"]')).toBeTruthy();

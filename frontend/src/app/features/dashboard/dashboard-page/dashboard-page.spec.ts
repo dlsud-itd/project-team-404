@@ -53,7 +53,8 @@ describe('DashboardPage', () => {
     const page = await harness.navigateByUrl('/dashboard', DashboardPage);
     http.expectOne(URL).flush({ tasks: [] });
     http.expectOne(OVERDUE_URL).flush({ tasks: [] });
-    http.expectOne(PROJECTS_URL).flush([]);
+    http.expectOne(`${PROJECTS_URL}?isArchived=false`).flush([]);
+    http.expectOne(`${PROJECTS_URL}?isArchived=true`).flush([]);
     harness.detectChanges();
 
     const el = harness.routeNativeElement as HTMLElement;

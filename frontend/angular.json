@@ -73,6 +73,7 @@
           "options": {
             "include": ["src/**/*.spec.ts", "../tests/integration/features/**/*.spec.ts"],
             "setupFiles": ["src/test-setup.ts"],
+            "isolate": true,
             "coverage": true,
             "coverageReporters": ["html", "text-summary"],
             "coverageExclude": ["src/**/*.spec.ts"]

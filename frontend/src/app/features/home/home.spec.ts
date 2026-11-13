@@ -37,19 +37,24 @@ describe('Home tabs', () => {
   const tab = (id: string) => el<HTMLButtonElement>(`#tab-${id}`)!;
   const panelId = () => el('[role="tabpanel"]')?.id;
 
+  function flushProjects(projects: unknown[] = []): void {
+    http.expectOne(`${PROJECTS_URL}?isArchived=false`).flush(projects);
+    http.expectOne(`${PROJECTS_URL}?isArchived=true`).flush([]);
+  }
+
   async function settle(): Promise<void> {
     await harness.fixture.whenStable();
     harness.detectChanges();
   }
 
   function loadTasksTab(): void {
-    http.expectOne(PROJECTS_URL).flush([INBOX]);
+    flushProjects([INBOX]);
     http.expectOne(ALL_TASKS_URL).flush([]);
     harness.detectChanges();
   }
 
   function loadDashboardTab(): void {
-    http.expectOne(PROJECTS_URL).flush([INBOX]);
+    flushProjects([INBOX]);
     http.expectOne(ALL_TASKS_URL).flush([]);
     harness.detectChanges();
   }
@@ -125,14 +130,14 @@ describe('Home tabs', () => {
     await settle();
 
     expect(panelId()).toBe('panel-projects');
-    http.expectOne(PROJECTS_URL).flush([]);
+    flushProjects();
     harness.detectChanges();
     expect(el('#panel-projects h1')?.textContent).toContain('Projects');
   });
 
   it('moves the pill with the selected tab', async () => {
     await harness.navigateByUrl('/home?tab=projects');
-    http.expectOne(PROJECTS_URL).flush([]);
+    flushProjects();
 
     expect(el('[role="tablist"]')?.style.getPropertyValue('--tab-index')).toBe('2');
   });
@@ -147,7 +152,7 @@ describe('Home tabs', () => {
     await settle();
 
     expect(router.url).toBe('/home?tab=projects');
-    http.expectOne(PROJECTS_URL).flush([]);
+    flushProjects();
 
     el('[role="tablist"]')!.dispatchEvent(
       new KeyboardEvent('keydown', { key: 'Home', bubbles: true }),
@@ -227,7 +232,7 @@ describe('Home tabs', () => {
 
   it('sends the old /projects address to the Projects tab', async () => {
     await harness.navigateByUrl('/projects');
-    http.expectOne(PROJECTS_URL).flush([]);
+    flushProjects();
 
     expect(router.url).toBe('/home?tab=projects');
     expect(panelId()).toBe('panel-projects');
@@ -238,7 +243,7 @@ describe('Home tabs', () => {
 
     it('opens over the Projects tab, keeping the top bar and the URL', async () => {
       await harness.navigateByUrl('/home?tab=projects');
-      http.expectOne(PROJECTS_URL).flush([]);
+      flushProjects();
       harness.detectChanges();
 
       newProject().click();
@@ -252,7 +257,7 @@ describe('Home tabs', () => {
 
     it('opens from the Organize view too, and stays there', async () => {
       await harness.navigateByUrl('/home?tab=projects&view=organize');
-      http.expectOne(PROJECTS_URL).flush([]);
+      flushProjects();
       harness.detectChanges();
 
       newProject().click();
@@ -264,7 +269,7 @@ describe('Home tabs', () => {
 
     it('sends the old /projects/new address to the Projects tab', async () => {
       await harness.navigateByUrl('/projects/new');
-      http.expectOne(PROJECTS_URL).flush([]);
+      flushProjects();
 
       expect(router.url).toBe('/home?tab=projects');
       expect(panelId()).toBe('panel-projects');
@@ -279,7 +284,7 @@ describe('Home tabs', () => {
 
     async function open(url = '/home?tab=projects&view=organize'): Promise<void> {
       await harness.navigateByUrl(url);
-      http.expectOne(PROJECTS_URL).flush([]);
+      flushProjects();
       harness.detectChanges();
     }
 
@@ -289,7 +294,7 @@ describe('Home tabs', () => {
 
       viewLink('Organize').click();
       await settle();
-      http.expectOne(PROJECTS_URL).flush([]);
+      flushProjects();
       harness.detectChanges();
 
       expect(router.url).toBe('/home?tab=projects&view=organize');
@@ -312,7 +317,7 @@ describe('Home tabs', () => {
 
       viewLink('All projects').click();
       await settle();
-      http.expectOne(PROJECTS_URL).flush([]);
+      flushProjects();
       harness.detectChanges();
 
       expect(router.url).toBe('/home?tab=projects');

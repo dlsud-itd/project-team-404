@@ -5,6 +5,7 @@ import {
 import type {
   CreateProjectInput,
   ListProjectsFilters,
+  ListProjectsResult,
   UpdateProjectInput,
 } from './project-crud.types';
 import type { ProjectRecord } from '../shared/models/project.model';
@@ -18,7 +19,7 @@ export type ProjectCrudDependencies = {
   findOwnedProjects(
     userId: string,
     filters: ListProjectsFilters
-  ): Promise<ProjectRecord[]>;
+  ): Promise<ListProjectsResult>;
   updateOwnedProject(
     projectId: number,
     userId: string,
@@ -38,8 +39,14 @@ export class ProjectCrudService {
   }
 
   async list(userId: string, filters: ListProjectsFilters) {
-    const projects = await this.dependencies.findOwnedProjects(userId, filters);
-    return projects.map(toProjectModel);
+    const result = await this.dependencies.findOwnedProjects(userId, filters);
+    if (Array.isArray(result)) {
+      return result.map(toProjectModel);
+    }
+    return {
+      projects: result.projects.map(toProjectModel),
+      total: result.total,
+    };
   }
 
   async update(

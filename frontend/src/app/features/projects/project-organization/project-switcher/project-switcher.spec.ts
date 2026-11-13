@@ -56,7 +56,12 @@ describe('ProjectSwitcher', () => {
   const render = () => fixture.detectChanges();
 
   function loadWith(projects: Project[]): void {
-    http.expectOne(URL).flush(projects.map(apiProject));
+    http
+      .expectOne(`${URL}?isArchived=false`)
+      .flush(projects.filter((project) => !project.isArchived).map(apiProject));
+    http
+      .expectOne(`${URL}?isArchived=true`)
+      .flush(projects.filter((project) => project.isArchived).map(apiProject));
     render();
   }
 

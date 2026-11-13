@@ -1,0 +1,390 @@
+{
+  "info": {
+    "_postman_id": "3438de4a-d2f9-4bbd-95a8-d2475997c0e8",
+    "name": "Project-Team-404 API - 342-sort-filter",
+    "description": "Read-only Sprint 5 task and project filter/sort checks. Requires the 006_filtering.sql seed for Harvey.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "342-sort-filter",
+      "item": [
+        {
+          "name": "Login - Harvey",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"identifier\": \"{{harveyEmail}}\",\n  \"password\": \"{{seedPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Login succeeds', function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test('Login returns a token', function () { pm.expect(body.token).to.be.a('string').and.not.empty; });",
+                  "pm.environment.set('token', body.token);"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Setup - Capture filter label IDs",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/labels",
+              "host": ["{{baseUrl}}"],
+              "path": ["labels"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Labels load', function () { pm.response.to.have.status(200); });",
+                  "const labels = pm.response.json();",
+                  "const filtering = labels.find((label) => label.name === 'Filtering');",
+                  "const review = labels.find((label) => label.name === 'Review');",
+                  "pm.test('Filtering fixture labels exist', function () { pm.expect(filtering).to.exist; pm.expect(review).to.exist; });",
+                  "pm.environment.set('filteringLabelId', String(filtering.id));",
+                  "pm.environment.set('reviewLabelId', String(review.id));"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Setup - Capture active fixture project IDs",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/projects?isArchived=false",
+              "host": ["{{baseUrl}}"],
+              "path": ["projects"],
+              "query": [
+                {
+                  "key": "isArchived",
+                  "value": "false"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Active projects load', function () { pm.response.to.have.status(200); });",
+                  "const projects = pm.response.json();",
+                  "const clientWork = projects.find((project) => project.name === 'Filtering - Client Work');",
+                  "const personal = projects.find((project) => project.name === 'Filtering - Personal');",
+                  "pm.test('Both active filtering projects exist', function () { pm.expect(clientWork).to.exist; pm.expect(personal).to.exist; });",
+                  "pm.environment.set('filterClientProjectId', String(clientWork.id));",
+                  "pm.environment.set('filterPersonalProjectId', String(personal.id));"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Task filter matrix",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/tasks?status=all&pageSize=100",
+              "host": ["{{baseUrl}}"],
+              "path": ["tasks"],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "all"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "100"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Task list returns an array', function () { pm.response.to.have.status(200); pm.expect(pm.response.json()).to.be.an('array'); });",
+                  "function localToday() { const parts = new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Manila', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date()); const part = (type) => parts.find((value) => value.type === type).value; return `${part('year')}-${part('month')}-${part('day')}`; }",
+                  "function shiftDate(date, days) { const value = new Date(`${date}T00:00:00.000Z`); value.setUTCDate(value.getUTCDate() + days); return value.toISOString().slice(0, 10); }",
+                  "function requestCase(name, query, check) { const baseQuery = query.includes('status=') ? 'pageSize=100' : 'status=all&pageSize=100'; pm.sendRequest({ url: `${pm.environment.get('baseUrl')}/tasks?${baseQuery}&${query}`, method: 'GET', header: { Authorization: `Bearer ${pm.environment.get('token')}` } }, function (error, response) { pm.test(`${name} returns 200`, function () { pm.expect(error).to.equal(null); pm.expect(response.code).to.equal(200); }); if (!error && response.code === 200) { const rows = response.json(); pm.test(name, function () { pm.expect(rows).to.be.an('array'); check(rows); }); } }); }",
+                  "pm.sendRequest({ url: `${pm.environment.get('baseUrl')}/tasks?pageSize=100`, method: 'GET', header: { Authorization: `Bearer ${pm.environment.get('token')}` } }, function (error, response) { pm.test('Omitted status includes active and completed tasks', function () { pm.expect(error).to.equal(null); pm.expect(response.code).to.equal(200); const rows = response.json(); pm.expect(rows.some((task) => task.isDone)).to.equal(true); pm.expect(rows.some((task) => !task.isDone)).to.equal(true); }); });",
+                  "const today = localToday();",
+                  "const past = shiftDate(today, -5);",
+                  "const future = shiftDate(today, 7);",
+                  "const filteringLabelId = pm.environment.get('filteringLabelId');",
+                  "const reviewLabelId = pm.environment.get('reviewLabelId');",
+                  "requestCase('Legacy single priority', 'priority=low', (rows) => pm.expect(rows.every((task) => task.priority === 'low')).to.equal(true));",
+                  "requestCase('Multiple priorities are ORed', 'priorities=low,high', (rows) => pm.expect(rows.every((task) => ['low', 'high'].includes(task.priority))).to.equal(true));",
+                  "requestCase('Legacy single label ID', `labelId=${filteringLabelId}`, (rows) => pm.expect(rows.every((task) => task.labels.some((label) => label.id === Number(filteringLabelId)))).to.equal(true));",
+                  "requestCase('Multiple labels match any by default', `labelIds=${filteringLabelId},${reviewLabelId}`, (rows) => pm.expect(rows.every((task) => task.labels.some((label) => [Number(filteringLabelId), Number(reviewLabelId)].includes(label.id)))).to.equal(true));",
+                  "requestCase('Multiple labels match all', `labelIds=${filteringLabelId},${reviewLabelId}&labelMatch=all`, (rows) => pm.expect(rows.every((task) => [Number(filteringLabelId), Number(reviewLabelId)].every((id) => task.labels.some((label) => label.id === id)))).to.equal(true));",
+                  "requestCase('dueFrom is inclusive', `dueFrom=${past}`, (rows) => { pm.expect(rows.every((task) => task.dueDate === null || task.dueDate >= past)).to.equal(true); pm.expect(rows.some((task) => task.title === 'Filter fixture 01: overdue low')).to.equal(true); });",
+                  "requestCase('dueTo is inclusive', `dueTo=${future}`, (rows) => { pm.expect(rows.every((task) => task.dueDate === null || task.dueDate <= future)).to.equal(true); pm.expect(rows.some((task) => task.title === 'Filter fixture 06: future high')).to.equal(true); });",
+                  "requestCase('Date range includes both edges', `dueFrom=${past}&dueTo=${future}`, (rows) => { pm.expect(rows.some((task) => task.title === 'Filter fixture 01: overdue low')).to.equal(true); pm.expect(rows.some((task) => task.title === 'Filter fixture 06: future high')).to.equal(true); });",
+                  "requestCase('Tasks with due dates', 'hasDueDate=true', (rows) => pm.expect(rows.every((task) => task.dueDate !== null)).to.equal(true));",
+                  "requestCase('Tasks without due dates', 'hasDueDate=false', (rows) => pm.expect(rows.every((task) => task.dueDate === null)).to.equal(true));",
+                  "requestCase('Overdue excludes completed tasks', 'overdue=true', (rows) => pm.expect(rows.every((task) => !task.isDone && task.dueDate < today)).to.equal(true));",
+                  "requestCase('Recurring tasks', 'recurring=true', (rows) => pm.expect(rows.every((task) => task.recurrence !== 'none' && task.recurrence !== null)).to.equal(true));",
+                  "requestCase('Non-recurring tasks', 'recurring=false', (rows) => pm.expect(rows.every((task) => task.recurrence === 'none' || task.recurrence === null)).to.equal(true));",
+                  "requestCase('Active status', 'status=active', (rows) => pm.expect(rows.every((task) => !task.isDone)).to.equal(true));",
+                  "requestCase('Completed status', 'status=completed', (rows) => pm.expect(rows.every((task) => task.isDone)).to.equal(true));",
+                  "requestCase('Legacy completion filter', 'isDone=false', (rows) => pm.expect(rows.every((task) => !task.isDone)).to.equal(true));",
+                  "requestCase('Project filter', `projectId=${pm.environment.get('filterClientProjectId')}`, (rows) => pm.expect(rows.every((task) => task.projectId === Number(pm.environment.get('filterClientProjectId')))).to.equal(true));",
+                  "requestCase('Combined filters use AND', `priorities=low,high&labelIds=${filteringLabelId},${reviewLabelId}&labelMatch=all&dueFrom=${past}&dueTo=${future}&hasDueDate=true&recurring=false`, (rows) => { pm.expect(rows.length).to.be.greaterThan(0); pm.expect(rows.every((task) => ['low', 'high'].includes(task.priority) && task.dueDate >= past && task.dueDate <= future && task.recurrence === 'none' && [Number(filteringLabelId), Number(reviewLabelId)].every((id) => task.labels.some((label) => label.id === id)))).to.equal(true); });"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Task sort matrix",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/tasks?status=all&pageSize=100",
+              "host": ["{{baseUrl}}"],
+              "path": ["tasks"],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "all"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "100"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Task sort baseline returns 200', function () { pm.response.to.have.status(200); });",
+                  "function requestSort(orderBy, direction) { pm.sendRequest({ url: `${pm.environment.get('baseUrl')}/tasks?status=all&pageSize=100&orderBy=${orderBy}&orderDirection=${direction}`, method: 'GET', header: { Authorization: `Bearer ${pm.environment.get('token')}` } }, function (error, response) { const name = `Task ${orderBy} ${direction}`; pm.test(`${name} returns 200`, function () { pm.expect(error).to.equal(null); pm.expect(response.code).to.equal(200); }); if (!error && response.code === 200) { const rows = response.json(); const rank = { low: 0, medium: 1, high: 2 }; const value = (task) => orderBy === 'priority' ? rank[task.priority] : task[orderBy]; const compare = (left, right) => { const a = value(left); const b = value(right); if (a === null || a === undefined) return b === null || b === undefined ? 0 : 1; if (b === null || b === undefined) return -1; const order = typeof a === 'string' ? a.localeCompare(b) : a - b; return direction === 'asc' ? order : -order; }; pm.test(`${name} is ordered with nulls last and stable IDs`, function () { for (let index = 1; index < rows.length; index += 1) { const order = compare(rows[index - 1], rows[index]); pm.expect(order <= 0).to.equal(true); if (order === 0) pm.expect(rows[index - 1].id).to.be.at.most(rows[index].id); } }); } }); }",
+                  "['dueDate', 'deadline', 'scheduledDate', 'priority', 'title', 'createdAt', 'updatedAt'].forEach((orderBy) => ['asc', 'desc'].forEach((direction) => requestSort(orderBy, direction)));"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Project filter and sort matrix",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/projects?isArchived=false&limit=100",
+              "host": ["{{baseUrl}}"],
+              "path": ["projects"],
+              "query": [
+                {
+                  "key": "isArchived",
+                  "value": "false"
+                },
+                {
+                  "key": "limit",
+                  "value": "100"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Limited project list returns projects and total', function () { pm.response.to.have.status(200); const body = pm.response.json(); pm.expect(body.projects).to.be.an('array'); pm.expect(body.total).to.be.a('number'); });",
+                  "function requestProjectCase(name, query, check) { pm.sendRequest({ url: `${pm.environment.get('baseUrl')}/projects?${query}`, method: 'GET', header: { Authorization: `Bearer ${pm.environment.get('token')}` } }, function (error, response) { pm.test(`${name} returns 200`, function () { pm.expect(error).to.equal(null); pm.expect(response.code).to.equal(200); }); if (!error && response.code === 200) pm.test(name, function () { check(response.json()); }); }); }",
+                  "requestProjectCase('Favorite project filter', 'isFavorite=true', (rows) => pm.expect(rows.every((project) => project.isFavorite)).to.equal(true));",
+                  "requestProjectCase('Non-favorite project filter', 'isFavorite=false', (rows) => pm.expect(rows.every((project) => !project.isFavorite)).to.equal(true));",
+                  "requestProjectCase('Active project filter', 'isArchived=false', (rows) => pm.expect(rows.every((project) => !project.isArchived)).to.equal(true));",
+                  "requestProjectCase('Archived project filter', 'isArchived=true', (rows) => { pm.expect(rows.length).to.be.greaterThan(0); pm.expect(rows.every((project) => project.isArchived)).to.equal(true); });",
+                  "requestProjectCase('Omitted archive filter returns active projects', '', (rows) => pm.expect(rows.every((project) => !project.isArchived)).to.equal(true));",
+                  "requestProjectCase('Color filter ignores case', 'color=%233c78d8', (rows) => { pm.expect(rows.length).to.be.greaterThan(0); pm.expect(rows.every((project) => project.color.toUpperCase() === '#3C78D8')).to.equal(true); });",
+                  "['sortOrder', 'name', 'createdAt', 'updatedAt'].forEach((orderBy) => ['asc', 'desc'].forEach((direction) => pm.sendRequest({ url: `${pm.environment.get('baseUrl')}/projects?isArchived=false&limit=100&orderBy=${orderBy}&orderDirection=${direction}`, method: 'GET', header: { Authorization: `Bearer ${pm.environment.get('token')}` } }, function (error, response) { const name = `Project ${orderBy} ${direction}`; pm.test(`${name} returns a limited response`, function () { pm.expect(error).to.equal(null); pm.expect(response.code).to.equal(200); pm.expect(response.json().projects).to.be.an('array'); }); if (!error && response.code === 200) { const projects = response.json().projects; pm.test(`${name} is ordered with stable IDs`, function () { for (let index = 1; index < projects.length; index += 1) { const left = projects[index - 1][orderBy]; const right = projects[index][orderBy]; const order = typeof left === 'string' ? left.localeCompare(right) : left - right; pm.expect(direction === 'asc' ? order <= 0 : order >= 0).to.equal(true); if (order === 0) pm.expect(projects[index - 1].id).to.be.at.most(projects[index].id); } }); } })));",
+                  "requestProjectCase('Limit returns a bounded page and total', 'limit=1', (body) => { pm.expect(body.projects).to.have.length.at.most(1); pm.expect(body.total).to.be.at.least(body.projects.length); });",
+                  "requestProjectCase('Omitted limit preserves the array response', 'isArchived=false', (body) => pm.expect(body).to.be.an('array'));"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Invalid filter matrix",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/tasks?priority=invalid",
+              "host": ["{{baseUrl}}"],
+              "path": ["tasks"],
+              "query": [
+                {
+                  "key": "priority",
+                  "value": "invalid"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Invalid priority returns 400', function () { pm.response.to.have.status(400); });",
+                  "function expectBadRequest(name, path) { pm.sendRequest({ url: `${pm.environment.get('baseUrl')}${path}`, method: 'GET', header: { Authorization: `Bearer ${pm.environment.get('token')}` } }, function (error, response) { pm.test(`${name} returns 400`, function () { pm.expect(error).to.equal(null); pm.expect(response.code).to.equal(400); }); }); }",
+                  "expectBadRequest('Invalid label ID', '/tasks?labelIds=0');",
+                  "expectBadRequest('Invalid task sort', '/tasks?orderBy=unknown');",
+                  "expectBadRequest('Invalid reversed date range', '/tasks?dueFrom=2026-11-30&dueTo=2026-11-10');",
+                  "expectBadRequest('Overdue cannot include completed tasks', '/tasks?overdue=true&status=completed');",
+                  "expectBadRequest('Invalid favorite value', '/projects?isFavorite=yes');",
+                  "expectBadRequest('Invalid project color', '/projects?color=blue');",
+                  "expectBadRequest('Invalid project sort', '/projects?orderBy=unknown');",
+                  "expectBadRequest('Invalid project limit', '/projects?limit=101');"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Tasks require authentication",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/tasks?status=all",
+              "host": ["{{baseUrl}}"],
+              "path": ["tasks"],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "all"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Missing task token returns 401', function () { pm.response.to.have.status(401); });"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Projects require authentication",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/projects?isFavorite=true",
+              "host": ["{{baseUrl}}"],
+              "path": ["projects"],
+              "query": [
+                {
+                  "key": "isFavorite",
+                  "value": "true"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Missing project token returns 401', function () { pm.response.to.have.status(401); });"
+                ]
+              }
+            }
+          ],
+          "response": []
+        }
+      ]
+    }
+  ]
+}
