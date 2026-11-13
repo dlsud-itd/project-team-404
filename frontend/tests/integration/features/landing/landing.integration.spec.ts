@@ -47,9 +47,7 @@ describe('Landing integration (landing page, guestGuard, session)', () => {
   async function settle(): Promise<void> {
     await harness.fixture.whenStable();
     harness.detectChanges();
-    http
-      .match((request) => request.url === PROJECTS_API)
-      .forEach((request) => request.flush([]));
+    http.match((request) => request.url === PROJECTS_API).forEach((request) => request.flush([]));
     http
       .match((request) => request.url === TASKS_API && request.method === 'GET')
       .forEach((request) => request.flush([]));
