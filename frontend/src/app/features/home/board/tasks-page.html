@@ -39,7 +39,11 @@
             <span class="swatch" [style.background]="projectColor(task.projectId)"></span>
             {{ projectName(task.projectId) }}
           </span>
-          <span class="priority" [attr.data-priority]="task.priorityId">
+          <span
+            class="priority"
+            [attr.data-priority]="task.priorityId"
+            [style.background]="priorities.colorOf(task.priorityId)"
+          >
             {{ priorityName(task.priorityId) }}
           </span>
           <span class="due" [class.overdue]="isOverdue(task)">

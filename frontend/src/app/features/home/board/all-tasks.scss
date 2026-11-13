@@ -90,11 +90,20 @@
   background: transparent;
 }
 
+// A fixed maximum height: a long list scrolls inside the panel.
 .list {
   display: grid;
+  max-height: 26rem;
   margin: 0;
   padding: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   list-style: none;
+
+  &:focus-visible {
+    outline: 2px solid #7b23a8;
+    outline-offset: 2px;
+  }
 }
 
 .task {
@@ -155,19 +164,7 @@
   font-size: 0.6875rem;
   font-weight: 600;
   text-align: center;
-  text-transform: capitalize;
-}
-
-.priority--high {
-  background: var(--ink);
-}
-
-.priority--medium {
-  background: #7b23a8;
-}
-
-.priority--low {
-  background: #ebb49c;
+  text-shadow: 0 0 2px rgb(0 0 0 / 0.35);
 }
 
 .due {

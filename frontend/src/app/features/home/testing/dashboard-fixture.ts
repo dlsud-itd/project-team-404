@@ -1,5 +1,5 @@
 import type { ApiProject, Project } from '../../projects/shared/types/project.types';
-import type { ApiTask, Task } from '../../tasks/shared/types/task.types';
+import { PRIORITY_NAMES, type ApiTask, type Task } from '../../tasks/shared/types/task.types';
 
 export const DASHBOARD_PROJECTS: Project[] = [
   {
@@ -94,7 +94,7 @@ export function apiTasks(): ApiTask[] {
     projectId: task.projectId,
     title: task.title,
     description: task.description,
-    priority: task.priorityId === 1 ? 'high' : task.priorityId === 2 ? 'medium' : 'low',
+    priority: PRIORITY_NAMES[task.priorityId],
     scheduledDate: null,
     dueDate: task.dueDate,
     deadline: task.deadline,

@@ -12,8 +12,19 @@ export interface TaskLabel {
   color: string | null;
 }
 
-/** The priorities as the API names them. */
+/** The Sprint 3 priority names, still accepted and sent by older servers. */
 export type ApiTaskPriority = 'high' | 'medium' | 'low';
+
+/** A task's priority as Sprint 5 servers send it: one of the user's own levels. */
+export interface ApiTaskPriorityLevel {
+  id: number;
+  name: string;
+  color: string | null;
+  sortOrder: number;
+}
+
+/** How a request names a priority: by Sprint 3 name for older servers, otherwise by level id. */
+export type PriorityField = { priority: ApiTaskPriority } | { priorityId: number };
 
 /** A task as /api/tasks sends it. See toTask for the shape the app uses. */
 export interface ApiTask {
@@ -21,7 +32,7 @@ export interface ApiTask {
   projectId: number | null;
   title: string;
   description: string | null;
-  priority: ApiTaskPriority;
+  priority: ApiTaskPriority | ApiTaskPriorityLevel;
   scheduledDate: string | null;
   dueDate: string | null;
   deadline: string | null;
@@ -41,7 +52,7 @@ export interface ApiTask {
 export interface Task {
   taskId: number;
   projectId: number;
-  /** 1 is the highest priority, 3 the lowest (and the default). */
+  /** One of the user's priority levels; PrioritiesStore has its name, color and order. */
   priorityId: number;
   title: string;
   description: string | null;
@@ -80,9 +91,7 @@ export interface CreateTaskRequest {
 }
 
 /** Body of POST /api/tasks. */
-export type CreateTaskBody = Omit<CreateTaskRequest, 'priorityId'> & {
-  priority: ApiTaskPriority;
-};
+export type CreateTaskBody = Omit<CreateTaskRequest, 'priorityId'> & PriorityField;
 
 /** The details that changed in an edit. */
 export interface UpdateTaskRequest {
@@ -94,11 +103,11 @@ export interface UpdateTaskRequest {
 }
 
 /** Body of PUT /api/tasks/{taskId}. */
-export type UpdateTaskBody = Omit<UpdateTaskRequest, 'priorityId' | 'completedAt'> & {
-  priority?: ApiTaskPriority;
-  isDone?: boolean;
-  doneAt?: string | null;
-};
+export type UpdateTaskBody = Omit<UpdateTaskRequest, 'priorityId' | 'completedAt'> &
+  Partial<{ priority: ApiTaskPriority; priorityId: number }> & {
+    isDone?: boolean;
+    doneAt?: string | null;
+  };
 
 export interface UpdateTaskResponse {
   taskId: number;
@@ -137,16 +146,11 @@ export interface TaskError {
 }
 
 export const TASK_TITLE_MAX_LENGTH = 200;
-export const DEFAULT_TASK_PRIORITY = 3;
 
-/** The fixed priority levels, highest first. */
-export const TASK_PRIORITIES: readonly { priorityId: number; label: string }[] = [
-  { priorityId: 1, label: 'High' },
-  { priorityId: 2, label: 'Medium' },
-  { priorityId: 3, label: 'Low' },
-];
-
-/** Each priority id's name in the API. */
+/**
+ * The Sprint 3 name of each built-in level id (tbl_priority_level), for talking to servers that
+ * predate per-user priorities. PrioritiesStore decides when these are used.
+ */
 export const PRIORITY_NAMES: Readonly<Record<number, ApiTaskPriority>> = {
   1: 'high',
   2: 'medium',

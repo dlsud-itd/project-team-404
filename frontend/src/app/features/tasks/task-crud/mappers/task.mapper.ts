@@ -2,15 +2,28 @@ import { PRIORITY_NAMES } from '../../shared/types/task.types';
 import type {
   ApiTask,
   ApiTaskPriority,
+  ApiTaskPriorityLevel,
   CreateTaskBody,
+  PriorityField,
   CreateTaskRequest,
   Task,
   UpdateTaskBody,
   UpdateTaskRequest,
 } from '../../shared/types/task.types';
 
-function toPriorityId(priority: ApiTaskPriority): number {
+/** Finds the Sprint 3 name for a level id, or undefined when the level must be sent by id. */
+export type LegacyPriorityLookup = (priorityId: number) => ApiTaskPriority | undefined;
+
+const builtInName: LegacyPriorityLookup = (priorityId) => PRIORITY_NAMES[priorityId];
+
+function toPriorityId(priority: ApiTaskPriority | ApiTaskPriorityLevel): number {
+  if (typeof priority === 'object') return priority.id;
   return Number(Object.keys(PRIORITY_NAMES).find((id) => PRIORITY_NAMES[+id] === priority));
+}
+
+function priorityField(priorityId: number, legacyName: LegacyPriorityLookup): PriorityField {
+  const name = legacyName(priorityId);
+  return name ? { priority: name } : { priorityId };
 }
 
 /**
@@ -40,18 +53,20 @@ export function toTask(task: ApiTask): Task {
   };
 }
 
-export function toCreateTaskBody({ priorityId, ...rest }: CreateTaskRequest): CreateTaskBody {
-  return { ...rest, priority: PRIORITY_NAMES[priorityId] };
+export function toCreateTaskBody(
+  { priorityId, ...rest }: CreateTaskRequest,
+  legacyName: LegacyPriorityLookup = builtInName,
+): CreateTaskBody {
+  return { ...rest, ...priorityField(priorityId, legacyName) };
 }
 
-export function toUpdateTaskBody({
-  priorityId,
-  completedAt,
-  ...rest
-}: UpdateTaskRequest): UpdateTaskBody {
+export function toUpdateTaskBody(
+  { priorityId, completedAt, ...rest }: UpdateTaskRequest,
+  legacyName: LegacyPriorityLookup = builtInName,
+): UpdateTaskBody {
   return {
     ...rest,
-    ...(priorityId === undefined ? {} : { priority: PRIORITY_NAMES[priorityId] }),
+    ...(priorityId === undefined ? {} : priorityField(priorityId, legacyName)),
     ...(completedAt === undefined ? {} : { isDone: completedAt !== null, doneAt: completedAt }),
   };
 }

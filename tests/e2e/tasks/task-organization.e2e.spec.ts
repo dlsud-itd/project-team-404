@@ -80,21 +80,24 @@ async function createTask(
   return id;
 }
 
-test('creates, renames, rejects duplicate names and deletes a label', async ({
+test('creates, renames, rejects duplicate names and deletes a label in settings', async ({
   page,
 }) => {
   const name = `${e2eLabelPrefix}Manage ${Date.now().toString(36)}`;
   const renamed = `${name} updated`;
   await logIn(page, harvey.email, harvey.password);
   await page.goto(`${baseUrl}/settings/labels`);
+  const newLabel = page.getByRole('region', { name: 'New label' });
 
-  await page.getByLabel('Name', { exact: true }).fill(name);
+  await newLabel.getByLabel('Label name', { exact: true }).fill(name);
   const createPromise = page.waitForResponse(
     (response) =>
       response.request().method() === 'POST' &&
       new URL(response.url()).pathname === '/api/labels'
   );
-  await page.getByRole('button', { name: 'Create label', exact: true }).click();
+  await newLabel
+    .getByRole('button', { name: 'Add label', exact: true })
+    .click();
   const createResponse = await createPromise;
   expect(createResponse.status()).toBe(201);
   const { id } = (await createResponse.json()) as { id: number };
@@ -102,26 +105,24 @@ test('creates, renames, rejects duplicate names and deletes a label', async ({
   await expect(page.getByRole('list', { name: 'Labels' })).toContainText(name);
   expect(await labelRow(id)).toMatchObject({ user_id: userId, name });
 
-  await page.getByLabel('Name', { exact: true }).fill(name);
-  const duplicatePromise = page.waitForResponse(
-    (response) =>
-      response.request().method() === 'POST' &&
-      new URL(response.url()).pathname === '/api/labels'
+  // Duplicate names are caught as the user types, before anything is sent.
+  await newLabel.getByLabel('Label name', { exact: true }).fill(name);
+  await expect(newLabel.locator('#new-label-status')).toHaveText(
+    `Label “${name}” already exists.`
   );
-  await page.getByRole('button', { name: 'Create label', exact: true }).click();
-  expect((await duplicatePromise).status()).toBe(409);
-  await expect(page.getByRole('alert')).toHaveText(
-    'A label with this name already exists.'
-  );
+  await expect(
+    newLabel.getByRole('button', { name: 'Add label', exact: true })
+  ).toBeDisabled();
+  await newLabel.getByLabel('Label name', { exact: true }).fill('');
 
   await page.getByRole('button', { name: `Edit ${name}`, exact: true }).click();
-  await page.getByLabel('Name', { exact: true }).fill(renamed);
+  await page.locator(`#label-${id}-editor-name`).fill(renamed);
   const updatePromise = page.waitForResponse(
     (response) =>
       response.request().method() === 'PUT' &&
       new URL(response.url()).pathname === `/api/labels/${id}`
   );
-  await page.getByRole('button', { name: 'Save label', exact: true }).click();
+  await page.getByRole('button', { name: 'Save', exact: true }).click();
   expect((await updatePromise).status()).toBe(200);
   await expect(page.getByRole('list', { name: 'Labels' })).toContainText(
     renamed
@@ -131,7 +132,9 @@ test('creates, renames, rejects duplicate names and deletes a label', async ({
   await page
     .getByRole('button', { name: `Delete ${renamed}`, exact: true })
     .click();
-  const confirmation = page.getByRole('dialog', { name: `Delete ${renamed}` });
+  const confirmation = page.getByRole('alertdialog', {
+    name: `Delete “${renamed}”?`,
+  });
   await confirmation
     .getByRole('button', { name: 'Delete label', exact: true })
     .click();
@@ -148,13 +151,16 @@ test('filters by priority and label and sorts matching tasks by title', async ({
   const labelName = `${e2eLabelPrefix}Filter ${suffix}`;
   await logIn(page, harvey.email, harvey.password);
   await page.goto(`${baseUrl}/settings/labels`);
-  await page.getByLabel('Name', { exact: true }).fill(labelName);
+  const newLabel = page.getByRole('region', { name: 'New label' });
+  await newLabel.getByLabel('Label name', { exact: true }).fill(labelName);
   const labelResponsePromise = page.waitForResponse(
     (response) =>
       response.request().method() === 'POST' &&
       new URL(response.url()).pathname === '/api/labels'
   );
-  await page.getByRole('button', { name: 'Create label', exact: true }).click();
+  await newLabel
+    .getByRole('button', { name: 'Add label', exact: true })
+    .click();
   const labelResponse = await labelResponsePromise;
   expect(labelResponse.status()).toBe(201);
   const { id: labelId } = (await labelResponse.json()) as { id: number };

@@ -17,11 +17,18 @@
       </div>
     }
     @default {
-      <div class="groups">
+      <div class="groups" tabindex="0" aria-label="Current and upcoming tasks">
         @for (group of groups(); track group.key) {
           <app-task-group [group]="group" />
         }
       </div>
+      <app-view-all-link
+        [total]="total()"
+        [shown]="shown()"
+        link="/home"
+        [queryParams]="{ tab: 'tasks' }"
+        noun="current and upcoming tasks"
+      />
     }
   }
 </section>

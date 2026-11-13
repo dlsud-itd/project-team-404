@@ -4,6 +4,7 @@ import { TestBed } from '@angular/core/testing';
 import { environment } from '../../../../../environments/environment';
 import { asApiTask } from '../../../tasks/shared/testing/api-task';
 import type { Task } from '../../../tasks/shared/types/task.types';
+import type { DashboardTaskList } from '../types/dashboard.types';
 import { DashboardService, mapDashboardError } from './dashboard.service';
 
 const URL = `${environment.apiBaseUrl}/api/dashboard`;
@@ -42,14 +43,24 @@ describe('DashboardService', () => {
 
   describe('currentUpcoming', () => {
     it('asks for the next 7 days by default and maps the tasks', () => {
-      let result: Task[] | undefined;
-      service.currentUpcoming().subscribe((tasks) => (result = tasks));
+      let result: DashboardTaskList | undefined;
+      service.currentUpcoming().subscribe((list) => (result = list));
 
       const req = http.expectOne(`${URL}/current-upcoming-tasks?days=7`);
       expect(req.request.method).toBe('GET');
       req.flush({ tasks: [asApiTask(STUDY)] });
 
-      expect(result).toEqual([STUDY]);
+      // An older server sends no total, so the tasks it sent are all there are.
+      expect(result).toEqual({ tasks: [STUDY], total: 1 });
+    });
+
+    it('keeps the full count a Sprint 5 server sends with its capped list', () => {
+      let result: DashboardTaskList | undefined;
+      service.currentUpcoming().subscribe((list) => (result = list));
+      http
+        .expectOne(`${URL}/current-upcoming-tasks?days=7`)
+        .flush({ tasks: [asApiTask(STUDY)], total: 6 });
+      expect(result).toEqual({ tasks: [STUDY], total: 6 });
     });
 
     it('sends the day count it is given', () => {
@@ -79,14 +90,14 @@ describe('DashboardService', () => {
 
   describe('overdue', () => {
     it('gets the overdue tasks and maps them', () => {
-      let result: Task[] | undefined;
-      service.overdue().subscribe((tasks) => (result = tasks));
+      let result: DashboardTaskList | undefined;
+      service.overdue().subscribe((list) => (result = list));
 
       const req = http.expectOne(`${URL}/overdue-tasks`);
       expect(req.request.method).toBe('GET');
-      req.flush({ tasks: [asApiTask(STUDY)] });
+      req.flush({ tasks: [asApiTask(STUDY)], total: 4 });
 
-      expect(result).toEqual([STUDY]);
+      expect(result).toEqual({ tasks: [STUDY], total: 4 });
     });
   });
 

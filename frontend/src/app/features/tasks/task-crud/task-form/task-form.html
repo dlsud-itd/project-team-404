@@ -87,7 +87,7 @@
               aria-describedby="task-priority-status"
               (change)="clearServerError('priorityId')"
             >
-              @for (priority of priorities; track priority.priorityId) {
+              @for (priority of priorities(); track priority.priorityId) {
                 <option [ngValue]="priority.priorityId">{{ priority.label }}</option>
               }
             </select>

@@ -104,24 +104,11 @@ button:disabled {
   border-radius: 999px;
   background: #eee;
   padding: 0.15rem 0.4rem;
+  color: #fff;
+  text-shadow: 0 0 2px rgb(0 0 0 / 0.35);
   text-align: center;
   font-size: 0.7rem;
   font-weight: 700;
-
-  &[data-priority='1'] {
-    background: #281d1b;
-    color: #fff;
-  }
-
-  &[data-priority='2'] {
-    background: #8c26a8;
-    color: #fff;
-  }
-
-  &[data-priority='3'] {
-    background: #f0ad96;
-    color: #fff;
-  }
 }
 
 .due {

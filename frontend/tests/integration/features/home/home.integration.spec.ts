@@ -150,7 +150,15 @@ describe('Home integration (live dashboard APIs)', () => {
       'Call grandma',
       'Plan weekend trip',
     ]);
-    expect(allTasks().at(-1)).toBe('Gym session');
+    // All Tasks lists the default 5 and links to the rest.
+    expect(allTasks()).toEqual([
+      'Submit lab report',
+      'Reply to client email',
+      'Read chapter 4',
+      'Team stand-up notes',
+      'Study for quiz',
+    ]);
+    expect(text('app-all-tasks a.view-all')).toBe('View all (9)');
   });
 
   it('filters backend tasks by project and priority', async () => {

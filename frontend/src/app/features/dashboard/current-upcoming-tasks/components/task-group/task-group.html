@@ -13,6 +13,7 @@
           <span
             class="priority"
             [attr.data-priority]="task.priorityId"
+            [style.--priority-color]="priorityColor(task)"
             [attr.aria-label]="priorityLabel(task) + ' priority'"
             >{{ priorityLabel(task) }}</span
           >

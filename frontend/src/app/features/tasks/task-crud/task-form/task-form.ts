@@ -18,9 +18,8 @@ import { SessionService } from '../../../auth/session/session.service';
 import { ProjectService } from '../../../projects/project-crud/services/project.service';
 import { ProjectsStore } from '../../../projects/shared/state/projects.store';
 import { TasksStore } from '../../shared/state/tasks.store';
+import { PrioritiesStore } from '../../../settings/state/priorities.store';
 import {
-  DEFAULT_TASK_PRIORITY,
-  TASK_PRIORITIES,
   TASK_TITLE_MAX_LENGTH,
   type CreateTaskRequest,
   type Task,
@@ -79,6 +78,7 @@ export class TaskForm implements OnInit {
   private readonly projects = inject(ProjectService);
   private readonly projectsStore = inject(ProjectsStore);
   private readonly session = inject(SessionService);
+  private readonly prioritiesStore = inject(PrioritiesStore);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
   private readonly route = inject(ActivatedRoute).snapshot;
@@ -95,7 +95,17 @@ export class TaskForm implements OnInit {
   protected listUrl = '/projects';
 
   protected readonly titleMax = TASK_TITLE_MAX_LENGTH;
-  protected readonly priorities = TASK_PRIORITIES;
+  /** The user's levels in their order, plus the edited task's level if it is no longer among them. */
+  protected readonly priorities = computed(() => {
+    const options = this.prioritiesStore
+      .levels()
+      .map((level) => ({ priorityId: level.id, label: level.name }));
+    const current = this.task()?.priorityId;
+    if (current !== undefined && !options.some((option) => option.priorityId === current)) {
+      options.push({ priorityId: current, label: this.prioritiesStore.nameOf(current) });
+    }
+    return options;
+  });
 
   /** The task being edited, as last saved. */
   protected readonly task = computed(() =>
@@ -127,7 +137,7 @@ export class TaskForm implements OnInit {
     {
       title: ['', taskTitleValidator],
       description: [''],
-      priorityId: [DEFAULT_TASK_PRIORITY],
+      priorityId: [this.prioritiesStore.defaultLevel().id],
       projectId: [this.projectId],
       labelIds: [[] as number[]],
       scheduledDate: [''],
@@ -154,6 +164,12 @@ export class TaskForm implements OnInit {
       const inbox = this.projectsStore.inbox();
       const project = this.form.controls.projectId;
       if (inbox && !project.value) project.setValue(inbox.projectId);
+    });
+    // The user's levels may load after the form opens; new tasks follow their default until picked.
+    effect(() => {
+      const fallback = this.prioritiesStore.defaultLevel().id;
+      const priority = this.form.controls.priorityId;
+      if (this.mode === 'create' && priority.pristine) priority.setValue(fallback);
     });
   }
 

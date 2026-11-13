@@ -1,7 +1,8 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { SessionService } from '../../../../auth/session/session.service';
-import { TASK_PRIORITIES, type Task } from '../../../shared/types/task.types';
+import { PrioritiesStore } from '../../../../settings/state/priorities.store';
+import type { Task } from '../../../shared/types/task.types';
 import {
   formatDate,
   instantToDate,
@@ -17,6 +18,7 @@ import { recurrenceSummary } from '../../../task-scheduling/utils/recurrence-lab
       <span
         class="priority"
         [attr.data-priority]="task().priorityId"
+        [style.--priority-color]="priorityColor()"
         [attr.aria-label]="priority() + ' priority'"
         >{{ priority() }}</span
       >
@@ -95,27 +97,14 @@ import { recurrenceSummary } from '../../../task-scheduling/utils/recurrence-lab
       flex-shrink: 0;
       min-width: 1.875rem;
       padding: 0.0625rem 0.375rem;
-      border: 1px solid #6b7280;
+      border: 1px solid;
       border-radius: 999px;
-      color: #4b5563;
+      border-color: var(--priority-color, #6b7280);
+      background: color-mix(in srgb, var(--priority-color, #6b7280) 14%, #fff);
+      color: color-mix(in srgb, var(--priority-color, #6b7280) 70%, #000);
       font-size: 0.6875rem;
       font-weight: 700;
       text-align: center;
-      &[data-priority='1'] {
-        border-color: #dc2626;
-        background: #fdecec;
-        color: #b91c1c;
-      }
-      &[data-priority='2'] {
-        border-color: #ea580c;
-        background: #fff1e8;
-        color: #c2410c;
-      }
-      &[data-priority='3'] {
-        border-color: #2563eb;
-        background: #eef3fe;
-        color: #1d4ed8;
-      }
     }
     .body {
       flex: 1;
@@ -208,8 +197,10 @@ export class TaskItem {
   private readonly session = inject(SessionService);
 
   protected readonly done = computed(() => this.task().completedAt !== null);
-  protected readonly priority = computed(
-    () => TASK_PRIORITIES.find((p) => p.priorityId === this.task().priorityId)?.label,
+  private readonly priorities = inject(PrioritiesStore);
+  protected readonly priority = computed(() => this.priorities.nameOf(this.task().priorityId));
+  protected readonly priorityColor = computed(() =>
+    this.priorities.colorOf(this.task().priorityId),
   );
   protected readonly repeats = computed(() => {
     const { recurrence, recurrenceDays, recurrenceEndDate } = this.task();

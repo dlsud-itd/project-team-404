@@ -25,9 +25,9 @@
           <option [value]="project.id">{{ project.name }}</option>
         }
       </select>
-      <select formControlName="priority" aria-label="Priority">
-        @for (p of priorities; track p.value) {
-          <option [value]="p.value">{{ p.label }}</option>
+      <select formControlName="priorityId" aria-label="Priority">
+        @for (level of priorities.levels(); track level.id) {
+          <option [ngValue]="level.id">{{ level.name }}</option>
         }
       </select>
       <input type="date" formControlName="due" aria-label="Due date" />
@@ -40,8 +40,8 @@
     </form>
   }
 
-  <ul class="list">
-    @for (task of store.filteredTasks(); track task.id) {
+  <ul class="list" tabindex="0" aria-label="Tasks">
+    @for (task of visibleTasks(); track task.id) {
       <li class="task" [class.done]="task.done" (contextmenu)="showContextMenu($event, task.id)">
         <label class="check">
           <input
@@ -57,8 +57,8 @@
             <span class="swatch" [style.background]="project.color"></span>{{ project.name }}
           </span>
         }
-        <span class="priority" [class]="'priority priority--' + task.priority">{{
-          task.priority
+        <span class="priority" [style.background]="priorities.colorOf(task.priorityId)">{{
+          priorities.nameOf(task.priorityId)
         }}</span>
         <span class="due" [class.overdue]="store.statusOf(task) === 'overdue'">
           {{ shortDate(task.due) }}
@@ -105,6 +105,13 @@
       <li class="empty">No tasks match. Add one with “+ New Task”.</li>
     }
   </ul>
+  <app-view-all-link
+    [total]="store.filteredTasks().length"
+    [shown]="visibleTasks().length"
+    link="/home"
+    [queryParams]="{ tab: 'tasks' }"
+    noun="tasks"
+  />
 </section>
 
 @if (pendingDelete(); as task) {

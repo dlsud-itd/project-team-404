@@ -1,15 +1,18 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { ViewAllLink } from '../../../shared/components/view-all-link/view-all-link';
+import { SettingsStore } from '../../settings/state/settings.store';
 import { DashboardStore } from '../dashboard.store';
 
 @Component({
   selector: 'app-project-list',
+  imports: [ViewAllLink],
   template: `
     <section class="card" aria-labelledby="projects-heading">
       <header class="head">
         <h2 id="projects-heading">Projects</h2>
       </header>
 
-      <ul class="list">
+      <ul class="list" tabindex="0" aria-label="Projects">
         <li>
           <button
             type="button"
@@ -26,7 +29,7 @@ import { DashboardStore } from '../dashboard.store';
           </button>
         </li>
 
-        @for (project of store.projects(); track project.id) {
+        @for (project of visibleProjects(); track project.id) {
           <li class="project">
             <button
               type="button"
@@ -44,6 +47,13 @@ import { DashboardStore } from '../dashboard.store';
           <li class="empty">No active projects</li>
         }
       </ul>
+      <app-view-all-link
+        [total]="store.projects().length"
+        [shown]="visibleProjects().length"
+        link="/home"
+        [queryParams]="{ tab: 'projects' }"
+        noun="projects"
+      />
       <p class="manage-note">Create and manage projects in the Projects tab.</p>
     </section>
   `,
@@ -62,12 +72,20 @@ import { DashboardStore } from '../dashboard.store';
       font-size: 0.75rem;
       font-weight: 600;
     }
+    /* A fixed maximum height: a long list scrolls inside the card. */
     .list {
       display: grid;
       gap: 0.375rem;
+      max-height: 16rem;
       margin: 0;
       padding: 0;
+      overflow-y: auto;
+      overscroll-behavior: contain;
       list-style: none;
+      &:focus-visible {
+        outline: 2px solid #7b23a8;
+        outline-offset: 2px;
+      }
     }
     .project {
       min-width: 0;
@@ -133,6 +151,11 @@ import { DashboardStore } from '../dashboard.store';
 })
 export class ProjectList {
   protected readonly store = inject(DashboardStore);
+  private readonly settings = inject(SettingsStore);
+  /** Active projects, capped at the user's "projects in the dashboard list" setting. */
+  protected readonly visibleProjects = computed(() =>
+    this.store.projects().slice(0, this.settings.projectLimit()),
+  );
 
   protected toggle(projectId: number): void {
     this.store.filter.update((filter) => (filter.projectId === projectId ? {} : { projectId }));

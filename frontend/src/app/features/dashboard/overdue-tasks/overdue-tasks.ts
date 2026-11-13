@@ -9,7 +9,9 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
+import { ViewAllLink } from '../../../shared/components/view-all-link/view-all-link';
 import { SessionService } from '../../auth/session/session.service';
+import { SettingsStore } from '../../settings/state/settings.store';
 import { ProjectService } from '../../projects/project-crud/services/project.service';
 import { ProjectsStore } from '../../projects/shared/state/projects.store';
 import type { Task } from '../../tasks/shared/types/task.types';
@@ -33,7 +35,7 @@ const FALLBACK_DOT_COLOR = '#bbb';
 /** Open tasks whose deadline has passed, oldest first, on the dashboard. */
 @Component({
   selector: 'app-overdue-tasks',
-  imports: [RouterLink, OverdueBadge],
+  imports: [RouterLink, OverdueBadge, ViewAllLink],
   templateUrl: './overdue-tasks.html',
   styleUrl: './overdue-tasks.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -41,6 +43,7 @@ const FALLBACK_DOT_COLOR = '#bbb';
 export class OverdueTasks implements OnInit {
   private readonly dashboard = inject(DashboardService);
   private readonly session = inject(SessionService);
+  private readonly settings = inject(SettingsStore);
   private readonly projects = inject(ProjectsStore);
   private readonly projectService = inject(ProjectService);
   private readonly now = inject(DASHBOARD_NOW);
@@ -49,13 +52,17 @@ export class OverdueTasks implements OnInit {
   protected readonly loadState = signal<LoadState>('loading');
   protected readonly error = signal<string | null>(null);
   /** In the server's order: oldest deadline first. */
-  protected readonly tasks = signal<Task[]>([]);
+  private readonly allTasks = signal<Task[]>([]);
+  /** Every overdue task according to the server, including ones it left out. */
+  protected readonly total = signal(0);
+  /** The tasks shown, capped at the user's "tasks per dashboard widget" setting. */
+  protected readonly tasks = computed(() => this.allTasks().slice(0, this.settings.taskLimit()));
   /** When the tasks were last requested; lateness is measured from here. */
   protected readonly loadedAt = signal(new Date(0));
 
   protected readonly timeZone = computed(() => userTimeZone(this.session.currentUser()?.timezone));
   protected readonly countLabel = computed(() => {
-    const count = this.tasks().length;
+    const count = this.total();
     return `${count} overdue ${count === 1 ? 'task' : 'tasks'}`;
   });
 
@@ -72,8 +79,9 @@ export class OverdueTasks implements OnInit {
       .overdue()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: (tasks) => {
-          this.tasks.set(tasks);
+        next: ({ tasks, total }) => {
+          this.allTasks.set(tasks);
+          this.total.set(total);
           this.loadState.set('ready');
         },
         error: (error: unknown) => {

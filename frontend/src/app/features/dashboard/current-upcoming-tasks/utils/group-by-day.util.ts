@@ -33,3 +33,24 @@ export function groupByDay(tasks: readonly Task[], today: string): TaskDayGroup[
 
   return DAY_GROUPS.map((group) => ({ ...group, tasks: buckets[group.key] }));
 }
+
+/** The message for a day whose tasks are all past the widget's limit. */
+export const HIDDEN_GROUP_MESSAGE = 'More tasks under View all.';
+
+/**
+ * Keeps the first `limit` tasks across the groups, in group order. A group emptied by the limit
+ * says its tasks are under View all instead of claiming there are none.
+ */
+export function limitGroups(groups: readonly TaskDayGroup[], limit: number): TaskDayGroup[] {
+  let room = Math.max(0, limit);
+  return groups.map((group) => {
+    const tasks = group.tasks.slice(0, room);
+    room -= tasks.length;
+    if (tasks.length === group.tasks.length) return group;
+    return {
+      ...group,
+      tasks,
+      emptyMessage: tasks.length ? group.emptyMessage : HIDDEN_GROUP_MESSAGE,
+    };
+  });
+}

@@ -36,12 +36,25 @@
   white-space: nowrap;
 }
 
+// A fixed maximum height: long lists scroll inside the card instead of pushing others down.
 .list {
   display: grid;
   gap: 0.5rem;
+  max-height: 18rem;
   margin: 0;
   padding: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   list-style: none;
+
+  &:focus-visible {
+    outline: 2px solid #7b23a8;
+    outline-offset: 2px;
+  }
+}
+
+.more {
+  text-align: center;
 }
 
 .task {
