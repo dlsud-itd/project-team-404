@@ -107,29 +107,25 @@ describe('PrioritiesStore', () => {
     loadLevels();
 
     store.create({ name: 'Urgent', color: '#C44536' }).subscribe();
-    http
-      .expectOne(URL)
-      .flush({
-        id: 14,
-        name: 'Urgent',
-        color: '#C44536',
-        sortOrder: 3,
-        isDefault: false,
-        taskCount: 0,
-      });
+    http.expectOne(URL).flush({
+      id: 14,
+      name: 'Urgent',
+      color: '#C44536',
+      sortOrder: 3,
+      isDefault: false,
+      taskCount: 0,
+    });
     expect(names()).toEqual(['Low', 'Medium', 'High', 'Urgent']);
 
     store.update(14, { name: 'Critical' }).subscribe();
-    http
-      .expectOne(`${URL}/14`)
-      .flush({
-        id: 14,
-        name: 'Critical',
-        color: '#C44536',
-        sortOrder: 3,
-        isDefault: false,
-        taskCount: 0,
-      });
+    http.expectOne(`${URL}/14`).flush({
+      id: 14,
+      name: 'Critical',
+      color: '#C44536',
+      sortOrder: 3,
+      isDefault: false,
+      taskCount: 0,
+    });
     expect(names()).toEqual(['Low', 'Medium', 'High', 'Critical']);
 
     store.setDefault(14).subscribe();

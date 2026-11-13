@@ -1,8 +1,17 @@
-import type { ApiTask } from '../../../tasks/shared/types/task.types';
+import type { ApiTask, Task } from '../../../tasks/shared/types/task.types';
 
 /** Body of GET /api/dashboard/current-upcoming-tasks and GET /api/dashboard/overdue-tasks. */
 export interface DashboardTasksResponse {
   tasks: ApiTask[];
+  /** Sprint 5: every matching task before the server's limit. Older servers leave it out. */
+  total?: number;
+}
+
+/** A dashboard list: the tasks sent, and how many match in all. */
+export interface DashboardTaskList {
+  tasks: Task[];
+  /** At least tasks.length; more when the server capped the list. */
+  total: number;
 }
 
 /** How many days after today the current & upcoming list covers when no count is given. */

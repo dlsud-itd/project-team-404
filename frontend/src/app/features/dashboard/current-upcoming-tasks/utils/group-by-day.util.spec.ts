@@ -1,5 +1,5 @@
 import type { Task } from '../../../tasks/shared/types/task.types';
-import { addDays, groupByDay } from './group-by-day.util';
+import { addDays, groupByDay, HIDDEN_GROUP_MESSAGE, limitGroups } from './group-by-day.util';
 
 const TODAY = '2026-11-06';
 
@@ -82,5 +82,41 @@ describe('groupByDay', () => {
     const input = [task(1, '2026-11-10'), task(2, '2026-11-09')];
     groupByDay(input, TODAY);
     expect(ids(input)).toEqual([1, 2]);
+  });
+});
+
+describe('limitGroups', () => {
+  const groups = () =>
+    groupByDay(
+      [
+        task(1, '2026-11-06'),
+        task(2, '2026-11-06'),
+        task(3, '2026-11-07'),
+        task(4, '2026-11-09'),
+        task(5, '2026-11-10'),
+      ],
+      TODAY,
+    );
+
+  it('keeps the first tasks across the groups, in Today, Tomorrow, Later order', () => {
+    const limited = limitGroups(groups(), 3);
+    expect(limited.map((group) => ids(group.tasks))).toEqual([[1, 2], [3], []]);
+  });
+
+  it('says a group emptied by the limit has its tasks under View all', () => {
+    const limited = limitGroups(groups(), 3);
+    expect(limited[2].emptyMessage).toBe(HIDDEN_GROUP_MESSAGE);
+    // A partly shown group keeps its own message.
+    expect(limitGroups(groups(), 4)[2].emptyMessage).toBe('Nothing else due this week.');
+  });
+
+  it('returns the groups unchanged when everything fits', () => {
+    const all = groups();
+    const limited = limitGroups(all, 50);
+    limited.forEach((group, index) => expect(group).toBe(all[index]));
+  });
+
+  it('shows nothing for a limit of zero or less', () => {
+    expect(limitGroups(groups(), 0).every((group) => group.tasks.length === 0)).toBe(true);
   });
 });

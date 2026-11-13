@@ -5,6 +5,7 @@ import { routes } from './app.routes';
 import { provideSessionRestore } from './features/auth/session/auth.guards';
 import { authInterceptor } from './features/auth/session/auth.interceptor';
 import { providePriorityLevels } from './features/settings/state/priorities.store';
+import { provideUserSettings } from './features/settings/state/settings.store';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -13,5 +14,6 @@ export const appConfig: ApplicationConfig = {
     provideHttpClient(withFetch(), withInterceptors([authInterceptor])),
     provideSessionRestore(),
     providePriorityLevels(),
+    provideUserSettings(),
   ],
 };

@@ -1,0 +1,81 @@
+<h2>Config</h2>
+<p class="intro">Choose how much the dashboard lists before it offers “View all”.</p>
+
+@if (store.error() && !store.loaded()) {
+  <div class="alert" role="alert">
+    {{ store.error() }}
+    <button type="button" class="secondary" [disabled]="store.loading()" (click)="store.load()">
+      {{ store.loading() ? 'Retrying…' : 'Try again' }}
+    </button>
+  </div>
+}
+
+@if (saved(); as message) {
+  <p class="form-notice" role="status">{{ message }}</p>
+}
+@if (saveError(); as message) {
+  <p class="alert" role="alert">{{ message }}</p>
+}
+
+<form class="card" [formGroup]="form" (ngSubmit)="save()" novalidate>
+  @for (field of fields; track field.key) {
+    <div class="field">
+      <label [for]="field.id">{{ field.label }}</label>
+      <div class="stepper">
+        <button
+          type="button"
+          class="step"
+          [disabled]="!canStep(field.key, -1)"
+          [attr.aria-label]="'Decrease ' + field.label.toLowerCase()"
+          [attr.aria-controls]="field.id"
+          (click)="step(field.key, -1)"
+        >
+          −
+        </button>
+        <input
+          type="number"
+          inputmode="numeric"
+          [id]="field.id"
+          [formControlName]="field.key"
+          [min]="min"
+          [max]="max"
+          step="1"
+          [attr.aria-invalid]="!!message(field.key)"
+          [attr.aria-describedby]="field.id + '-hint ' + field.id + '-error'"
+          (input)="saved.set(null)"
+        />
+        <button
+          type="button"
+          class="step"
+          [disabled]="!canStep(field.key, 1)"
+          [attr.aria-label]="'Increase ' + field.label.toLowerCase()"
+          [attr.aria-controls]="field.id"
+          (click)="step(field.key, 1)"
+        >
+          +
+        </button>
+      </div>
+      <p class="hint" [id]="field.id + '-hint'">{{ min }}–{{ max }}. {{ field.hint }}</p>
+      <p class="error" [id]="field.id + '-error'" aria-live="polite">{{ message(field.key) }}</p>
+    </div>
+  }
+
+  <p class="note">
+    These limits apply to the widgets on the Dashboard page and the Home dashboard. When a list has
+    more, it shows “View all” with the full count, and long lists scroll inside their widget.
+  </p>
+
+  <div class="actions">
+    <button type="submit" class="primary" [disabled]="!canSave()">
+      {{ saving() ? 'Saving…' : 'Save' }}
+    </button>
+    <button
+      type="button"
+      class="secondary"
+      [disabled]="saving() || !store.loaded() || (atDefaults() && !changed())"
+      (click)="resetToDefaults()"
+    >
+      Reset to defaults
+    </button>
+  </div>
+</form>

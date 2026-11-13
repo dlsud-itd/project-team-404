@@ -14,7 +14,9 @@ import { FormBuilder, ReactiveFormsModule, type ValidatorFn, Validators } from '
 import { finalize } from 'rxjs';
 import { ConfirmDeleteTaskDialog } from '../../tasks/task-crud/components/confirm-delete-dialog/confirm-delete-dialog';
 import { NewTaskDialog } from '../../tasks/task-crud/components/new-task-dialog/new-task-dialog';
+import { ViewAllLink } from '../../../shared/components/view-all-link/view-all-link';
 import { PrioritiesStore } from '../../settings/state/priorities.store';
+import { SettingsStore } from '../../settings/state/settings.store';
 import { DashboardStore, type Task } from '../dashboard.store';
 import { mapTaskError } from '../../tasks/task-crud/mappers/task-error.mapper';
 import { TaskService } from '../../tasks/task-crud/services/task.service';
@@ -25,7 +27,7 @@ const notBlank: ValidatorFn = ({ value }) =>
 
 @Component({
   selector: 'app-all-tasks',
-  imports: [ReactiveFormsModule, ConfirmDeleteTaskDialog, NewTaskDialog],
+  imports: [ReactiveFormsModule, ConfirmDeleteTaskDialog, NewTaskDialog, ViewAllLink],
   templateUrl: './all-tasks.html',
   styleUrl: './all-tasks.scss',
   host: {
@@ -37,6 +39,11 @@ const notBlank: ValidatorFn = ({ value }) =>
 export class AllTasks {
   protected readonly store = inject(DashboardStore);
   protected readonly priorities = inject(PrioritiesStore);
+  private readonly settings = inject(SettingsStore);
+  /** The filtered tasks, capped at the user's "tasks per dashboard widget" setting. */
+  protected readonly visibleTasks = computed(() =>
+    this.store.filteredTasks().slice(0, this.settings.taskLimit()),
+  );
   protected readonly actionError = signal<string | null>(null);
   protected readonly submitting = signal(false);
   protected readonly busyTasks = signal<ReadonlySet<number>>(new Set());

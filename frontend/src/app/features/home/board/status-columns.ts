@@ -1,16 +1,19 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
-import { DashboardStore, type TaskStatus } from '../dashboard.store';
+import { ViewAllLink } from '../../../shared/components/view-all-link/view-all-link';
+import { SettingsStore } from '../../settings/state/settings.store';
+import { DashboardStore, type Task, type TaskStatus } from '../dashboard.store';
 
 @Component({
   selector: 'app-status-columns',
+  imports: [ViewAllLink],
   template: `
     @for (column of columns; track column.status) {
       <section class="column" [attr.aria-labelledby]="'col-' + column.status">
         <h2 [id]="'col-' + column.status" class="pill" [class]="'pill pill--' + column.status">
           {{ column.label }}
         </h2>
-        <ul class="list">
-          @for (task of store.byStatus()[column.status]; track task.id) {
+        <ul class="list" tabindex="0" [attr.aria-label]="column.label + ' tasks'">
+          @for (task of visible(column.status); track task.id) {
             <li class="task">
               <span
                 class="dot"
@@ -23,6 +26,14 @@ import { DashboardStore, type TaskStatus } from '../dashboard.store';
             <li class="empty">Nothing here</li>
           }
         </ul>
+        <app-view-all-link
+          class="more"
+          [total]="store.byStatus()[column.status].length"
+          [shown]="visible(column.status).length"
+          link="/home"
+          [queryParams]="{ tab: 'tasks' }"
+          [noun]="column.label.toLowerCase() + ' tasks'"
+        />
       </section>
     }
   `,
@@ -62,12 +73,23 @@ import { DashboardStore, type TaskStatus } from '../dashboard.store';
     .pill--overdue {
       background: var(--ink);
     }
+    /* A fixed maximum height: long columns scroll inside the card. */
     .list {
       display: grid;
       gap: 0.375rem;
+      max-height: 12rem;
       margin: 0;
       padding: 0;
+      overflow-y: auto;
+      overscroll-behavior: contain;
       list-style: none;
+      &:focus-visible {
+        outline: 2px solid #7b23a8;
+        outline-offset: 2px;
+      }
+    }
+    .more {
+      text-align: center;
     }
     .task {
       display: flex;
@@ -109,11 +131,17 @@ import { DashboardStore, type TaskStatus } from '../dashboard.store';
 })
 export class StatusColumns {
   protected readonly store = inject(DashboardStore);
+  private readonly settings = inject(SettingsStore);
   protected readonly columns: { status: TaskStatus; label: string }[] = [
     { status: 'current', label: 'Current' },
     { status: 'upcoming', label: 'Upcoming' },
     { status: 'overdue', label: 'Overdue' },
   ];
+
+  /** A column's tasks, capped at the user's "tasks per dashboard widget" setting. */
+  protected visible(status: TaskStatus): Task[] {
+    return this.store.byStatus()[status].slice(0, this.settings.taskLimit());
+  }
 
   protected shortDate(key: string | null): string {
     if (!key) return 'No due date';

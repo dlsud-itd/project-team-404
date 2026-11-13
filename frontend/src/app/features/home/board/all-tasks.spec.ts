@@ -6,11 +6,14 @@ import { environment } from '../../../../environments/environment';
 import { DASHBOARD_PROJECTS, DASHBOARD_TASKS, task } from '../testing/dashboard-fixture';
 import { DashboardStore } from '../dashboard.store';
 import { asApiTask } from '../../tasks/shared/testing/api-task';
+import { SettingsStore } from '../../settings/state/settings.store';
+import { clearSettingsCache, seedSettings } from '../../settings/testing/settings-cache';
 import { AllTasks } from './all-tasks';
 
 const TASKS_URL = `${environment.apiBaseUrl}/api/tasks`;
 const PROJECTS_URL = `${environment.apiBaseUrl}/api/projects`;
 const LABELS_URL = `${environment.apiBaseUrl}/api/labels`;
+const SETTINGS_URL = `${environment.apiBaseUrl}/api/settings`;
 
 describe('AllTasks', () => {
   let fixture: ComponentFixture<AllTasks>;
@@ -50,6 +53,8 @@ describe('AllTasks', () => {
   beforeEach(async () => {
     vi.useFakeTimers({ toFake: ['Date'] });
     vi.setSystemTime(new Date(2026, 9, 30, 9, 0, 0));
+    // Room for every fixture task; the limit itself is tested below.
+    seedSettings({ dashboardTaskLimit: 50 });
 
     await TestBed.configureTestingModule({
       imports: [AllTasks],
@@ -71,6 +76,34 @@ describe('AllTasks', () => {
   afterEach(() => {
     http.verify();
     vi.useRealTimers();
+    clearSettingsCache();
+  });
+
+  it('shows at most the saved number of tasks, with View all linking to the full list', () => {
+    expect(el('.view-all')).toBeNull();
+    expect(el('ul.list')?.getAttribute('tabindex')).toBe('0');
+
+    TestBed.inject(SettingsStore).save({ dashboardTaskLimit: 3 }).subscribe();
+    http.expectOne(SETTINGS_URL).flush({
+      dashboardTaskLimit: 3,
+      dashboardProjectLimit: 5,
+      fontSize: 'medium',
+      fontFamily: 'system',
+      updatedAt: '2026-10-30T01:00:00.000Z',
+    });
+    render();
+
+    expect(titles()).toEqual(['Submit lab report', 'Reply to client email', 'Read chapter 4']);
+    const viewAll = el<HTMLAnchorElement>('a.view-all')!;
+    expect(viewAll.textContent?.trim()).toBe('View all (9)');
+    expect(viewAll.getAttribute('href')).toBe('/home?tab=tasks');
+    expect(viewAll.getAttribute('aria-label')).toBe('View all 9 tasks');
+
+    // The count follows the filter.
+    store.filter.set({ projectId: 3 });
+    render();
+    expect(titles()).toHaveLength(3);
+    expect(el('a.view-all')).toBeNull();
   });
 
   it('lists live tasks with project, priority and due date', () => {

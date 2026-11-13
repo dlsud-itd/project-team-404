@@ -90,11 +90,20 @@
   background: transparent;
 }
 
+// A fixed maximum height: a long list scrolls inside the panel.
 .list {
   display: grid;
+  max-height: 26rem;
   margin: 0;
   padding: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   list-style: none;
+
+  &:focus-visible {
+    outline: 2px solid #7b23a8;
+    outline-offset: 2px;
+  }
 }
 
 .task {

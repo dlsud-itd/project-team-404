@@ -40,8 +40,8 @@
     </form>
   }
 
-  <ul class="list">
-    @for (task of store.filteredTasks(); track task.id) {
+  <ul class="list" tabindex="0" aria-label="Tasks">
+    @for (task of visibleTasks(); track task.id) {
       <li class="task" [class.done]="task.done" (contextmenu)="showContextMenu($event, task.id)">
         <label class="check">
           <input
@@ -105,6 +105,13 @@
       <li class="empty">No tasks match. Add one with “+ New Task”.</li>
     }
   </ul>
+  <app-view-all-link
+    [total]="store.filteredTasks().length"
+    [shown]="visibleTasks().length"
+    link="/home"
+    [queryParams]="{ tab: 'tasks' }"
+    noun="tasks"
+  />
 </section>
 
 @if (pendingDelete(); as task) {

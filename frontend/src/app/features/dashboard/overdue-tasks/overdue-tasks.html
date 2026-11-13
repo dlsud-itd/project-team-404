@@ -17,7 +17,7 @@
       </div>
     }
     @default {
-      <ul class="list">
+      <ul class="list" tabindex="0" aria-label="Overdue tasks">
         @for (task of tasks(); track task.taskId) {
           <li class="task">
             <span class="dot" [style.background]="dotColor(task)" aria-hidden="true"></span>
@@ -41,6 +41,14 @@
           <li class="empty">Nothing here</li>
         }
       </ul>
+      <app-view-all-link
+        class="more"
+        [total]="total()"
+        [shown]="tasks().length"
+        link="/home"
+        [queryParams]="{ tab: 'tasks' }"
+        noun="overdue tasks"
+      />
     }
   }
 </section>

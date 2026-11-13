@@ -5,6 +5,7 @@ import { type ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { environment } from '../../../../environments/environment';
 import { SessionService } from '../../auth/session/session.service';
+import { clearSettingsCache, seedSettings } from '../../settings/testing/settings-cache';
 import { asApiTask } from '../../tasks/shared/testing/api-task';
 import type { Task } from '../../tasks/shared/types/task.types';
 import { DASHBOARD_NOW } from '../shared/services/dashboard.service';
@@ -72,7 +73,13 @@ describe('CurrentUpcomingTasks', () => {
     http = TestBed.inject(HttpTestingController);
   });
 
-  afterEach(() => http.verify());
+  afterEach(() => {
+    http.verify();
+    clearSettingsCache();
+  });
+
+  /** Seeds the saved limit; must run before the component (and SettingsStore) is created. */
+  const limitTo = (limit: number) => seedSettings({ dashboardTaskLimit: limit });
 
   it('shows a loading message until the tasks arrive', () => {
     create();
@@ -130,5 +137,55 @@ describe('CurrentUpcomingTasks', () => {
 
     expect(el().querySelector('[role="alert"]')).toBeNull();
     expect(titlesIn('today')).toEqual(['Task 1']);
+  });
+
+  it('shows at most the saved number of tasks across the days, with View all for the rest', () => {
+    limitTo(3);
+    create();
+    respond([
+      task(1, '2026-11-06'),
+      task(2, '2026-11-07'),
+      task(3, '2026-11-09'),
+      task(4, '2026-11-06'),
+      task(5, '2026-11-10'),
+    ]);
+
+    expect(titlesIn('today')).toEqual(['Task 1', 'Task 4']);
+    expect(titlesIn('tomorrow')).toEqual(['Task 2']);
+    expect(titlesIn('later')).toEqual([]);
+    // A day emptied by the limit doesn't claim nothing is due.
+    expect(el().querySelector('[data-group="later"] .empty')?.textContent?.trim()).toBe(
+      'More tasks under View all.',
+    );
+    expect(el().querySelector('.summary')?.textContent?.trim()).toBe('5 tasks');
+
+    const viewAll = el().querySelector<HTMLAnchorElement>('a.view-all')!;
+    expect(viewAll.textContent?.trim()).toBe('View all (5)');
+    expect(viewAll.getAttribute('href')).toBe('/home?tab=tasks');
+    expect(viewAll.getAttribute('aria-label')).toBe('View all 5 current and upcoming tasks');
+  });
+
+  it('uses the total a Sprint 5 server sends with its capped list', () => {
+    limitTo(2);
+    create();
+    http
+      .expectOne(`${URL}?days=7`)
+      .flush({ tasks: [task(1, '2026-11-06'), task(2, '2026-11-07')].map(asApiTask), total: 6 });
+    fixture.detectChanges();
+
+    expect(el().querySelectorAll('.task')).toHaveLength(2);
+    expect(el().querySelector('.summary')?.textContent?.trim()).toBe('6 tasks');
+    expect(el().querySelector('a.view-all')?.textContent?.trim()).toBe('View all (6)');
+  });
+
+  it('shows no View all when everything fits, and scrolls inside a fixed height', () => {
+    create();
+    respond([task(1, '2026-11-06'), task(2, '2026-11-07')]);
+
+    expect(el().querySelector('a.view-all')).toBeNull();
+    const groups = el().querySelector<HTMLElement>('.groups')!;
+    expect(groups.getAttribute('tabindex')).toBe('0');
+    expect(getComputedStyle(groups).overflowY).toBe('auto');
+    expect(getComputedStyle(groups).maxHeight).toBe('28rem');
   });
 });

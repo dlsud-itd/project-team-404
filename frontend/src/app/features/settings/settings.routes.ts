@@ -19,26 +19,13 @@ export const SETTINGS_ROUTES: Routes = [
       {
         path: 'preferences',
         title: 'Preferences · HabitTracker',
-        data: {
-          heading: 'Preferences',
-          description: 'Font size and font choices will be set here soon.',
-        },
         loadComponent: () =>
-          import('./components/settings-placeholder/settings-placeholder').then(
-            (m) => m.SettingsPlaceholder,
-          ),
+          import('./preferences/preferences-settings').then((m) => m.PreferencesSettings),
       },
       {
         path: 'config',
         title: 'Config · HabitTracker',
-        data: {
-          heading: 'Config',
-          description: 'How many tasks and projects the dashboard shows will be set here soon.',
-        },
-        loadComponent: () =>
-          import('./components/settings-placeholder/settings-placeholder').then(
-            (m) => m.SettingsPlaceholder,
-          ),
+        loadComponent: () => import('./config/config-settings').then((m) => m.ConfigSettings),
       },
       {
         path: 'labels',

@@ -1,4 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
+import { clearSettingsCache, seedSettings } from '../../settings/testing/settings-cache';
 import { DashboardStore } from '../dashboard.store';
 import { DASHBOARD_PROJECTS, DASHBOARD_TASKS } from '../testing/dashboard-fixture';
 import { ProjectList } from './project-list';
@@ -49,5 +51,42 @@ describe('ProjectList (sidebar)', () => {
     expect(page.querySelector('button[aria-label^="Rename"]')).toBeNull();
     expect(page.querySelector('button[aria-label^="Delete"]')).toBeNull();
     expect(page.textContent).toContain('Create and manage projects in the Projects tab');
+  });
+});
+
+describe('ProjectList (sidebar) with a dashboard project limit', () => {
+  let fixture: ComponentFixture<ProjectList>;
+  let page: HTMLElement;
+
+  const names = () => [...page.querySelectorAll('.project .name')].map((node) => node.textContent);
+
+  beforeEach(() => {
+    seedSettings({ dashboardProjectLimit: 2 });
+    TestBed.configureTestingModule({
+      imports: [ProjectList],
+      providers: [DashboardStore, provideRouter([])],
+    });
+    TestBed.inject(DashboardStore).setData(DASHBOARD_PROJECTS, DASHBOARD_TASKS);
+    fixture = TestBed.createComponent(ProjectList);
+    page = fixture.nativeElement;
+    fixture.detectChanges();
+  });
+
+  afterEach(() => clearSettingsCache());
+
+  it('lists at most the saved number of projects, with View all linking to the Projects tab', () => {
+    expect(names()).toEqual(['Inbox', 'School']);
+    const viewAll = page.querySelector<HTMLAnchorElement>('a.view-all')!;
+    expect(viewAll.textContent?.trim()).toBe('View all (4)');
+    expect(viewAll.getAttribute('href')).toBe('/home?tab=projects');
+    expect(viewAll.getAttribute('aria-label')).toBe('View all 4 projects');
+    // All Projects still counts every open task.
+    expect(page.querySelector('button.row.all .count')?.textContent).toBe('8');
+  });
+
+  it('keeps the list scrollable within the card', () => {
+    const list = page.querySelector<HTMLElement>('ul.list')!;
+    expect(list.getAttribute('aria-label')).toBe('Projects');
+    expect(getComputedStyle(list).overflowY).toBe('auto');
   });
 });

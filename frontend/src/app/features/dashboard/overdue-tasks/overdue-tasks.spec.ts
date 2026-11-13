@@ -5,6 +5,7 @@ import { type ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { environment } from '../../../../environments/environment';
 import { SessionService } from '../../auth/session/session.service';
+import { clearSettingsCache, seedSettings } from '../../settings/testing/settings-cache';
 import { ProjectsStore } from '../../projects/shared/state/projects.store';
 import type { ApiProject } from '../../projects/shared/types/project.types';
 import { asApiTask } from '../../tasks/shared/testing/api-task';
@@ -90,7 +91,10 @@ describe('OverdueTasks', () => {
     http = TestBed.inject(HttpTestingController);
   });
 
-  afterEach(() => http.verify());
+  afterEach(() => {
+    http.verify();
+    clearSettingsCache();
+  });
 
   it('shows a loading message until the tasks arrive', () => {
     create();
@@ -196,5 +200,47 @@ describe('OverdueTasks', () => {
     expect(text(el().querySelector('[role="alert"] p'))).toBe(
       'Your session has ended. Please log in again.',
     );
+  });
+
+  it('shows at most the saved number of tasks, oldest first, with View all for the rest', () => {
+    seedSettings({ dashboardTaskLimit: 2 });
+    create();
+    respond([
+      task(1, '2026-11-01T15:59:59.999Z'),
+      task(2, '2026-11-02T15:59:59.999Z'),
+      task(3, '2026-11-03T15:59:59.999Z'),
+    ]);
+    respondProjects();
+
+    expect(rows().map((row) => text(row.querySelector('.title')))).toEqual(['Task 1', 'Task 2']);
+    expect(text(el().querySelector('h2 .visually-hidden'))).toBe(', 3 overdue tasks');
+    const viewAll = el().querySelector<HTMLAnchorElement>('a.view-all')!;
+    expect(text(viewAll)).toBe('View all (3)');
+    expect(viewAll.getAttribute('href')).toBe('/home?tab=tasks');
+    expect(viewAll.getAttribute('aria-label')).toBe('View all 3 overdue tasks');
+  });
+
+  it('counts the tasks a Sprint 5 server left out of its capped list', () => {
+    seedSettings({ dashboardTaskLimit: 1 });
+    create();
+    http
+      .expectOne(URL)
+      .flush({ tasks: [asApiTask(task(1, '2026-11-01T15:59:59.999Z'))], total: 4 });
+    fixture.detectChanges();
+    respondProjects();
+
+    expect(rows()).toHaveLength(1);
+    expect(text(el().querySelector('a.view-all'))).toBe('View all (4)');
+  });
+
+  it('keeps the list scrollable within the card and shows no View all when it fits', () => {
+    create();
+    respond([task(1, '2026-11-01T15:59:59.999Z')]);
+    respondProjects();
+
+    expect(el().querySelector('a.view-all')).toBeNull();
+    const list = el().querySelector<HTMLElement>('ul.list')!;
+    expect(list.getAttribute('aria-label')).toBe('Overdue tasks');
+    expect(getComputedStyle(list).overflowY).toBe('auto');
   });
 });
