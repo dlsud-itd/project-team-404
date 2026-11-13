@@ -44,7 +44,7 @@ describe('ProjectService', () => {
   afterEach(() => http.verify());
 
   describe('list', () => {
-    it('gets every project when no filter is given', () => {
+    it('gets active projects when no filter is given', () => {
       let result: Project[] | undefined;
       service.list().subscribe((projects) => (result = projects));
 
@@ -68,20 +68,32 @@ describe('ProjectService', () => {
   });
 
   describe('refresh', () => {
-    it('loads the list into the store', () => {
+    it('loads active and archived projects into the store', () => {
       service.refresh().subscribe();
       expect(store.loading()).toBe(true);
 
-      http.expectOne(URL).flush([CAPSTONE, INBOX].map(apiProject));
+      http
+        .expectOne(`${URL}?isArchived=false`)
+        .flush([INBOX, CAPSTONE].map(apiProject));
+      http
+        .expectOne(`${URL}?isArchived=true`)
+        .flush([apiProject({ ...CAPSTONE, isArchived: true, projectId: 11, name: 'Old' })]);
 
       expect(store.loading()).toBe(false);
-      expect(store.projects()).toEqual([INBOX, CAPSTONE]);
+      expect(store.projects()).toEqual([
+        INBOX,
+        CAPSTONE,
+        { ...CAPSTONE, isArchived: true, projectId: 11, name: 'Old' },
+      ]);
     });
 
     it('records a failure in the store', () => {
       service.refresh().subscribe({ error: () => {} });
 
-      http.expectOne(URL).flush(null, { status: 500, statusText: 'Server Error' });
+      http
+        .expectOne(`${URL}?isArchived=false`)
+        .flush(null, { status: 500, statusText: 'Server Error' });
+      expect(http.expectOne(`${URL}?isArchived=true`).cancelled).toBe(true);
 
       expect(store.loading()).toBe(false);
       expect(store.error()).toBe('Something went wrong. Please try again.');

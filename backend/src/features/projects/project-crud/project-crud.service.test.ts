@@ -51,8 +51,29 @@ describe('ProjectCrudService', () => {
     expect(deps.findOwnedProjects).toHaveBeenCalledWith('user-123', {
       isArchived: false,
     });
+    if (!Array.isArray(result)) {
+      throw new Error(
+        'Expected the unpaginated project response to be an array'
+      );
+    }
     expect(result[0]).not.toHaveProperty('userId');
     expect(result[0]).not.toHaveProperty('deletedAt');
+  });
+
+  it('preserves the matching count for limited project results', async () => {
+    const deps = dependencies();
+    vi.mocked(deps.findOwnedProjects).mockResolvedValue({
+      projects: [project],
+      total: 4,
+    });
+    const service = new ProjectCrudService(deps);
+
+    await expect(service.list('user-123', { limit: 1 })).resolves.toEqual({
+      projects: [
+        expect.not.objectContaining({ userId: 'user-123', deletedAt: null }),
+      ],
+      total: 4,
+    });
   });
 
   it('updates a regular project', async () => {

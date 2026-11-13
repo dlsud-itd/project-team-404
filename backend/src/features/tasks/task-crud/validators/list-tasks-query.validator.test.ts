@@ -2,9 +2,9 @@ import { describe, expect, it } from 'vitest';
 import { listTasksQueryValidator } from './list-tasks-query.validator';
 
 describe('listTasksQueryValidator', () => {
-  it('applies active and paging defaults', () => {
+  it('applies all-status and paging defaults', () => {
     expect(listTasksQueryValidator.parse({})).toEqual({
-      status: 'active',
+      status: 'all',
       page: 1,
       pageSize: 20,
       orderDirection: 'asc',
@@ -34,6 +34,18 @@ describe('listTasksQueryValidator', () => {
     ).toThrow();
     expect(() => listTasksQueryValidator.parse({ page: '0' })).toThrow();
     expect(() => listTasksQueryValidator.parse({ pageSize: '101' })).toThrow();
+  });
+
+  it('rejects conflicts with legacy completion and overdue filters', () => {
+    expect(() =>
+      listTasksQueryValidator.parse({ status: 'active', isDone: 'false' })
+    ).toThrow();
+    expect(() =>
+      listTasksQueryValidator.parse({ overdue: 'true', status: 'completed' })
+    ).toThrow();
+    expect(() =>
+      listTasksQueryValidator.parse({ overdue: 'true', isDone: 'true' })
+    ).toThrow();
   });
 
   it('rejects unsupported query parameters', () => {

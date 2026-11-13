@@ -1,6 +1,6 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { Observable, map, tap } from 'rxjs';
+import { Observable, forkJoin, map, tap } from 'rxjs';
 import { environment } from '../../../../../environments/environment';
 import { ProjectsStore } from '../../shared/state/projects.store';
 import type {
@@ -24,7 +24,7 @@ export class ProjectService {
   private readonly store = inject(ProjectsStore);
   private readonly baseUrl = `${environment.apiBaseUrl}/api/projects`;
 
-  /** GET /api/projects. `archived` limits the list to archived or active projects. */
+  /** GET /api/projects. Omitted `archived` returns active projects. */
   list(archived?: boolean): Observable<Project[]> {
     const params =
       archived === undefined ? undefined : new HttpParams().set('isArchived', String(archived));
@@ -36,7 +36,8 @@ export class ProjectService {
   /** Loads every project into the store, recording loading and error state there. */
   refresh(): Observable<Project[]> {
     this.store.startLoading();
-    return this.list().pipe(
+    return forkJoin([this.list(false), this.list(true)]).pipe(
+      map(([active, archived]) => [...active, ...archived]),
       tap({
         next: (projects) => this.store.setProjects(projects),
         error: (error: unknown) => this.store.fail(mapProjectError(error).message),
