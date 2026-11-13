@@ -3,6 +3,7 @@
     <a class="back" routerLink="/projects">← Projects</a>
     <div class="title-row">
       <h1>{{ project()?.name ?? 'Tasks' }}</h1>
+      <a routerLink="/settings/labels">Manage labels</a>
       @if (!projectMissing()) {
         <button type="button" class="new" (click)="newTask()">+ New task</button>
       }
@@ -24,6 +25,48 @@
     @if (actionError(); as message) {
       <p class="banner-error" role="alert">{{ message }}</p>
     }
+    @if (labelsError(); as message) {
+      <p class="banner-error" role="alert">{{ message }}</p>
+    }
+
+    <section class="filters" aria-label="Task filters and sorting">
+      <label for="filter-priority">Priority</label>
+      <select id="filter-priority" (change)="setPriority($event)">
+        <option value="" [selected]="!filters().priority">All priorities</option>
+        @for (priority of priorities; track priority.priorityId) {
+          <option
+            [value]="priority.label.toLowerCase()"
+            [selected]="filters().priority === priority.label.toLowerCase()"
+          >
+            {{ priority.label }}
+          </option>
+        }
+      </select>
+      <label for="filter-label">Label</label>
+      <select id="filter-label" (change)="setLabel($event)">
+        <option value="" [selected]="filters().labelId === null">All labels</option>
+        @for (label of labels(); track label.labelId) {
+          <option [value]="label.labelId" [selected]="filters().labelId === label.labelId">
+            {{ label.name }}
+          </option>
+        }
+      </select>
+      <label for="sort-tasks">Sort by</label>
+      <select id="sort-tasks" (change)="setOrderBy($event)">
+        <option value="" [selected]="!filters().orderBy">Default order</option>
+        <option value="title" [selected]="filters().orderBy === 'title'">Title</option>
+        <option value="dueDate" [selected]="filters().orderBy === 'dueDate'">Due date</option>
+        <option value="createdAt" [selected]="filters().orderBy === 'createdAt'">
+          Created date
+        </option>
+        <option value="priority" [selected]="filters().orderBy === 'priority'">Priority</option>
+      </select>
+      <label for="sort-direction">Direction</label>
+      <select id="sort-direction" (change)="setOrderDirection($event)">
+        <option value="asc" [selected]="filters().orderDirection === 'asc'">Ascending</option>
+        <option value="desc" [selected]="filters().orderDirection === 'desc'">Descending</option>
+      </select>
+    </section>
 
     @if (store.error(); as message) {
       <div class="load-error" role="alert">

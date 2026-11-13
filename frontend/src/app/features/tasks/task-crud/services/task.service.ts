@@ -22,6 +22,10 @@ const MAX_PAGE_SIZE = 100;
 export interface TaskListFilter {
   projectId?: number;
   page?: number;
+  priority?: 'low' | 'medium' | 'high';
+  labelId?: number;
+  orderBy?: 'dueDate' | 'createdAt' | 'priority' | 'title';
+  orderDirection?: 'asc' | 'desc';
 }
 
 /**
@@ -41,10 +45,21 @@ export class TaskService {
     let params = new HttpParams();
     if (filter.projectId !== undefined) params = params.set('projectId', filter.projectId);
     params = params.set('status', 'all').set('pageSize', MAX_PAGE_SIZE);
+    if (filter.priority) params = params.set('priority', filter.priority);
+    if (filter.labelId !== undefined) params = params.set('labelId', filter.labelId);
+    if (filter.orderBy) params = params.set('orderBy', filter.orderBy);
+    if (filter.orderDirection) params = params.set('orderDirection', filter.orderDirection);
     if (filter.page !== undefined) params = params.set('page', filter.page);
     return this.http
       .get<ApiTask[]>(this.baseUrl, { params })
-      .pipe(map((tasks) => tasks.map(toTask)));
+      .pipe(
+        map((tasks) =>
+          tasks.map((task, index) => ({
+            ...toTask(task),
+            ...(filter.orderBy ? { sortOrder: index } : {}),
+          })),
+        ),
+      );
   }
 
   /** Loads all API pages, rather than silently truncating the list at the page-size limit. */
@@ -59,9 +74,12 @@ export class TaskService {
   }
 
   /** Loads a project's active tasks into the store, recording loading and error state there. */
-  refresh(projectId: number): Observable<Task[]> {
+  refresh(
+    projectId: number,
+    filter: Omit<TaskListFilter, 'projectId' | 'page'> = {},
+  ): Observable<Task[]> {
     this.store.startLoading(projectId);
-    return this.list({ projectId }).pipe(
+    return this.list({ ...filter, projectId }).pipe(
       tap({
         next: (tasks) => this.store.setTasks(projectId, tasks),
         error: (error: unknown) => this.store.fail(mapTaskError(error).message),

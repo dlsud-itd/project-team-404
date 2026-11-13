@@ -10,12 +10,14 @@ import { NewTaskDialog } from './new-task-dialog';
 
 const URL = `${environment.apiBaseUrl}/api/tasks`;
 const PROJECTS_URL = `${environment.apiBaseUrl}/api/projects`;
+const LABELS_URL = `${environment.apiBaseUrl}/api/labels`;
 const STUDY: Task = {
   taskId: 1,
   projectId: 10,
   priorityId: 3,
   title: 'Study',
   description: null,
+  scheduledDate: null,
   dueDate: null,
   deadline: null,
   recurrence: 'none',
@@ -67,6 +69,7 @@ describe('NewTaskDialog', () => {
     fixture.detectChanges();
     await fixture.whenStable();
     http.expectOne(PROJECTS_URL).flush([]);
+    http.expectOne(LABELS_URL).flush([]);
     fixture.detectChanges();
   });
 

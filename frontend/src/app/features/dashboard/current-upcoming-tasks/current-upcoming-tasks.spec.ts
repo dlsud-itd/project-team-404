@@ -21,6 +21,7 @@ function task(taskId: number, dueDate: string): Task {
     priorityId: 3,
     title: `Task ${taskId}`,
     description: null,
+    scheduledDate: null,
     dueDate,
     deadline: null,
     recurrence: 'none',

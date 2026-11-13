@@ -115,9 +115,45 @@
           </div>
         </div>
 
+        <section class="field" aria-labelledby="task-labels-heading">
+          <div class="label-row">
+            <h2 id="task-labels-heading">Labels</h2>
+            <a routerLink="/settings/labels">Manage labels</a>
+          </div>
+          @if (labelsError(); as message) {
+            <p class="field-message" role="alert">{{ message }}</p>
+          } @else if (labels().length) {
+            <div class="label-options">
+              @for (label of labels(); track label.labelId) {
+                <label class="label-option">
+                  <input type="checkbox" [checked]="form.controls.labelIds.value.includes(label.labelId)"
+                    (change)="toggleLabel(label.labelId, $event)" />
+                  {{ label.name }}
+                </label>
+              }
+            </div>
+          } @else {
+            <p class="field-message">No labels yet.</p>
+          }
+        </section>
+
         <section class="schedule" aria-labelledby="task-schedule-heading">
           <h2 id="task-schedule-heading">Date and deadline</h2>
           <div class="row">
+            <div class="field">
+              <label for="task-scheduled-date">Scheduled date <span>(optional)</span></label>
+              <input
+                id="task-scheduled-date"
+                type="date"
+                formControlName="scheduledDate"
+                [attr.aria-invalid]="!!fieldError('scheduledDate')"
+                aria-describedby="task-scheduled-date-status"
+                (input)="clearServerError('scheduledDate')"
+              />
+              <p id="task-scheduled-date-status" class="field-message" aria-live="polite">
+                {{ fieldError('scheduledDate') }}
+              </p>
+            </div>
             <app-due-date-picker
               [control]="form.controls.dueDate"
               [error]="fieldError('dueDate')"

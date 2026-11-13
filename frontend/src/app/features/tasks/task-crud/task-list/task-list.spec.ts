@@ -12,6 +12,7 @@ import { TaskList } from './task-list';
 
 const TASKS_URL = `${environment.apiBaseUrl}/api/tasks`;
 const PROJECTS_URL = `${environment.apiBaseUrl}/api/projects`;
+const LABELS_URL = `${environment.apiBaseUrl}/api/labels`;
 
 /** Projects as the API sends them: `id` instead of `projectId`. */
 const asApi = ({ projectId, ...rest }: Project): ApiProject => ({ id: projectId, ...rest });
@@ -33,6 +34,7 @@ const base: Task = {
   priorityId: 3,
   title: 'Write chapter 1',
   description: null,
+  scheduledDate: null,
   dueDate: null,
   deadline: null,
   recurrence: 'none',
@@ -64,8 +66,13 @@ describe('TaskList', () => {
   const titles = (scope = '') =>
     [...page().querySelectorAll(`${scope} app-task-item .title`)].map((n) => n.textContent?.trim());
 
-  async function open(url = '/projects/10/tasks'): Promise<void> {
+  async function open(
+    url = '/projects/10/tasks',
+    labels: { id: number; name: string; color: string | null }[] = [],
+  ): Promise<void> {
     await harness.navigateByUrl(url);
+    await harness.fixture.whenStable();
+    http.match(LABELS_URL).forEach((req) => req.flush(labels));
   }
 
   function loadWith(tasks: Task[], project: Project | null = CAPSTONE): void {
@@ -126,12 +133,90 @@ describe('TaskList', () => {
     expect(text('#open-heading')).toBe('To do · 2');
   });
 
+  it('filters by priority and label and orders the server response', async () => {
+    await open('/projects/10/tasks', [{ id: 7, name: 'Study', color: null }]);
+    loadWith([CHAPTER]);
+
+    const priority = el<HTMLSelectElement>('#filter-priority')!;
+    priority.value = 'high';
+    priority.dispatchEvent(new Event('change'));
+    http
+      .expectOne(`${TASKS_URL}?projectId=10&status=all&pageSize=100&priority=high`)
+      .flush([asApiTask({ ...CHAPTER, priorityId: 1 })]);
+
+    const label = el<HTMLSelectElement>('#filter-label')!;
+    label.value = '7';
+    label.dispatchEvent(new Event('change'));
+    http
+      .expectOne(`${TASKS_URL}?projectId=10&status=all&pageSize=100&priority=high&labelId=7`)
+      .flush([
+        asApiTask({
+          ...CHAPTER,
+          priorityId: 1,
+          labels: [{ labelId: 7, name: 'Study', color: null }],
+        }),
+      ]);
+
+    const sort = el<HTMLSelectElement>('#sort-tasks')!;
+    sort.value = 'title';
+    sort.dispatchEvent(new Event('change'));
+    http
+      .expectOne(
+        `${TASKS_URL}?projectId=10&status=all&pageSize=100&priority=high&labelId=7&orderBy=title&orderDirection=asc`,
+      )
+      .flush([
+        asApiTask({
+          ...CHAPTER,
+          taskId: 2,
+          title: 'A task',
+          priorityId: 1,
+          labels: [{ labelId: 7, name: 'Study', color: null }],
+        }),
+        asApiTask({
+          ...CHAPTER,
+          priorityId: 1,
+          labels: [{ labelId: 7, name: 'Study', color: null }],
+        }),
+      ]);
+    await harness.fixture.whenStable();
+    harness.detectChanges();
+
+    expect(titles()).toEqual(['A task', 'Write chapter 1']);
+  });
+
+  it('restores filters from the URL and sends them on the initial list request', async () => {
+    await open('/projects/10/tasks?priority=high&labelId=7&orderBy=title&orderDirection=desc', [
+      { id: 7, name: 'Study', color: null },
+    ]);
+    http.expectOne(`${PROJECTS_URL}/10`).flush(asApi(CAPSTONE));
+    http
+      .expectOne(
+        `${TASKS_URL}?projectId=10&status=all&pageSize=100&priority=high&labelId=7&orderBy=title&orderDirection=desc`,
+      )
+      .flush([
+        asApiTask({
+          ...CHAPTER,
+          priorityId: 1,
+          labels: [{ labelId: 7, name: 'Study', color: null }],
+        }),
+      ]);
+    await harness.fixture.whenStable();
+    harness.detectChanges();
+
+    const prioritySelect = el<HTMLSelectElement>('#filter-priority')!;
+    expect(prioritySelect.value, prioritySelect.outerHTML).toBe('high');
+    expect(el<HTMLSelectElement>('#filter-label')!.value).toBe('7');
+    expect(el<HTMLSelectElement>('#sort-tasks')!.value).toBe('title');
+    expect(el<HTMLSelectElement>('#sort-direction')!.value).toBe('desc');
+  });
+
   describe('new task popup', () => {
     async function openPopup(selector = '.title-row button.new'): Promise<void> {
       el<HTMLButtonElement>(selector)!.click();
       harness.detectChanges();
       // The form's project picker loads the projects.
       http.expectOne(PROJECTS_URL).flush([asApi(CAPSTONE)]);
+      http.expectOne(LABELS_URL).flush([]);
       await harness.fixture.whenStable();
       harness.detectChanges();
     }
@@ -200,6 +285,7 @@ describe('TaskList', () => {
     el<HTMLButtonElement>('.empty button.new')!.click();
     harness.detectChanges();
     http.expectOne(PROJECTS_URL).flush([asApi(CAPSTONE)]);
+    http.expectOne(LABELS_URL).flush([]);
 
     expect(el('[role="dialog"]')).toBeTruthy();
   });

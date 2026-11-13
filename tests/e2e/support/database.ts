@@ -355,6 +355,97 @@ export async function projectRow(
   return rows[0] ?? null;
 }
 
+export async function taskRowsForUser(
+  userId: string
+): Promise<Record<string, unknown>[]> {
+  const query = new URLSearchParams({
+    select: '*',
+    user_id: `eq.${userId}`,
+    order: 'task_id.asc',
+  });
+  return supabaseRequest(`/rest/v1/tbl_task?${query}`);
+}
+
+export async function labelRowsForUser(
+  userId: string
+): Promise<Record<string, unknown>[]> {
+  const query = new URLSearchParams({
+    select: '*',
+    user_id: `eq.${userId}`,
+    order: 'label_id.asc',
+  });
+  return supabaseRequest(`/rest/v1/tbl_label?${query}`);
+}
+
+export async function taskLabelRowsForUser(
+  userId: string
+): Promise<Record<string, unknown>[]> {
+  const taskIds = (await taskRowsForUser(userId)).map((row) => row['task_id']);
+  if (!taskIds.length) return [];
+  const query = new URLSearchParams({
+    select: '*',
+    task_id: `in.(${taskIds.join(',')})`,
+    order: 'task_id.asc,label_id.asc',
+  });
+  return supabaseRequest(`/rest/v1/tbl_task_label?${query}`);
+}
+
+export async function taskRow(
+  taskId: number
+): Promise<Record<string, unknown> | null> {
+  const query = new URLSearchParams({
+    select: '*',
+    task_id: `eq.${taskId}`,
+  });
+  const rows = await supabaseRequest<Record<string, unknown>[]>(
+    `/rest/v1/tbl_task?${query}`
+  );
+  return rows[0] ?? null;
+}
+
+export async function labelRow(
+  labelId: number
+): Promise<Record<string, unknown> | null> {
+  const query = new URLSearchParams({
+    select: '*',
+    label_id: `eq.${labelId}`,
+  });
+  const rows = await supabaseRequest<Record<string, unknown>[]>(
+    `/rest/v1/tbl_label?${query}`
+  );
+  return rows[0] ?? null;
+}
+
+export async function deleteTaskRows(
+  userId: string,
+  taskIds: number[]
+): Promise<void> {
+  if (!taskIds.length) return;
+  const query = new URLSearchParams({
+    task_id: `in.(${taskIds.join(',')})`,
+    user_id: `eq.${userId}`,
+  });
+  await supabaseRequest(`/rest/v1/tbl_task?${query}`, {
+    method: 'DELETE',
+    headers: { Prefer: 'return=minimal' },
+  });
+}
+
+export async function deleteLabelRows(
+  userId: string,
+  labelIds: number[]
+): Promise<void> {
+  if (!labelIds.length) return;
+  const query = new URLSearchParams({
+    label_id: `in.(${labelIds.join(',')})`,
+    user_id: `eq.${userId}`,
+  });
+  await supabaseRequest(`/rest/v1/tbl_label?${query}`, {
+    method: 'DELETE',
+    headers: { Prefer: 'return=minimal' },
+  });
+}
+
 /** Hard-deletes project rows the E2E tests created, so reruns start clean. */
 export async function deleteProjectRows(projectIds: number[]): Promise<void> {
   if (!projectIds.length) return;

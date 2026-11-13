@@ -10,6 +10,7 @@ import { AllTasks } from './all-tasks';
 
 const TASKS_URL = `${environment.apiBaseUrl}/api/tasks`;
 const PROJECTS_URL = `${environment.apiBaseUrl}/api/projects`;
+const LABELS_URL = `${environment.apiBaseUrl}/api/labels`;
 
 describe('AllTasks', () => {
   let fixture: ComponentFixture<AllTasks>;
@@ -182,6 +183,7 @@ describe('AllTasks', () => {
     row.querySelector<HTMLButtonElement>('.task-menu-item:not(.delete)')!.click();
     render();
 
+    http.expectOne(LABELS_URL).flush([]);
     expect(el('[role="dialog"] #new-task-title')?.textContent?.trim()).toBe('Edit task');
     http.expectOne(PROJECTS_URL).flush([]);
     const taskToEdit = task(

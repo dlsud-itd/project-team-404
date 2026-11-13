@@ -27,8 +27,11 @@ import { recurrenceSummary } from '../../../task-scheduling/utils/recurrence-lab
           <p class="description">{{ description }}</p>
         }
 
-        @if (due() || deadline() || repeats() || done()) {
+        @if (scheduled() || due() || deadline() || repeats() || done()) {
           <p class="meta">
+            @if (scheduled(); as scheduled) {
+              <span class="scheduled">Scheduled {{ scheduled }}</span>
+            }
             @if (due(); as due) {
               <span class="due">Due {{ due }}</span>
             }
@@ -215,6 +218,10 @@ export class TaskItem {
   protected readonly due = computed(() => {
     const { dueDate } = this.task();
     return dueDate ? formatDate(dueDate) : null;
+  });
+  protected readonly scheduled = computed(() => {
+    const { scheduledDate } = this.task();
+    return scheduledDate ? formatDate(scheduledDate) : null;
   });
   protected readonly deadline = computed(() => {
     const { deadline } = this.task();

@@ -10,6 +10,7 @@ import { Home } from './home';
 
 const PROJECTS_URL = `${environment.apiBaseUrl}/api/projects`;
 const TASKS_URL = `${environment.apiBaseUrl}/api/tasks`;
+const LABELS_URL = `${environment.apiBaseUrl}/api/labels`;
 const ALL_TASKS_URL = `${TASKS_URL}?status=all&pageSize=100&page=1`;
 const INBOX = {
   id: 1,
@@ -178,6 +179,7 @@ describe('Home tabs', () => {
 
       el<HTMLButtonElement>('#panel-tasks button.new')!.click();
       await settle();
+      http.expectOne(LABELS_URL).flush([]);
 
       expect(router.url).toBe('/home?tab=tasks');
       expect(el('[role="dialog"] app-recurrence-picker')).toBeTruthy();
@@ -192,6 +194,7 @@ describe('Home tabs', () => {
 
       el<HTMLButtonElement>('#panel-tasks button.new')!.click();
       await settle();
+      http.expectOne(LABELS_URL).flush([]);
       const title = el<HTMLInputElement>('#task-title')!;
       title.value = 'Stay on this tab';
       title.dispatchEvent(new Event('input'));

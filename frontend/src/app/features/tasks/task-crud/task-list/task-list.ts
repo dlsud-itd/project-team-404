@@ -7,8 +7,15 @@ import {
   signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, RouterLink } from '@angular/router';
-import { finalize } from 'rxjs';
+import {
+  ActivatedRoute,
+  convertToParamMap,
+  NavigationEnd,
+  Router,
+  RouterLink,
+  type ParamMap,
+} from '@angular/router';
+import { filter, finalize } from 'rxjs';
 import { mapProjectError } from '../../../projects/project-crud/mappers/project-error.mapper';
 import { ProjectService } from '../../../projects/project-crud/services/project.service';
 import { ProjectsStore } from '../../../projects/shared/state/projects.store';
@@ -18,6 +25,15 @@ import { ConfirmDeleteTaskDialog } from '../components/confirm-delete-dialog/con
 import { TaskItem } from '../components/task-item/task-item';
 import { mapTaskError } from '../mappers/task-error.mapper';
 import { TaskService } from '../services/task.service';
+import { TASK_PRIORITIES } from '../../shared/types/task.types';
+import { LabelService, type Label } from '../../task-organization/services/label.service';
+
+type TaskFilters = {
+  priority: '' | 'low' | 'medium' | 'high';
+  labelId: number | null;
+  orderBy: '' | 'dueDate' | 'createdAt' | 'priority' | 'title';
+  orderDirection: 'asc' | 'desc';
+};
 
 /** The tasks of one project, at /projects/:projectId/tasks. */
 @Component({
@@ -32,7 +48,16 @@ export class TaskList {
   private readonly tasks = inject(TaskService);
   private readonly projects = inject(ProjectService);
   private readonly projectsStore = inject(ProjectsStore);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly labelsApi = inject(LabelService);
+  protected readonly priorities = TASK_PRIORITIES;
+  protected readonly labels = signal<Label[]>([]);
+  protected readonly labelsError = signal<string | null>(null);
+  protected readonly filters = signal<TaskFilters>(
+    taskFiltersFromParams(this.route.snapshot.queryParamMap),
+  );
 
   private readonly projectId = signal(0);
   protected readonly project = computed(() => this.projectsStore.byId(this.projectId()) ?? null);
@@ -50,9 +75,29 @@ export class TaskList {
 
   constructor() {
     // The router reuses this page between projects, so :projectId can change under it.
-    inject(ActivatedRoute)
-      .paramMap.pipe(takeUntilDestroyed())
+    this.route.paramMap
+      .pipe(takeUntilDestroyed())
       .subscribe((params) => this.open(Number(params.get('projectId'))));
+    this.router.events
+      .pipe(
+        filter((event): event is NavigationEnd => event instanceof NavigationEnd),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe(() => {
+        const params = convertToParamMap(this.router.parseUrl(this.router.url).queryParams);
+        const next = taskFiltersFromParams(params);
+        if (!sameFilters(next, this.filters())) {
+          this.filters.set(next);
+          if (this.projectId() > 0) this.load();
+        }
+      });
+    this.labelsApi
+      .list()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (labels) => this.labels.set(labels),
+        error: () => this.labelsError.set('Could not load labels. Please try again.'),
+      });
   }
 
   private open(projectId: number): void {
@@ -66,16 +111,81 @@ export class TaskList {
   }
 
   protected load(): void {
+    const filters = this.filters();
     this.tasks
-      .refresh(this.projectId())
+      .refresh(this.projectId(), {
+        ...(filters.priority ? { priority: filters.priority } : {}),
+        ...(filters.labelId ? { labelId: filters.labelId } : {}),
+        ...(filters.orderBy
+          ? { orderBy: filters.orderBy, orderDirection: filters.orderDirection }
+          : {}),
+      })
       .pipe(takeUntilDestroyed(this.destroyRef))
       // The store records the error for the template.
       .subscribe({ error: () => {} });
   }
 
+  protected setPriority(event: Event): void {
+    const target = event.target;
+    if (!(target instanceof HTMLSelectElement)) return;
+    const value = target.value;
+    this.updateFilters({
+      ...this.filters(),
+      priority: value === 'high' || value === 'medium' || value === 'low' ? value : '',
+    });
+  }
+
+  protected setLabel(event: Event): void {
+    const target = event.target;
+    if (!(target instanceof HTMLSelectElement)) return;
+    const labelId = Number(target.value);
+    this.updateFilters({
+      ...this.filters(),
+      labelId: Number.isInteger(labelId) && labelId > 0 ? labelId : null,
+    });
+  }
+
+  protected setOrderBy(event: Event): void {
+    const target = event.target;
+    if (!(target instanceof HTMLSelectElement)) return;
+    const value = target.value;
+    this.updateFilters({
+      ...this.filters(),
+      orderBy:
+        value === 'dueDate' || value === 'createdAt' || value === 'priority' || value === 'title'
+          ? value
+          : '',
+    });
+  }
+
+  protected setOrderDirection(event: Event): void {
+    const target = event.target;
+    if (!(target instanceof HTMLSelectElement)) return;
+    this.updateFilters({
+      ...this.filters(),
+      orderDirection: target.value === 'desc' ? 'desc' : 'asc',
+    });
+  }
+
   protected newTask(): void {
     this.notice.set(null);
     this.store.creating.set({ projectId: this.projectId() });
+  }
+
+  private updateFilters(filters: TaskFilters): void {
+    this.filters.set(filters);
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: {
+        priority: filters.priority || null,
+        labelId: filters.labelId,
+        orderBy: filters.orderBy || null,
+        orderDirection: filters.orderBy ? filters.orderDirection : null,
+      },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
+    this.load();
   }
 
   protected askDelete(task: Task): void {
@@ -132,4 +242,31 @@ export class TaskList {
         },
       });
   }
+}
+
+function taskFiltersFromParams(params: ParamMap): TaskFilters {
+  const priority = params.get('priority');
+  const orderBy = params.get('orderBy');
+  const parsedLabelId = Number(params.get('labelId'));
+  return {
+    priority: priority === 'high' || priority === 'medium' || priority === 'low' ? priority : '',
+    labelId: Number.isInteger(parsedLabelId) && parsedLabelId > 0 ? parsedLabelId : null,
+    orderBy:
+      orderBy === 'dueDate' ||
+      orderBy === 'createdAt' ||
+      orderBy === 'priority' ||
+      orderBy === 'title'
+        ? orderBy
+        : '',
+    orderDirection: params.get('orderDirection') === 'desc' ? 'desc' : 'asc',
+  };
+}
+
+function sameFilters(left: TaskFilters, right: TaskFilters): boolean {
+  return (
+    left.priority === right.priority &&
+    left.labelId === right.labelId &&
+    left.orderBy === right.orderBy &&
+    left.orderDirection === right.orderDirection
+  );
 }
