@@ -45,7 +45,7 @@ describe('StatusColumns', () => {
   });
 
   it('shows "Nothing here" for an empty column', () => {
-    store.filter.set({ priority: 'high' });
+    store.filter.set({ priorityId: 1 });
     fixture.detectChanges();
 
     expect(column('current')).toEqual([]);

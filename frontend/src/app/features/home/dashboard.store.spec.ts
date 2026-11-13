@@ -56,7 +56,7 @@ describe('DashboardStore', () => {
       [2, 3],
       [3, 2],
     ]);
-    expect(store.priorityCounts()).toEqual({ high: 3, medium: 3, low: 2 });
+    expect(Object.fromEntries(store.priorityCounts())).toEqual({ 1: 3, 2: 3, 3: 2 });
   });
 
   it('filters live tasks by project or priority and sorts open tasks first', () => {
@@ -68,7 +68,7 @@ describe('DashboardStore', () => {
       'Gym session',
     ]);
 
-    store.filter.set({ priority: 'high' });
+    store.filter.set({ priorityId: 1 });
     expect(titles(store.filteredTasks())).toEqual([
       'Submit lab report',
       'Study for quiz',

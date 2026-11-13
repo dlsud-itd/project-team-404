@@ -1,0 +1,159 @@
+<h2>Priorities</h2>
+<p class="intro">
+  Your priority levels, in the order tasks are sorted by. New tasks get the default level unless you
+  pick another.
+</p>
+
+<p class="visually-hidden" aria-live="polite">{{ announcement() }}</p>
+
+@if (store.error() && !store.editable()) {
+  <div class="alert" role="alert">
+    {{ store.error() }} The built-in High, Medium and Low levels are shown until they load.
+    <button type="button" class="action" [disabled]="store.loading()" (click)="store.load()">
+      {{ store.loading() ? 'Retrying…' : 'Try again' }}
+    </button>
+  </div>
+}
+
+@if (store.loading() && !store.editable()) {
+  <p class="status" role="status">Loading priorities…</p>
+} @else {
+  @if (store.editable()) {
+    <section class="create" aria-label="New priority level">
+      <app-name-color-editor
+        #createEditor
+        idPrefix="new-priority"
+        kind="Priority"
+        placeholder="New priority name"
+        submitLabel="Add priority"
+        defaultColor="#7B23A8"
+        [showCancel]="false"
+        [takenNames]="takenNames(null)"
+        [busy]="creating()"
+        [serverError]="createError()"
+        (saved)="create($event)"
+      />
+    </section>
+  }
+
+  <ul
+    class="list"
+    aria-label="Priority levels"
+    cdkDropList
+    [cdkDropListData]="store.levels()"
+    [cdkDropListDisabled]="!store.editable()"
+    (cdkDropListDropped)="drop($event)"
+  >
+    @for (level of store.levels(); track level.id; let first = $first, last = $last) {
+      <li
+        class="row"
+        cdkDrag
+        [cdkDragDisabled]="editingId() !== null"
+        [attr.data-priority-id]="level.id"
+      >
+        @if (editingId() === level.id) {
+          <app-name-color-editor
+            [idPrefix]="'priority-' + level.id + '-editor'"
+            kind="Priority"
+            submitLabel="Save"
+            [autofocus]="true"
+            [initialName]="level.name"
+            [initialColor]="level.color"
+            [takenNames]="takenNames(level.id)"
+            [busy]="saving()"
+            [serverError]="editError()"
+            (saved)="saveEdit(level, $event)"
+            (cancelled)="cancelEdit()"
+          />
+        } @else {
+          @if (store.editable()) {
+            <button
+              type="button"
+              class="handle"
+              cdkDragHandle
+              tabindex="-1"
+              aria-hidden="true"
+              title="Drag to reorder"
+            >
+              ⠿
+            </button>
+          }
+          <span class="swatch" [style.background-color]="level.color ?? noColor"></span>
+          <span class="name">{{ level.name }}</span>
+          @if (level.isDefault) {
+            <span class="badge">Default</span>
+          }
+          @if (countLabel(level.taskCount); as count) {
+            <span class="count">{{ count }}</span>
+          }
+          @if (store.editable()) {
+            <div class="actions">
+              <button
+                type="button"
+                class="icon"
+                [id]="'priority-' + level.id + '-up'"
+                [disabled]="first"
+                [attr.aria-label]="'Move ' + level.name + ' up'"
+                (click)="move(level, -1)"
+              >
+                ↑
+              </button>
+              <button
+                type="button"
+                class="icon"
+                [id]="'priority-' + level.id + '-down'"
+                [disabled]="last"
+                [attr.aria-label]="'Move ' + level.name + ' down'"
+                (click)="move(level, 1)"
+              >
+                ↓
+              </button>
+              <button
+                type="button"
+                class="action"
+                [id]="'priority-' + level.id + '-edit'"
+                [attr.aria-label]="'Edit ' + level.name"
+                (click)="startEdit(level)"
+              >
+                Edit
+              </button>
+              @if (!level.isDefault) {
+                <button
+                  type="button"
+                  class="action"
+                  [disabled]="defaultingId() !== null"
+                  [attr.aria-label]="'Set ' + level.name + ' as default'"
+                  (click)="setDefault(level)"
+                >
+                  Set as default
+                </button>
+              }
+              <button
+                type="button"
+                class="action danger"
+                [id]="'priority-' + level.id + '-delete'"
+                [disabled]="store.levels().length === 1"
+                [attr.aria-label]="'Delete ' + level.name"
+                [title]="store.levels().length === 1 ? 'You need at least one priority level' : ''"
+                (click)="askDelete(level)"
+              >
+                Delete
+              </button>
+            </div>
+          }
+        }
+      </li>
+    }
+  </ul>
+}
+
+@if (pendingDelete(); as level) {
+  <app-delete-priority-dialog
+    [level]="level"
+    [levels]="store.levels()"
+    [busy]="deleting()"
+    [error]="deleteError()"
+    (confirmed)="confirmDelete($event)"
+    (cancelled)="cancelDelete()"
+  />
+}

@@ -25,11 +25,12 @@ import { ConfirmDeleteTaskDialog } from '../components/confirm-delete-dialog/con
 import { TaskItem } from '../components/task-item/task-item';
 import { mapTaskError } from '../mappers/task-error.mapper';
 import { TaskService } from '../services/task.service';
-import { TASK_PRIORITIES } from '../../shared/types/task.types';
+import { PrioritiesStore } from '../../../settings/state/priorities.store';
 import { LabelService, type Label } from '../../task-organization/services/label.service';
 
 type TaskFilters = {
-  priority: '' | 'low' | 'medium' | 'high';
+  /** A priority level name in lower case, or '' for every level. */
+  priority: string;
   labelId: number | null;
   orderBy: '' | 'dueDate' | 'createdAt' | 'priority' | 'title';
   orderDirection: 'asc' | 'desc';
@@ -52,7 +53,7 @@ export class TaskList {
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
   private readonly labelsApi = inject(LabelService);
-  protected readonly priorities = TASK_PRIORITIES;
+  protected readonly priorities = inject(PrioritiesStore);
   protected readonly labels = signal<Label[]>([]);
   protected readonly labelsError = signal<string | null>(null);
   protected readonly filters = signal<TaskFilters>(
@@ -128,11 +129,7 @@ export class TaskList {
   protected setPriority(event: Event): void {
     const target = event.target;
     if (!(target instanceof HTMLSelectElement)) return;
-    const value = target.value;
-    this.updateFilters({
-      ...this.filters(),
-      priority: value === 'high' || value === 'medium' || value === 'low' ? value : '',
-    });
+    this.updateFilters({ ...this.filters(), priority: priorityParam(target.value) });
   }
 
   protected setLabel(event: Event): void {
@@ -249,7 +246,7 @@ function taskFiltersFromParams(params: ParamMap): TaskFilters {
   const orderBy = params.get('orderBy');
   const parsedLabelId = Number(params.get('labelId'));
   return {
-    priority: priority === 'high' || priority === 'medium' || priority === 'low' ? priority : '',
+    priority: priorityParam(priority),
     labelId: Number.isInteger(parsedLabelId) && parsedLabelId > 0 ? parsedLabelId : null,
     orderBy:
       orderBy === 'dueDate' ||
@@ -260,6 +257,12 @@ function taskFiltersFromParams(params: ParamMap): TaskFilters {
         : '',
     orderDirection: params.get('orderDirection') === 'desc' ? 'desc' : 'asc',
   };
+}
+
+/** A priority filter value: a level name in lower case, or '' for none. */
+function priorityParam(value: string | null): string {
+  const name = value?.trim().toLowerCase() ?? '';
+  return name.length <= 50 ? name : '';
 }
 
 function sameFilters(left: TaskFilters, right: TaskFilters): boolean {

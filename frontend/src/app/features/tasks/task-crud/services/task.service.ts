@@ -2,6 +2,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { EMPTY, Observable, concat, expand, last, map, of, tap, toArray } from 'rxjs';
 import { environment } from '../../../../../environments/environment';
+import { PrioritiesStore } from '../../../settings/state/priorities.store';
 import { TasksStore } from '../../shared/state/tasks.store';
 import type {
   ApiTask,
@@ -22,7 +23,8 @@ const MAX_PAGE_SIZE = 100;
 export interface TaskListFilter {
   projectId?: number;
   page?: number;
-  priority?: 'low' | 'medium' | 'high';
+  /** A priority level name, compared without case by the server. */
+  priority?: string;
   labelId?: number;
   orderBy?: 'dueDate' | 'createdAt' | 'priority' | 'title';
   orderDirection?: 'asc' | 'desc';
@@ -38,6 +40,8 @@ export class TaskService {
   private readonly http = inject(HttpClient);
   private readonly store = inject(TasksStore);
   private readonly scheduling = inject(TaskSchedulingService);
+  private readonly priorities = inject(PrioritiesStore);
+  private readonly legacyPriority = (priorityId: number) => this.priorities.legacyName(priorityId);
   private readonly baseUrl = `${environment.apiBaseUrl}/api/tasks`;
 
   /** GET /api/tasks, open and completed, optionally limited to one project. */
@@ -45,7 +49,13 @@ export class TaskService {
     let params = new HttpParams();
     if (filter.projectId !== undefined) params = params.set('projectId', filter.projectId);
     params = params.set('status', 'all').set('pageSize', MAX_PAGE_SIZE);
-    if (filter.priority) params = params.set('priority', filter.priority);
+    if (filter.priority) {
+      // Sprint 3 servers only know the legacy single `priority` filter; custom names need `priorities`.
+      const name = filter.priority.toLowerCase();
+      params = ['high', 'medium', 'low'].includes(name)
+        ? params.set('priority', name)
+        : params.set('priorities', filter.priority);
+    }
     if (filter.labelId !== undefined) params = params.set('labelId', filter.labelId);
     if (filter.orderBy) params = params.set('orderBy', filter.orderBy);
     if (filter.orderDirection) params = params.set('orderDirection', filter.orderDirection);
@@ -93,16 +103,21 @@ export class TaskService {
   }
 
   create(request: CreateTaskRequest): Observable<Task> {
-    return this.http.post<ApiTask>(this.baseUrl, toCreateTaskBody(request)).pipe(
-      map(toTask),
-      tap((task) => this.store.upsert(task)),
-    );
+    return this.http
+      .post<ApiTask>(this.baseUrl, toCreateTaskBody(request, this.legacyPriority))
+      .pipe(
+        map(toTask),
+        tap((task) => this.store.upsert(task)),
+      );
   }
 
   /** PUT /api/tasks/{id} with only the changed details (title, description, priority, project). */
   update(taskId: number, changes: UpdateTaskRequest): Observable<UpdateTaskResponse> {
     return this.http
-      .put<UpdateTaskResponse>(`${this.baseUrl}/${taskId}`, toUpdateTaskBody(changes))
+      .put<UpdateTaskResponse>(
+        `${this.baseUrl}/${taskId}`,
+        toUpdateTaskBody(changes, this.legacyPriority),
+      )
       .pipe(tap(() => this.store.patch(taskId, changes)));
   }
 

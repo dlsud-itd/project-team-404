@@ -78,7 +78,7 @@ describe('AllTasks', () => {
     expect(titles().at(-1)).toBe('Gym session');
     const first = el('.task')!;
     expect(first.querySelector('.project')?.textContent?.trim()).toBe('School');
-    expect(first.querySelector('.priority')?.textContent?.trim()).toBe('high');
+    expect(first.querySelector('.priority')?.textContent?.trim()).toBe('High');
     expect(first.querySelector('.due')?.classList).toContain('overdue');
   });
 
@@ -87,7 +87,11 @@ describe('AllTasks', () => {
     compose();
 
     expect(el<HTMLInputElement>('input[aria-label="Due date"]')!.value).toBe('2026-10-30');
-    expect(el<HTMLSelectElement>('select[aria-label="Priority"]')!.value).toBe('medium');
+    expect(
+      el<HTMLSelectElement>(
+        'select[aria-label="Priority"]',
+      )!.selectedOptions[0].textContent?.trim(),
+    ).toBe('Medium');
   });
 
   it('opens the composer from the All Tasks action', () => {
@@ -135,7 +139,7 @@ describe('AllTasks', () => {
     expect(store.tasks().at(-1)).toMatchObject({
       title: 'Write essay',
       projectId: 4,
-      priority: 'medium',
+      priorityId: 2,
       due: '2026-10-30',
     });
     expect(el('form.composer')).toBeNull();
@@ -190,7 +194,7 @@ describe('AllTasks', () => {
       listedTask.id,
       listedTask.title,
       listedTask.projectId ?? 4,
-      listedTask.priority === 'high' ? 1 : listedTask.priority === 'medium' ? 2 : 3,
+      listedTask.priorityId,
       listedTask.due,
       listedTask.done,
     );

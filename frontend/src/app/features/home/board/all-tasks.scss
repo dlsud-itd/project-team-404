@@ -155,19 +155,7 @@
   font-size: 0.6875rem;
   font-weight: 600;
   text-align: center;
-  text-transform: capitalize;
-}
-
-.priority--high {
-  background: var(--ink);
-}
-
-.priority--medium {
-  background: #7b23a8;
-}
-
-.priority--low {
-  background: #ebb49c;
+  text-shadow: 0 0 2px rgb(0 0 0 / 0.35);
 }
 
 .due {

@@ -16,7 +16,8 @@ import { mapTaskError } from '../../tasks/task-crud/mappers/task-error.mapper';
 import { TaskService } from '../../tasks/task-crud/services/task.service';
 import { NewTaskDialog } from '../../tasks/task-crud/components/new-task-dialog/new-task-dialog';
 import { TasksStore } from '../../tasks/shared/state/tasks.store';
-import { TASK_PRIORITIES, type Task } from '../../tasks/shared/types/task.types';
+import { PrioritiesStore } from '../../settings/state/priorities.store';
+import type { Task } from '../../tasks/shared/types/task.types';
 
 @Component({
   selector: 'app-tasks-page',
@@ -27,7 +28,7 @@ import { TASK_PRIORITIES, type Task } from '../../tasks/shared/types/task.types'
 })
 export class TasksPage {
   protected readonly projectsStore = inject(ProjectsStore);
-  protected readonly priorities = TASK_PRIORITIES;
+  protected readonly priorities = inject(PrioritiesStore);
 
   private readonly projects = inject(ProjectService);
   private readonly tasksApi = inject(TaskService);
@@ -91,7 +92,7 @@ export class TasksPage {
   }
 
   protected priorityName(priorityId: number): string {
-    return this.priorities.find((priority) => priority.priorityId === priorityId)?.label ?? 'Low';
+    return this.priorities.nameOf(priorityId);
   }
 
   protected isBusy(task: Task): boolean {

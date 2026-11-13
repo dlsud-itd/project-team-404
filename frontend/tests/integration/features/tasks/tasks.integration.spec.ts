@@ -276,7 +276,7 @@ describe('Tasks integration (Task Scheduling screens + API)', () => {
       expect(req.request.method).toBe('POST');
       expect(req.request.body).toEqual({
         projectId: CAPSTONE.id,
-        priority: 'low',
+        priority: 'medium',
         title: 'Gym',
         description: null,
         scheduledDate: '2026-11-18',
@@ -710,8 +710,8 @@ describe('Tasks integration (Task Scheduling screens + API)', () => {
       await openList();
       await openNewTask();
 
-      // New tasks start at the lowest priority.
-      expect(selectedPriority()).toBe('Low');
+      // New tasks start at the default level (Medium among the built-in levels).
+      expect(selectedPriority()).toBe('Medium');
       type('#task-title', 'Prepare slides');
       choosePriority('High');
       await submit();

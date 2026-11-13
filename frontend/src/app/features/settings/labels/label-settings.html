@@ -1,0 +1,200 @@
+<h2>Labels</h2>
+<p class="intro">
+  Tag tasks across projects. Drag a label, or use Move up and Move down, to set the order labels
+  appear in.
+</p>
+
+<p class="visually-hidden" aria-live="polite">{{ announcement() }}</p>
+
+@if (loadError(); as message) {
+  <div class="alert" role="alert">
+    {{ message }}
+    <button type="button" class="action" (click)="load()">Try again</button>
+  </div>
+}
+
+@if (loading()) {
+  <p class="status" role="status">Loading labels…</p>
+} @else if (!loadError()) {
+  <section class="create" aria-label="New label">
+    <app-name-color-editor
+      #createEditor
+      idPrefix="new-label"
+      kind="Label"
+      placeholder="New label name"
+      submitLabel="Add label"
+      [showCancel]="false"
+      [takenNames]="takenNames(null)"
+      [busy]="creating()"
+      [serverError]="createError()"
+      (saved)="create($event)"
+    />
+  </section>
+
+  <ul
+    class="list"
+    aria-label="Labels"
+    cdkDropList
+    [cdkDropListData]="labels()"
+    (cdkDropListDropped)="drop($event)"
+  >
+    @for (label of labels(); track label.id; let first = $first, last = $last) {
+      <li
+        class="row"
+        cdkDrag
+        [cdkDragDisabled]="editingId() !== null"
+        [attr.data-label-id]="label.id"
+      >
+        @if (editingId() === label.id) {
+          <app-name-color-editor
+            [idPrefix]="'label-' + label.id + '-editor'"
+            kind="Label"
+            submitLabel="Save"
+            [autofocus]="true"
+            [initialName]="label.name"
+            [initialColor]="label.color"
+            [takenNames]="takenNames(label.id)"
+            [busy]="saving()"
+            [serverError]="editError()"
+            (saved)="saveEdit(label, $event)"
+            (cancelled)="cancelEdit()"
+          />
+        } @else {
+          <button
+            type="button"
+            class="handle"
+            cdkDragHandle
+            tabindex="-1"
+            aria-hidden="true"
+            title="Drag to reorder"
+          >
+            ⠿
+          </button>
+          <span class="swatch" [style.background-color]="label.color ?? noColor"></span>
+          <span class="name">{{ label.name }}</span>
+          @if (countLabel(label.taskCount); as count) {
+            <span class="count">{{ count }}</span>
+          }
+          <div class="actions">
+            <button
+              type="button"
+              class="icon"
+              [id]="'label-' + label.id + '-up'"
+              [disabled]="first"
+              [attr.aria-label]="'Move ' + label.name + ' up'"
+              (click)="move(label, -1)"
+            >
+              ↑
+            </button>
+            <button
+              type="button"
+              class="icon"
+              [id]="'label-' + label.id + '-down'"
+              [disabled]="last"
+              [attr.aria-label]="'Move ' + label.name + ' down'"
+              (click)="move(label, 1)"
+            >
+              ↓
+            </button>
+            <button
+              type="button"
+              class="action"
+              [id]="'label-' + label.id + '-edit'"
+              [attr.aria-label]="'Edit ' + label.name"
+              (click)="startEdit(label)"
+            >
+              Edit
+            </button>
+            <button
+              type="button"
+              class="action"
+              [disabled]="isBusy(label)"
+              [attr.aria-label]="'Archive ' + label.name"
+              (click)="setArchived(label, true)"
+            >
+              Archive
+            </button>
+            <button
+              type="button"
+              class="action danger"
+              [id]="'label-' + label.id + '-delete'"
+              [attr.aria-label]="'Delete ' + label.name"
+              (click)="askDelete(label)"
+            >
+              Delete
+            </button>
+          </div>
+        }
+      </li>
+    } @empty {
+      <li class="empty">No labels yet. Add one above.</li>
+    }
+  </ul>
+
+  @if (archived().length) {
+    <h3 id="archived-labels-heading">Archived</h3>
+    <ul class="list archived" aria-labelledby="archived-labels-heading">
+      @for (label of archived(); track label.id) {
+        <li class="row">
+          <span class="swatch" [style.background-color]="label.color ?? noColor"></span>
+          <span class="name">{{ label.name }}</span>
+          @if (countLabel(label.taskCount); as count) {
+            <span class="count">{{ count }}</span>
+          }
+          <div class="actions">
+            <button
+              type="button"
+              class="action"
+              [disabled]="isBusy(label)"
+              [attr.aria-label]="'Restore ' + label.name"
+              (click)="setArchived(label, false)"
+            >
+              Restore
+            </button>
+            <button
+              type="button"
+              class="action danger"
+              [id]="'label-' + label.id + '-delete'"
+              [attr.aria-label]="'Delete ' + label.name"
+              (click)="askDelete(label)"
+            >
+              Delete
+            </button>
+          </div>
+        </li>
+      }
+    </ul>
+  }
+}
+
+@if (pendingDelete(); as label) {
+  <div class="backdrop" (click)="cancelDelete()"></div>
+  <section
+    class="dialog"
+    role="alertdialog"
+    aria-modal="true"
+    aria-labelledby="delete-label-title"
+    aria-describedby="delete-label-impact"
+    (keydown.escape)="cancelDelete()"
+  >
+    <h3 id="delete-label-title">Delete “{{ label.name }}”?</h3>
+    <p id="delete-label-impact">{{ deleteImpact(label) }} This can't be undone.</p>
+    @if (deleteError(); as message) {
+      <p class="dialog-error" role="alert">{{ message }}</p>
+    }
+    <div class="dialog-actions">
+      <button
+        type="button"
+        class="action"
+        id="delete-label-cancel"
+        [disabled]="deleting()"
+        (click)="cancelDelete()"
+      >
+        Cancel
+      </button>
+      <button type="button" class="action danger" [disabled]="deleting()" (click)="confirmDelete()">
+        {{ deleting() ? 'Deleting…' : 'Delete label' }}
+      </button>
+    </div>
+  </section>
+}

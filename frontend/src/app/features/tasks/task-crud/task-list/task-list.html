@@ -33,12 +33,12 @@
       <label for="filter-priority">Priority</label>
       <select id="filter-priority" (change)="setPriority($event)">
         <option value="" [selected]="!filters().priority">All priorities</option>
-        @for (priority of priorities; track priority.priorityId) {
+        @for (level of priorities.levels(); track level.id) {
           <option
-            [value]="priority.label.toLowerCase()"
-            [selected]="filters().priority === priority.label.toLowerCase()"
+            [value]="level.name.toLowerCase()"
+            [selected]="filters().priority === level.name.toLowerCase()"
           >
-            {{ priority.label }}
+            {{ level.name }}
           </option>
         }
       </select>

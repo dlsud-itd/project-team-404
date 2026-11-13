@@ -21,6 +21,7 @@ import { environment } from '../../../../src/environments/environment';
 const AUTH_API = `${environment.apiBaseUrl}/api/auth`;
 const PROJECTS_API = `${environment.apiBaseUrl}/api/projects`;
 const TASKS_API = `${environment.apiBaseUrl}/api/tasks`;
+const PRIORITIES_API = `${environment.apiBaseUrl}/api/priorities`;
 const TOKEN = 'session-token';
 const USER = {
   id: 'user-1',
@@ -49,6 +50,10 @@ describe('Landing integration (landing page, guestGuard, session)', () => {
     http
       .match((request) => request.url === TASKS_API && request.method === 'GET')
       .forEach((request) => request.flush([]));
+    // Signing in loads the user's priority levels; a Sprint 3 server has no such route.
+    http
+      .match(PRIORITIES_API)
+      .forEach((request) => request.flush(null, { status: 404, statusText: 'Not Found' }));
     await harness.fixture.whenStable();
     harness.detectChanges();
   }

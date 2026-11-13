@@ -1,6 +1,7 @@
-import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { TASK_PRIORITIES, type Task } from '../../../../tasks/shared/types/task.types';
+import { PrioritiesStore } from '../../../../settings/state/priorities.store';
+import type { Task } from '../../../../tasks/shared/types/task.types';
 import { formatDate } from '../../../../tasks/task-scheduling/utils/date-format.util';
 import type { TaskDayGroup } from '../../types/current-upcoming.types';
 
@@ -19,8 +20,14 @@ export class TaskGroup {
   /** Only Later spans several days, so only its tasks show their date. */
   protected readonly showDates = computed(() => this.group().key === 'later');
 
+  private readonly priorities = inject(PrioritiesStore);
+
   protected priorityLabel(task: Task): string {
-    return TASK_PRIORITIES.find((p) => p.priorityId === task.priorityId)?.label ?? '';
+    return this.priorities.nameOf(task.priorityId);
+  }
+
+  protected priorityColor(task: Task): string {
+    return this.priorities.colorOf(task.priorityId);
   }
 
   protected dueLabel(task: Task): string {

@@ -14,7 +14,8 @@ import { FormBuilder, ReactiveFormsModule, type ValidatorFn, Validators } from '
 import { finalize } from 'rxjs';
 import { ConfirmDeleteTaskDialog } from '../../tasks/task-crud/components/confirm-delete-dialog/confirm-delete-dialog';
 import { NewTaskDialog } from '../../tasks/task-crud/components/new-task-dialog/new-task-dialog';
-import { DashboardStore, PRIORITIES, type Priority, type Task } from '../dashboard.store';
+import { PrioritiesStore } from '../../settings/state/priorities.store';
+import { DashboardStore, type Task } from '../dashboard.store';
 import { mapTaskError } from '../../tasks/task-crud/mappers/task-error.mapper';
 import { TaskService } from '../../tasks/task-crud/services/task.service';
 
@@ -35,7 +36,7 @@ const notBlank: ValidatorFn = ({ value }) =>
 })
 export class AllTasks {
   protected readonly store = inject(DashboardStore);
-  protected readonly priorities = PRIORITIES;
+  protected readonly priorities = inject(PrioritiesStore);
   protected readonly actionError = signal<string | null>(null);
   protected readonly submitting = signal(false);
   protected readonly busyTasks = signal<ReadonlySet<number>>(new Set());
@@ -52,7 +53,7 @@ export class AllTasks {
   protected readonly form = inject(FormBuilder).nonNullable.group({
     title: ['', [notBlank, Validators.maxLength(200)]],
     projectId: [''],
-    priority: ['medium' as Priority],
+    priorityId: [this.priorities.defaultLevel().id],
     due: [this.store.today(), Validators.required],
   });
 
@@ -66,6 +67,12 @@ export class AllTasks {
 
   constructor() {
     // Opening the form, or picking a day while it is open, starts the due date on that day.
+    // The user's levels may load after the page opens; follow their default until one is picked.
+    effect(() => {
+      const fallback = this.priorities.defaultLevel().id;
+      const priority = this.form.controls.priorityId;
+      if (priority.pristine) priority.setValue(fallback);
+    });
     effect(() => {
       const due = this.dueFilter();
       if (!this.composing()) return;
@@ -78,13 +85,13 @@ export class AllTasks {
       this.form.markAllAsTouched();
       return;
     }
-    const { title, projectId, priority, due } = this.form.getRawValue();
+    const { title, projectId, priorityId, due } = this.form.getRawValue();
     this.actionError.set(null);
     this.submitting.set(true);
     this.tasksApi
       .create({
         ...(projectId ? { projectId: Number(projectId) } : {}),
-        priorityId: priority === 'high' ? 1 : priority === 'medium' ? 2 : 3,
+        priorityId,
         title: title.trim(),
         description: null,
         dueDate: due || null,
@@ -100,7 +107,12 @@ export class AllTasks {
       .subscribe({
         next: (task) => {
           this.store.upsertTask(task);
-          this.form.reset({ title: '', projectId, priority: 'medium', due: this.store.today() });
+          this.form.reset({
+            title: '',
+            projectId,
+            priorityId: this.priorities.defaultLevel().id,
+            due: this.store.today(),
+          });
           this.composing.set(false);
         },
         error: (error: unknown) => this.actionError.set(mapTaskError(error).message),

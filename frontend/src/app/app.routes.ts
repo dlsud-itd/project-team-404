@@ -38,20 +38,10 @@ export const routes: Routes = [
           import('./features/projects/projects.routes').then((m) => m.PROJECTS_ROUTES),
       },
       {
-        path: 'settings/profile',
-        title: 'Profile · HabitTracker',
-        loadComponent: () =>
-          import('./features/auth/profile/profile-settings/profile-settings').then(
-            (m) => m.ProfileSettings,
-          ),
-      },
-      {
-        path: 'settings/labels',
-        title: 'Labels · HabitTracker',
-        loadComponent: () =>
-          import('./features/tasks/label-management/label-management').then(
-            (m) => m.LabelManagement,
-          ),
+        // Profile, Preferences, Config, Labels and Priorities tabs; /settings/profile is unchanged.
+        path: 'settings',
+        loadChildren: () =>
+          import('./features/settings/settings.routes').then((m) => m.SETTINGS_ROUTES),
       },
     ],
   },

@@ -176,7 +176,7 @@ describe('TaskForm', () => {
       flushProjects();
     });
 
-    it('shows labelled fields, with the lowest priority and this project picked', () => {
+    it('shows labelled fields, with the default priority and this project picked', () => {
       expect(text('#new-task-title')).toBe('New task');
       for (const id of [
         'task-title',
@@ -192,7 +192,7 @@ describe('TaskForm', () => {
       }
       expect(text('.schedule h2')).toBe('Date and deadline');
       expect(text('legend')).toBe('Repeat');
-      expect(selected('task-priority')).toBe('Low');
+      expect(selected('task-priority')).toBe('Medium');
       expect(selected('task-project')).toBe('Capstone');
       expect(el<HTMLSelectElement>('#task-project').options).toHaveLength(3);
       expect(saveButton().textContent).toContain('Add task');
@@ -223,7 +223,7 @@ describe('TaskForm', () => {
       expect(req.request.method).toBe('POST');
       expect(req.request.body).toEqual({
         projectId: 10,
-        priority: 'low',
+        priority: 'medium',
         title: 'Study ILT Module 4',
         description: null,
         scheduledDate: null,

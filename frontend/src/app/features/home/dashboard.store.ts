@@ -2,7 +2,6 @@ import { Injectable, computed, signal } from '@angular/core';
 import type { Project as ApiProject } from '../projects/shared/types/project.types';
 import type { Task as ApiTask } from '../tasks/shared/types/task.types';
 
-export type Priority = 'high' | 'medium' | 'low';
 export type TaskStatus = 'current' | 'upcoming' | 'overdue' | 'done' | 'unscheduled';
 
 export interface Project {
@@ -15,7 +14,8 @@ export interface Task {
   id: number;
   title: string;
   projectId: number | null;
-  priority: Priority;
+  /** One of the user's priority levels; PrioritiesStore has its name, color and order. */
+  priorityId: number;
   /** Local date, YYYY-MM-DD, or null when the task has no due date. */
   due: string | null;
   done: boolean;
@@ -26,22 +26,10 @@ export interface Task {
 
 export interface TaskFilter {
   projectId?: number;
-  priority?: Priority;
+  priorityId?: number;
   /** Local date, YYYY-MM-DD: only tasks due that day. Set by the calendar. */
   due?: string;
 }
-
-export const PRIORITIES: { value: Priority; label: string; hint?: string }[] = [
-  { value: 'high', label: 'High', hint: 'Do these first' },
-  { value: 'medium', label: 'Medium' },
-  { value: 'low', label: 'Low' },
-];
-
-const PRIORITY_BY_ID: Readonly<Record<number, Priority>> = {
-  1: 'high',
-  2: 'medium',
-  3: 'low',
-};
 
 /** Formats a date as a local YYYY-MM-DD string. */
 export function toDateKey(date: Date): string {
@@ -58,7 +46,7 @@ function fromApiTask(task: ApiTask): Task {
     id: task.taskId,
     title: task.title,
     projectId: task.projectId || null,
-    priority: PRIORITY_BY_ID[task.priorityId] ?? 'low',
+    priorityId: task.priorityId,
     due: task.dueDate,
     done: task.completedAt !== null,
     isRecurring: task.recurrence !== 'none',
@@ -101,10 +89,10 @@ export class DashboardStore {
   );
 
   readonly filteredTasks = computed(() => {
-    const { projectId, priority, due } = this.filter();
+    const { projectId, priorityId, due } = this.filter();
     return this.taskList()
       .filter((task) => projectId === undefined || task.projectId === projectId)
-      .filter((task) => priority === undefined || task.priority === priority)
+      .filter((task) => priorityId === undefined || task.priorityId === priorityId)
       .filter((task) => due === undefined || task.due === due)
       .sort(
         (left, right) =>
@@ -134,9 +122,12 @@ export class DashboardStore {
     return counts;
   });
 
+  /** Open tasks per priority level id. */
   readonly priorityCounts = computed(() => {
-    const counts: Record<Priority, number> = { high: 0, medium: 0, low: 0 };
-    for (const task of this.openTasks()) counts[task.priority]++;
+    const counts = new Map<number, number>();
+    for (const task of this.openTasks()) {
+      counts.set(task.priorityId, (counts.get(task.priorityId) ?? 0) + 1);
+    }
     return counts;
   });
 

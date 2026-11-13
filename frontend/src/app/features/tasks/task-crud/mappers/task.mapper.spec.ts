@@ -125,3 +125,34 @@ describe('toUpdateTaskBody', () => {
     });
   });
 });
+
+describe('per-user priority levels (Sprint 5)', () => {
+  const byId = () => undefined;
+
+  it('reads the level id from a priority object', () => {
+    const task = toTask({
+      ...API_TASK,
+      priority: { id: 42, name: 'Urgent', color: '#C44536', sortOrder: 0 },
+    });
+    expect(task.priorityId).toBe(42);
+  });
+
+  it('sends a level by id once the user’s own levels are in use', () => {
+    const body = toCreateTaskBody(
+      {
+        priorityId: 42,
+        title: 'Plan sprint',
+        description: null,
+        dueDate: null,
+        deadline: null,
+        recurrence: 'none',
+        recurrenceDays: [],
+        recurrenceEndDate: null,
+      },
+      byId,
+    );
+    expect(body).toMatchObject({ priorityId: 42 });
+    expect(body).not.toHaveProperty('priority');
+    expect(toUpdateTaskBody({ priorityId: 42 }, byId)).toEqual({ priorityId: 42 });
+  });
+});
