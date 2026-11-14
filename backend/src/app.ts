@@ -12,6 +12,7 @@ import { createDashboardRouter } from './features/dashboard/dashboard.routes';
 import { createPrioritiesRouter } from './features/priorities/priorities.routes';
 import { createSettingsRouter } from './features/settings/settings.routes';
 import { createArchiveRouter } from './features/archive/archive.routes';
+import { createSearchRouter } from './features/search/search.routes';
 import { errorHandler } from './middleware/error-handler.middleware';
 
 export const app = express();
@@ -33,6 +34,7 @@ app.use('/api/priorities', createPrioritiesRouter(sessions));
 app.use('/api/settings', createSettingsRouter(sessions));
 app.use('/api/dashboard', createDashboardRouter(sessions));
 app.use('/api/archive', createArchiveRouter(sessions));
+app.use('/api/search', createSearchRouter(sessions));
 
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok' });
