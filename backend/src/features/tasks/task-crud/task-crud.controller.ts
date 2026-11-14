@@ -1,7 +1,10 @@
 import type { RequestHandler } from 'express';
 import type { TaskRecord } from '../shared/models/task.model';
 import { toTaskModel } from '../shared/models/task.model';
-import { TaskNotFoundError } from './errors/task-crud.errors';
+import {
+  InvalidTaskPriorityError,
+  TaskNotFoundError,
+} from './errors/task-crud.errors';
 import type { TaskCrudService } from './task-crud.service';
 import type {
   CreateTaskInput,
@@ -23,6 +26,13 @@ export function createTaskCrudController(service: TaskCrudService): {
   ) => {
     if (error instanceof TaskNotFoundError) {
       res.status(404).json({ error: error.message });
+      return;
+    }
+    if (error instanceof InvalidTaskPriorityError) {
+      res.status(400).json({
+        code: 'invalid-priority',
+        error: error.message,
+      });
       return;
     }
     next(error);

@@ -31,9 +31,15 @@ export type TaskOrganizationDependencies = {
 export class TaskOrganizationService {
   constructor(private readonly dependencies: TaskOrganizationDependencies) {}
 
-  async setPriority(task: TaskRecord, userId: string, priority: TaskPriority) {
+  async setPriority(
+    task: TaskRecord,
+    userId: string,
+    priority?: TaskPriority,
+    priorityId?: number
+  ) {
     const updated = await this.dependencies.updateOwnedTask(task.id, userId, {
-      priority,
+      ...(priority !== undefined ? { priority } : {}),
+      ...(priorityId !== undefined ? { priorityId } : {}),
     });
     if (!updated) {
       throw new TaskNotFoundError();

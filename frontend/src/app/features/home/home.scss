@@ -66,21 +66,6 @@
   }
 }
 
-.mascot {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin-top: 1rem;
-
-  img {
-    width: 5rem;
-    aspect-ratio: 1;
-    border-radius: 50%;
-    background: radial-gradient(circle, #d6a4dc 0%, #a963c2 100%);
-    object-fit: cover;
-  }
-}
-
 .main {
   display: flex;
   flex-direction: column;

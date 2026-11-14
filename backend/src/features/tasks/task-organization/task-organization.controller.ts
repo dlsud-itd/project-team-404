@@ -1,6 +1,9 @@
 import type { RequestHandler } from 'express';
 import { LabelNotFoundError } from '../../labels/label-crud/errors/label-not-found.error';
-import { TaskNotFoundError } from '../task-crud/errors/task-not-found.error';
+import {
+  InvalidTaskPriorityError,
+  TaskNotFoundError,
+} from '../task-crud/errors/task-crud.errors';
 import type { TaskRecord } from '../shared/models/task.model';
 import type { TaskOrganizationService } from './task-organization.service';
 import type {
@@ -28,16 +31,26 @@ export function createTaskOrganizationController(
       res.status(404).json({ error: error.message });
       return;
     }
+    if (error instanceof InvalidTaskPriorityError) {
+      res.status(400).json({
+        code: 'invalid-priority',
+        error: error.message,
+      });
+      return;
+    }
     next(error);
   };
 
   return {
     setPriority: async (req, res, next) => {
       try {
+        const { priority, priorityId } = res.locals
+          .validated as SetTaskPriorityInput;
         const result = await service.setPriority(
           res.locals.ownedTask as TaskRecord,
           req.auth!.userId,
-          (res.locals.validated as SetTaskPriorityInput).priority
+          priority,
+          priorityId
         );
         res.status(200).json(result);
       } catch (error) {

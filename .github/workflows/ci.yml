@@ -40,6 +40,41 @@ jobs:
           cache-dependency-path: backend/package-lock.json
       - run: npm ci
       - run: npm ci --prefix ..
+      - name: Select an available local Supabase database port
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import re
+          import socket
+          from pathlib import Path
+
+          with socket.socket() as sock:
+              sock.bind(("0.0.0.0", 0))
+              db_port = sock.getsockname()[1]
+
+          config_path = Path("../supabase/config.toml")
+          lines = config_path.read_text().splitlines(keepends=True)
+          in_db_section = False
+          updated = 0
+
+          for index, line in enumerate(lines):
+              section = line.strip()
+              if section.startswith("["):
+                  in_db_section = section == "[db]"
+              if in_db_section and re.match(r"^\s*port\s*=", line):
+                  lines[index] = re.sub(
+                      r"^(\s*port\s*=\s*)\d+",
+                      rf"\g<1>{db_port}",
+                      line,
+                  )
+                  updated += 1
+
+          if updated != 1:
+              raise SystemExit(f"Expected one [db] port setting, found {updated}")
+
+          config_path.write_text("".join(lines))
+          print(f"Using local Supabase database port {db_port}")
+          PY
       - name: Start local Supabase
         run: npm --prefix .. run supabase:local:start
       - name: Reset local database without demo data

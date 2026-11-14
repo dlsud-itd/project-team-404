@@ -24,7 +24,17 @@ const task: TaskRecord = {
   createdAt: new Date(),
   updatedAt: new Date(),
   deletedAt: null,
-  priorityLevel: { id: 2, name: 'medium', sortOrder: 2 },
+  priorityLevel: {
+    id: 2,
+    userId: 'user-1',
+    name: 'medium',
+    color: '#a3a3a3',
+    isDefault: true,
+    sortOrder: 2,
+    deletedAt: null,
+    createdAt: new Date('2026-10-30T00:00:00.000Z'),
+    updatedAt: new Date('2026-10-30T00:00:00.000Z'),
+  },
   taskLabels: [],
 };
 

@@ -13,7 +13,7 @@ model Task {
   projectId     Int?            @db.Integer @map("project_id")
   title         String          @db.VarChar(200)
   description   String?         @db.VarChar(1000)
-  priorityId    Int             @db.SmallInt @map("priority_id")
+  priorityId    Int             @db.Integer @map("priority_id")
   scheduledDate DateTime?       @db.Date @map("scheduled_date")
   dueDate       DateTime?       @db.Date @map("due_date")
   deadline      DateTime?       @db.Timestamptz(6) @map("deadline")

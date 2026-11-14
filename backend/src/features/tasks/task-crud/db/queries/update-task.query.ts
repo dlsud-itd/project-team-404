@@ -2,6 +2,7 @@ import { prisma } from '../../../../../shared/db/prisma.client';
 import type { UpdateTaskInput } from '../../types/task-crud.types';
 import { toRecurrenceData } from '../../../task-scheduling/utils/recurrence-data.util';
 import { RecurrenceService } from '../../../task-scheduling/services/recurrence.service';
+import { InvalidTaskPriorityError } from '../../errors/invalid-task-priority.error';
 
 const recurrenceService = new RecurrenceService();
 const taskInclude = {
@@ -23,14 +24,26 @@ export async function updateTask(
 
     const completing = input.isDone === true && !currentTask.isDone;
     const priorityLevel =
-      input.priority === undefined
-        ? null
-        : await transaction.priorityLevel.findUnique({
-            where: { name: input.priority },
+      input.priorityId !== undefined
+        ? await transaction.priorityLevel.findFirst({
+            where: { id: input.priorityId, userId, deletedAt: null },
             select: { id: true },
-          });
-    if (input.priority !== undefined && !priorityLevel) {
-      throw new Error(`Priority level is not configured: ${input.priority}`);
+          })
+        : input.priority !== undefined
+          ? await transaction.priorityLevel.findFirst({
+              where: {
+                userId,
+                deletedAt: null,
+                name: { equals: input.priority, mode: 'insensitive' },
+              },
+              select: { id: true },
+            })
+          : null;
+    if (
+      (input.priority !== undefined || input.priorityId !== undefined) &&
+      !priorityLevel
+    ) {
+      throw new InvalidTaskPriorityError();
     }
 
     const result = await transaction.task.updateMany({
@@ -66,7 +79,7 @@ export async function updateTask(
           ? { deadline: input.deadline ? new Date(input.deadline) : null }
           : {}),
         ...toRecurrenceData(input),
-        ...(input.priority !== undefined
+        ...(input.priority !== undefined || input.priorityId !== undefined
           ? { priorityId: priorityLevel!.id }
           : {}),
         ...(input.isDone !== undefined ? { isDone: input.isDone } : {}),

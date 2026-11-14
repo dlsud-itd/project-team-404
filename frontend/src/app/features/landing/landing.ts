@@ -7,7 +7,6 @@ import { LandingSteps } from './steps/landing-steps';
 
 interface Showcase {
   label: string;
-  image: string;
   tone: 'purple' | 'peach';
 }
 
@@ -25,10 +24,9 @@ export class Landing {
     { label: 'About', fragment: 'about' },
   ];
 
-  /** Illustrations live in public/landing/. */
   protected readonly showcases: Showcase[] = [
-    { label: 'Focus', image: 'landing/focus.png', tone: 'purple' },
-    { label: 'Routine', image: 'landing/routine.png', tone: 'peach' },
-    { label: 'Consistent', image: 'landing/consistent.png', tone: 'purple' },
+    { label: 'Focus', tone: 'purple' },
+    { label: 'Routine', tone: 'peach' },
+    { label: 'Consistent', tone: 'purple' },
   ];
 }

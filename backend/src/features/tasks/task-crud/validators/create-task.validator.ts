@@ -21,6 +21,7 @@ const taskDeadline = z
   .nullable()
   .optional();
 const taskPriority = z.enum(['low', 'medium', 'high']).optional();
+const taskPriorityId = z.coerce.number().int().positive().optional();
 
 export const createTaskValidator = z
   .object({
@@ -34,6 +35,7 @@ export const createTaskValidator = z
     recurrenceDays: recurrenceDaysField,
     recurrenceEndDate: recurrenceEndDateField,
     priority: taskPriority,
+    priorityId: taskPriorityId,
     isDone: z.boolean().optional(),
     doneAt: z.string().datetime({ offset: true }).nullable().optional(),
   })

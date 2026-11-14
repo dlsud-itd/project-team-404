@@ -1,6 +1,9 @@
 import { LabelNameTakenError } from './errors/label-name-taken.error';
 import { LabelNotFoundError } from './errors/label-not-found.error';
-import type { LabelRecord } from '../shared/models/label.model';
+import type {
+  LabelListRecord,
+  LabelRecord,
+} from '../shared/models/label.model';
 import { toLabelModel } from '../shared/models/label.model';
 import type {
   CreateLabelInput,
@@ -9,7 +12,7 @@ import type {
 
 export type LabelCrudDependencies = {
   createLabel(userId: string, input: CreateLabelInput): Promise<LabelRecord>;
-  listLabels(userId: string): Promise<LabelRecord[]>;
+  listLabels(userId: string): Promise<LabelListRecord[]>;
   findOwnedLabel(labelId: number, userId: string): Promise<LabelRecord | null>;
   updateOwnedLabel(
     labelId: number,
@@ -34,7 +37,9 @@ export class LabelCrudService {
   }
 
   async list(userId: string) {
-    return (await this.dependencies.listLabels(userId)).map(toLabelModel);
+    return (await this.dependencies.listLabels(userId)).map((label) =>
+      toLabelModel(label, label._count.taskLabels)
+    );
   }
 
   async get(labelId: number, userId: string) {
