@@ -4,7 +4,7 @@
 
 This matrix covers the Current & Upcoming tasks view and the Overdue Tasks view across backend integration, frontend integration, and end-to-end tests. These views depend on the task scheduling contract: tasks are grouped by upcoming scheduled or due dates, while overdue items are incomplete tasks whose due date is in the past. The expected results below describe observable behavior; use the scheduling API specification for exact route, field, and response names.
 
-Tests that depend on task persistence or date grouping are blocked until the Task CRUD and task scheduling integration cases pass. Every end-to-end case is blocked until the relevant backend and frontend integration coverage passes.
+Tests that depend on task persistence or date grouping are blocked until the Task CRUD and task scheduling integration cases pass. The end-to-end cases run against the real API and a seeded local database, so they do not wait on the integration rows.
 
 Status values: `Failing` means the case is planned but not yet passing; `Blocked` means a prerequisite must pass first; `Passing` means verified.
 
@@ -50,14 +50,14 @@ Tests: `frontend/tests/integration/features/dashboard/dashboard.integration.spec
 
 ### 1.3 End-to-End
 
-| ID         | Test Case                                              | Expected Result                                                                               | Status  |
-| ---------- | ------------------------------------------------------ | --------------------------------------------------------------------------------------------- | ------- |
-| E2E-CUR-01 | Create a task scheduled for a future date              | The task appears in the Current & Upcoming view and remains after reload.                     | Blocked |
-| E2E-CUR-02 | Create a task with a future due date                   | The task appears in the correct upcoming grouping using the due date.                         | Blocked |
-| E2E-CUR-03 | Mark a task complete after it was in the upcoming list | The task disappears from the Current & Upcoming view after the update and reload.             | Blocked |
-| E2E-CUR-04 | Edit a task's scheduled date to a later date           | The task moves to the correct upcoming date grouping and remains after reload.                | Blocked |
-| E2E-CUR-05 | Open the current/upcoming tasks view after refresh     | The current and upcoming tasks remain visible and correctly ordered with persisted task data. | Blocked |
-| E2E-CUR-06 | Sign in as a different user and view upcoming tasks    | The other user's upcoming tasks are not shown or accessible.                                  | Blocked |
+| ID         | Test Case                                                  | Expected Result                                                                                                                                                           | Status  |
+| ---------- | ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- |
+| E2E-CUR-01 | Log in as a seeded user and open `/dashboard`, then reload | Today, Tomorrow and Later, their counts, the tasks in each and the section total match a service-role query for that user, in the API's order, before and after a reload. | Passing |
+| E2E-CUR-02 | Complete one listed task through the API, then reload      | The completed task (matched by id) is no longer listed, and the groups match a fresh service-role query.                                                                  | Passing |
+| E2E-CUR-03 | Log in as a freshly created account                        | Today, Tomorrow and Later each show 0 and their empty message, the section shows "0 tasks", and no other user's tasks appear.                                             | Passing |
+| E2E-CUR-04 | Visit `/dashboard` while signed out                        | The browser lands on `/login` and no `/api/dashboard` request is made.                                                                                                    | Passing |
+
+Spec: `tests/e2e/dashboard/current-upcoming.e2e.spec.ts`. See "End-to-end dashboard specs" in the Notes for how to run it and what it needs.
 
 ## 2. Overdue Tasks View
 
@@ -86,17 +86,27 @@ Tests: `frontend/tests/integration/features/dashboard/dashboard.integration.spec
 
 ### 2.3 End-to-End
 
-| ID         | Test Case                                          | Expected Result                                                                           | Status  |
-| ---------- | -------------------------------------------------- | ----------------------------------------------------------------------------------------- | ------- |
-| E2E-OVD-01 | Create an incomplete task with a past due date     | The task appears in the Overdue Tasks view and remains after reload.                      | Blocked |
-| E2E-OVD-02 | Mark an overdue task complete                      | The task is removed from the Overdue Tasks view after save and reload.                    | Blocked |
-| E2E-OVD-03 | Change an overdue task's due date to a future date | The task moves out of the overdue group and into the Current & Upcoming view as expected. | Blocked |
-| E2E-OVD-04 | Open the overdue tasks view after refresh          | The overdue list remains correct and ordered after a browser refresh.                     | Blocked |
-| E2E-OVD-05 | Sign in as a different user and open overdue tasks | The other user's overdue task is not shown or accessible.                                 | Blocked |
+| ID         | Test Case                                                    | Expected Result                                                                                                                                                              | Status  |
+| ---------- | ------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- |
+| E2E-OVD-01 | Log in as a seeded user and open `/dashboard`, then reload   | The Overdue list matches a service-role query, oldest deadline first, each task shows the right "N days overdue" badge, and the count is correct, before and after a reload. | Passing |
+| E2E-OVD-02 | Complete one overdue task through the API, then reload       | The completed task (matched by id) is no longer listed, and the list matches a fresh service-role query.                                                                     | Passing |
+| E2E-OVD-03 | Log in as a freshly created account                          | The Overdue list shows "Nothing here" and "0 overdue tasks".                                                                                                                 | Passing |
+| E2E-OVD-04 | Log in as Harvey while other seeded users have overdue tasks | None of the other users' overdue tasks appear in the API response or on the page.                                                                                            | Passing |
+
+Spec: `tests/e2e/dashboard/overdue.e2e.spec.ts`.
 
 ## Notes
 
-- Current & Upcoming tasks and every end-to-end case are blocked until the relevant task scheduling backend and frontend cases pass.
+- Current & Upcoming tasks are blocked until the relevant task scheduling backend and frontend cases pass.
+
+### End-to-end dashboard specs
+
+- Run with `npm run test:e2e -- dashboard/` from the repository root (see `documents/setup.md`, "Browser E2E tests"). Both specs run headless in Chromium. They passed twice in a row, plus a third time as part of the full `npm run test:e2e` run, on 14 November 2026 against a database seeded the same day.
+- They use Harvey's seeded "Filter fixture" tasks from `supabase/seeds/006_filtering.sql`. Those tasks are due today and in the coming days, with deadlines in the past, all relative to the day the seed ran. Re-seeding does not move the dates, so each spec stops in `beforeAll` with a clear message if the seed is missing or more than one day old: reset with `npm run supabase:local:reset`, then run `npm run supabase:local:seed`.
+- Expected results come from service-role queries that apply the API's own rules. Current & Upcoming covers open tasks due from today through 7 days later in the user's timezone. Overdue covers open tasks whose deadline is in the past. Both leave out tasks in archived or deleted projects and are capped at the user's dashboard task limit.
+- Completing a recurring task creates its next occurrence with the same title, so tasks are matched by id (taken from the edit link). `afterEach` deletes any task rows added during the test, writes back every changed row from a snapshot taken in `beforeAll`, and fails if Harvey's tasks still differ from that snapshot. It also deletes any freshly created account.
+- Overdue is based on the task's deadline, not its due date; E2E-OVD-01 to E2E-OVD-04 follow that.
+- Not covered end to end: creating a task with a future scheduled date (scheduled dates are not used for grouping; see FE-CUR-02), editing a task's scheduled date, and changing an overdue task's dates through the editor. The earlier planned rows for these cases were replaced by the rows above.
 - FE-OVD-05: an Overdue failure shows its own error and Try again without hiding Current & Upcoming; this is checked in the dashboard spec under FE-CUR-09. The Overdue rows keep their status until the Overdue section has its own integration tests.
 - The Current & Upcoming view should follow the scheduling contract for current/future windows and ordering; the Overdue view should show only incomplete tasks whose due dates precede the current time.
 - Task results must be scoped to the authenticated user and should not expose another user's tasks by ID, date window, or filtering criteria.

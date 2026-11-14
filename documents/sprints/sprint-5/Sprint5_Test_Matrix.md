@@ -112,12 +112,24 @@ All Sorting & Filtering E2E cases remain blocked until the draft contract is app
 
 | ID        | Test Case                                      | Expected Result                                                                                                  | Status  |
 | --------- | ---------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- | ------- |
-| FE-LPM-01 | Manage priority names, colors, and ordering    | The page loads priorities and reflects successful create, edit, reorder, and delete responses.                   | Blocked |
-| FE-LPM-02 | Select a default priority                      | The selected level becomes the default and is used for new tasks when no priority is explicitly supplied.        | Blocked |
-| FE-LPM-03 | Delete a priority used by tasks                | The UI requires a valid reassignment target and updates affected tasks and counts after success.                 | Blocked |
-| FE-LPM-04 | Manage label names, colors, and ordering       | The page reflects successful label CRUD and reorder operations, including updated task counts.                   | Blocked |
-| FE-LPM-05 | Assign priorities and labels to tasks          | Task forms send selected IDs, display returned priority/label data, and prevent selection of archived labels.    | Blocked |
-| FE-LPM-06 | Report validation, conflict, and server errors | Duplicate names and other API errors are visible in context; failed changes do not replace the last saved state. | Blocked |
+| FE-LPM-01 | Manage priority names, colors, and ordering    | The page loads priorities and reflects successful create, edit, reorder, and delete responses.                   | Passing |
+| FE-LPM-02 | Select a default priority                      | The selected level becomes the default and is used for new tasks when no priority is explicitly supplied.        | Passing |
+| FE-LPM-03 | Delete a priority used by tasks                | The UI requires a valid reassignment target and updates affected tasks and counts after success.                 | Passing |
+| FE-LPM-04 | Manage label names, colors, and ordering       | The page reflects successful label CRUD and reorder operations, including updated task counts.                   | Passing |
+| FE-LPM-05 | Assign priorities and labels to tasks          | Task forms send selected IDs, display returned priority/label data, and prevent selection of archived labels.    | Failing |
+| FE-LPM-06 | Report validation, conflict, and server errors | Duplicate names and other API errors are visible in context; failed changes do not replace the last saved state. | Passing |
+
+Tests: `frontend/tests/integration/features/settings/labels-priorities.integration.spec.ts`; run with `npm run test:run` from `frontend` (17 tests; the whole frontend suite passed on 14 November 2026). They go through the real `/settings/labels` and `/settings/priorities` routes behind `authGuard` and the settings layout, and the real task list and task form, with the real `LabelsService`, `PrioritiesService`, `PrioritiesStore`, `SettingsStore`, `TaskService` and `TasksStore`. `providePriorityLevels()` and `provideUserSettings()` are registered as in `app.config.ts`, so signing in loads the user's levels and settings. Only the network is faked, with the backend's bodies and status codes (`toLabelModel`, `toPriorityModel`, `toTaskModel` and the controllers' error bodies), and `http.verify()` runs after every test.
+
+- Settings layout: `/settings` opens Profile, and all five tabs (Profile, Preferences, Config, Labels, Priorities) link to their pages.
+- FE-LPM-01: the list shows levels in order with the Default badge and task counts. Create sends `POST /priorities` with the name and color, edit sends `PUT /priorities/:id`, and Move up sends `PUT /priorities/reorder` with every id. The backend answers reorder with the reordered levels, not the documented `{ priorityIds }`; the page does not read the body.
+- FE-LPM-02: Set as default sends `PUT /priorities/:id/default` and moves the badge. A new task in the task form preselects the default level and sends it as `priorityId`.
+- FE-LPM-03: deleting a used level asks where its tasks go and will not send until a level is chosen. It then sends `DELETE /priorities/:id?reassignTo=…`, and the chosen level's task count goes up by the moved tasks. An unused level is deleted without `reassignTo`. When only one level is left, its Delete button is disabled.
+- FE-LPM-04: labels are listed in order with task counts. Create, rename and recolor send the trimmed name and an upper-case color; an edit keeps the task count, since `PUT` answers without one. Delete asks first and names the number of tasks that lose the label. Drag (a CDK drop) and Move up/down each send `PUT /labels/reorder` with every active id.
+- FE-LPM-05 stays Failing: the priority picker and the task-list priority filter show the user's own levels in order, and each task's priority badge uses its level's color. Assigning labels in the task form and keeping archived labels out of it are not covered yet.
+- FE-LPM-06: a name already in use is caught as it is typed; a `409` from the server shows "Label “…” already exists." A failed reorder puts the old order back with a toast. A `500` on load shows Try again, and the retry loads the page. If priorities fail before any load, the built-in levels are shown, read-only, with Try again. A `401` clears the session and opens `/login`.
+- Backend gaps found while matching the bodies: `PUT /labels/reorder` has no backend route yet. `DELETE /priorities/:id` and `PUT /priorities/:id/default` answer with the full level instead of the documented bodies. `PrioritiesStore` now works out the moved-task count when `tasksReassigned` is missing; before this fix the count showed "NaN tasks".
+- A failed refresh on the Priorities page, after the levels loaded at sign-in, keeps those levels without an alert or retry.
 
 ### 3.3 End-to-End
 
@@ -144,11 +156,20 @@ All Sorting & Filtering E2E cases remain blocked until the draft contract is app
 
 | ID        | Test Case                                         | Expected Result                                                                                                   | Status  |
 | --------- | ------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- | ------- |
-| FE-SET-01 | Load settings and apply saved preferences         | The settings UI and application use the values returned by `GET /settings`, including defaults for a new user.    | Blocked |
-| FE-SET-02 | Save dashboard limits and appearance preferences  | Valid changes send a partial `PATCH`, show success, and remain applied after the settings response is refreshed.  | Blocked |
-| FE-SET-03 | Reject invalid settings and preserve saved values | Invalid values are prevented or reported; a failed save does not replace the last successfully saved preferences. | Blocked |
-| FE-SET-04 | Apply dashboard item limits                       | Dashboard requests use configured task/project limits and render the returned items and total correctly.          | Blocked |
-| FE-SET-05 | Handle settings load or update failure            | A visible error and retry path are provided without silently reverting or displaying success-shaped defaults.     | Blocked |
+| FE-SET-01 | Load settings and apply saved preferences         | The settings UI and application use the values returned by `GET /settings`, including defaults for a new user.    | Passing |
+| FE-SET-02 | Save dashboard limits and appearance preferences  | Valid changes send a partial `PATCH`, show success, and remain applied after the settings response is refreshed.  | Passing |
+| FE-SET-03 | Reject invalid settings and preserve saved values | Invalid values are prevented or reported; a failed save does not replace the last successfully saved preferences. | Passing |
+| FE-SET-04 | Apply dashboard item limits                       | Dashboard requests use configured task/project limits and render the returned items and total correctly.          | Passing |
+| FE-SET-05 | Handle settings load or update failure            | A visible error and retry path are provided without silently reverting or displaying success-shaped defaults.     | Passing |
+
+Tests: `frontend/tests/integration/features/settings/settings.integration.spec.ts`; run with `npm run test:run` from `frontend` (13 tests; the whole frontend suite passed on 14 November 2026). They go through the real app shell and the `/login`, `/settings/config`, `/settings/preferences`, `/dashboard` and `/home` routes behind `authGuard`, with the real `SettingsService`, `SettingsStore`, `SessionService`, `DashboardService`, the dashboard sections and the home project list. `providePriorityLevels()` and `provideUserSettings()` are registered as in `app.config.ts`. Only the network and the dashboard clock are faked, with the backend's bodies (`toUserSettingsModel`, the validate-request `400` body, the dashboard `{ tasks }` and `toProjectModel`), and `http.verify()` runs after every test.
+
+- FE-SET-01: after logging in through `/login`, the saved size and font from `GET /settings` are set on `<html>` (`--app-font-size`, `--app-font-family`) and cached. They are already there while `/dashboard` is still loading its tasks. On a reload, the cached size and font are applied before `GET /auth/me` or `GET /settings` is answered, so there is no flash. Logging out clears the cache and puts the default look back. A user on the defaults sees 5 and 5, Medium and System.
+- FE-SET-02: in Preferences, picking a size or font changes the preview and the whole page at once. Save sends `PATCH /settings` with `{ fontSize, fontFamily }` and shows "Preferences saved."; Cancel puts the saved values back without a request. In Config, saving 3 tasks and 4 projects sends `PATCH /settings` with only the two limits. Reset to defaults sends 5 and 5 straight away.
+- FE-SET-03: 0 and 51 show "Choose a number from 1 to 50." and Save stays disabled, so nothing is sent. A `400` shows the server's message ("Invalid settings update: …"), and the saved limits and cache stay as they were.
+- FE-SET-04: with limits of 3 and 4, Current & Upcoming and Overdue each list 3 tasks with View all (6) and View all (5). The home project list shows 4 projects (Inbox included) with View all (7), which opens `/home?tab=projects` with every project. The limits are applied in the browser: the dashboard endpoints take no limit and send no `total` yet (see BE-SET-05), so the totals come from the full list the server sends.
+- FE-SET-05: a `500` on `GET /settings` shows "Couldn't load your settings." with Try again, Save stays disabled until the settings load, and the retry loads and applies them. A `401` clears the session and the cached settings and opens `/login`.
+- The `400` message is new: Config and Preferences used to show a fixed "Couldn't save…" message for every failure. They now show the server's `error` and `details` messages for a `400`; other failures keep the fixed message.
 
 ### 4.3 End-to-End
 

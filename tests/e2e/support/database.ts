@@ -416,6 +416,27 @@ export async function labelRow(
   return rows[0] ?? null;
 }
 
+/** Reads rows from a table with the service-role key; `query` holds PostgREST filters. */
+export async function serviceRoleRows<T = Record<string, unknown>>(
+  table: string,
+  query: URLSearchParams
+): Promise<T[]> {
+  return supabaseRequest<T[]>(`/rest/v1/${table}?${query}`);
+}
+
+/** Overwrites one task row with saved column values, e.g. to undo a completion. */
+export async function patchTaskRow(
+  taskId: number,
+  values: Record<string, unknown>
+): Promise<void> {
+  const query = new URLSearchParams({ task_id: `eq.${taskId}` });
+  await supabaseRequest(`/rest/v1/tbl_task?${query}`, {
+    method: 'PATCH',
+    headers: { Prefer: 'return=minimal' },
+    body: JSON.stringify(values),
+  });
+}
+
 export async function deleteTaskRows(
   userId: string,
   taskIds: number[]

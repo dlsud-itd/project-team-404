@@ -124,8 +124,9 @@ project, never production or shared development data.
 
 The shared Playwright runner exercises registration, login/session handling,
 password recovery, profile management, and Projects (create, edit, delete,
-favorite, archive, reorder, and switch) against the local frontend and API.
-Specs live in `tests/e2e/auth/` and `tests/e2e/projects/`.
+favorite, archive, reorder, and switch), Tasks, and the Dashboard against the
+local frontend and API. Specs live in `tests/e2e/auth/`, `tests/e2e/projects/`,
+`tests/e2e/tasks/`, and `tests/e2e/dashboard/`.
 By default, it starts local Supabase and uses its seeded database. It forces the
 backend console mailer and does not read or connect to a linked/remote project.
 
@@ -164,12 +165,31 @@ aborted run are removed before the next one. Harvey's seeded projects get their
 favorite, archive, and sort-order values put back through the API after each
 test, and the test fails if they differ from the seed afterwards.
 
+The Dashboard specs in `tests/e2e/dashboard/` (`current-upcoming.e2e.spec.ts`
+and `overdue.e2e.spec.ts`) check the Current & Upcoming and Overdue sections of
+`/dashboard` against service-role database queries. They use Harvey's
+`Filter fixture …` tasks from `supabase/seeds/006_filtering.sql`, whose due dates
+and deadlines are relative to the day the seed ran. Seeding again does not move
+those dates, so **run the Dashboard specs on a database seeded the same day**:
+
+```powershell
+npm run supabase:local:reset   # deletes local data
+npm run supabase:local:seed
+npm run test:e2e -- dashboard/
+```
+
+Each spec stops with a clear message if the seed is missing or more than one
+day old. Tasks completed during a test, and any next occurrences created for
+recurring tasks, are put back after each test. Freshly created accounts are
+deleted.
+
 Pass extra Playwright arguments after `--`:
 
 ```powershell
 npm run test:e2e -- projects/                 # only the Projects specs
 npm run test:e2e -- projects/project-crud     # one spec file
 npm run test:e2e -- projects/ --repeat-each=2 # each Projects test twice in a row
+npm run test:e2e -- dashboard/                # only the Dashboard specs
 ```
 
 Failed-test screenshots, videos, and traces are saved under

@@ -127,9 +127,16 @@ export class PrioritiesStore {
   /** Deletes a level, moving its tasks (and its default flag) to `reassignTo`. */
   remove(id: number, reassignTo: number | null): Observable<DeletePriorityResult> {
     return this.api.delete(id, reassignTo).pipe(
-      tap((result) => {
+      tap((body) => {
+        const result = body as Partial<DeletePriorityResult> | null;
         const removed = this.byId(id);
-        const target = result.reassignedTo ?? reassignTo;
+        const target = result?.reassignedTo ?? reassignTo;
+        // The backend currently answers with the deleted level instead of the documented
+        // { deletedId, reassignedTo, tasksReassigned }; then the moved tasks are the level's own.
+        const moved =
+          typeof result?.tasksReassigned === 'number'
+            ? result.tasksReassigned
+            : (removed?.taskCount ?? null);
         this.list.update((levels) =>
           levels
             .filter((level) => level.id !== id)
@@ -139,7 +146,7 @@ export class PrioritiesStore {
                     ...level,
                     isDefault: level.isDefault || !!removed?.isDefault,
                     taskCount:
-                      level.taskCount === null ? null : level.taskCount + result.tasksReassigned,
+                      level.taskCount === null || moved === null ? null : level.taskCount + moved,
                   }
                 : level,
             ),
