@@ -1,0 +1,744 @@
+{
+  "info": {
+    "_postman_id": "a32a8af7-d7d9-49f4-b37f-280f926d2fa7",
+    "name": "Project-Team-404 API - 342-labels-priorities",
+    "description": "Postman API tests for Sprint 5 labels and priorities.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "342-labels-priorities",
+      "description": "Priority and label CRUD, ordering, validation, and ownership checks.",
+      "item": [
+        {
+          "name": "Login - James (token)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "const response = pm.response.json();",
+                  "pm.test('Token exists', function () { pm.expect(response.token).to.be.a('string').and.not.empty; });",
+                  "pm.environment.set('token', response.token);",
+                  "pm.environment.set('runId', String(Date.now()));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"identifier\": \"james@example.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Login - Harvey (tokenB)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "const response = pm.response.json();",
+                  "pm.environment.set('tokenB', response.token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"identifier\": \"harvey@example.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Get Harvey priorities for ownership check",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "const priorities = pm.response.json();",
+                  "pm.test('Harvey priority ID is captured', function () { pm.expect(priorities).to.be.an('array').and.not.empty; pm.environment.set('otherUserPriorityId', String(priorities[0].id)); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{tokenB}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/priorities",
+              "host": ["{{baseUrl}}"],
+              "path": ["priorities"]
+            }
+          }
+        },
+        {
+          "name": "Get James priorities and capture Medium",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test('List contains Low, Medium, and High priorities', function () { pm.expect(body).to.be.an('array'); pm.expect(body.some((p) => p.name === 'Low')).to.equal(true); pm.expect(body.some((p) => p.name === 'Medium')).to.equal(true); pm.expect(body.some((p) => p.name === 'High')).to.equal(true); const medium = body.find((p) => p.name === 'Medium'); pm.expect(medium).to.not.equal(undefined); pm.environment.set('reassignPriorityId', String(medium.id)); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/priorities",
+              "host": ["{{baseUrl}}"],
+              "path": ["priorities"]
+            }
+          }
+        },
+        {
+          "name": "Restore Medium as default baseline",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Medium is restored as the default', function () { pm.expect(pm.response.json().isDefault).to.equal(true); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/priorities/{{reassignPriorityId}}/default",
+              "host": ["{{baseUrl}}"],
+              "path": ["priorities", "{{reassignPriorityId}}", "default"]
+            }
+          }
+        },
+        {
+          "name": "Create James custom priority",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 201', function () { pm.response.to.have.status(201); });",
+                  "const response = pm.response.json();",
+                  "pm.test('Created priority has expected fields', function () { pm.expect(response.id).to.be.a('number'); pm.expect(response.name).to.equal('Urgent ' + pm.environment.get('runId')); pm.expect(response.color).to.equal('#ff6b35'); });",
+                  "pm.environment.set('priorityId', String(response.id));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Urgent {{runId}}\",\n  \"color\": \"#ff6b35\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/priorities",
+              "host": ["{{baseUrl}}"],
+              "path": ["priorities"]
+            }
+          }
+        },
+        {
+          "name": "Rename priority",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "const response = pm.response.json();",
+                  "pm.test('Name was updated', function () { pm.expect(response.name).to.equal('Critical ' + pm.environment.get('runId')); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Critical {{runId}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/priorities/{{priorityId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["priorities", "{{priorityId}}"]
+            }
+          }
+        },
+        {
+          "name": "Recolor priority",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "const response = pm.response.json();",
+                  "pm.test('Color is updated', function () { pm.expect(response.color).to.equal('#00b894'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"color\": \"#00b894\"\n}" },
+            "url": {
+              "raw": "{{baseUrl}}/priorities/{{priorityId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["priorities", "{{priorityId}}"]
+            }
+          }
+        },
+        {
+          "name": "Set default priority",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "const response = pm.response.json();",
+                  "pm.test('Priority is marked default', function () { pm.expect(response.isDefault).to.equal(true); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/priorities/{{priorityId}}/default",
+              "host": ["{{baseUrl}}"],
+              "path": ["priorities", "{{priorityId}}", "default"]
+            }
+          }
+        },
+        {
+          "name": "Duplicate priority name returns 409",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 409', function () { pm.response.to.have.status(409); });",
+                  "const body = pm.response.json();",
+                  "pm.test('Conflict code is present', function () { pm.expect(body.code).to.equal('priority-name-taken'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Critical {{runId}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/priorities",
+              "host": ["{{baseUrl}}"],
+              "path": ["priorities"]
+            }
+          }
+        },
+        {
+          "name": "Create unused priority for delete check",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 201', function () { pm.response.to.have.status(201); });",
+                  "const response = pm.response.json();",
+                  "pm.environment.set('unusedPriorityId', String(response.id));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Unused {{runId}}\",\n  \"color\": \"#45818e\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/priorities",
+              "host": ["{{baseUrl}}"],
+              "path": ["priorities"]
+            }
+          }
+        },
+        {
+          "name": "Create task with custom priority",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 201', function () { pm.response.to.have.status(201); });",
+                  "const response = pm.response.json();",
+                  "pm.test('Custom priority details are returned', function () { pm.expect(response.priority).to.be.an('object'); pm.expect(response.priority.id).to.equal(Number(pm.environment.get('priorityId'))); pm.expect(response.priority.name).to.equal('Critical ' + pm.environment.get('runId')); });",
+                  "pm.environment.set('priorityTaskId', String(response.id));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Custom priority task {{runId}}\",\n  \"priorityId\": {{priorityId}}\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/tasks",
+              "host": ["{{baseUrl}}"],
+              "path": ["tasks"]
+            }
+          }
+        },
+        {
+          "name": "Delete unused priority",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/priorities/{{unusedPriorityId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["priorities", "{{unusedPriorityId}}"]
+            }
+          }
+        },
+        {
+          "name": "Delete used priority without reassign returns 409",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 409', function () { pm.response.to.have.status(409); });",
+                  "const body = pm.response.json();",
+                  "pm.test('Reassign required code is present', function () { pm.expect(body.code).to.equal('reassign-required'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/priorities/{{priorityId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["priorities", "{{priorityId}}"]
+            }
+          }
+        },
+        {
+          "name": "Delete used priority with reassign",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "const response = pm.response.json();",
+                  "pm.test('Task reassignment is returned', function () { pm.expect(response).to.have.property('id'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/priorities/{{priorityId}}?reassignTo={{reassignPriorityId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["priorities", "{{priorityId}}"],
+              "query": [
+                { "key": "reassignTo", "value": "{{reassignPriorityId}}" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Deleted priority is no longer accessible",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 404', function () { pm.response.to.have.status(404); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/priorities/{{priorityId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["priorities", "{{priorityId}}"]
+            }
+          }
+        },
+        {
+          "name": "Create task without priority uses default",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 201', function () { pm.response.to.have.status(201); });",
+                  "const response = pm.response.json();",
+                  "pm.test('Task uses the reassigned Medium default', function () { pm.expect(response.priority).to.equal('medium'); });",
+                  "pm.environment.set('taskId', String(response.id));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Priority default test {{runId}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/tasks",
+              "host": ["{{baseUrl}}"],
+              "path": ["tasks"]
+            }
+          }
+        },
+        {
+          "name": "Legacy priority name still works on task create",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 201', function () { pm.response.to.have.status(201); });",
+                  "const response = pm.response.json();",
+                  "pm.test('Legacy priority resolves to the built-in string', function () { pm.expect(response.priority).to.equal('low'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Legacy priority {{runId}}\",\n  \"priority\": \"low\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/tasks",
+              "host": ["{{baseUrl}}"],
+              "path": ["tasks"]
+            }
+          }
+        },
+        {
+          "name": "Another user's priority ID fails on task",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 400', function () { pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Cross-user priority {{runId}}\",\n  \"priorityId\": {{otherUserPriorityId}}\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/tasks",
+              "host": ["{{baseUrl}}"],
+              "path": ["tasks"]
+            }
+          }
+        },
+        {
+          "name": "Another user's priority ID returns 404 on /priorities",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 404', function () { pm.response.to.have.status(404); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/priorities/{{otherUserPriorityId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["priorities", "{{otherUserPriorityId}}"]
+            }
+          }
+        },
+        {
+          "name": "Create a label",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 201', function () { pm.response.to.have.status(201); });",
+                  "const response = pm.response.json();",
+                  "pm.test('Label is created for this run', function () { pm.expect(response.id).to.be.a('number'); pm.expect(response.name).to.equal('Postman ' + pm.environment.get('runId')); });",
+                  "pm.environment.set('labelId', String(response.id));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Postman {{runId}}\",\n  \"color\": \"#45818e\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/labels",
+              "host": ["{{baseUrl}}"],
+              "path": ["labels"]
+            }
+          }
+        },
+        {
+          "name": "List labels has taskCount and sortOrder",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test('Created label is listed with taskCount and sortOrder', function () { const label = body.find((item) => String(item.id) === pm.environment.get('labelId')); pm.expect(label).to.not.equal(undefined); pm.expect(label).to.have.property('taskCount'); pm.expect(label).to.have.property('sortOrder'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/labels",
+              "host": ["{{baseUrl}}"],
+              "path": ["labels"]
+            }
+          }
+        },
+        {
+          "name": "Get created label",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Label detail matches the created label', function () { pm.expect(pm.response.json().id).to.equal(Number(pm.environment.get('labelId'))); pm.expect(pm.response.json().name).to.equal('Postman ' + pm.environment.get('runId')); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/labels/{{labelId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["labels", "{{labelId}}"]
+            }
+          }
+        },
+        {
+          "name": "Update created label",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "const response = pm.response.json();",
+                  "pm.test('Label name and color are updated', function () { pm.expect(response.name).to.equal('Updated Postman ' + pm.environment.get('runId')); pm.expect(response.color).to.equal('#00b894'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Postman {{runId}}\",\n  \"color\": \"#00b894\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/labels/{{labelId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["labels", "{{labelId}}"]
+            }
+          }
+        },
+        {
+          "name": "Delete created label",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 204', function () { pm.response.to.have.status(204); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/labels/{{labelId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["labels", "{{labelId}}"]
+            }
+          }
+        },
+        {
+          "name": "401 without token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 401', function () { pm.response.to.have.status(401); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/priorities",
+              "host": ["{{baseUrl}}"],
+              "path": ["priorities"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
