@@ -1,5 +1,7 @@
 import type { RequestHandler } from 'express';
 import { LabelNotFoundError } from '../../labels/label-crud/errors/label-not-found.error';
+import { LabelArchivedError } from '../../labels/shared/errors/label-archived.error';
+import { TaskArchivedError } from '../shared/errors/task-archived.error';
 import {
   InvalidTaskPriorityError,
   TaskNotFoundError,
@@ -18,6 +20,7 @@ export function createTaskOrganizationController(
   listLabels: RequestHandler;
   attachLabels: RequestHandler;
   detachLabel: RequestHandler;
+  archive: RequestHandler;
 } {
   const respondToError = (
     error: unknown,
@@ -36,6 +39,13 @@ export function createTaskOrganizationController(
         code: 'invalid-priority',
         error: error.message,
       });
+      return;
+    }
+    if (
+      error instanceof TaskArchivedError ||
+      error instanceof LabelArchivedError
+    ) {
+      res.status(409).json({ error: error.message });
       return;
     }
     next(error);
@@ -90,6 +100,19 @@ export function createTaskOrganizationController(
           labelId
         );
         res.status(200).json({ labels });
+      } catch (error) {
+        respondToError(error, res, next);
+      }
+    },
+    archive: async (req, res, next) => {
+      try {
+        const { isArchived } = res.locals.validated as { isArchived: boolean };
+        const result = await service.setArchived(
+          res.locals.ownedTask as TaskRecord,
+          req.auth!.userId,
+          isArchived
+        );
+        res.status(200).json(result);
       } catch (error) {
         respondToError(error, res, next);
       }

@@ -58,7 +58,12 @@ integrationDescribe('dashboard integration', () => {
 
   async function seedProject(userId: string, name: string, isArchived = false) {
     return prisma.project.create({
-      data: { userId, name, isArchived },
+      data: {
+        userId,
+        name,
+        isArchived,
+        archivedAt: isArchived ? new Date() : null,
+      },
     });
   }
 

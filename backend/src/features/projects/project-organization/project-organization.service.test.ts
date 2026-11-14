@@ -15,6 +15,7 @@ const project: ProjectRecord = {
   isInbox: false,
   isFavorite: false,
   isArchived: false,
+  archivedAt: null,
   sortOrder: 0,
   createdAt: new Date('2026-10-20T00:00:00.000Z'),
   updatedAt: new Date('2026-10-20T00:00:00.000Z'),
@@ -24,7 +25,16 @@ const project: ProjectRecord = {
 function dependencies(): ProjectOrganizationDependencies {
   return {
     setProjectFavorite: vi.fn().mockResolvedValue({ count: 1 }),
-    setProjectArchived: vi.fn().mockResolvedValue({ count: 1 }),
+    setProjectArchived: vi
+      .fn()
+      .mockImplementation(
+        (_projectId: number, _userId: string, isArchived: boolean) =>
+          Promise.resolve({
+            ...project,
+            isArchived,
+            archivedAt: isArchived ? new Date() : null,
+          })
+      ),
     setProjectSortOrder: vi.fn().mockResolvedValue({ count: 1 }),
     updateProjectSortOrders: vi
       .fn()

@@ -1,4 +1,5 @@
 import { TaskNotFoundError } from './errors/task-not-found.error';
+import { TaskArchivedError } from '../shared/errors/task-archived.error';
 import type {
   CreateTaskInput,
   ListTasksFilters,
@@ -43,6 +44,9 @@ export class TaskCrudService {
   }
 
   async update(task: TaskRecord, userId: string, input: UpdateTaskInput) {
+    if (task.archivedAt !== null) {
+      throw new TaskArchivedError();
+    }
     const projectId =
       input.projectId === undefined
         ? undefined

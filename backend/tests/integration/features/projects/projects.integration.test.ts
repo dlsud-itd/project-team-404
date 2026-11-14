@@ -58,6 +58,7 @@ integrationDescribe('projects integration', () => {
         color: values.color,
         isInbox: values.isInbox,
         isArchived: values.isArchived,
+        archivedAt: values.isArchived ? new Date() : null,
         sortOrder: values.sortOrder,
         deletedAt: values.deletedAt,
         updatedAt: values.updatedAt,
@@ -596,7 +597,7 @@ integrationDescribe('projects integration', () => {
           body: { isArchived: true },
         }
       );
-      expect(inboxArchive.status).toBe(400);
+      expect(inboxArchive.status).toBe(409);
       expect(inboxArchive.body).toEqual({
         error: 'Inbox project cannot be archived',
       });

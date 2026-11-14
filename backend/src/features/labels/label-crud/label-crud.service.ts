@@ -7,12 +7,13 @@ import type {
 import { toLabelModel } from '../shared/models/label.model';
 import type {
   CreateLabelInput,
+  ListLabelsQuery,
   UpdateLabelInput,
 } from './types/label-crud.types';
 
 export type LabelCrudDependencies = {
   createLabel(userId: string, input: CreateLabelInput): Promise<LabelRecord>;
-  listLabels(userId: string): Promise<LabelListRecord[]>;
+  listLabels(userId: string, isArchived: boolean): Promise<LabelListRecord[]>;
   findOwnedLabel(labelId: number, userId: string): Promise<LabelRecord | null>;
   updateOwnedLabel(
     labelId: number,
@@ -36,9 +37,12 @@ export class LabelCrudService {
     }
   }
 
-  async list(userId: string) {
-    return (await this.dependencies.listLabels(userId)).map((label) =>
-      toLabelModel(label, label._count.taskLabels)
+  async list(
+    userId: string,
+    { isArchived = false }: Partial<ListLabelsQuery> = {}
+  ) {
+    return (await this.dependencies.listLabels(userId, isArchived)).map(
+      (label) => toLabelModel(label, label._count.taskLabels)
     );
   }
 

@@ -20,6 +20,7 @@ const task: TaskRecord = {
   recurrenceEndDate: null,
   isDone: false,
   doneAt: null,
+  archivedAt: null,
   createdAt: new Date(),
   updatedAt: new Date(),
   deletedAt: null,

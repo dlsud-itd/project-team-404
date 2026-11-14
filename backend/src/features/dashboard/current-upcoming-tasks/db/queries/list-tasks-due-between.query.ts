@@ -10,6 +10,7 @@ export async function listTasksDueBetween(
       userId,
       isDone: false,
       deletedAt: null,
+      archivedAt: null,
       dueDate: {
         gte: toDatabaseDate(startDate),
         lte: toDatabaseDate(endDate),

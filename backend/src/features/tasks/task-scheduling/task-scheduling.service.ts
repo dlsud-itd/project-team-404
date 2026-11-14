@@ -1,4 +1,5 @@
 import { TaskNotFoundError } from '../task-crud/errors/task-not-found.error';
+import { TaskArchivedError } from '../shared/errors/task-archived.error';
 import type { TaskRecord } from '../shared/models/task.model';
 import { toTaskModel } from '../shared/models/task.model';
 import type { TaskScheduleUpdateInput } from './task-scheduling.types';
@@ -26,6 +27,7 @@ export class TaskSchedulingService {
     userId: string,
     scheduledDate: string | null
   ) {
+    this.assertTaskActive(task);
     const updated = await this.dependencies.updateTaskSchedule(
       task.id,
       userId,
@@ -40,6 +42,7 @@ export class TaskSchedulingService {
   }
 
   async setDueDate(task: TaskRecord, userId: string, dueDate: string | null) {
+    this.assertTaskActive(task);
     const updated = await this.dependencies.updateTaskSchedule(
       task.id,
       userId,
@@ -54,6 +57,7 @@ export class TaskSchedulingService {
   }
 
   async setDeadline(task: TaskRecord, userId: string, deadline: string | null) {
+    this.assertTaskActive(task);
     if (
       deadline &&
       task.dueDate &&
@@ -84,6 +88,7 @@ export class TaskSchedulingService {
       'recurrenceDays' | 'recurrenceEndDate'
     > = {}
   ) {
+    this.assertTaskActive(task);
     const updated = await this.dependencies.updateTaskSchedule(
       task.id,
       userId,
@@ -96,5 +101,11 @@ export class TaskSchedulingService {
       throw new TaskNotFoundError();
     }
     return toTaskModel(updated);
+  }
+
+  private assertTaskActive(task: TaskRecord) {
+    if (task.archivedAt !== null) {
+      throw new TaskArchivedError();
+    }
   }
 }

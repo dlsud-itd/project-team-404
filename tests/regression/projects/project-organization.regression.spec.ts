@@ -157,7 +157,7 @@ integrationDescribe('Project organization API regression', () => {
         body: { isArchived: true },
       }
     );
-    expect(inboxArchive.status).toBe(400);
+    expect(inboxArchive.status).toBe(409);
 
     const inboxSortOrder = await request(
       app,

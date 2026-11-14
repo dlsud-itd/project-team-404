@@ -1,5 +1,6 @@
 import type { RequestHandler } from 'express';
 import type { TaskRecord } from '../shared/models/task.model';
+import { TaskArchivedError } from '../shared/errors/task-archived.error';
 import { toTaskModel } from '../shared/models/task.model';
 import {
   InvalidTaskPriorityError,
@@ -33,6 +34,10 @@ export function createTaskCrudController(service: TaskCrudService): {
         code: 'invalid-priority',
         error: error.message,
       });
+      return;
+    }
+    if (error instanceof TaskArchivedError) {
+      res.status(409).json({ error: error.message });
       return;
     }
     next(error);

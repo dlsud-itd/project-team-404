@@ -25,6 +25,8 @@ The collection logs in as James and Harvey, who are created by `supabase/seeds/0
 
 James's Inbox project comes from `supabase/seeds/002_inbox_projects.sql`. Postman does not create these accounts or the Inbox. The backend reads user/project rows from PostgreSQL and checks credentials through Supabase Auth, so `DATABASE_URL`, `SUPABASE_URL`, and `SUPABASE_SERVICE_ROLE_KEY` must all refer to the **same test project**.
 
+The archive migration keeps the existing project `is_archived` flag in sync with nullable `archived_at` and prevents Inbox projects from being archived. The `supabase/seeds/009_archiving.sql` fixtures cover archived tasks, projects, and labels for Harvey and James; running **🌱 Supabase: Seed Remote** also runs the archive checks in `supabase/verify_seeds.sql`.
+
 ## Before you begin
 
 You need VS Code, Postman, Node.js 22 or later, and access to a dedicated remote Supabase test project. Docker Desktop is not needed. If the repository dependencies are not installed, run **📦 Install All Dependencies** from **Tasks: Run Task**.
@@ -138,11 +140,11 @@ You can click each request in the expanded folder and press **Send** instead. St
 | 8 | Repeat favorite request is idempotent | `200`. |
 | 9 | Confirm favorite persisted | `200`. |
 | 10 | Unfavorite project | `200`. |
-| 11 | Archive project | `200`. |
-| 12 | Archived project appears in archived list | `200`. |
+| 11 | Archive project | `200`; sets the legacy archive flag and timestamp. |
+| 12 | Archived project appears in archived list | `200`; asserts `isArchived` and a valid `archivedAt`. |
 | 13 | Archived project is excluded from active list | `200`. |
 | 14 | Unarchive project | `200`. |
-| 15 | Archiving Inbox returns 400 | `400`. |
+| 15 | Archiving Inbox returns 409 | `409`. |
 | 16 | Reorder projects in requested order | `200`; saves `expectedOrder`. |
 | 17 | Project list follows reordered IDs | `200`; checks the saved order. |
 | 18 | Duplicate reorder IDs return 400 | `400`. |
@@ -165,7 +167,7 @@ The collection creates three remote project rows and does not delete them. It re
 | Connection refused or no response | Confirm the backend is running and `baseUrl` is `http://localhost:3000/api`. |
 | A seeded login returns `401` | Confirm the test project was seeded, `seedPassword` is `password123`, and `SUPABASE_URL`/`DATABASE_URL` target the same project. |
 | A request URL contains an empty project ID | An earlier login/setup request did not pass in this Runner session. Start the folder from request 1 and keep the order. |
-| Inbox archive does not return `400` | Confirm request 3 captured James's Inbox ID and the remote project has the Inbox fixture. |
+| Inbox archive does not return `409` | Confirm request 3 captured James's Inbox ID and the remote project has the Inbox fixture. |
 | Order assertion fails | Run the reorder request before the list check and do not skip setup requests. |
 | Backend exits after removing Brevo | Remove/comment out Brevo settings instead of leaving empty assignments, then restart the backend. |
 | Migration or seed task reports `ERROR` | Stop and inspect the CLI output and linked project. Do not use the destructive remote reset task. |

@@ -459,7 +459,7 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
-                  "pm.test(\"Archived list includes project\", function () { const body = pm.response.json(); pm.expect(body.some((project) => String(project.id) === pm.environment.get('projectId'))).to.equal(true); });"
+                  "pm.test(\"Archived list includes project with timestamp\", function () { const body = pm.response.json(); const project = body.find((item) => String(item.id) === pm.environment.get('projectId')); pm.expect(project).to.be.an('object'); pm.expect(project.isArchived).to.equal(true); pm.expect(project.archivedAt).to.be.a('string'); pm.expect(Number.isNaN(Date.parse(project.archivedAt))).to.equal(false); });"
                 ]
               }
             }
@@ -566,14 +566,14 @@
           "response": []
         },
         {
-          "name": "Archiving Inbox returns 400",
+          "name": "Archiving Inbox returns 409",
           "event": [
             {
               "listen": "test",
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('Status is 400', function () { pm.response.to.have.status(400); });",
+                  "pm.test('Status is 409', function () { pm.response.to.have.status(409); });",
                   "pm.test(\"Inbox cannot be archived\", function () { const body = pm.response.json(); pm.expect(body.error).to.include('Inbox'); });"
                 ]
               }

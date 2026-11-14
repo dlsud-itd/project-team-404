@@ -8,7 +8,7 @@ export async function updateTaskSchedule(
   input: TaskScheduleUpdateInput
 ) {
   const result = await prisma.task.updateMany({
-    where: { id: taskId, userId, deletedAt: null },
+    where: { id: taskId, userId, deletedAt: null, archivedAt: null },
     data: {
       ...(input.scheduledDate !== undefined
         ? {

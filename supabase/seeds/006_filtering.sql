@@ -1,8 +1,22 @@
-with expected_projects(name, color, is_favorite, is_archived, sort_order) as (
+with expected_projects(
+  name,
+  color,
+  is_favorite,
+  is_archived,
+  archived_at,
+  sort_order
+) as (
   values
-    ('Filtering - Client Work', '#3C78D8', true, false, 10),
-    ('Filtering - Personal', '#8B5CF6', false, false, 11),
-    ('Filtering - Archived', '#6B7280', false, true, 12)
+    ('Filtering - Client Work', '#3C78D8', true, false, null::timestamptz, 10),
+    ('Filtering - Personal', '#8B5CF6', false, false, null::timestamptz, 11),
+    (
+      'Filtering - Archived',
+      '#6B7280',
+      false,
+      true,
+      now() - interval '4 days',
+      12
+    )
 )
 insert into public.tbl_project (
   user_id,
@@ -11,6 +25,7 @@ insert into public.tbl_project (
   is_inbox,
   is_favorite,
   is_archived,
+  archived_at,
   sort_order
 )
 select
@@ -20,6 +35,7 @@ select
   false,
   expected.is_favorite,
   expected.is_archived,
+  expected.archived_at,
   expected.sort_order
 from expected_projects as expected
 join public.tbl_user as profile on profile.email = 'harvey@example.com'
@@ -102,7 +118,8 @@ join public.tbl_project as project
   and project.name = fixture.project_name
   and project.deleted_at is null
 join public.tbl_priority_level as priority
-  on priority.name = fixture.priority_name
+  on priority.user_id = profile.user_id
+  and lower(priority.name) = fixture.priority_name
 where not exists (
   select 1
   from public.tbl_task as existing
