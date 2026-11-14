@@ -1,0 +1,91 @@
+<div class="bar" role="group" aria-label="Filter projects">
+  <div class="chips">
+    <button
+      type="button"
+      class="chip"
+      [attr.aria-pressed]="query().favorites"
+      (click)="toggleFavorites()"
+    >
+      <svg class="icon" viewBox="0 0 16 16" aria-hidden="true">
+        <path d="M8 1.8l1.9 3.9 4.3.6-3.1 3 .7 4.3L8 11.6l-3.8 2 .7-4.3-3.1-3 4.3-.6z" />
+      </svg>
+      Favorites
+    </button>
+
+    <button
+      type="button"
+      class="chip"
+      [attr.aria-pressed]="query().archived"
+      (click)="toggleArchived()"
+    >
+      <svg class="icon" viewBox="0 0 16 16" aria-hidden="true">
+        <path d="M2 3.5h12v3H2zM3 6.5v6.5h10V6.5M6.5 9h3" />
+      </svg>
+      Archived
+    </button>
+
+    <div
+      #colorWrap
+      class="chip-wrap"
+      (focusout)="onFocusOut($event, colorWrap)"
+      (keydown.escape)="closeAndFocus(colorChip)"
+    >
+      <button
+        #colorChip
+        type="button"
+        class="chip"
+        [class.active]="query().color !== null"
+        [attr.aria-expanded]="colorOpen()"
+        aria-controls="project-filter-color"
+        (click)="colorOpen.set(!colorOpen())"
+      >
+        @if (query().color; as color) {
+          <span class="swatch" [style.background]="color"></span>
+          Color: {{ color }}
+        } @else {
+          Color
+        }
+        <svg class="caret" viewBox="0 0 12 12" aria-hidden="true">
+          <path d="M3 4.5 6 7.5 9 4.5" />
+        </svg>
+      </button>
+      @if (colorOpen()) {
+        <fieldset id="project-filter-color" class="panel">
+          <legend class="sr-only">Color</legend>
+          <label class="option">
+            <input
+              type="radio"
+              name="project-filter-color"
+              [checked]="query().color === null"
+              (change)="setColor(null)"
+            />
+            Any color
+          </label>
+          @for (color of colors(); track color) {
+            <label class="option">
+              <input
+                type="radio"
+                name="project-filter-color"
+                [checked]="query().color === color"
+                (change)="setColor(color)"
+              />
+              <span class="swatch" [style.background]="color"></span>
+              {{ color }}
+            </label>
+          } @empty {
+            <p class="hint">None of your projects has a color yet.</p>
+          }
+        </fieldset>
+      }
+    </div>
+
+    @if (count() > 0) {
+      <div class="summary">
+        <span class="count">{{ count() }} {{ count() === 1 ? 'filter' : 'filters' }}</span>
+        <button type="button" class="clear" (click)="clear()">Clear all</button>
+      </div>
+    }
+  </div>
+
+  <p class="sr-only" aria-live="polite">{{ announcement() }}</p>
+</div>

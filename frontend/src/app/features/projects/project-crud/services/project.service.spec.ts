@@ -56,8 +56,11 @@ describe('ProjectService', () => {
         { ...apiProject(CAPSTONE), updatedAt: '2026-10-20T00:00:00.000Z' },
       ]);
 
-      // id becomes projectId; timestamps are dropped.
-      expect(result).toEqual([INBOX, CAPSTONE]);
+      // id becomes projectId; timestamps are kept for sorting.
+      expect(result).toEqual([
+        { ...INBOX, createdAt: '2026-10-20T00:00:00.000Z' },
+        { ...CAPSTONE, updatedAt: '2026-10-20T00:00:00.000Z' },
+      ]);
     });
 
     it.each([true, false])('sends isArchived=%s when asked', (archived) => {

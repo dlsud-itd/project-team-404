@@ -1,0 +1,268 @@
+<div class="bar" role="group" aria-label="Filter tasks">
+  <div class="chips">
+    <div
+      #priorityWrap
+      class="chip-wrap"
+      [class.open]="open() === 'priority'"
+      (focusout)="onFocusOut($event, priorityWrap)"
+      (keydown.escape)="closeAndFocus(priorityChip)"
+    >
+      <button
+        #priorityChip
+        type="button"
+        class="chip"
+        [class.active]="query().priorities.length > 0"
+        [attr.aria-expanded]="open() === 'priority'"
+        aria-controls="task-filter-priority"
+        (click)="toggle('priority')"
+      >
+        <span class="chip-text">{{ priorityText() }}</span>
+        <svg class="caret" viewBox="0 0 12 12" aria-hidden="true">
+          <path d="M3 4.5 6 7.5 9 4.5" />
+        </svg>
+      </button>
+      @if (open() === 'priority') {
+        <fieldset id="task-filter-priority" class="panel">
+          <legend class="sr-only">Priority</legend>
+          @for (level of levels(); track level.id) {
+            <label class="option">
+              <input
+                type="checkbox"
+                [checked]="isPriority(level)"
+                (change)="togglePriority(level)"
+              />
+              <span class="swatch" [style.background]="level.color ?? 'transparent'"></span>
+              {{ level.name }}
+            </label>
+          }
+        </fieldset>
+      }
+    </div>
+
+    <div
+      #labelsWrap
+      class="chip-wrap"
+      [class.open]="open() === 'labels'"
+      (focusout)="onFocusOut($event, labelsWrap)"
+      (keydown.escape)="closeAndFocus(labelsChip)"
+    >
+      <button
+        #labelsChip
+        type="button"
+        class="chip"
+        [class.active]="query().labelIds.length > 0"
+        [attr.aria-expanded]="open() === 'labels'"
+        aria-controls="task-filter-labels"
+        (click)="toggle('labels')"
+      >
+        <span class="chip-text">{{ labelsText() }}</span>
+        <svg class="caret" viewBox="0 0 12 12" aria-hidden="true">
+          <path d="M3 4.5 6 7.5 9 4.5" />
+        </svg>
+      </button>
+      @if (open() === 'labels') {
+        <div id="task-filter-labels" class="panel">
+          <fieldset class="group">
+            <legend class="sr-only">Labels</legend>
+            @for (label of labels(); track label.labelId) {
+              <label class="option">
+                <input
+                  type="checkbox"
+                  [checked]="query().labelIds.includes(label.labelId)"
+                  (change)="toggleLabel(label.labelId)"
+                />
+                <span class="swatch" [style.background]="label.color ?? 'transparent'"></span>
+                {{ label.name }}
+              </label>
+            } @empty {
+              <p class="hint">You have no labels yet.</p>
+            }
+          </fieldset>
+          @if (query().labelIds.length > 1) {
+            <fieldset class="group match">
+              <legend>Show tasks with</legend>
+              <label class="option">
+                <input
+                  type="radio"
+                  name="task-filter-label-match"
+                  [checked]="query().labelMatch === 'any'"
+                  (change)="setLabelMatch('any')"
+                />
+                Any of these labels
+              </label>
+              <label class="option">
+                <input
+                  type="radio"
+                  name="task-filter-label-match"
+                  [checked]="query().labelMatch === 'all'"
+                  (change)="setLabelMatch('all')"
+                />
+                All of these labels
+              </label>
+            </fieldset>
+          }
+        </div>
+      }
+    </div>
+
+    <div
+      #dueWrap
+      class="chip-wrap"
+      [class.open]="open() === 'due'"
+      (focusout)="onFocusOut($event, dueWrap)"
+      (keydown.escape)="closeAndFocus(dueChip)"
+    >
+      <button
+        #dueChip
+        type="button"
+        class="chip"
+        [class.active]="query().due !== null"
+        [attr.aria-expanded]="open() === 'due'"
+        aria-controls="task-filter-due"
+        (click)="toggle('due')"
+      >
+        <span class="chip-text">{{ dueText() }}</span>
+        <svg class="caret" viewBox="0 0 12 12" aria-hidden="true">
+          <path d="M3 4.5 6 7.5 9 4.5" />
+        </svg>
+      </button>
+      @if (open() === 'due') {
+        <fieldset id="task-filter-due" class="panel">
+          <legend class="sr-only">Due date</legend>
+          @for (option of dueOptions; track option.label) {
+            <label class="option">
+              <input
+                type="radio"
+                name="task-filter-due"
+                [checked]="query().due === option.value"
+                (change)="setDue(option.value)"
+              />
+              {{ option.label }}
+            </label>
+          }
+        </fieldset>
+      }
+    </div>
+
+    <div
+      #repeatWrap
+      class="chip-wrap"
+      [class.open]="open() === 'repeat'"
+      (focusout)="onFocusOut($event, repeatWrap)"
+      (keydown.escape)="closeAndFocus(repeatChip)"
+    >
+      <button
+        #repeatChip
+        type="button"
+        class="chip"
+        [class.active]="query().recurring !== null"
+        [attr.aria-expanded]="open() === 'repeat'"
+        aria-controls="task-filter-repeat"
+        (click)="toggle('repeat')"
+      >
+        <span class="chip-text">{{ repeatText() }}</span>
+        <svg class="caret" viewBox="0 0 12 12" aria-hidden="true">
+          <path d="M3 4.5 6 7.5 9 4.5" />
+        </svg>
+      </button>
+      @if (open() === 'repeat') {
+        <fieldset id="task-filter-repeat" class="panel">
+          <legend class="sr-only">Repeat</legend>
+          @for (option of repeatOptions; track option.label) {
+            <label class="option">
+              <input
+                type="radio"
+                name="task-filter-repeat"
+                [checked]="query().recurring === option.value"
+                (change)="setRecurring(option.value)"
+              />
+              {{ option.label }}
+            </label>
+          }
+        </fieldset>
+      }
+    </div>
+
+    <div
+      #statusWrap
+      class="chip-wrap"
+      [class.open]="open() === 'status'"
+      (focusout)="onFocusOut($event, statusWrap)"
+      (keydown.escape)="closeAndFocus(statusChip)"
+    >
+      <button
+        #statusChip
+        type="button"
+        class="chip"
+        [class.active]="query().status !== 'all'"
+        [attr.aria-expanded]="open() === 'status'"
+        aria-controls="task-filter-status"
+        (click)="toggle('status')"
+      >
+        <span class="chip-text">{{ statusText() }}</span>
+        <svg class="caret" viewBox="0 0 12 12" aria-hidden="true">
+          <path d="M3 4.5 6 7.5 9 4.5" />
+        </svg>
+      </button>
+      @if (open() === 'status') {
+        <fieldset id="task-filter-status" class="panel">
+          <legend class="sr-only">Status</legend>
+          @for (option of statusOptions; track option.value) {
+            <label class="option">
+              <input
+                type="radio"
+                name="task-filter-status"
+                [checked]="query().status === option.value"
+                (change)="setStatus(option.value)"
+              />
+              {{ option.label }}
+            </label>
+          }
+        </fieldset>
+      }
+    </div>
+
+    @if (count() > 0) {
+      <div class="summary">
+        <span class="count">{{ count() }} {{ count() === 1 ? 'filter' : 'filters' }}</span>
+        <button type="button" class="clear" (click)="clear()">Clear all</button>
+      </div>
+    }
+  </div>
+
+  @if (query().due === 'custom') {
+    <fieldset class="range">
+      <legend class="sr-only">Custom due date range</legend>
+      <label>
+        From
+        <input
+          #dueFrom
+          type="date"
+          [value]="query().dueFrom ?? ''"
+          [max]="query().dueTo ?? ''"
+          [attr.aria-invalid]="invalidRange()"
+          [attr.aria-describedby]="invalidRange() ? 'task-filter-range-error' : null"
+          (change)="setRange('dueFrom', $event)"
+        />
+      </label>
+      <label>
+        To
+        <input
+          type="date"
+          [value]="query().dueTo ?? ''"
+          [min]="query().dueFrom ?? ''"
+          [attr.aria-invalid]="invalidRange()"
+          [attr.aria-describedby]="invalidRange() ? 'task-filter-range-error' : null"
+          (change)="setRange('dueTo', $event)"
+        />
+      </label>
+      @if (invalidRange()) {
+        <p id="task-filter-range-error" class="range-error" role="alert">
+          “From” must be on or before “To”.
+        </p>
+      }
+    </fieldset>
+  }
+
+  <p class="sr-only" aria-live="polite">{{ announcement() }}</p>
+</div>

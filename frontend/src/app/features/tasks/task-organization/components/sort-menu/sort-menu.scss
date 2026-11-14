@@ -1,0 +1,99 @@
+@use '../filter-chips' as chips;
+
+:host {
+  display: block;
+}
+
+.sort {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.trigger {
+  @include chips.chip;
+
+  &[aria-expanded='true'] {
+    border-color: var(--ink-muted);
+  }
+}
+
+.muted {
+  color: var(--ink-muted);
+  font-weight: 400;
+}
+
+.caret {
+  @include chips.caret;
+}
+
+.direction {
+  @include chips.chip;
+
+  justify-content: center;
+  width: 2.5rem;
+  padding: 0;
+
+  svg {
+    @include chips.caret;
+
+    width: 1rem;
+    height: 1rem;
+    transition: transform 150ms ease;
+  }
+
+  .desc {
+    transform: rotate(180deg);
+  }
+
+  @media (pointer: coarse) {
+    width: 2.75rem;
+  }
+}
+
+.menu {
+  @include chips.panel;
+
+  margin-top: 0.25rem;
+}
+
+.item {
+  @include chips.option;
+
+  width: 100%;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 0.875rem;
+  text-align: left;
+
+  &:focus-visible,
+  &.cdk-keyboard-focused {
+    outline: 2px solid var(--ink);
+    outline-offset: -2px;
+  }
+
+  &:focus {
+    background: var(--cream);
+  }
+}
+
+.check {
+  @include chips.caret;
+
+  width: 1rem;
+  height: 1rem;
+  stroke: #7b23a8;
+  stroke-width: 2;
+  visibility: hidden;
+
+  [aria-checked='true'] > & {
+    visibility: visible;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .direction svg {
+    transition: none;
+  }
+}
