@@ -50,6 +50,8 @@ describe('Home tabs', () => {
   function loadTasksTab(): void {
     flushProjects([INBOX]);
     http.expectOne(ALL_TASKS_URL).flush([]);
+    // The filter bar's label choices.
+    http.expectOne(LABELS_URL).flush([]);
     harness.detectChanges();
   }
 

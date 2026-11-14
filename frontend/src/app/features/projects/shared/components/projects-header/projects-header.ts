@@ -1,12 +1,14 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
-import { type IsActiveMatchOptions, RouterLink, RouterLinkActive } from '@angular/router';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { ActivatedRoute, RouterLink } from '@angular/router';
+import { map } from 'rxjs';
 import { NewProjectDialog } from '../../../project-crud/components/new-project-dialog/new-project-dialog';
 import { ProjectsStore } from '../../state/projects.store';
 
 /** Title, new-project popup and the tabs between the project list and the organize view. */
 @Component({
   selector: 'app-projects-header',
-  imports: [RouterLink, RouterLinkActive, NewProjectDialog],
+  imports: [RouterLink, NewProjectDialog],
   template: `
     <header>
       <a class="back" routerLink="/home">← Dashboard</a>
@@ -21,18 +23,16 @@ import { ProjectsStore } from '../../state/projects.store';
         class="tab"
         routerLink="/home"
         [queryParams]="{ tab: 'projects' }"
-        routerLinkActive="active"
-        ariaCurrentWhenActive="page"
-        [routerLinkActiveOptions]="exactUrl"
+        [class.active]="!organizing()"
+        [attr.aria-current]="organizing() ? null : 'page'"
         >All projects</a
       >
       <a
         class="tab"
         routerLink="/home"
         [queryParams]="{ tab: 'projects', view: 'organize' }"
-        routerLinkActive="active"
-        ariaCurrentWhenActive="page"
-        [routerLinkActiveOptions]="exactUrl"
+        [class.active]="organizing()"
+        [attr.aria-current]="organizing() ? 'page' : null"
         >Organize</a
       >
     </nav>
@@ -121,11 +121,12 @@ import { ProjectsStore } from '../../state/projects.store';
 export class ProjectsHeader {
   protected readonly store = inject(ProjectsStore);
 
-  /** Both views share a path, so only the query parameters tell them apart. */
-  protected readonly exactUrl: IsActiveMatchOptions = {
-    paths: 'exact',
-    queryParams: 'exact',
-    matrixParams: 'ignored',
-    fragment: 'ignored',
-  };
+  /**
+   * Both views share a path, so only ?view tells them apart. Matching the whole query would
+   * lose the active tab as soon as the list's filters add their own params.
+   */
+  protected readonly organizing = toSignal(
+    inject(ActivatedRoute).queryParamMap.pipe(map((params) => params.get('view') === 'organize')),
+    { initialValue: false },
+  );
 }

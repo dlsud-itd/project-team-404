@@ -1,0 +1,175 @@
+@use '../filter-chips' as chips;
+
+:host {
+  display: block;
+  min-width: 0;
+}
+
+.bar {
+  position: relative;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.chip-wrap {
+  position: relative;
+  max-width: 100%;
+}
+
+.chip {
+  @include chips.chip;
+
+  &[aria-expanded='true'] .caret {
+    transform: rotate(180deg);
+  }
+}
+
+.chip-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.caret {
+  @include chips.caret;
+
+  transition: transform 150ms ease;
+}
+
+.panel {
+  @include chips.panel;
+
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 0.375rem);
+  left: 0;
+}
+
+.group {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.match {
+  margin-top: 0.375rem;
+  padding-top: 0.375rem;
+  border-top: 1px solid var(--cream);
+
+  legend {
+    padding: 0.25rem 0.625rem;
+    color: var(--ink-muted);
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+}
+
+.option {
+  @include chips.option;
+}
+
+.swatch {
+  @include chips.swatch;
+}
+
+.hint {
+  margin: 0;
+  padding: 0.5rem 0.625rem;
+  color: var(--ink-muted);
+  font-size: 0.875rem;
+}
+
+.summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-left: 0.25rem;
+}
+
+.count {
+  color: var(--ink-muted);
+  font-size: 0.875rem;
+}
+
+.clear {
+  @include chips.clear-button;
+}
+
+.range {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 0.75rem 1rem;
+  margin: 0.75rem 0 0;
+  padding: 0;
+  border: 0;
+
+  label {
+    display: grid;
+    gap: 0.25rem;
+    color: var(--ink-muted);
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  input {
+    min-height: 2.5rem;
+    padding: 0 0.625rem;
+    border: 1px solid chips.$line;
+    border-radius: 0.5rem;
+    background: #fff;
+    color: var(--ink);
+    font: inherit;
+    font-size: 0.875rem;
+    letter-spacing: normal;
+    text-transform: none;
+
+    &:focus-visible {
+      outline: 2px solid var(--ink);
+      outline-offset: 1px;
+    }
+
+    &[aria-invalid='true'] {
+      border-color: var(--error);
+    }
+  }
+}
+
+.range-error {
+  flex-basis: 100%;
+  margin: 0;
+  color: var(--error);
+  font-size: 0.875rem;
+}
+
+.sr-only {
+  @include chips.visually-hidden;
+}
+
+/* On phones the panel spans the bar under the chips, so it never runs off the screen. */
+@media (max-width: 39.99rem) {
+  .chip-wrap {
+    position: static;
+  }
+
+  .panel {
+    top: auto;
+    right: 0;
+    max-width: none;
+    margin-top: 0.375rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .caret {
+    transition: none;
+  }
+}

@@ -29,43 +29,22 @@
       <p class="banner-error" role="alert">{{ message }}</p>
     }
 
-    <section class="filters" aria-label="Task filters and sorting">
-      <label for="filter-priority">Priority</label>
-      <select id="filter-priority" (change)="setPriority($event)">
-        <option value="" [selected]="!filters().priority">All priorities</option>
-        @for (level of priorities.levels(); track level.id) {
-          <option
-            [value]="level.name.toLowerCase()"
-            [selected]="filters().priority === level.name.toLowerCase()"
-          >
-            {{ level.name }}
-          </option>
-        }
-      </select>
-      <label for="filter-label">Label</label>
-      <select id="filter-label" (change)="setLabel($event)">
-        <option value="" [selected]="filters().labelId === null">All labels</option>
-        @for (label of labels(); track label.labelId) {
-          <option [value]="label.labelId" [selected]="filters().labelId === label.labelId">
-            {{ label.name }}
-          </option>
-        }
-      </select>
-      <label for="sort-tasks">Sort by</label>
-      <select id="sort-tasks" (change)="setOrderBy($event)">
-        <option value="" [selected]="!filters().orderBy">Default order</option>
-        <option value="title" [selected]="filters().orderBy === 'title'">Title</option>
-        <option value="dueDate" [selected]="filters().orderBy === 'dueDate'">Due date</option>
-        <option value="createdAt" [selected]="filters().orderBy === 'createdAt'">
-          Created date
-        </option>
-        <option value="priority" [selected]="filters().orderBy === 'priority'">Priority</option>
-      </select>
-      <label for="sort-direction">Direction</label>
-      <select id="sort-direction" (change)="setOrderDirection($event)">
-        <option value="asc" [selected]="filters().orderDirection === 'asc'">Ascending</option>
-        <option value="desc" [selected]="filters().orderDirection === 'desc'">Descending</option>
-      </select>
+    <section class="toolbar" aria-label="Filter and sort tasks">
+      <app-task-filter-bar
+        [query]="query.query()"
+        [levels]="priorities.levels()"
+        [labels]="labels()"
+        (changed)="query.set($event)"
+        (cleared)="query.clear()"
+      />
+      <app-sort-menu
+        class="sort"
+        label="Sort tasks"
+        [options]="sortOptions"
+        [value]="query.query().orderBy ?? ''"
+        [direction]="query.query().orderDirection"
+        (changed)="setSort($event)"
+      />
     </section>
 
     @if (store.error(); as message) {
@@ -108,6 +87,12 @@
             </ul>
           </section>
         }
+      } @else if (query.count() > 0) {
+        <div class="empty">
+          <p class="empty-title">No tasks match these filters.</p>
+          <p>Try removing a filter, or clear them all to see every task in this project.</p>
+          <button type="button" class="new" (click)="query.clear()">Clear filters</button>
+        </div>
       } @else {
         <div class="empty">
           <p class="empty-title">No tasks here yet.</p>
