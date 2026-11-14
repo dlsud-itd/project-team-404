@@ -1,0 +1,485 @@
+{
+  "info": {
+    "_postman_id": "bc4b506c-5ce5-4db4-b54e-df1a4f09c7f7",
+    "name": "Project-Team-404 API - 343-search",
+    "description": "Sprint 5 Search API acceptance checks. Requires supabase/seeds/010_search.sql.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "343-search",
+      "item": [
+        {
+          "name": "Login - Harvey",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"identifier\": \"{{harveyEmail}}\",\n  \"password\": \"{{seedPassword}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Login succeeds', function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test('Login returns a token', function () { pm.expect(body.token).to.be.a('string').and.not.empty; });",
+                  "pm.environment.set('token', body.token);"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Task title - case-insensitive ranking",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/search?q=oRbIt&type=tasks&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["search"],
+              "query": [
+                { "key": "q", "value": "oRbIt" },
+                { "key": "type", "value": "tasks" },
+                { "key": "limit", "value": "20" }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Task title search returns 200', function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test('Task exact, starts-with, and contains titles rank in order', function () { const titles = body.tasks.items.map((item) => item.title); pm.expect(titles.slice(0, 3)).to.eql(['Orbit', 'Orbit launch checklist', 'Planning around Orbit']); pm.expect(body.tasks.items[0].matchedField).to.equal('title'); });",
+                  "pm.test('Type tasks leaves the projects group empty with total zero', function () { pm.expect(body.projects).to.eql({ items: [], total: 0 }); });"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Task description - matched field and snippet",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/search?q=Orbit&type=tasks",
+              "host": ["{{baseUrl}}"],
+              "path": ["search"],
+              "query": [
+                { "key": "q", "value": "Orbit" },
+                { "key": "type", "value": "tasks" }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Task description search returns 200', function () { pm.response.to.have.status(200); });",
+                  "const item = pm.response.json().tasks.items.find((result) => result.title === 'Quarterly review notes');",
+                  "pm.test('Description-only match identifies its field and snippet', function () { pm.expect(item).to.exist; pm.expect(item.matchedField).to.equal('description'); pm.expect(item.snippet).to.include('Orbit'); pm.expect(item.snippet.length).to.be.at.most(120); });"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Project name - case-insensitive ranking",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/search?q=oRbIt&type=projects&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["search"],
+              "query": [
+                { "key": "q", "value": "oRbIt" },
+                { "key": "type", "value": "projects" },
+                { "key": "limit", "value": "20" }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Project name search returns 200', function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test('Project exact, starts-with, and contains names rank correctly', function () { const names = body.projects.items.map((item) => item.name); pm.expect(names[0]).to.equal('Orbit'); pm.expect(names[1]).to.equal('Orbit launch workspace'); pm.expect(names).to.include('Planning around Orbit'); });",
+                  "pm.test('Type projects leaves the tasks group empty with total zero', function () { pm.expect(body.tasks).to.eql({ items: [], total: 0 }); });"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Project description - matched field and snippet",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/search?q=Orbit&type=projects",
+              "host": ["{{baseUrl}}"],
+              "path": ["search"],
+              "query": [
+                { "key": "q", "value": "Orbit" },
+                { "key": "type", "value": "projects" }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Project description search returns 200', function () { pm.response.to.have.status(200); });",
+                  "const item = pm.response.json().projects.items.find((result) => result.name === 'Weekly Notes');",
+                  "pm.test('Description-only project match identifies its field and snippet', function () { pm.expect(item).to.exist; pm.expect(item.matchedField).to.equal('description'); pm.expect(item.snippet).to.include('Orbit'); pm.expect(item.snippet.length).to.be.at.most(120); });"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Type and limit - independent groups",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/search?q=Orbit&limit=1",
+              "host": ["{{baseUrl}}"],
+              "path": ["search"],
+              "query": [
+                { "key": "q", "value": "Orbit" },
+                { "key": "limit", "value": "1" }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('All-type search returns 200', function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test('Limit applies separately to both groups without changing totals', function () { pm.expect(body.tasks.items.length).to.be.at.most(1); pm.expect(body.projects.items.length).to.be.at.most(1); pm.expect(body.tasks.total).to.be.greaterThan(1); pm.expect(body.projects.total).to.be.greaterThan(1); });"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Literal search - percent and underscore",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/search?q=%25_&type=tasks",
+              "host": ["{{baseUrl}}"],
+              "path": ["search"],
+              "query": [
+                { "key": "q", "value": "%_" },
+                { "key": "type", "value": "tasks" }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Percent and underscore search returns 200', function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test('Percent and underscore are literal characters', function () { pm.expect(body.tasks.total).to.equal(1); pm.expect(body.tasks.items[0].title).to.equal('Literal 50%_done marker'); });"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Literal search - backslash",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/search?q=%5Cx&type=tasks",
+              "host": ["{{baseUrl}}"],
+              "path": ["search"],
+              "query": [
+                { "key": "q", "value": "\\x" },
+                { "key": "type", "value": "tasks" }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Backslash search returns 200', function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test('Backslash is treated literally', function () { pm.expect(body.tasks.total).to.equal(1); pm.expect(body.tasks.items[0].title).to.equal('Literal \\\\x marker'); });"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Deleted and other-user rows are excluded",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/search?q=Orbit&includeArchived=true&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["search"],
+              "query": [
+                { "key": "q", "value": "Orbit" },
+                { "key": "includeArchived", "value": "true" },
+                { "key": "limit", "value": "20" }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Ownership and deletion search returns 200', function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test('Soft-deleted task and project are never returned', function () { pm.expect(body.tasks.items.some((item) => item.title === 'Deleted Orbit task fixture')).to.equal(false); pm.expect(body.projects.items.some((item) => item.name === 'Deleted Orbit project fixture')).to.equal(false); });",
+                  "pm.test('Another user task is never returned', function () { pm.expect(body.tasks.items.some((item) => item.title === 'James Orbit task fixture')).to.equal(false); });"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Archived items - excluded by default",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/search?q=ArchiveNeedle",
+              "host": ["{{baseUrl}}"],
+              "path": ["search"],
+              "query": [{ "key": "q", "value": "ArchiveNeedle" }]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Default archive search returns 200', function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test('Archived tasks, projects, and archived-project tasks are excluded', function () { pm.expect(body.tasks).to.eql({ items: [], total: 0 }); pm.expect(body.projects).to.eql({ items: [], total: 0 }); });"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Archived items - included when requested",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/search?q=ArchiveNeedle&includeArchived=true",
+              "host": ["{{baseUrl}}"],
+              "path": ["search"],
+              "query": [
+                { "key": "q", "value": "ArchiveNeedle" },
+                { "key": "includeArchived", "value": "true" }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Including archived results returns 200', function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test('Archived tasks and projects are included', function () { pm.expect(body.tasks.items.some((item) => item.title === 'ArchiveNeedle archived task fixture' && item.isArchived)).to.equal(true); pm.expect(body.projects.items.some((item) => item.name === 'ArchiveNeedle archived project' && item.isArchived)).to.equal(true); });",
+                  "pm.test('Active tasks in archived projects are included', function () { pm.expect(body.tasks.items.some((item) => item.title === 'Active ArchiveNeedle task in archived project' && !item.isArchived)).to.equal(true); });",
+                  "pm.test('Other users results remain excluded', function () { pm.expect(body.tasks.items.some((item) => item.title === 'James ArchiveNeedle task fixture')).to.equal(false); });"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "No matches - empty groups",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/search?q=NoSearchMatchFixture",
+              "host": ["{{baseUrl}}"],
+              "path": ["search"],
+              "query": [{ "key": "q", "value": "NoSearchMatchFixture" }]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('No-match search returns 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Both result groups are empty with total zero', function () { pm.expect(pm.response.json()).to.eql({ tasks: { items: [], total: 0 }, projects: { items: [], total: 0 } }); });"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Invalid query - shorter than 2",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/search?q=x",
+              "host": ["{{baseUrl}}"],
+              "path": ["search"],
+              "query": [{ "key": "q", "value": "x" }]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('One-character query is rejected', function () { pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Invalid query - longer than 100",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/search?q=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+              "host": ["{{baseUrl}}"],
+              "path": ["search"],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Query longer than 100 characters is rejected', function () { pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Invalid limit - above 20",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/search?q=Orbit&limit=21",
+              "host": ["{{baseUrl}}"],
+              "path": ["search"],
+              "query": [
+                { "key": "q", "value": "Orbit" },
+                { "key": "limit", "value": "21" }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Limit above 20 is rejected', function () { pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Search requires authentication",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/search?q=Orbit",
+              "host": ["{{baseUrl}}"],
+              "path": ["search"],
+              "query": [{ "key": "q", "value": "Orbit" }]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Missing bearer token is rejected', function () { pm.response.to.have.status(401); });"
+                ]
+              }
+            }
+          ],
+          "response": []
+        }
+      ]
+    }
+  ]
+}

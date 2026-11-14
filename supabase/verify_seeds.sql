@@ -256,6 +256,155 @@ begin
   raise notice 'PASS: filtering tasks cover date, deadline, recurrence, and completion states';
 end;
 $$;
+
+do $$
+declare
+  harvey_id uuid;
+  james_id uuid;
+  actual_count integer;
+begin
+  select user_id into harvey_id
+  from public.tbl_user
+  where email = 'harvey@example.com';
+
+  select user_id into james_id
+  from public.tbl_user
+  where email = 'james@example.com';
+
+  if harvey_id is null or james_id is null then
+    raise exception 'FAIL: search seed users are missing';
+  end if;
+
+  select count(*) into actual_count
+  from public.tbl_task
+  where user_id = harvey_id
+    and title = 'Orbit'
+    and deleted_at is null
+    and archived_at is null;
+  if actual_count <> 1 then
+    raise exception 'FAIL: expected one active exact Orbit task, found %', actual_count;
+  end if;
+
+  if not exists (
+    select 1
+    from public.tbl_task
+    where user_id = harvey_id
+      and title = 'Planning around Orbit'
+      and deleted_at is null
+      and archived_at is null
+  ) then
+    raise exception 'FAIL: contains-ranking task fixture is missing';
+  end if;
+
+  if not exists (
+    select 1
+    from public.tbl_task
+    where user_id = harvey_id
+      and title = 'Quarterly review notes'
+      and description ilike '%Orbit%'
+      and title not ilike '%Orbit%'
+      and deleted_at is null
+  ) or not exists (
+    select 1
+    from public.tbl_project
+    where user_id = harvey_id
+      and name = 'Weekly Notes'
+      and description ilike '%Orbit%'
+      and name not ilike '%Orbit%'
+      and deleted_at is null
+  ) then
+    raise exception 'FAIL: task/project description-only search fixtures are missing';
+  end if;
+
+  if not exists (
+    select 1
+    from public.tbl_task
+    where user_id = harvey_id
+      and title = 'Search fixture - Café run'
+      and deleted_at is null
+  ) then
+    raise exception 'FAIL: accented case-insensitive search fixture is missing';
+  end if;
+
+  if not exists (
+    select 1
+    from public.tbl_task
+    where user_id = harvey_id
+      and title = 'Literal 50%_done marker'
+      and deleted_at is null
+  ) or not exists (
+    select 1
+    from public.tbl_task
+    where user_id = harvey_id
+      and title = 'Literal \x marker'
+      and deleted_at is null
+  ) then
+    raise exception 'FAIL: literal wildcard/backslash search fixtures are missing';
+  end if;
+
+  if not exists (
+    select 1
+    from public.tbl_task
+    where user_id = harvey_id
+      and title = 'Deleted Orbit task fixture'
+      and deleted_at is not null
+  ) or not exists (
+    select 1
+    from public.tbl_project
+    where user_id = harvey_id
+      and name = 'Deleted Orbit project fixture'
+      and deleted_at is not null
+  ) then
+    raise exception 'FAIL: soft-deleted search fixtures are missing';
+  end if;
+
+  if not exists (
+    select 1
+    from public.tbl_project as project
+    join public.tbl_task as task on task.project_id = project.project_id
+    where project.user_id = harvey_id
+      and project.name = 'ArchiveNeedle archived project'
+      and project.archived_at is not null
+      and task.user_id = harvey_id
+      and task.title = 'ArchiveNeedle archived task fixture'
+      and task.archived_at is not null
+      and task.deleted_at is null
+  ) or not exists (
+    select 1
+    from public.tbl_task as task
+    join public.tbl_project as project on project.project_id = task.project_id
+    where task.user_id = harvey_id
+      and task.title = 'Active ArchiveNeedle task in archived project'
+      and task.archived_at is null
+      and project.is_archived
+      and task.deleted_at is null
+  ) then
+    raise exception 'FAIL: archived search fixtures are incomplete';
+  end if;
+
+  if not exists (
+    select 1
+    from public.tbl_task
+    where user_id = james_id
+      and title = 'James ArchiveNeedle task fixture'
+      and deleted_at is null
+  ) then
+    raise exception 'FAIL: second-user search fixture is missing';
+  end if;
+
+  if not exists (
+    select 1
+    from public.tbl_task
+    where user_id = james_id
+      and title = 'James Orbit task fixture'
+      and deleted_at is null
+  ) then
+    raise exception 'FAIL: second-user ownership search fixture is missing';
+  end if;
+
+  raise notice 'PASS: search fixtures cover ranking, descriptions, accents, deletion, archives, and ownership';
+end;
+$$;
 select
   'three_defaults_per_user' as check_name,
   case
