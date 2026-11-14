@@ -256,3 +256,101 @@ begin
   raise notice 'PASS: filtering tasks cover date, deadline, recurrence, and completion states';
 end;
 $$;
+select
+  'three_defaults_per_user' as check_name,
+  case
+    when (
+      select count(*) = 0
+      from (
+        select user_id, count(*) as level_count
+        from public.tbl_priority_level
+        where deleted_at is null
+        group by user_id
+        having count(*) <> 3
+      ) as result
+    )
+      then 'PASS'
+    else 'FAIL'
+  end as result;
+
+select
+  'exactly_one_default_per_user' as check_name,
+  case
+    when (
+      select count(*) = 0
+      from (
+        select user_id
+        from public.tbl_priority_level
+        where deleted_at is null and is_default = true
+        group by user_id
+        having count(*) <> 1
+      ) as result
+    )
+      then 'PASS'
+    else 'FAIL'
+  end as result;
+
+select
+  'no_task_points_to_other_users_priority' as check_name,
+  case
+    when (
+      select count(*) = 0
+      from public.tbl_task as task
+      join public.tbl_priority_level as priority_level
+        on priority_level.priority_id = task.priority_id
+      where task.user_id <> priority_level.user_id
+    )
+      then 'PASS'
+    else 'FAIL'
+  end as result;
+
+select
+  'label_sort_order_unique_per_user' as check_name,
+  case
+    when (
+      select count(*) = 0
+      from (
+        select user_id, sort_order
+        from public.tbl_label
+        group by user_id, sort_order
+        having count(*) > 1
+      ) as result
+    )
+      then 'PASS'
+    else 'FAIL'
+  end as result;
+
+select
+  'settings_row_per_user' as check_name,
+  case
+    when (
+      select count(*) = 0
+      from (
+        select user_id
+        from public.tbl_user_setting
+        group by user_id
+        having count(*) <> 1
+      ) as result
+    )
+      then 'PASS'
+    else 'FAIL'
+  end as result;
+
+select
+  'james_settings_seeded_values' as check_name,
+  case
+    when (
+      select exists (
+        select 1
+        from public.tbl_user_setting as settings
+        join public.tbl_user as user_profile on user_profile.user_id = settings.user_id
+        where user_profile.email = 'james@example.com'
+          and settings.dashboard_task_limit = 3
+          and settings.dashboard_project_limit = 4
+          and settings.font_size = 'large'
+          and settings.font_family = 'serif'
+      )
+    )
+      then 'PASS'
+    else 'FAIL'
+  end as result;

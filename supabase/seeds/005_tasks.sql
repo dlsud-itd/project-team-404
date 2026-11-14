@@ -60,7 +60,8 @@ seeded_tasks as (
     limit 1
   ) as project_row on true
   join public.tbl_priority_level as priority_level
-    on priority_level.name = expected.priority
+    on priority_level.user_id = user_profile.user_id
+    and lower(priority_level.name) = expected.priority
 )
 insert into public.tbl_task (
   user_id,
@@ -183,7 +184,8 @@ join public.tbl_project as project
   on project.user_id = task_fixtures_data.user_id
   and project.name = task_fixtures_data.project_name
 join public.tbl_priority_level as priority
-  on priority.name = task_fixtures_data.priority_name
+  on priority.user_id = task_fixtures_data.user_id
+  and lower(priority.name) = task_fixtures_data.priority_name
 where not exists (
   select 1
   from public.tbl_task as existing
