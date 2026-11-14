@@ -9,6 +9,8 @@ import { createProjectCrudRouter } from './features/projects/project-crud/projec
 import { createTasksRouter } from './features/tasks/tasks.routes';
 import { createLabelsRouter } from './features/labels/labels.routes';
 import { createDashboardRouter } from './features/dashboard/dashboard.routes';
+import { createPrioritiesRouter } from './features/priorities/priorities.routes';
+import { createSettingsRouter } from './features/settings/settings.routes';
 import { errorHandler } from './middleware/error-handler.middleware';
 
 export const app = express();
@@ -26,6 +28,8 @@ app.use('/api/auth', createAuthRouter({ sessionService: sessions }));
 app.use('/api/projects', createProjectCrudRouter(sessions));
 app.use('/api/tasks', createTasksRouter(sessions));
 app.use('/api/labels', createLabelsRouter(sessions));
+app.use('/api/priorities', createPrioritiesRouter(sessions));
+app.use('/api/settings', createSettingsRouter(sessions));
 app.use('/api/dashboard', createDashboardRouter(sessions));
 
 app.get('/health', (_req, res) => {

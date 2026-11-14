@@ -3,6 +3,7 @@ model Label {
   userId     String      @db.Uuid @map("user_id")
   name       String      @db.VarChar(50)
   color      String?     @db.Char(7)
+  sortOrder  Int         @default(0) @map("sort_order")
   createdAt  DateTime    @default(now()) @db.Timestamptz(6) @map("created_at")
   updatedAt  DateTime    @default(now()) @db.Timestamptz(6) @map("updated_at")
   user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -10,6 +11,7 @@ model Label {
 
   @@unique([userId, name], map: "tbl_label_user_name_key")
   @@index([userId], map: "tbl_label_user_id_idx")
+  @@index([userId, sortOrder], map: "tbl_label_user_sort_order_idx")
   @@map("tbl_label")
 }
 

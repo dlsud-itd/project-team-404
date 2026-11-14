@@ -1,8 +1,18 @@
 model PriorityLevel {
-  id        Int     @id @db.SmallInt @map("priority_id")
-  name      String  @unique @db.VarChar(50)
-  sortOrder Int     @unique @db.SmallInt @map("sort_order")
+  id        Int       @id @default(autoincrement()) @map("priority_id")
+  userId    String    @db.Uuid @map("user_id")
+  name      String    @db.VarChar(50)
+  color     String?   @db.Char(7)
+  isDefault Boolean   @default(false) @map("is_default")
+  sortOrder Int       @default(0) @db.Integer @map("sort_order")
+  createdAt DateTime  @default(now()) @db.Timestamptz(6) @map("created_at")
+  updatedAt DateTime  @default(now()) @db.Timestamptz(6) @map("updated_at")
+  deletedAt DateTime? @db.Timestamptz(6) @map("deleted_at")
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   tasks     Task[]
 
+  @@unique([userId, name], map: "tbl_priority_level_user_name_key")
+  @@unique([userId, sortOrder], map: "tbl_priority_level_user_sort_order_key")
+  @@index([userId], map: "tbl_priority_level_user_id_idx")
   @@map("tbl_priority_level")
 }
