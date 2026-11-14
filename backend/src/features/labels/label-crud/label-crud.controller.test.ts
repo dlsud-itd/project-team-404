@@ -9,15 +9,17 @@ const label = {
   userId: 'user-1',
   name: 'Work',
   color: '#f59e0b',
+  sortOrder: 1,
   createdAt: new Date(),
   updatedAt: new Date(),
 };
+const labelWithCount = { ...label, _count: { taskLabels: 0 } };
 
 describe('LabelCrudController', () => {
   it('creates a label for the authenticated user', async () => {
     const dependencies: LabelCrudDependencies = {
       createLabel: vi.fn().mockResolvedValue(label),
-      listLabels: vi.fn().mockResolvedValue([label]),
+      listLabels: vi.fn().mockResolvedValue([labelWithCount]),
       findOwnedLabel: vi.fn().mockResolvedValue(label),
       updateOwnedLabel: vi.fn().mockResolvedValue(label),
       deleteOwnedLabel: vi.fn().mockResolvedValue(true),

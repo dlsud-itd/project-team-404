@@ -9,14 +9,16 @@ const label: LabelRecord = {
   userId: 'user-1',
   name: 'Work',
   color: '#f59e0b',
+  sortOrder: 1,
   createdAt: new Date('2026-10-30T00:00:00.000Z'),
   updatedAt: new Date('2026-10-30T00:00:00.000Z'),
 };
+const labelWithCount = { ...label, _count: { taskLabels: 0 } };
 
 function dependencies() {
   return {
     createLabel: vi.fn().mockResolvedValue(label),
-    listLabels: vi.fn().mockResolvedValue([label]),
+    listLabels: vi.fn().mockResolvedValue([labelWithCount]),
     findOwnedLabel: vi.fn().mockResolvedValue(label),
     updateOwnedLabel: vi.fn().mockResolvedValue(label),
     deleteOwnedLabel: vi.fn().mockResolvedValue(true),
