@@ -19,6 +19,8 @@ const seedFiles = [
   'supabase/seeds/004_projects.sql',
   'supabase/seeds/005_tasks.sql',
   'supabase/seeds/006_filtering.sql',
+  'supabase/seeds/007_priority_labels.sql',
+  'supabase/seeds/008_user_settings.sql',
 ];
 const verificationFile = 'supabase/verify_seeds.sql';
 
@@ -178,6 +180,10 @@ async function main() {
     } else {
       console.log(`${path.basename(file)}: ERROR - ${oneLine(fileError)}`);
       hasErrors = true;
+      console.error(
+        `Stopping before dependent seed files after ${path.basename(file)} failed.`
+      );
+      break;
     }
   }
 
