@@ -27,6 +27,7 @@ export function buildListTasksWhere(
   const labelIds =
     filters.labelIds ??
     (filters.labelId !== undefined ? [filters.labelId] : undefined);
+  const priorityIds = normalizePriorityIds(filters.priorityIds);
 
   if (filters.dueFrom !== undefined || filters.dueTo !== undefined) {
     and.push({
@@ -97,6 +98,9 @@ export function buildListTasksWhere(
           },
         }
       : {}),
+    ...(priorityIds && priorityIds.length > 0
+      ? { priorityId: { in: priorityIds } }
+      : {}),
     AND: and,
   };
 }
@@ -143,4 +147,9 @@ async function getUserToday(userId: string) {
 
 function toDate(value: string) {
   return new Date(`${value}T00:00:00.000Z`);
+}
+
+function normalizePriorityIds(value: number[] | undefined) {
+  if (!value || value.length === 0) return undefined;
+  return [...new Set(value.filter((id) => Number.isInteger(id) && id > 0))];
 }

@@ -6,6 +6,8 @@ import {
   taskRecurrenceField,
 } from '../../task-scheduling/validators/recurrence-fields';
 
+const taskPriorityId = z.coerce.number().int().positive().optional();
+
 export const updateTaskValidator = z
   .object({
     title: z.string().trim().min(1).max(200).optional(),
@@ -28,6 +30,7 @@ export const updateTaskValidator = z
     recurrenceDays: recurrenceDaysField,
     recurrenceEndDate: recurrenceEndDateField,
     priority: z.enum(['low', 'medium', 'high']).optional(),
+    priorityId: taskPriorityId,
     isDone: z.boolean().optional(),
     doneAt: z.string().datetime({ offset: true }).nullable().optional(),
   })

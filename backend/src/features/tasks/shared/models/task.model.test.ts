@@ -20,7 +20,17 @@ const record: TaskRecord = {
   createdAt: new Date('2026-10-30T00:00:00.000Z'),
   updatedAt: new Date('2026-10-30T00:00:00.000Z'),
   deletedAt: null,
-  priorityLevel: { id: 3, name: 'high', sortOrder: 3 },
+  priorityLevel: {
+    id: 3,
+    userId: 'owner-1',
+    name: 'high',
+    color: '#ef4444',
+    isDefault: false,
+    sortOrder: 3,
+    deletedAt: null,
+    createdAt: new Date('2026-10-30T00:00:00.000Z'),
+    updatedAt: new Date('2026-10-30T00:00:00.000Z'),
+  },
   taskLabels: [],
 };
 
@@ -34,5 +44,34 @@ describe('toTaskModel', () => {
     expect(model.priority).toBe('high');
     expect(model.labels).toEqual([]);
     expect(model.createdAt).toEqual(record.createdAt);
+  });
+
+  it('normalizes title-case priority names', () => {
+    const model = toTaskModel({
+      ...record,
+      priorityLevel: { ...record.priorityLevel, name: 'Medium' },
+    });
+
+    expect(model.priority).toBe('medium');
+  });
+
+  it('returns custom priority details for user-managed levels', () => {
+    const model = toTaskModel({
+      ...record,
+      priorityLevel: {
+        ...record.priorityLevel,
+        id: 21,
+        name: 'Test',
+        color: '#123456',
+        sortOrder: 4,
+      },
+    });
+
+    expect(model.priority).toEqual({
+      id: 21,
+      name: 'Test',
+      color: '#123456',
+      sortOrder: 4,
+    });
   });
 });

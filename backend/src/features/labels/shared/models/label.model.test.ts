@@ -7,6 +7,7 @@ const label: LabelRecord = {
   userId: 'owner-1',
   name: 'Work',
   color: '#f59e0b',
+  sortOrder: 1,
   createdAt: new Date('2026-10-30T00:00:00.000Z'),
   updatedAt: new Date('2026-10-30T00:00:00.000Z'),
 };

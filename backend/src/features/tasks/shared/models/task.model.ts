@@ -19,7 +19,7 @@ export type Task = Omit<
   | 'priorityLevel'
   | 'taskLabels'
 > & {
-  priority: TaskPriority;
+  priority: TaskPriority | TaskPriorityLevel;
   scheduledDate: string | null;
   dueDate: string | null;
   deadline: string | null;
@@ -33,6 +33,12 @@ export type Task = Omit<
 };
 export type TaskPriority = 'low' | 'medium' | 'high';
 export type TaskRecurrence = 'none' | 'daily' | 'weekly' | 'monthly';
+export type TaskPriorityLevel = {
+  id: number;
+  name: string;
+  color: string | null;
+  sortOrder: number;
+};
 export type Label = {
   id: number;
   name: string;
@@ -40,10 +46,15 @@ export type Label = {
 };
 
 export function toTaskModel(task: TaskRecord): Task {
-  const priority = task.priorityLevel.name;
-  if (!isTaskPriority(priority)) {
-    throw new Error(`Unsupported task priority: ${priority}`);
-  }
+  const priorityName = task.priorityLevel.name.toLowerCase();
+  const priority = isTaskPriority(priorityName)
+    ? priorityName
+    : {
+        id: task.priorityLevel.id,
+        name: task.priorityLevel.name,
+        color: task.priorityLevel.color?.trim() || null,
+        sortOrder: task.priorityLevel.sortOrder,
+      };
 
   return {
     id: task.id,

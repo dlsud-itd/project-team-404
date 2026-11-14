@@ -58,6 +58,34 @@ const labelIdsValue = z.string().transform((value, context) => {
   return uniqueValues;
 });
 
+const priorityIdsValue = z.string().transform((value, context) => {
+  const values = value.split(',').map((item) => item.trim());
+  if (values.some((item) => !/^[1-9]\d*$/.test(item))) {
+    context.addIssue({
+      code: 'custom',
+      message: 'Priority IDs must be comma-separated positive integers',
+    });
+    return z.NEVER;
+  }
+
+  const uniqueValues = [...new Set(values.map(Number))];
+  if (uniqueValues.some((item) => !Number.isSafeInteger(item))) {
+    context.addIssue({
+      code: 'custom',
+      message: 'Priority IDs must be safe positive integers',
+    });
+    return z.NEVER;
+  }
+  if (uniqueValues.length > 50) {
+    context.addIssue({
+      code: 'custom',
+      message: 'At most 50 distinct priorities may be requested',
+    });
+    return z.NEVER;
+  }
+  return uniqueValues;
+});
+
 const queryBoolean = z
   .enum(['true', 'false'])
   .transform((value) => value === 'true');
@@ -75,6 +103,7 @@ const dateValue = z
 const taskFilterFields = {
   priority: priorityValue.optional(),
   priorities: prioritiesValue.optional(),
+  priorityIds: priorityIdsValue.optional(),
   labelId: z.coerce.number().int().positive().optional(),
   labelIds: labelIdsValue.optional(),
   labelMatch: z.enum(['any', 'all']).optional(),

@@ -22,7 +22,17 @@ const task: TaskRecord = {
   createdAt: new Date('2026-10-30T00:00:00.000Z'),
   updatedAt: new Date('2026-10-30T00:00:00.000Z'),
   deletedAt: null,
-  priorityLevel: { id: 2, name: 'medium', sortOrder: 2 },
+  priorityLevel: {
+    id: 2,
+    userId: 'user-1',
+    name: 'medium',
+    color: '#a3a3a3',
+    isDefault: true,
+    sortOrder: 2,
+    deletedAt: null,
+    createdAt: new Date('2026-10-30T00:00:00.000Z'),
+    updatedAt: new Date('2026-10-30T00:00:00.000Z'),
+  },
   taskLabels: [],
 };
 const label: LabelRecord = {
@@ -30,6 +40,7 @@ const label: LabelRecord = {
   userId: 'user-1',
   name: 'Work',
   color: '#f59e0b',
+  sortOrder: 1,
   createdAt: new Date('2026-10-30T00:00:00.000Z'),
   updatedAt: new Date('2026-10-30T00:00:00.000Z'),
 };
@@ -51,7 +62,17 @@ describe('TaskOrganizationService', () => {
     vi.mocked(deps.updateOwnedTask).mockResolvedValue({
       ...task,
       priorityId: 3,
-      priorityLevel: { id: 3, name: 'high', sortOrder: 3 },
+      priorityLevel: {
+        id: 3,
+        userId: 'user-1',
+        name: 'high',
+        color: '#ef4444',
+        isDefault: false,
+        sortOrder: 3,
+        deletedAt: null,
+        createdAt: new Date('2026-10-30T00:00:00.000Z'),
+        updatedAt: new Date('2026-10-30T00:00:00.000Z'),
+      },
     });
     const service = new TaskOrganizationService(deps);
 
