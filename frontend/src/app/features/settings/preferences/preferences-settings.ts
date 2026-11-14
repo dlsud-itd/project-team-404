@@ -10,6 +10,7 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { finalize } from 'rxjs';
+import { settingsSaveError } from '../services/settings.service';
 import { SettingsStore } from '../state/settings.store';
 import {
   FONT_FAMILIES,
@@ -96,7 +97,10 @@ export class PreferencesSettings {
           this.touched.set(false);
           this.saved.set('Preferences saved.');
         },
-        error: () => this.saveError.set("Couldn't save your preferences. Please try again."),
+        error: (error: unknown) =>
+          this.saveError.set(
+            settingsSaveError(error, "Couldn't save your preferences. Please try again."),
+          ),
       });
   }
 

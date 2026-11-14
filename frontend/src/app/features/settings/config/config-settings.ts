@@ -11,6 +11,7 @@ import {
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators, type FormControl } from '@angular/forms';
 import { finalize, startWith } from 'rxjs';
+import { settingsSaveError } from '../services/settings.service';
 import { SettingsStore } from '../state/settings.store';
 import {
   DASHBOARD_LIMIT_MAX,
@@ -189,7 +190,10 @@ export class ConfigSettings {
           });
           this.saved.set(successMessage);
         },
-        error: () => this.saveError.set("Couldn't save your limits. Please try again."),
+        error: (error: unknown) =>
+          this.saveError.set(
+            settingsSaveError(error, "Couldn't save your limits. Please try again."),
+          ),
       });
   }
 }
