@@ -4,6 +4,7 @@ import { LabelNotFoundError } from './errors/label-not-found.error';
 import type { LabelCrudService } from './label-crud.service';
 import type {
   CreateLabelInput,
+  ListLabelsQuery,
   UpdateLabelInput,
 } from './types/label-crud.types';
 
@@ -47,7 +48,14 @@ export function createLabelCrudController(service: LabelCrudService): {
     },
     list: async (req, res, next) => {
       try {
-        res.status(200).json(await service.list(req.auth!.userId));
+        res
+          .status(200)
+          .json(
+            await service.list(
+              req.auth!.userId,
+              res.locals.validated as ListLabelsQuery
+            )
+          );
       } catch (error) {
         next(error);
       }

@@ -1,0 +1,480 @@
+{
+  "info": {
+    "_postman_id": "80be7c84-58aa-4ffa-9f4f-29f71891d344",
+    "name": "Project-Team-404 API - 344-archive",
+    "description": "Sprint 5 archive, restore, archived-item listing, and cursor checks. Requires the 009_archiving.sql fixtures for Harvey.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "344-archive",
+      "item": [
+        {
+          "name": "Login - Harvey",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"identifier\": \"{{harveyEmail}}\",\n  \"password\": \"{{seedPassword}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/auth/login"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Login succeeds', function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test('Login returns a token', function () { pm.expect(body.token).to.be.a('string').and.not.empty; });",
+                  "pm.environment.set('token', body.token);"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Setup - Capture active archive task",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/tasks?isArchived=false"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Active tasks load', function () { pm.response.to.have.status(200); });",
+                  "const task = pm.response.json().find((item) => item.title === 'Archive fixture - active task');",
+                  "pm.test('Active archive task fixture exists', function () { pm.expect(task).to.exist; });",
+                  "if (task) pm.environment.set('archiveTaskId', String(task.id));"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Setup - Capture active archive project",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/projects?isArchived=false"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Active projects load', function () { pm.response.to.have.status(200); });",
+                  "const project = pm.response.json().find((item) => item.name === 'Filtering - Client Work');",
+                  "pm.test('Active project fixture exists', function () { pm.expect(project).to.exist; });",
+                  "if (project) pm.environment.set('archiveProjectId', String(project.id));"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Setup - Capture active archive label",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/labels"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Active labels load', function () { pm.response.to.have.status(200); });",
+                  "const label = pm.response.json().find((item) => item.name === 'Archive fixture - Active task label');",
+                  "pm.test('Active label fixture exists', function () { pm.expect(label).to.exist; });",
+                  "if (label) pm.environment.set('archiveLabelId', String(label.id));"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Archive task",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"isArchived\": true\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/tasks/{{archiveTaskId}}/archive"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Task archives', function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test('Task archive timestamp is returned', function () { pm.expect(body.isArchived).to.eql(true); pm.expect(new Date(body.archivedAt).toISOString()).to.eql(body.archivedAt); });"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Archived task cannot be updated",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"This update must be rejected\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/tasks/{{archiveTaskId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Archived task update returns 409', function () { pm.response.to.have.status(409); });"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Restore task",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"isArchived\": false\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/tasks/{{archiveTaskId}}/archive"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Task restores', function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test('Restored task has no archive timestamp', function () { pm.expect(body.isArchived).to.eql(false); pm.expect(body.archivedAt).to.eql(null); });"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Archive label",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"isArchived\": true\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/labels/{{archiveLabelId}}/archive"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Label archives', function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test('Label archive state is returned', function () { pm.expect(body.isArchived).to.eql(true); pm.expect(body.archivedAt).to.be.a('string'); });"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Archived label cannot be newly attached",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"labelIds\": [{{archiveLabelId}}]\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/tasks/{{archiveTaskId}}/labels"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Attaching archived label returns 409', function () { pm.response.to.have.status(409); });"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Restore label",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"isArchived\": false\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/labels/{{archiveLabelId}}/archive"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Label restores', function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test('Restored label has no archive timestamp', function () { pm.expect(body.isArchived).to.eql(false); pm.expect(body.archivedAt).to.eql(null); });"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Archive project",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"isArchived\": true\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/projects/{{archiveProjectId}}/archive"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Project archives', function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test('Project archive state is returned', function () { pm.expect(body.isArchived).to.eql(true); pm.expect(body.archivedAt).to.be.a('string'); });"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Archived project is excluded from active list",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/projects?isArchived=false"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Active project list loads', function () { pm.response.to.have.status(200); });",
+                  "const projects = pm.response.json();",
+                  "pm.test('Archived project is excluded', function () { pm.expect(projects.some((project) => String(project.id) === pm.environment.get('archiveProjectId'))).to.eql(false); });"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Restore project",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"isArchived\": false\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/projects/{{archiveProjectId}}/archive"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Project restores', function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test('Restored project has no archive timestamp', function () { pm.expect(body.isArchived).to.eql(false); pm.expect(body.archivedAt).to.eql(null); });"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "List archived items - first page",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/archive?type=all&limit=1"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Archive list loads', function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test('All archive groups are present', function () { ['tasks', 'projects', 'labels'].forEach((key) => { pm.expect(body[key].items).to.be.an('array'); pm.expect(body[key].total).to.be.a('number'); }); });",
+                  "pm.test('A next-page cursor is returned', function () { pm.expect(body.nextCursor).to.be.a('string').and.not.empty; });",
+                  "const firstGroup = ['tasks', 'projects', 'labels'].find((key) => body[key].items.length > 0);",
+                  "if (firstGroup) pm.environment.set('firstArchiveItem', firstGroup + ':' + body[firstGroup].items[0].id);",
+                  "pm.environment.set('archiveCursor', body.nextCursor);"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "List archived items - next page",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/archive?type=all&limit=1&cursor={{archiveCursor}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Archive next page loads', function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "const nextGroup = ['tasks', 'projects', 'labels'].find((key) => body[key].items.length > 0);",
+                  "pm.test('Next page does not repeat its first item', function () { pm.expect(nextGroup).to.exist; if (nextGroup) pm.expect(nextGroup + ':' + body[nextGroup].items[0].id).not.to.eql(pm.environment.get('firstArchiveItem')); });"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "List only archived projects",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/archive?type=projects"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Project archive filter loads', function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test('Unrequested groups are empty', function () { pm.expect(body.tasks).to.eql({ items: [], total: 0 }); pm.expect(body.labels).to.eql({ items: [], total: 0 }); });"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Invalid archive limit returns 400",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/archive?limit=51"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Invalid archive limit is rejected', function () { pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Archive list requires authentication",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/archive"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Missing token is rejected', function () { pm.response.to.have.status(401); });"
+                ]
+              }
+            }
+          ],
+          "response": []
+        }
+      ]
+    }
+  ]
+}

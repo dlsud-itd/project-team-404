@@ -14,6 +14,7 @@ import type { LabelCrudDependencies } from './label-crud.service';
 import { createLabelValidator } from './validators/create-label.validator';
 import { labelIdParamValidator } from './validators/label-id-param.validator';
 import { updateLabelValidator } from './validators/update-label.validator';
+import { listLabelsQueryValidator } from './validators/list-labels-query.validator';
 
 export function createLabelCrudRouter(
   sessionService: SessionService,
@@ -46,7 +47,12 @@ export function createLabelCrudRouter(
     validateRequest(createLabelValidator, 'body', 'Invalid label details'),
     controller.create
   );
-  router.get('/', auth, controller.list);
+  router.get(
+    '/',
+    auth,
+    validateRequest(listLabelsQueryValidator, 'query', 'Invalid label filters'),
+    controller.list
+  );
   router.get('/:labelId', auth, validateLabelId, controller.get);
   router.put(
     '/:labelId',

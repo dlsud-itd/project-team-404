@@ -1,6 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
 import { LabelNotFoundError } from '../../labels/label-crud/errors/label-not-found.error';
+import { LabelArchivedError } from '../../labels/shared/errors/label-archived.error';
 import type { LabelRecord } from '../../labels/shared/models/label.model';
+import { TaskArchivedError } from '../shared/errors/task-archived.error';
 import type { TaskRecord } from '../shared/models/task.model';
 import { TaskOrganizationService } from './task-organization.service';
 
@@ -19,6 +21,7 @@ const task: TaskRecord = {
   recurrenceEndDate: null,
   isDone: false,
   doneAt: null,
+  archivedAt: null,
   createdAt: new Date('2026-10-30T00:00:00.000Z'),
   updatedAt: new Date('2026-10-30T00:00:00.000Z'),
   deletedAt: null,
@@ -41,6 +44,7 @@ const label: LabelRecord = {
   name: 'Work',
   color: '#f59e0b',
   sortOrder: 1,
+  archivedAt: null,
   createdAt: new Date('2026-10-30T00:00:00.000Z'),
   updatedAt: new Date('2026-10-30T00:00:00.000Z'),
 };
@@ -53,6 +57,7 @@ function dependencies() {
     detachTaskLabel: vi.fn().mockResolvedValue({ count: 1 }),
     listTaskLabels: vi.fn().mockResolvedValue([label]),
     findOwnedLabel: vi.fn().mockResolvedValue(label),
+    setTaskArchived: vi.fn().mockResolvedValue(task),
   };
 }
 
@@ -115,5 +120,36 @@ describe('TaskOrganizationService', () => {
 
     expect(deps.detachTaskLabel).toHaveBeenCalledTimes(2);
     expect(deps.detachTaskLabel).toHaveBeenCalledWith(4, 8, 'user-1');
+  });
+
+  it('rejects task mutations when the task has been archived', async () => {
+    const deps = dependencies();
+    const service = new TaskOrganizationService(deps);
+    const archivedTask = {
+      ...task,
+      archivedAt: new Date('2026-11-10T09:30:00.000Z'),
+    };
+
+    await expect(
+      service.setPriority(archivedTask, 'user-1', 'high')
+    ).rejects.toBeInstanceOf(TaskArchivedError);
+    await expect(
+      service.attachLabels(archivedTask, 'user-1', [8])
+    ).rejects.toBeInstanceOf(TaskArchivedError);
+    expect(deps.updateOwnedTask).not.toHaveBeenCalled();
+    expect(deps.attachTaskLabels).not.toHaveBeenCalled();
+  });
+
+  it('rejects attaching an archived label without changing assignments', async () => {
+    const deps = dependencies();
+    vi.mocked(deps.findOwnedLabels).mockResolvedValue([
+      { ...label, archivedAt: new Date('2026-11-10T09:30:00.000Z') },
+    ]);
+    const service = new TaskOrganizationService(deps);
+
+    await expect(
+      service.attachLabels(task, 'user-1', [8])
+    ).rejects.toBeInstanceOf(LabelArchivedError);
+    expect(deps.attachTaskLabels).not.toHaveBeenCalled();
   });
 });

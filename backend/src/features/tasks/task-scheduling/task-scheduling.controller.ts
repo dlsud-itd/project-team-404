@@ -1,5 +1,6 @@
 import type { RequestHandler } from 'express';
 import { TaskNotFoundError } from '../task-crud/errors/task-not-found.error';
+import { TaskArchivedError } from '../shared/errors/task-archived.error';
 import type { TaskRecord } from '../shared/models/task.model';
 import {
   InvalidTaskDeadlineError,
@@ -31,6 +32,10 @@ export function createTaskSchedulingController(
     }
     if (error instanceof InvalidTaskDeadlineError) {
       res.status(400).json({ error: error.message });
+      return;
+    }
+    if (error instanceof TaskArchivedError) {
+      res.status(409).json({ error: error.message });
       return;
     }
     next(error);

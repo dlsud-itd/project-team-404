@@ -34,6 +34,7 @@ describe('listTasks query builders', () => {
     expect(buildListTasksWhere('user-123', filters)).toEqual({
       userId: 'user-123',
       deletedAt: null,
+      archivedAt: null,
       projectId: 18,
       isDone: false,
       priorityLevel: {

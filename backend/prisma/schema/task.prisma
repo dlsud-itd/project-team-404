@@ -24,6 +24,7 @@ model Task {
   recurrenceEndDate DateTime?   @db.Date @map("recurrence_end_date")
   isDone        Boolean         @default(false) @map("is_done")
   doneAt        DateTime?       @db.Timestamptz(6) @map("done_at")
+  archivedAt    DateTime?       @db.Timestamptz(6) @map("archived_at")
   createdAt     DateTime        @default(now()) @db.Timestamptz(6) @map("created_at")
   updatedAt     DateTime        @updatedAt @db.Timestamptz(6) @map("updated_at")
   deletedAt     DateTime?       @db.Timestamptz(6) @map("deleted_at")

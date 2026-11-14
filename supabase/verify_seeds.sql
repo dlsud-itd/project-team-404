@@ -51,7 +51,7 @@ begin
     where task.user_id = fixture_user_id
       and task.title like 'Filter fixture %'
       and task.deleted_at is null
-      and priority.name = expected.name;
+      and lower(priority.name) = expected.name;
 
     if actual_count <> expected.task_count then
       raise exception 'FAIL: expected % % priority tasks, found %',
@@ -354,3 +354,151 @@ select
       then 'PASS'
     else 'FAIL'
   end as result;
+
+do $$
+declare
+  actual_count integer;
+  expected record;
+begin
+  for expected in
+    select *
+    from (values
+      ('harvey@example.com', 'tasks', 3),
+      ('harvey@example.com', 'projects', 1),
+      ('harvey@example.com', 'labels', 1),
+      ('james@example.com', 'tasks', 1),
+      ('james@example.com', 'projects', 0),
+      ('james@example.com', 'labels', 1)
+    ) as fixture_counts(email, item_type, expected_count)
+  loop
+    if expected.item_type = 'tasks' then
+      select count(*)
+      into actual_count
+      from public.tbl_task as task
+      join public.tbl_user as profile on profile.user_id = task.user_id
+      where profile.email = expected.email
+        and task.title like 'Archive fixture %'
+        and task.deleted_at is null
+        and task.archived_at is not null;
+    elsif expected.item_type = 'projects' then
+      select count(*)
+      into actual_count
+      from public.tbl_project as project
+      join public.tbl_user as profile on profile.user_id = project.user_id
+      where profile.email = expected.email
+        and project.name like 'Archive fixture %'
+        and project.deleted_at is null
+        and project.archived_at is not null;
+    else
+      select count(*)
+      into actual_count
+      from public.tbl_label as label
+      join public.tbl_user as profile on profile.user_id = label.user_id
+      where profile.email = expected.email
+        and label.name like 'Archive fixture %'
+        and label.archived_at is not null;
+    end if;
+
+    if actual_count < expected.expected_count then
+      raise exception
+        'FAIL: expected at least % archived fixture % for %, found %',
+        expected.expected_count, expected.item_type, expected.email, actual_count;
+    end if;
+    raise notice 'PASS: % archived fixtures for %',
+      expected.item_type, expected.email;
+  end loop;
+
+  if not exists (
+    select 1
+    from public.tbl_task as task
+    join public.tbl_project as project
+      on project.project_id = task.project_id
+    join public.tbl_user as profile
+      on profile.user_id = task.user_id
+    where profile.email = 'harvey@example.com'
+      and project.name = 'Filtering - Client Work'
+      and not project.is_archived
+      and task.title = 'Archive fixture - active task'
+      and task.archived_at is null
+      and task.deleted_at is null
+  ) then
+    raise exception 'FAIL: active task archive fixture is missing';
+  end if;
+  raise notice 'PASS: active task archive fixture is present';
+
+  if not exists (
+    select 1
+    from public.tbl_label as label
+    join public.tbl_user as profile
+      on profile.user_id = label.user_id
+    where profile.email = 'harvey@example.com'
+      and label.name = 'Archive fixture - Active task label'
+      and label.archived_at is null
+  ) then
+    raise exception 'FAIL: active label archive fixture is missing';
+  end if;
+  raise notice 'PASS: active label archive fixture is present';
+
+  if exists (
+    select 1
+    from public.tbl_project
+    where is_inbox and is_archived
+  ) then
+    raise exception 'FAIL: an Inbox project is archived';
+  end if;
+  raise notice 'PASS: no Inbox project is archived';
+
+  if exists (
+    select 1
+    from public.tbl_project
+    where is_archived is distinct from (archived_at is not null)
+  ) then
+    raise exception 'FAIL: project is_archived and archived_at disagree';
+  end if;
+  raise notice 'PASS: project archive flags match archived_at';
+
+  if not exists (
+    select 1
+    from public.tbl_project as project
+    join public.tbl_user as profile on profile.user_id = project.user_id
+    join public.tbl_task as task on task.project_id = project.project_id
+    where profile.email = 'harvey@example.com'
+      and project.name = 'Archive fixture - Archived project'
+      and project.is_archived
+      and task.title = 'Archive fixture - active task in archived project'
+      and task.archived_at is null
+      and task.deleted_at is null
+  ) then
+    raise exception 'FAIL: archived project does not contain its active task fixture';
+  end if;
+  raise notice 'PASS: archived project contains an active task';
+
+  if not exists (
+    select 1
+    from public.tbl_label as label
+    join public.tbl_task_label as task_label on task_label.label_id = label.label_id
+    join public.tbl_task as task on task.task_id = task_label.task_id
+    join public.tbl_user as profile on profile.user_id = label.user_id
+    where profile.email = 'harvey@example.com'
+      and label.name = 'Archive fixture - Archived label'
+      and label.archived_at is not null
+      and task.title = 'Archive fixture - active task in archived project'
+      and task.archived_at is null
+      and task.deleted_at is null
+  ) then
+    raise exception 'FAIL: archived label is not attached to its active task fixture';
+  end if;
+  raise notice 'PASS: archived label remains attached to an active task';
+
+  if not exists (
+    select 1
+    from public.tbl_task
+    where title = 'Archive fixture ArchiveNeedle - labeled task'
+      and archived_at is not null
+      and deleted_at is null
+  ) then
+    raise exception 'FAIL: distinctive archived search task fixture is missing';
+  end if;
+  raise notice 'PASS: distinctive archived search task fixture is present';
+end;
+$$;

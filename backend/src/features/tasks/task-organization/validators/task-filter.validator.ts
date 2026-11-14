@@ -115,6 +115,7 @@ const taskFilterFields = {
     .transform(() => true)
     .optional(),
   recurring: queryBoolean.optional(),
+  isArchived: queryBoolean.optional(),
   isDone: queryBoolean.optional(),
 };
 

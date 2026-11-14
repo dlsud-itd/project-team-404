@@ -14,6 +14,7 @@ const project: ProjectRecord = {
   isInbox: false,
   isFavorite: false,
   isArchived: false,
+  archivedAt: null,
   sortOrder: 0,
   createdAt: new Date('2026-10-20T00:00:00.000Z'),
   updatedAt: new Date('2026-10-20T00:00:00.000Z'),
@@ -36,7 +37,11 @@ function context(validated: unknown, ownedProject?: ProjectRecord) {
 function makeController(
   dependencies = {
     setProjectFavorite: vi.fn().mockResolvedValue({ count: 1 }),
-    setProjectArchived: vi.fn().mockResolvedValue({ count: 1 }),
+    setProjectArchived: vi.fn().mockResolvedValue({
+      ...project,
+      isArchived: true,
+      archivedAt: new Date('2026-11-10T09:30:00.000Z'),
+    }),
     setProjectSortOrder: vi.fn().mockResolvedValue({ count: 1 }),
     updateProjectSortOrders: vi
       .fn()
@@ -65,7 +70,11 @@ describe('ProjectOrganizationController', () => {
     const archive = context({ isArchived: true }, project);
     await controller.archive(archive.req, archive.res, archive.next);
     expect(archive.res.json).toHaveBeenCalledWith(
-      expect.objectContaining({ projectId: 7, isArchived: true })
+      expect.objectContaining({
+        projectId: 7,
+        isArchived: true,
+        archivedAt: expect.any(Date),
+      })
     );
   });
 
@@ -94,7 +103,7 @@ describe('ProjectOrganizationController', () => {
     const { controller } = makeController(deps);
     const inbox = context({ isArchived: true }, { ...project, isInbox: true });
     await controller.archive(inbox.req, inbox.res, inbox.next);
-    expect(inbox.res.status).toHaveBeenCalledWith(400);
+    expect(inbox.res.status).toHaveBeenCalledWith(409);
     expect(inbox.res.json).toHaveBeenCalledWith({
       error: 'Inbox project cannot be archived',
     });

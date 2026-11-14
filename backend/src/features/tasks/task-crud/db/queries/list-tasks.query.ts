@@ -88,6 +88,7 @@ export function buildListTasksWhere(
       : {}),
     ...(filters.status === 'active' ? { isDone: false } : {}),
     ...(filters.status === 'completed' ? { isDone: true } : {}),
+    archivedAt: filters.isArchived ? { not: null } : null,
     ...(filters.isDone !== undefined ? { isDone: filters.isDone } : {}),
     ...(priorityNames !== undefined
       ? {

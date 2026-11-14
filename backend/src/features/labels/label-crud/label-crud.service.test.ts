@@ -10,6 +10,7 @@ const label: LabelRecord = {
   name: 'Work',
   color: '#f59e0b',
   sortOrder: 1,
+  archivedAt: null,
   createdAt: new Date('2026-10-30T00:00:00.000Z'),
   updatedAt: new Date('2026-10-30T00:00:00.000Z'),
 };
@@ -34,7 +35,7 @@ describe('LabelCrudService', () => {
     const labels = await service.list('user-1');
 
     expect(deps.createLabel).toHaveBeenCalledWith('user-1', { name: 'Work' });
-    expect(deps.listLabels).toHaveBeenCalledWith('user-1');
+    expect(deps.listLabels).toHaveBeenCalledWith('user-1', false);
     expect(labels[0]).not.toHaveProperty('userId');
   });
 

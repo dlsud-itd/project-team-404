@@ -6,6 +6,7 @@ export async function listOverdueTasks(userId: string, before: Date) {
       userId,
       isDone: false,
       deletedAt: null,
+      archivedAt: null,
       deadline: { not: null, lt: before },
       OR: [
         { projectId: null },

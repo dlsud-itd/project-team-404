@@ -17,6 +17,7 @@ const project: ProjectRecord = {
   isInbox: false,
   isFavorite: false,
   isArchived: false,
+  archivedAt: null,
   sortOrder: 0,
   createdAt: new Date('2026-10-20T00:00:00.000Z'),
   updatedAt: new Date('2026-10-20T00:00:00.000Z'),
@@ -31,7 +32,7 @@ function makeApp() {
   } as unknown as SessionService;
   const dependencies = {
     setProjectFavorite: vi.fn().mockResolvedValue({ count: 1 }),
-    setProjectArchived: vi.fn().mockResolvedValue({ count: 1 }),
+    setProjectArchived: vi.fn().mockResolvedValue(project),
     setProjectSortOrder: vi.fn().mockResolvedValue({ count: 1 }),
     updateProjectSortOrders: vi.fn().mockResolvedValue([]),
   };

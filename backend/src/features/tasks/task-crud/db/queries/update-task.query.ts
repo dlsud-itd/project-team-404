@@ -3,6 +3,7 @@ import type { UpdateTaskInput } from '../../types/task-crud.types';
 import { toRecurrenceData } from '../../../task-scheduling/utils/recurrence-data.util';
 import { RecurrenceService } from '../../../task-scheduling/services/recurrence.service';
 import { InvalidTaskPriorityError } from '../../errors/invalid-task-priority.error';
+import { TaskArchivedError } from '../../../shared/errors/task-archived.error';
 
 const recurrenceService = new RecurrenceService();
 const taskInclude = {
@@ -21,6 +22,9 @@ export async function updateTask(
       include: taskInclude,
     });
     if (!currentTask) return null;
+    if (currentTask.archivedAt !== null) {
+      throw new TaskArchivedError();
+    }
 
     const completing = input.isDone === true && !currentTask.isDone;
     const priorityLevel =
@@ -51,6 +55,7 @@ export async function updateTask(
         id: taskId,
         userId,
         deletedAt: null,
+        archivedAt: null,
         ...(completing ? { isDone: false } : {}),
       },
       data: {
@@ -93,8 +98,11 @@ export async function updateTask(
       where: { id: taskId, userId, deletedAt: null },
       include: taskInclude,
     });
-    if (!updatedTask || (result.count === 0 && !updatedTask.isDone))
-      return null;
+    if (!updatedTask) return null;
+    if (updatedTask.archivedAt !== null) {
+      throw new TaskArchivedError();
+    }
+    if (result.count === 0 && !updatedTask.isDone) return null;
 
     if (completing && result.count > 0) {
       const owner = await transaction.user.findUnique({

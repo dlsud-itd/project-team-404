@@ -1,5 +1,7 @@
 import { LabelNotFoundError } from '../../labels/label-crud/errors/label-not-found.error';
+import { LabelArchivedError } from '../../labels/shared/errors/label-archived.error';
 import { TaskNotFoundError } from '../task-crud/errors/task-not-found.error';
+import { TaskArchivedError } from '../shared/errors/task-archived.error';
 import type { LabelRecord } from '../../labels/shared/models/label.model';
 import { toLabelModel } from '../../labels/shared/models/label.model';
 import type { TaskRecord } from '../shared/models/task.model';
@@ -26,6 +28,11 @@ export type TaskOrganizationDependencies = {
   ): Promise<unknown>;
   listTaskLabels(taskId: number, userId: string): Promise<LabelRecord[]>;
   findOwnedLabel(labelId: number, userId: string): Promise<LabelRecord | null>;
+  setTaskArchived(
+    taskId: number,
+    userId: string,
+    isArchived: boolean
+  ): Promise<TaskRecord | null>;
 };
 
 export class TaskOrganizationService {
@@ -37,6 +44,7 @@ export class TaskOrganizationService {
     priority?: TaskPriority,
     priorityId?: number
   ) {
+    this.assertTaskActive(task);
     const updated = await this.dependencies.updateOwnedTask(task.id, userId, {
       ...(priority !== undefined ? { priority } : {}),
       ...(priorityId !== undefined ? { priorityId } : {}),
@@ -58,6 +66,7 @@ export class TaskOrganizationService {
     userId: string,
     requestedLabelIds: number[]
   ) {
+    this.assertTaskActive(task);
     const labelIds = [...new Set(requestedLabelIds)];
     const ownedLabels = await this.dependencies.findOwnedLabels(
       labelIds,
@@ -65,6 +74,9 @@ export class TaskOrganizationService {
     );
     if (ownedLabels.length !== labelIds.length) {
       throw new LabelNotFoundError();
+    }
+    if (ownedLabels.some((label) => label.archivedAt !== null)) {
+      throw new LabelArchivedError();
     }
     const labels = await this.dependencies.attachTaskLabels(
       task.id,
@@ -75,6 +87,7 @@ export class TaskOrganizationService {
   }
 
   async detachLabel(task: TaskRecord, userId: string, labelId: number) {
+    this.assertTaskActive(task);
     const label = await this.dependencies.findOwnedLabel(labelId, userId);
     if (!label) {
       throw new LabelNotFoundError();
@@ -83,5 +96,27 @@ export class TaskOrganizationService {
     return (await this.dependencies.listTaskLabels(task.id, userId)).map(
       toLabelModel
     );
+  }
+
+  async setArchived(task: TaskRecord, userId: string, isArchived: boolean) {
+    const updated = await this.dependencies.setTaskArchived(
+      task.id,
+      userId,
+      isArchived
+    );
+    if (!updated) {
+      throw new TaskNotFoundError();
+    }
+    return {
+      taskId: updated.id,
+      isArchived: updated.archivedAt !== null,
+      archivedAt: updated.archivedAt,
+    };
+  }
+
+  private assertTaskActive(task: TaskRecord) {
+    if (task.archivedAt !== null) {
+      throw new TaskArchivedError();
+    }
   }
 }

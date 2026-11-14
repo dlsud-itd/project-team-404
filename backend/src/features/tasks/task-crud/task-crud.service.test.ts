@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { TaskCrudService } from './task-crud.service';
 import type { TaskRecord } from '../shared/models/task.model';
 import { TaskNotFoundError } from './errors/task-crud.errors';
+import { TaskArchivedError } from '../shared/errors/task-archived.error';
 
 const task: TaskRecord = {
   id: 12,
@@ -18,6 +19,7 @@ const task: TaskRecord = {
   recurrenceEndDate: null,
   isDone: false,
   doneAt: null,
+  archivedAt: null,
   createdAt: new Date('2026-10-20T00:00:00.000Z'),
   updatedAt: new Date('2026-10-20T00:00:00.000Z'),
   deletedAt: null,
@@ -111,6 +113,20 @@ describe('TaskCrudService', () => {
     expect(deps.updateOwnedTask).toHaveBeenCalledWith(12, 'user-123', {
       title: 'Plan sprint review v2',
     });
+  });
+
+  it('rejects updates to archived tasks', async () => {
+    const deps = dependencies();
+    const service = new TaskCrudService(deps);
+
+    await expect(
+      service.update(
+        { ...task, archivedAt: new Date('2026-11-10T09:30:00.000Z') },
+        'user-123',
+        { title: 'Changed title' }
+      )
+    ).rejects.toBeInstanceOf(TaskArchivedError);
+    expect(deps.updateOwnedTask).not.toHaveBeenCalled();
   });
 
   it('moves a task only to a project owned by the user', async () => {

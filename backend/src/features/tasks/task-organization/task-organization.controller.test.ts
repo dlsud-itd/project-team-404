@@ -21,6 +21,7 @@ const task: TaskRecord = {
   recurrenceEndDate: null,
   isDone: false,
   doneAt: null,
+  archivedAt: null,
   createdAt: new Date(),
   updatedAt: new Date(),
   deletedAt: null,
@@ -46,6 +47,10 @@ function setup() {
     detachTaskLabel: vi.fn().mockResolvedValue({ count: 0 }),
     listTaskLabels: vi.fn().mockResolvedValue([]),
     findOwnedLabel: vi.fn().mockResolvedValue(null),
+    setTaskArchived: vi.fn().mockResolvedValue({
+      ...task,
+      archivedAt: new Date(),
+    }),
   };
   const controller = createTaskOrganizationController(
     new TaskOrganizationService(dependencies)

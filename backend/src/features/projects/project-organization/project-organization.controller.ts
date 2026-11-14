@@ -28,7 +28,7 @@ export function createProjectOrganizationController(
       return;
     }
     if (error instanceof InboxCannotBeArchivedError) {
-      res.status(400).json({ error: error.message });
+      res.status(409).json({ error: error.message });
       return;
     }
     next(error);

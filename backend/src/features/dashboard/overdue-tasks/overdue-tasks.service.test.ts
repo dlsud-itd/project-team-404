@@ -17,6 +17,7 @@ const task: TaskRecord = {
   recurrenceEndDate: null,
   isDone: false,
   doneAt: null,
+  archivedAt: null,
   createdAt: new Date('2026-11-05T00:00:00.000Z'),
   updatedAt: new Date('2026-11-05T00:00:00.000Z'),
   deletedAt: null,

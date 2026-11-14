@@ -19,6 +19,7 @@ export type Task = Omit<
   | 'priorityLevel'
   | 'taskLabels'
 > & {
+  isArchived: boolean;
   priority: TaskPriority | TaskPriorityLevel;
   scheduledDate: string | null;
   dueDate: string | null;
@@ -43,6 +44,8 @@ export type Label = {
   id: number;
   name: string;
   color: string | null;
+  isArchived: boolean;
+  archivedAt: Date | null;
 };
 
 export function toTaskModel(task: TaskRecord): Task {
@@ -76,12 +79,16 @@ export function toTaskModel(task: TaskRecord): Task {
       : null,
     isDone: task.isDone,
     doneAt: task.doneAt ? new Date(task.doneAt).toISOString() : null,
+    isArchived: task.archivedAt !== null,
+    archivedAt: task.archivedAt ? new Date(task.archivedAt) : null,
     createdAt: new Date(task.createdAt),
     updatedAt: new Date(task.updatedAt),
     labels: task.taskLabels.map(({ label }) => ({
       id: label.id,
       name: label.name,
       color: label.color?.trim() || null,
+      isArchived: label.archivedAt !== null,
+      archivedAt: label.archivedAt ? new Date(label.archivedAt) : null,
     })),
   };
 }

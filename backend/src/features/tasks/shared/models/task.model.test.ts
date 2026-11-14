@@ -17,6 +17,7 @@ const record: TaskRecord = {
   recurrenceEndDate: null,
   isDone: false,
   doneAt: null,
+  archivedAt: null,
   createdAt: new Date('2026-10-30T00:00:00.000Z'),
   updatedAt: new Date('2026-10-30T00:00:00.000Z'),
   deletedAt: null,
@@ -41,6 +42,8 @@ describe('toTaskModel', () => {
     expect(model).not.toHaveProperty('userId');
     expect(model).not.toHaveProperty('deletedAt');
     expect(model.dueDate).toBe('2026-11-02');
+    expect(model.isArchived).toBe(false);
+    expect(model.archivedAt).toBeNull();
     expect(model.priority).toBe('high');
     expect(model.labels).toEqual([]);
     expect(model.createdAt).toEqual(record.createdAt);
@@ -51,8 +54,42 @@ describe('toTaskModel', () => {
       ...record,
       priorityLevel: { ...record.priorityLevel, name: 'Medium' },
     });
-
     expect(model.priority).toBe('medium');
+  });
+
+  it('marks archived tasks and their archived labels in the public model', () => {
+    const archivedAt = new Date('2026-11-10T09:30:00.000Z');
+    const model = toTaskModel({
+      ...record,
+      archivedAt,
+      taskLabels: [
+        {
+          taskId: 21,
+          labelId: 8,
+          label: {
+            id: 8,
+            userId: 'owner-1',
+            name: 'Archived',
+            color: '#123456',
+            sortOrder: 1,
+            archivedAt,
+            createdAt: record.createdAt,
+            updatedAt: record.updatedAt,
+          },
+        },
+      ],
+    });
+
+    expect(model).toMatchObject({ isArchived: true, archivedAt });
+    expect(model.labels).toEqual([
+      {
+        id: 8,
+        name: 'Archived',
+        color: '#123456',
+        isArchived: true,
+        archivedAt,
+      },
+    ]);
   });
 
   it('returns custom priority details for user-managed levels', () => {

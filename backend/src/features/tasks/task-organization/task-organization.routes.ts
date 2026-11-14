@@ -13,6 +13,7 @@ import {
   listTaskLabels,
 } from './db/queries/attach-task-labels.query';
 import { detachTaskLabel } from './db/queries/detach-task-label.query';
+import { setTaskArchived } from './db/queries/set-task-archived.query';
 import { findOwnedLabels } from './db/queries/find-owned-labels.query';
 import { createTaskOrganizationController } from './task-organization.controller';
 import { TaskOrganizationService } from './task-organization.service';
@@ -22,6 +23,7 @@ import {
   taskLabelIdValidator,
 } from './validators/task-labels.validator';
 import { taskPriorityValidator } from './validators/priority.validator';
+import { setTaskArchivedValidator } from './validators/set-task-archived.validator';
 
 export function createTaskOrganizationRouter(
   sessionService: SessionService,
@@ -32,6 +34,7 @@ export function createTaskOrganizationRouter(
     detachTaskLabel,
     listTaskLabels,
     findOwnedLabel,
+    setTaskArchived,
   }
 ): Router {
   const router = Router();
@@ -65,6 +68,12 @@ export function createTaskOrganizationRouter(
     next();
   };
 
+  router.put(
+    '/:taskId/archive',
+    ...base,
+    validateRequest(setTaskArchivedValidator, 'body', 'isArchived is required'),
+    controller.archive
+  );
   router.put(
     '/:taskId/priority',
     ...base,
