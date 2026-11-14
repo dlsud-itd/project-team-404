@@ -39,15 +39,16 @@ describe('Landing', () => {
     expect(el('.hero .cta')?.textContent?.trim()).toBe('Create free account');
   });
 
-  it('shows the hero heading and illustrations with alt text', () => {
+  it('shows the hero heading and accessible local illustrations', () => {
     expect(el('h1')?.id).toBe('hero-heading');
     expect(el('.hero')?.getAttribute('aria-labelledby')).toBe('hero-heading');
-    expect(all('.showcase-card img').map((img) => img.getAttribute('alt'))).toEqual([
+    expect(all('.showcase-card').map((card) => card.getAttribute('aria-label'))).toEqual([
       'Focus illustration',
       'Routine illustration',
       'Consistent illustration',
     ]);
-    expect(el('.hero-art img')?.getAttribute('alt')).toBeTruthy();
+    expect(el('.hero-board[role="img"]')?.getAttribute('aria-label')).toBeTruthy();
+    expect(all('img')).toHaveLength(0);
     expect(all('.showcase-tags .tag').map((t) => t.textContent?.trim())).toEqual([
       'Focus',
       'Routine',

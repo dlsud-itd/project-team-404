@@ -38,8 +38,19 @@
         <div class="showcase">
           <ul class="showcase-cards">
             @for (item of showcases; track item.label) {
-              <li class="showcase-card">
-                <img [src]="item.image" [alt]="item.label + ' illustration'" loading="lazy" />
+              <li
+                class="showcase-card"
+                [class.showcase-card--focus]="item.label === 'Focus'"
+                [class.showcase-card--routine]="item.label === 'Routine'"
+                [class.showcase-card--consistent]="item.label === 'Consistent'"
+                role="img"
+                [attr.aria-label]="item.label + ' illustration'"
+              >
+                <span class="showcase-art" aria-hidden="true">
+                  <span></span>
+                  <span></span>
+                  <span></span>
+                </span>
               </li>
             }
           </ul>
@@ -52,10 +63,30 @@
       </div>
 
       <figure class="hero-art">
-        <img
-          src="landing/hero.png"
-          alt="A person sitting on a cushion, checking off a habit list on their phone"
-        />
+        <div class="hero-board" role="img" aria-label="A preview of a daily habit checklist">
+          <p class="hero-board__eyebrow">TODAY'S HABITS</p>
+          <h2>Small steps, steady progress</h2>
+          <div class="hero-board__row">
+            <span></span>
+            <p>Morning walk</p>
+            <b>Done</b>
+          </div>
+          <div class="hero-board__row">
+            <span></span>
+            <p>Read for 20 minutes</p>
+            <b>Done</b>
+          </div>
+          <div class="hero-board__row">
+            <span></span>
+            <p>Plan tomorrow</p>
+            <b>Next</b>
+          </div>
+          <div class="hero-board__progress">
+            <span>Weekly rhythm</span>
+            <b>4 of 7 days</b>
+            <i><span></span></i>
+          </div>
+        </div>
       </figure>
     </section>
 
