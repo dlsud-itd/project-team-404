@@ -7,7 +7,8 @@ import {
   signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { forkJoin, finalize } from 'rxjs';
+import { EMPTY, Subject, catchError, finalize, forkJoin, switchMap } from 'rxjs';
+import { SessionService } from '../../auth/session/session.service';
 import { mapProjectError } from '../../projects/project-crud/mappers/project-error.mapper';
 import { ProjectService } from '../../projects/project-crud/services/project.service';
 import { ProjectsStore } from '../../projects/shared/state/projects.store';
@@ -18,10 +19,24 @@ import { NewTaskDialog } from '../../tasks/task-crud/components/new-task-dialog/
 import { TasksStore } from '../../tasks/shared/state/tasks.store';
 import { PrioritiesStore } from '../../settings/state/priorities.store';
 import type { Task } from '../../tasks/shared/types/task.types';
+import { TaskFilterBar } from '../../tasks/task-organization/components/filter-bar/filter-bar';
+import {
+  SortMenu,
+  type SortChange,
+} from '../../tasks/task-organization/components/sort-menu/sort-menu';
+import { LabelService, type Label } from '../../tasks/task-organization/services/label.service';
+import { TaskQueryStore } from '../../tasks/task-organization/state/task-query.store';
+import {
+  TASK_SORT_OPTIONS,
+  taskSortField,
+  toTaskListFilter,
+} from '../../tasks/task-organization/utils/task-query-params.util';
+import { instantToDate, userTimeZone } from '../../tasks/task-scheduling/utils/date-format.util';
 
 @Component({
   selector: 'app-tasks-page',
-  imports: [ConfirmDeleteTaskDialog, NewTaskDialog],
+  imports: [ConfirmDeleteTaskDialog, NewTaskDialog, TaskFilterBar, SortMenu],
+  providers: [TaskQueryStore],
   templateUrl: './tasks-page.html',
   styleUrl: './tasks-page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -34,17 +49,31 @@ export class TasksPage {
   private readonly tasksApi = inject(TaskService);
   protected readonly tasksStore = inject(TasksStore);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly session = inject(SessionService);
+  private readonly labelsApi = inject(LabelService);
+  /** Filters and sort, kept in the URL next to ?tab=tasks. */
+  protected readonly query = inject(TaskQueryStore);
+  protected readonly sortOptions = TASK_SORT_OPTIONS;
+  protected readonly labels = signal<Label[]>([]);
+  protected readonly labelsError = signal<string | null>(null);
 
   private readonly taskList = signal<Task[]>([]);
+  /** The server's order when a sort is picked; otherwise open first, then by due date. */
   protected readonly tasks = computed(() =>
-    [...this.taskList()].sort(
-      (left, right) =>
-        Number(left.completedAt !== null) - Number(right.completedAt !== null) ||
-        (left.dueDate ?? '9999-12-31').localeCompare(right.dueDate ?? '9999-12-31') ||
-        left.taskId - right.taskId,
-    ),
+    this.query.query().orderBy
+      ? this.taskList()
+      : [...this.taskList()].sort(
+          (left, right) =>
+            Number(left.completedAt !== null) - Number(right.completedAt !== null) ||
+            (left.dueDate ?? '9999-12-31').localeCompare(right.dueDate ?? '9999-12-31') ||
+            left.taskId - right.taskId,
+        ),
   );
   protected readonly loading = signal(true);
+  /** A filter change is reloading the list; the current tasks stay on screen meanwhile. */
+  protected readonly refreshing = signal(false);
+  /** Each filter reload replaces the one before it, so a slow old answer never wins. */
+  private readonly reloads = new Subject<void>();
   protected readonly loadError = signal<string | null>(null);
   protected readonly actionError = signal<string | null>(null);
   protected readonly busyTasks = signal<ReadonlySet<number>>(new Set());
@@ -53,6 +82,30 @@ export class TasksPage {
   protected readonly deleteError = signal<string | null>(null);
 
   constructor() {
+    this.reloads
+      .pipe(
+        switchMap(() => {
+          this.refreshing.set(true);
+          this.loadError.set(null);
+          return this.tasksApi.listAll(this.filter()).pipe(
+            finalize(() => this.refreshing.set(false)),
+            catchError((error: unknown) => {
+              this.loadError.set(mapTaskError(error).message);
+              return EMPTY;
+            }),
+          );
+        }),
+        takeUntilDestroyed(),
+      )
+      .subscribe((tasks) => this.taskList.set(tasks));
+    this.query.changes$.pipe(takeUntilDestroyed()).subscribe(() => this.reloads.next());
+    this.labelsApi
+      .list()
+      .pipe(takeUntilDestroyed())
+      .subscribe({
+        next: (labels) => this.labels.set(labels),
+        error: () => this.labelsError.set('Could not load labels. Please try again.'),
+      });
     this.load();
   }
 
@@ -61,7 +114,7 @@ export class TasksPage {
     this.loadError.set(null);
     forkJoin({
       projects: this.projects.refresh(),
-      tasks: this.tasksApi.listAll(),
+      tasks: this.tasksApi.listAll(this.filter()),
     })
       .pipe(
         finalize(() => this.loading.set(false)),
@@ -81,6 +134,19 @@ export class TasksPage {
           );
         },
       });
+  }
+
+  protected setSort({ value, direction }: SortChange): void {
+    this.query.set({ orderBy: taskSortField(value), orderDirection: direction });
+  }
+
+  /** The API filter for the current query, with "today" in the user's timezone. */
+  private filter() {
+    const today = instantToDate(
+      new Date().toISOString(),
+      userTimeZone(this.session.currentUser()?.timezone),
+    );
+    return toTaskListFilter(this.query.query(), today);
   }
 
   protected projectName(projectId: number): string {

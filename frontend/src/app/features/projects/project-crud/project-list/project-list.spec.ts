@@ -1,7 +1,7 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { Router, provideRouter } from '@angular/router';
 import { environment } from '../../../../../environments/environment';
 import type { Project } from '../../shared/types/project.types';
 import { ProjectList, deletedNotice } from './project-list';
@@ -127,6 +127,69 @@ describe('ProjectList', () => {
 
     expect(el('.load-error')).toBeNull();
     expect(cardNames()).toEqual(['Inbox', 'Capstone']);
+  });
+
+  describe('filtering and sorting', () => {
+    const BLUE: Project = { ...CAPSTONE, projectId: 13, name: 'Blue notes', color: '#2563EB' };
+
+    async function goTo(url: string): Promise<void> {
+      await TestBed.inject(Router).navigateByUrl(url);
+      await fixture.whenStable();
+      render();
+    }
+
+    const chip = (name: string) =>
+      [...page.querySelectorAll<HTMLButtonElement>('app-project-filter-bar .chip')].find((c) =>
+        c.textContent?.trim().startsWith(name),
+      )!;
+
+    it('shows only favorites when the chip is pressed and puts it in the URL', async () => {
+      loadWith([CAPSTONE, OLD, GYM, INBOX]);
+
+      chip('Favorites').click();
+      await fixture.whenStable();
+      render();
+
+      expect(TestBed.inject(Router).url).toBe('/?favorites=true');
+      expect(chip('Favorites').getAttribute('aria-pressed')).toBe('true');
+      expect(cardNames()).toEqual(['Gym']);
+      expect(text('#results-heading')).toBe('Projects · 1');
+    });
+
+    it('shows archived projects and filters by color from the URL', async () => {
+      loadWith([CAPSTONE, OLD, GYM, BLUE, INBOX]);
+
+      await goTo('/?archived=true');
+      expect(cardNames()).toEqual(['Old class']);
+      expect(text('#results-heading')).toBe('Archived projects · 1');
+
+      await goTo('/?color=%232563eb');
+      expect(cardNames()).toEqual(['Blue notes']);
+    });
+
+    it('sorts by name, keeping the Inbox on top while nothing is filtered', async () => {
+      loadWith([CAPSTONE, GYM, BLUE, INBOX]);
+
+      await goTo('/?sort=name&dir=desc');
+
+      expect(cardNames()).toEqual(['Inbox', 'Gym', 'Capstone', 'Blue notes']);
+      expect(el('#favorites-heading')).toBeNull();
+      expect(text('app-sort-menu .trigger')).toContain('Name');
+    });
+
+    it('offers to clear the filters when no project matches', async () => {
+      loadWith([CAPSTONE, GYM, INBOX]);
+      await goTo('/?favorites=true&color=%232563EB');
+
+      expect(text('.empty-title')).toBe('No projects match these filters.');
+
+      el<HTMLButtonElement>('.empty button.new')!.click();
+      await fixture.whenStable();
+      render();
+
+      expect(TestBed.inject(Router).url).toBe('/');
+      expect(cardNames()).toEqual(['Inbox', 'Gym', 'Capstone']);
+    });
   });
 
   describe('deleting', () => {

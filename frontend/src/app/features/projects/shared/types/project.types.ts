@@ -10,6 +10,9 @@ export interface Project {
   isFavorite: boolean;
   isArchived: boolean;
   sortOrder: number;
+  /** ISO timestamps, used for sorting; older responses may leave them out. */
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 /**
@@ -18,8 +21,6 @@ export interface Project {
  */
 export interface ApiProject extends Omit<Project, 'projectId'> {
   id: number;
-  createdAt?: string;
-  updatedAt?: string;
 }
 
 /** Body of POST /api/projects. Optional fields are sent as null, never as empty strings. */

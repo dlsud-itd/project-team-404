@@ -11,5 +11,7 @@ export function toProject(project: ApiProject): Project {
     isFavorite: project.isFavorite,
     isArchived: project.isArchived,
     sortOrder: project.sortOrder,
+    ...(project.createdAt ? { createdAt: project.createdAt } : {}),
+    ...(project.updatedAt ? { updatedAt: project.updatedAt } : {}),
   };
 }

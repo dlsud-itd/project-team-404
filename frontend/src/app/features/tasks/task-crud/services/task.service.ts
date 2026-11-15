@@ -13,6 +13,12 @@ import type {
   UpdateTaskRequest,
   UpdateTaskResponse,
 } from '../../shared/types/task.types';
+import type {
+  LabelMatch,
+  SortDirection,
+  TaskSortField,
+  TaskStatusFilter,
+} from '../../task-organization/types/task-query.types';
 import { TaskSchedulingService } from '../../task-scheduling/services/task-scheduling.service';
 import { mapTaskError } from '../mappers/task-error.mapper';
 import { toCreateTaskBody, toTask, toUpdateTaskBody } from '../mappers/task.mapper';
@@ -20,14 +26,31 @@ import { toCreateTaskBody, toTask, toUpdateTaskBody } from '../mappers/task.mapp
 /** The most tasks one list request can return. */
 const MAX_PAGE_SIZE = 100;
 
+/** Sprint 3 servers only know these names, and only through the single `priority` filter. */
+const LEGACY_PRIORITY_NAMES = ['high', 'medium', 'low'];
+
 export interface TaskListFilter {
   projectId?: number;
   page?: number;
   /** A priority level name, compared without case by the server. */
   priority?: string;
+  /** Priority level names; a task matches any of them. */
+  priorities?: string[];
   labelId?: number;
-  orderBy?: 'dueDate' | 'createdAt' | 'priority' | 'title';
-  orderDirection?: 'asc' | 'desc';
+  labelIds?: number[];
+  /** Whether a task needs any (the default) or all of labelIds. */
+  labelMatch?: LabelMatch;
+  /** Inclusive YYYY-MM-DD bounds on the due date. */
+  dueFrom?: string;
+  dueTo?: string;
+  hasDueDate?: boolean;
+  /** Open tasks due before today in the user's timezone. */
+  overdue?: boolean;
+  recurring?: boolean;
+  /** Defaults to 'all'. */
+  status?: TaskStatusFilter;
+  orderBy?: TaskSortField;
+  orderDirection?: SortDirection;
 }
 
 /**
@@ -48,15 +71,23 @@ export class TaskService {
   list(filter: TaskListFilter = {}): Observable<Task[]> {
     let params = new HttpParams();
     if (filter.projectId !== undefined) params = params.set('projectId', filter.projectId);
-    params = params.set('status', 'all').set('pageSize', MAX_PAGE_SIZE);
-    if (filter.priority) {
-      // Sprint 3 servers only know the legacy single `priority` filter; custom names need `priorities`.
-      const name = filter.priority.toLowerCase();
-      params = ['high', 'medium', 'low'].includes(name)
-        ? params.set('priority', name)
-        : params.set('priorities', filter.priority);
+    params = params.set('status', filter.status ?? 'all').set('pageSize', MAX_PAGE_SIZE);
+    const priorities = filter.priorities ?? (filter.priority ? [filter.priority] : []);
+    if (priorities.length === 1 && LEGACY_PRIORITY_NAMES.includes(priorities[0].toLowerCase())) {
+      // One built-in level goes through the legacy filter, which Sprint 3 servers also understand.
+      params = params.set('priority', priorities[0].toLowerCase());
+    } else if (priorities.length) {
+      params = params.set('priorities', priorities.join(','));
     }
-    if (filter.labelId !== undefined) params = params.set('labelId', filter.labelId);
+    const labelIds = filter.labelIds ?? (filter.labelId !== undefined ? [filter.labelId] : []);
+    if (labelIds.length === 1) params = params.set('labelId', labelIds[0]);
+    else if (labelIds.length) params = params.set('labelIds', labelIds.join(','));
+    if (filter.labelMatch) params = params.set('labelMatch', filter.labelMatch);
+    if (filter.dueFrom) params = params.set('dueFrom', filter.dueFrom);
+    if (filter.dueTo) params = params.set('dueTo', filter.dueTo);
+    if (filter.hasDueDate !== undefined) params = params.set('hasDueDate', filter.hasDueDate);
+    if (filter.overdue) params = params.set('overdue', true);
+    if (filter.recurring !== undefined) params = params.set('recurring', filter.recurring);
     if (filter.orderBy) params = params.set('orderBy', filter.orderBy);
     if (filter.orderDirection) params = params.set('orderDirection', filter.orderDirection);
     if (filter.page !== undefined) params = params.set('page', filter.page);

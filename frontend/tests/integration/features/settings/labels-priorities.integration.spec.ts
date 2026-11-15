@@ -16,6 +16,7 @@ import { TOKEN_STORAGE_KEY } from '../../../../src/app/features/auth/session/tok
 import { providePriorityLevels } from '../../../../src/app/features/settings/state/priorities.store';
 import { provideUserSettings } from '../../../../src/app/features/settings/state/settings.store';
 import type { ApiTask } from '../../../../src/app/features/tasks/shared/types/task.types';
+import { TASK_QUERY_DEBOUNCE_MS } from '../../../../src/app/features/tasks/task-organization/state/task-query.store';
 import { environment } from '../../../../src/environments/environment';
 
 /**
@@ -295,6 +296,8 @@ describe('Labels & Priorities integration (Settings, task form and filters + API
         provideSessionRestore(),
         providePriorityLevels(),
         provideUserSettings(),
+        // Filter changes reload at once instead of after a pause.
+        { provide: TASK_QUERY_DEBOUNCE_MS, useValue: 0 },
       ],
     }).compileComponents();
   });
@@ -700,13 +703,12 @@ describe('Labels & Priorities integration (Settings, task form and filters + API
       await startSignedIn();
       await openList(TASKS);
 
-      const filter = [...el<HTMLSelectElement>('#filter-priority').options];
-      expect(filter.map((o) => [clean(o.textContent), o.value])).toEqual([
-        ['All priorities', ''],
-        ['Urgent', 'urgent'],
-        ['Normal', 'normal'],
-        ['Someday', 'someday'],
-      ]);
+      const chip = all('app-task-filter-bar .chip').find((c) =>
+        clean(c.textContent).startsWith('Priority'),
+      )!;
+      await press(chip);
+      const options = all('#task-filter-priority .option');
+      expect(options.map((o) => clean(o.textContent))).toEqual(['Urgent', 'Normal', 'Someday']);
       const badges = all('app-task-item .priority');
       expect(badges.map((b) => clean(b.textContent))).toEqual(['Urgent', 'Normal', 'Someday']);
       expect(badges.map((b) => b.style.getPropertyValue('--priority-color'))).toEqual([
@@ -715,7 +717,7 @@ describe('Labels & Priorities integration (Settings, task form and filters + API
         '#94A3B8',
       ]);
 
-      choose('#filter-priority', 'urgent');
+      options[0].querySelector('input')!.click();
       await settle();
       // Custom level names go in the Sprint 5 `priorities` parameter.
       expectTaskList({ priorities: 'urgent' }).flush([TASKS[0]]);

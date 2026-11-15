@@ -6,6 +6,27 @@
     </button>
   </header>
 
+  <section class="toolbar" aria-label="Filter and sort tasks">
+    <app-task-filter-bar
+      [query]="query.query()"
+      [levels]="priorities.levels()"
+      [labels]="labels()"
+      (changed)="query.set($event)"
+      (cleared)="query.clear()"
+    />
+    <app-sort-menu
+      class="sort"
+      label="Sort tasks"
+      [options]="sortOptions"
+      [value]="query.query().orderBy ?? ''"
+      [direction]="query.query().orderDirection"
+      (changed)="setSort($event)"
+    />
+  </section>
+
+  @if (labelsError(); as message) {
+    <p class="error" role="alert">{{ message }}</p>
+  }
   @if (actionError(); as message) {
     <p class="error" role="alert">{{ message }}</p>
   }
@@ -18,7 +39,7 @@
       <button type="button" class="retry" (click)="load()">Try again</button>
     </div>
   } @else {
-    <ul class="list">
+    <ul class="list" [attr.aria-busy]="refreshing()">
       @for (task of tasks(); track task.taskId) {
         <li class="task" [class.done]="task.completedAt !== null">
           <label class="check">
@@ -62,7 +83,16 @@
           </button>
         </li>
       } @empty {
-        <li class="empty">No tasks yet. Create one to see it here.</li>
+        @if (query.count() > 0) {
+          <li class="empty">
+            <p class="empty-title">No tasks match these filters.</p>
+            <button type="button" class="clear-filters" (click)="query.clear()">
+              Clear filters
+            </button>
+          </li>
+        } @else {
+          <li class="empty">No tasks yet. Create one to see it here.</li>
+        }
       }
     </ul>
   }
