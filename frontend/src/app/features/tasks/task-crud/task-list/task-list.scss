@@ -99,6 +99,25 @@ h1 {
   }
 }
 
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem 1rem;
+  margin: 0 0 1.25rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--orange-light);
+
+  app-task-filter-bar {
+    flex: 1 1 20rem;
+  }
+
+  .sort {
+    flex: none;
+  }
+}
+
 .status {
   color: var(--ink-muted);
   font-size: 0.875rem;

@@ -1,13 +1,15 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { Router, provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { environment } from '../../../../../environments/environment';
 import type { ApiProject, Project } from '../../../projects/shared/types/project.types';
 import { asApiTask } from '../../shared/testing/api-task';
 import { AppShell } from '../../../../shared/components/app-shell/app-shell';
 import type { Task } from '../../shared/types/task.types';
+import { TASK_QUERY_DEBOUNCE_MS } from '../../task-organization/state/task-query.store';
+import { instantToDate, userTimeZone } from '../../task-scheduling/utils/date-format.util';
 import { TaskList } from './task-list';
 
 const TASKS_URL = `${environment.apiBaseUrl}/api/tasks`;
@@ -81,6 +83,42 @@ describe('TaskList', () => {
     harness.detectChanges();
   }
 
+  /** The filter chip whose text starts with `name`, e.g. "Priority". */
+  const chip = (name: string) =>
+    [...page().querySelectorAll<HTMLButtonElement>('app-task-filter-bar .chip')].find((c) =>
+      c.textContent?.trim().startsWith(name),
+    )!;
+  const chipText = (name: string) => chip(name).textContent?.trim().replace(/\s+/g, ' ');
+
+  /** Opens a chip's panel and clicks the option with this text. */
+  async function pick(chipName: string, option: string): Promise<void> {
+    if (chip(chipName).getAttribute('aria-expanded') !== 'true') chip(chipName).click();
+    harness.detectChanges();
+    const input = [...page().querySelectorAll('.panel .option')]
+      .find((o) => o.textContent?.trim() === option)
+      ?.querySelector('input');
+    expect(input, `option ${option}`).toBeTruthy();
+    input!.click();
+    await harness.fixture.whenStable();
+    harness.detectChanges();
+  }
+
+  /** Opens the sort menu and picks a field; the menu renders in the CDK overlay. */
+  async function sortBy(label: string): Promise<void> {
+    el<HTMLButtonElement>('app-sort-menu .trigger')!.click();
+    harness.detectChanges();
+    const item = [...document.querySelectorAll<HTMLElement>('[role="menuitemradio"]')].find(
+      (i) => i.textContent?.trim() === label,
+    );
+    expect(item, `sort option ${label}`).toBeTruthy();
+    item!.click();
+    await harness.fixture.whenStable();
+    harness.detectChanges();
+  }
+
+  const listUrl = (params = '') =>
+    `${TASKS_URL}?projectId=10&status=all&pageSize=100${params ? `&${params}` : ''}`;
+
   function askToDelete(title: string): void {
     el<HTMLButtonElement>(`button[aria-label="Delete ${title}"]`)!.click();
     harness.detectChanges();
@@ -99,6 +137,8 @@ describe('TaskList', () => {
         ]),
         provideHttpClient(),
         provideHttpClientTesting(),
+        // Filter changes reload at once instead of after a pause.
+        { provide: TASK_QUERY_DEBOUNCE_MS, useValue: 0 },
       ],
     });
     http = TestBed.inject(HttpTestingController);
@@ -133,81 +173,111 @@ describe('TaskList', () => {
     expect(text('#open-heading')).toBe('To do · 2');
   });
 
-  it('filters by priority and label and orders the server response', async () => {
+  it('filters by several priorities and a label, sorts, and keeps it all in the URL', async () => {
     await open('/projects/10/tasks', [{ id: 7, name: 'Study', color: null }]);
     loadWith([CHAPTER]);
 
-    const priority = el<HTMLSelectElement>('#filter-priority')!;
-    priority.value = 'high';
-    priority.dispatchEvent(new Event('change'));
-    http
-      .expectOne(`${TASKS_URL}?projectId=10&status=all&pageSize=100&priority=high`)
-      .flush([asApiTask({ ...CHAPTER, priorityId: 1 })]);
+    await pick('Priority', 'High');
+    // One built-in level still uses the Sprint 3 filter.
+    http.expectOne(listUrl('priority=high')).flush([asApiTask(CHAPTER)]);
+    await pick('Priority', 'Medium');
+    http.expectOne(listUrl('priorities=high,medium')).flush([asApiTask(CHAPTER)]);
+    expect(chipText('Priority')).toBe('Priority: High, Medium');
 
-    const label = el<HTMLSelectElement>('#filter-label')!;
-    label.value = '7';
-    label.dispatchEvent(new Event('change'));
+    await pick('Labels', 'Study');
     http
-      .expectOne(`${TASKS_URL}?projectId=10&status=all&pageSize=100&priority=high&labelId=7`)
-      .flush([
-        asApiTask({
-          ...CHAPTER,
-          priorityId: 1,
-          labels: [{ labelId: 7, name: 'Study', color: null }],
-        }),
-      ]);
+      .expectOne(listUrl('priorities=high,medium&labelId=7'))
+      .flush([asApiTask({ ...CHAPTER, labels: [{ labelId: 7, name: 'Study', color: null }] })]);
 
-    const sort = el<HTMLSelectElement>('#sort-tasks')!;
-    sort.value = 'title';
-    sort.dispatchEvent(new Event('change'));
+    await sortBy('Title');
     http
-      .expectOne(
-        `${TASKS_URL}?projectId=10&status=all&pageSize=100&priority=high&labelId=7&orderBy=title&orderDirection=asc`,
-      )
-      .flush([
-        asApiTask({
-          ...CHAPTER,
-          taskId: 2,
-          title: 'A task',
-          priorityId: 1,
-          labels: [{ labelId: 7, name: 'Study', color: null }],
-        }),
-        asApiTask({
-          ...CHAPTER,
-          priorityId: 1,
-          labels: [{ labelId: 7, name: 'Study', color: null }],
-        }),
-      ]);
+      .expectOne(listUrl('priorities=high,medium&labelId=7&orderBy=title&orderDirection=asc'))
+      .flush([asApiTask({ ...CHAPTER, taskId: 2, title: 'A task' }), asApiTask(CHAPTER)]);
     await harness.fixture.whenStable();
     harness.detectChanges();
 
     expect(titles()).toEqual(['A task', 'Write chapter 1']);
+    expect(text('app-sort-menu .trigger')).toContain('Title');
+    expect(text('app-task-filter-bar .count')).toBe('2 filters');
+    const url = TestBed.inject(Router).url;
+    expect(url).toContain('priorities=high,medium');
+    expect(url).toContain('labelIds=7');
+    expect(url).toContain('orderBy=title');
   });
 
-  it('restores filters from the URL and sends them on the initial list request', async () => {
+  it('restores Sprint 3 filter links and sends them on the first list request', async () => {
     await open('/projects/10/tasks?priority=high&labelId=7&orderBy=title&orderDirection=desc', [
       { id: 7, name: 'Study', color: null },
     ]);
     http.expectOne(`${PROJECTS_URL}/10`).flush(asApi(CAPSTONE));
     http
-      .expectOne(
-        `${TASKS_URL}?projectId=10&status=all&pageSize=100&priority=high&labelId=7&orderBy=title&orderDirection=desc`,
-      )
-      .flush([
-        asApiTask({
-          ...CHAPTER,
-          priorityId: 1,
-          labels: [{ labelId: 7, name: 'Study', color: null }],
-        }),
-      ]);
+      .expectOne(listUrl('priority=high&labelId=7&orderBy=title&orderDirection=desc'))
+      .flush([asApiTask({ ...CHAPTER, labels: [{ labelId: 7, name: 'Study', color: null }] })]);
     await harness.fixture.whenStable();
     harness.detectChanges();
 
-    const prioritySelect = el<HTMLSelectElement>('#filter-priority')!;
-    expect(prioritySelect.value, prioritySelect.outerHTML).toBe('high');
-    expect(el<HTMLSelectElement>('#filter-label')!.value).toBe('7');
-    expect(el<HTMLSelectElement>('#sort-tasks')!.value).toBe('title');
-    expect(el<HTMLSelectElement>('#sort-direction')!.value).toBe('desc');
+    expect(chipText('Priority')).toBe('Priority: High');
+    expect(chipText('Labels')).toBe('Labels: Study');
+    expect(text('app-sort-menu .trigger')).toContain('Title');
+    expect(el('app-sort-menu .direction')!.getAttribute('aria-pressed')).toBe('true');
+  });
+
+  it('filters by due date, repeat and status, and drops Overdue when Completed is picked', async () => {
+    await open();
+    loadWith([CHAPTER]);
+    const today = instantToDate(new Date().toISOString(), userTimeZone());
+
+    await pick('Due', 'Today');
+    http.expectOne(listUrl(`dueFrom=${today}&dueTo=${today}`)).flush([]);
+    await pick('Due', 'Overdue');
+    http.expectOne(listUrl('overdue=true')).flush([]);
+    await pick('Repeat', 'Repeating');
+    http.expectOne(listUrl('overdue=true&recurring=true')).flush([]);
+
+    // The server refuses overdue together with completed; the newest choice wins.
+    await pick('Status', 'Completed');
+    http
+      .expectOne(`${TASKS_URL}?projectId=10&status=completed&pageSize=100&recurring=true`)
+      .flush([]);
+    expect(chipText('Due')).toBe('Due');
+  });
+
+  it('offers to clear the filters when nothing matches them', async () => {
+    await open('/projects/10/tasks?status=completed');
+    http.expectOne(`${PROJECTS_URL}/10`).flush(asApi(CAPSTONE));
+    http.expectOne(`${TASKS_URL}?projectId=10&status=completed&pageSize=100`).flush([]);
+    harness.detectChanges();
+
+    expect(text('.empty-title')).toBe('No tasks match these filters.');
+    expect(text('app-task-filter-bar .count')).toBe('1 filter');
+    expect(text('app-task-filter-bar [aria-live]')).toBe('1 filter applied');
+
+    el<HTMLButtonElement>('.empty button.new')!.click();
+    await harness.fixture.whenStable();
+    http.expectOne(LIST_URL).flush([asApiTask(CHAPTER)]);
+    harness.detectChanges();
+
+    expect(titles()).toEqual(['Write chapter 1']);
+    expect(el('app-task-filter-bar .count')).toBeNull();
+    expect(TestBed.inject(Router).url).toBe('/projects/10/tasks');
+  });
+
+  it('closes a filter panel with Escape and returns focus to its chip', async () => {
+    await open();
+    loadWith([CHAPTER]);
+
+    chip('Status').click();
+    harness.detectChanges();
+    expect(chip('Status').getAttribute('aria-expanded')).toBe('true');
+    const option = el<HTMLInputElement>('#task-filter-status input')!;
+    option.focus();
+
+    option.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    harness.detectChanges();
+
+    expect(el('#task-filter-status')).toBeNull();
+    expect(chip('Status').getAttribute('aria-expanded')).toBe('false');
+    expect(document.activeElement).toBe(chip('Status'));
   });
 
   describe('new task popup', () => {

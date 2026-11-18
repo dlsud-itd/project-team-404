@@ -175,3 +175,54 @@ button:disabled {
     text-align: left;
   }
 }
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem 1rem;
+  margin: 0 0 0.75rem;
+
+  app-task-filter-bar {
+    flex: 1 1 20rem;
+  }
+
+  .sort {
+    flex: none;
+  }
+}
+
+.list[aria-busy='true'] {
+  opacity: 0.6;
+  transition: opacity 150ms ease;
+}
+
+.empty-title {
+  margin: 0 0 0.75rem;
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.clear-filters {
+  padding: 0.45rem 0.9rem;
+  border: 0;
+  border-radius: 999px;
+  background: var(--orange);
+  color: #fff;
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: 2px solid var(--ink);
+    outline-offset: 2px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .list[aria-busy='true'] {
+    transition: none;
+  }
+}

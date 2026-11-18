@@ -8,6 +8,23 @@
     <p class="banner-error" role="alert">{{ message }}</p>
   }
 
+  <section class="toolbar" aria-label="Filter and sort projects">
+    <app-project-filter-bar
+      [query]="query()"
+      [colors]="colors()"
+      (changed)="setQuery($event)"
+      (cleared)="clearFilters()"
+    />
+    <app-sort-menu
+      class="sort"
+      label="Sort projects"
+      [options]="sortOptions"
+      [value]="query().orderBy"
+      [direction]="query().orderDirection"
+      (changed)="setSort($event)"
+    />
+  </section>
+
   @if (store.error(); as message) {
     <div class="load-error" role="alert">
       <p>Couldn't load your projects. {{ message }}</p>
@@ -20,45 +37,76 @@
   @if (firstLoad()) {
     <p class="status" role="status">Loading projects…</p>
   } @else if (store.loaded()) {
-    @if (store.inbox(); as inbox) {
-      <app-project-card class="inbox" [project]="inbox" />
+    @if (filterCount() === 0) {
+      @if (store.inbox(); as inbox) {
+        <app-project-card class="inbox" [project]="inbox" />
+      }
     }
 
-    @if (favorites().length) {
-      <section class="group" aria-labelledby="favorites-heading">
-        <h2 id="favorites-heading">Favorites</h2>
-        <ul class="list">
-          @for (project of favorites(); track project.projectId) {
-            <li>
-              <app-project-card [project]="project" (deleteRequested)="askDelete($event)" />
-            </li>
-          }
-        </ul>
+    @if (flat()) {
+      @if (visible().length) {
+        <section class="group" aria-labelledby="results-heading">
+          <h2 id="results-heading">
+            {{ query().archived ? 'Archived projects' : 'Projects' }} · {{ visible().length }}
+          </h2>
+          <ul class="list">
+            @for (project of visible(); track project.projectId) {
+              <li>
+                <app-project-card [project]="project" (deleteRequested)="askDelete($event)" />
+              </li>
+            }
+          </ul>
+        </section>
+      } @else if (filterCount() > 0) {
+        <div class="empty">
+          <p class="empty-title">No projects match these filters.</p>
+          <p>Try removing a filter, or clear them all to see every project.</p>
+          <button type="button" class="new" (click)="clearFilters()">Clear filters</button>
+        </div>
+      } @else {
+        <ng-container [ngTemplateOutlet]="onlyInbox" />
+      }
+    } @else {
+      @if (favorites().length) {
+        <section class="group" aria-labelledby="favorites-heading">
+          <h2 id="favorites-heading">Favorites</h2>
+          <ul class="list">
+            @for (project of favorites(); track project.projectId) {
+              <li>
+                <app-project-card [project]="project" (deleteRequested)="askDelete($event)" />
+              </li>
+            }
+          </ul>
+        </section>
+      }
+
+      <section class="group" aria-labelledby="projects-heading">
+        <h2 id="projects-heading">My projects</h2>
+        @if (others().length) {
+          <ul class="list">
+            @for (project of others(); track project.projectId) {
+              <li>
+                <app-project-card [project]="project" (deleteRequested)="askDelete($event)" />
+              </li>
+            }
+          </ul>
+        } @else if (!favorites().length) {
+          <ng-container [ngTemplateOutlet]="onlyInbox" />
+        }
       </section>
     }
-
-    <section class="group" aria-labelledby="projects-heading">
-      <h2 id="projects-heading">My projects</h2>
-      @if (others().length) {
-        <ul class="list">
-          @for (project of others(); track project.projectId) {
-            <li>
-              <app-project-card [project]="project" (deleteRequested)="askDelete($event)" />
-            </li>
-          }
-        </ul>
-      } @else if (!favorites().length) {
-        <div class="empty">
-          <p class="empty-title">You only have your Inbox so far.</p>
-          <p>Create a project to group the tasks for a class, a job or anything else you manage.</p>
-          <button type="button" class="new" (click)="store.creating.set(true)">
-            Create your first project
-          </button>
-        </div>
-      }
-    </section>
   }
 </main>
+
+<ng-template #onlyInbox>
+  <div class="empty">
+    <p class="empty-title">You only have your Inbox so far.</p>
+    <p>Create a project to group the tasks for a class, a job or anything else you manage.</p>
+    <button type="button" class="new" (click)="store.creating.set(true)">
+      Create your first project
+    </button>
+  </div>
+</ng-template>
 
 @if (pendingDelete(); as project) {
   <app-confirm-delete-dialog
