@@ -73,24 +73,35 @@ integrationDescribe('tasks integration', () => {
       title: string;
       description?: string | null;
       isDone?: boolean;
+      priorityId?: number;
+      position?: number;
+      scheduledDate?: Date;
       dueDate?: Date;
+      deadline?: Date;
+      recurrence?: 'none' | 'daily' | 'weekly' | 'monthly' | null;
       createdAt?: Date;
       updatedAt?: Date;
       deletedAt?: Date | null;
+      archivedAt?: Date | null;
     }
   ) {
     return prisma.task.create({
       data: {
         userId,
         projectId,
-        priorityId: mediumPriorityId,
+        priorityId: values.priorityId ?? mediumPriorityId,
+        position: values.position,
         title: values.title,
         description: values.description,
         isDone: values.isDone,
+        scheduledDate: values.scheduledDate,
         dueDate: values.dueDate,
+        deadline: values.deadline,
+        recurrence: values.recurrence,
         createdAt: values.createdAt,
         updatedAt: values.updatedAt,
         deletedAt: values.deletedAt,
+        archivedAt: values.archivedAt,
       },
     });
   }
@@ -1237,6 +1248,359 @@ integrationDescribe('tasks integration', () => {
           where: { taskId: task.id, labelId: ownLabelId },
         })
       ).toBe(0);
+    });
+  });
+
+  describe('Sprint 5 task list sorting and filtering', () => {
+    it('filters with AND semantics, keeps legacy filters, and isolates callers', async () => {
+      const account = await createAccount();
+      const otherAccount = await createAccount();
+      const firstProject = await seedProject(account.id, 'Filter project one');
+      const secondProject = await seedProject(account.id, 'Filter project two');
+      const otherProject = await seedProject(
+        otherAccount.id,
+        'Other user filter project'
+      );
+      const priorities = await prisma.priorityLevel.findMany({
+        where: { userId: account.id, deletedAt: null },
+        select: { id: true, name: true },
+      });
+      const priorityId = (name: string) => {
+        const priority = priorities.find(
+          (item) => item.name.toLowerCase() === name
+        );
+        if (!priority) {
+          throw new Error(`Missing ${name} priority for integration account`);
+        }
+        return priority.id;
+      };
+
+      const today = new Intl.DateTimeFormat('sv-SE', {
+        timeZone: account.timezone,
+      }).format(new Date());
+      const startDate = addCalendarDays(today, 2);
+      const endDate = addCalendarDays(today, 4);
+      const date = (value: string) => new Date(`${value}T00:00:00.000Z`);
+      const [labelA, labelB] = await Promise.all([
+        prisma.label.create({
+          data: { userId: account.id, name: 'Sprint filter label A' },
+        }),
+        prisma.label.create({
+          data: { userId: account.id, name: 'Sprint filter label B' },
+        }),
+      ]);
+      const taskA = await seedTask(account.id, firstProject.id, {
+        title: 'High active with both labels',
+        priorityId: priorityId('high'),
+        dueDate: date(startDate),
+        recurrence: 'daily',
+      });
+      const taskB = await seedTask(account.id, firstProject.id, {
+        title: 'Medium active with label A',
+        priorityId: priorityId('medium'),
+        dueDate: date(endDate),
+        recurrence: 'none',
+      });
+      const taskC = await seedTask(account.id, secondProject.id, {
+        title: 'Low completed with label B',
+        priorityId: priorityId('low'),
+        isDone: true,
+        dueDate: date(addCalendarDays(startDate, -1)),
+        recurrence: 'monthly',
+      });
+      const taskD = await seedTask(account.id, firstProject.id, {
+        title: 'High active without due date',
+        priorityId: priorityId('high'),
+        recurrence: null,
+      });
+      const taskE = await seedTask(account.id, secondProject.id, {
+        title: 'Medium active with both labels',
+        priorityId: priorityId('medium'),
+        dueDate: date(addCalendarDays(endDate, 1)),
+        recurrence: null,
+      });
+      const yesterday = date(addCalendarDays(today, -1));
+      const taskF = await seedTask(account.id, firstProject.id, {
+        title: 'Low overdue active',
+        priorityId: priorityId('low'),
+        dueDate: yesterday,
+        recurrence: 'daily',
+      });
+      const taskG = await seedTask(account.id, secondProject.id, {
+        title: 'High overdue completed',
+        priorityId: priorityId('high'),
+        isDone: true,
+        dueDate: yesterday,
+        recurrence: 'daily',
+      });
+      const foreignTask = await seedTask(otherAccount.id, otherProject.id, {
+        title: 'Another user task',
+        dueDate: date(startDate),
+      });
+      await prisma.taskLabel.createMany({
+        data: [
+          { taskId: taskA.id, labelId: labelA.id },
+          { taskId: taskA.id, labelId: labelB.id },
+          { taskId: taskB.id, labelId: labelA.id },
+          { taskId: taskC.id, labelId: labelB.id },
+          { taskId: taskE.id, labelId: labelA.id },
+          { taskId: taskE.id, labelId: labelB.id },
+          { taskId: taskF.id, labelId: labelB.id },
+          { taskId: taskG.id, labelId: labelA.id },
+        ],
+      });
+
+      const requestIds = async (filters: Record<string, string>) => {
+        const query = new URLSearchParams(filters);
+        const response = await taskRequest(
+          'GET',
+          `/api/tasks?${query}`,
+          account.token
+        );
+        expect(response.status).toBe(200);
+        return taskIds(response.body).sort((a, b) => a - b);
+      };
+      const ids = (...tasks: { id: number }[]) =>
+        tasks.map(({ id }) => id).sort((a, b) => a - b);
+      const labelFilters = {
+        labelIds: `${labelA.id},${labelB.id}`,
+      };
+
+      expect(await requestIds({ priorities: 'high,low' })).toEqual(
+        ids(taskA, taskC, taskD, taskF, taskG)
+      );
+      expect(
+        await requestIds({
+          priorityIds: `${priorityId('high')},${priorityId('low')}`,
+        })
+      ).toEqual(ids(taskA, taskC, taskD, taskF, taskG));
+      expect(await requestIds({ ...labelFilters, labelMatch: 'any' })).toEqual(
+        ids(taskA, taskB, taskC, taskE, taskF, taskG)
+      );
+      expect(await requestIds({ ...labelFilters, labelMatch: 'all' })).toEqual(
+        ids(taskA, taskE)
+      );
+      expect(await requestIds({ projectId: String(firstProject.id) })).toEqual(
+        ids(taskA, taskB, taskD, taskF)
+      );
+      expect(await requestIds({ status: 'active' })).toEqual(
+        ids(taskA, taskB, taskD, taskE, taskF)
+      );
+      expect(await requestIds({ dueFrom: startDate })).toEqual(
+        ids(taskA, taskB, taskE)
+      );
+      expect(await requestIds({ dueTo: endDate })).toEqual(
+        ids(taskA, taskB, taskC, taskF, taskG)
+      );
+      expect(await requestIds({ dueFrom: startDate, dueTo: endDate })).toEqual(
+        ids(taskA, taskB)
+      );
+      expect(await requestIds({ hasDueDate: 'true' })).toEqual(
+        ids(taskA, taskB, taskC, taskE, taskF, taskG)
+      );
+      expect(await requestIds({ hasDueDate: 'false' })).toEqual(ids(taskD));
+      expect(await requestIds({ overdue: 'true' })).toEqual(ids(taskF));
+      expect(await requestIds({ recurring: 'true' })).toEqual(
+        ids(taskA, taskC, taskF, taskG)
+      );
+      expect(await requestIds({ recurring: 'false' })).toEqual(
+        ids(taskB, taskD, taskE)
+      );
+
+      expect(
+        await requestIds({
+          priorities: 'high,low',
+          ...labelFilters,
+          labelMatch: 'all',
+        })
+      ).toEqual(ids(taskA));
+      expect(await requestIds({ priority: 'high' })).toEqual(
+        ids(taskA, taskD, taskG)
+      );
+      expect(await requestIds({ labelId: String(labelA.id) })).toEqual(
+        ids(taskA, taskB, taskE, taskG)
+      );
+      expect(foreignTask.id).not.toBe(taskA.id);
+      expect(await requestIds({ status: 'all' })).not.toContain(foreignTask.id);
+
+      for (const filters of [
+        { priority: 'urgent' },
+        { labelIds: 'not-a-number' },
+        { labelId: 'not-a-number' },
+        { dueFrom: 'not-a-date' },
+        { dueFrom: endDate, dueTo: startDate },
+        { orderBy: 'unknown' },
+      ]) {
+        const response = await taskRequest(
+          'GET',
+          `/api/tasks?${new URLSearchParams(filters)}`,
+          account.token
+        );
+        expect(response.status).toBe(400);
+      }
+
+      expect((await taskRequest('GET', '/api/tasks')).status).toBe(401);
+    });
+
+    it('sorts by every supported field in both directions with nulls last and stable pages', async () => {
+      const account = await createAccount();
+      const project = await seedProject(account.id, 'Sorting project');
+      const priorities = await prisma.priorityLevel.findMany({
+        where: { userId: account.id, deletedAt: null },
+        select: { id: true, name: true, sortOrder: true },
+      });
+      const priority = (name: string) => {
+        const result = priorities.find(
+          (item) => item.name.toLowerCase() === name
+        );
+        if (!result) {
+          throw new Error(`Missing ${name} priority for integration account`);
+        }
+        return result;
+      };
+      const date = (value: string) => new Date(`${value}T00:00:00.000Z`);
+      const rows = [
+        {
+          title: 'delta',
+          priority: priority('high'),
+          dueDate: null,
+          deadline: null,
+          scheduledDate: null,
+          position: 40,
+          createdAt: date('2026-01-03'),
+          updatedAt: date('2026-01-04'),
+        },
+        {
+          title: 'alpha',
+          priority: priority('low'),
+          dueDate: date('2026-03-04'),
+          deadline: date('2026-03-04'),
+          scheduledDate: date('2026-03-04'),
+          position: 10,
+          createdAt: date('2026-01-01'),
+          updatedAt: date('2026-01-02'),
+        },
+        {
+          title: 'alpha',
+          priority: priority('medium'),
+          dueDate: date('2026-03-01'),
+          deadline: date('2026-03-01'),
+          scheduledDate: date('2026-03-01'),
+          position: 30,
+          createdAt: date('2026-01-02'),
+          updatedAt: date('2026-01-03'),
+        },
+        {
+          title: 'charlie',
+          priority: priority('high'),
+          dueDate: date('2026-03-01'),
+          deadline: date('2026-03-03'),
+          scheduledDate: date('2026-03-02'),
+          position: 10,
+          createdAt: date('2026-01-01'),
+          updatedAt: date('2026-01-02'),
+        },
+        {
+          title: 'bravo',
+          priority: priority('low'),
+          dueDate: date('2026-03-02'),
+          deadline: date('2026-03-02'),
+          scheduledDate: date('2026-03-02'),
+          position: 20,
+          createdAt: date('2026-01-02'),
+          updatedAt: date('2026-01-03'),
+        },
+      ];
+      const seeded = await Promise.all(
+        rows.map(async (row) => ({
+          ...row,
+          task: await seedTask(account.id, project.id, {
+            title: row.title,
+            priorityId: row.priority.id,
+            dueDate: row.dueDate ?? undefined,
+            deadline: row.deadline ?? undefined,
+            scheduledDate: row.scheduledDate ?? undefined,
+            position: row.position,
+            createdAt: row.createdAt,
+            updatedAt: row.updatedAt,
+          }),
+        }))
+      );
+      const orderFields = [
+        'dueDate',
+        'deadline',
+        'scheduledDate',
+        'priority',
+        'title',
+        'position',
+        'createdAt',
+        'updatedAt',
+      ] as const;
+      const compareValues = (
+        first: string | number | Date | null,
+        second: string | number | Date | null
+      ) => {
+        if (first === null || second === null) {
+          return first === second ? 0 : first === null ? 1 : -1;
+        }
+        if (first instanceof Date && second instanceof Date) {
+          return first.getTime() - second.getTime();
+        }
+        if (typeof first === 'string' && typeof second === 'string') {
+          return first.localeCompare(second);
+        }
+        return Number(first) - Number(second);
+      };
+      const valueFor = (
+        row: (typeof seeded)[number],
+        orderBy: (typeof orderFields)[number]
+      ): string | number | Date | null => {
+        if (orderBy === 'priority') return row.priority.sortOrder;
+        return row[orderBy];
+      };
+
+      for (const orderBy of orderFields) {
+        for (const orderDirection of ['asc', 'desc'] as const) {
+          const direction = orderDirection === 'asc' ? 1 : -1;
+          const expected = [...seeded]
+            .sort((first, second) => {
+              const difference = compareValues(
+                valueFor(first, orderBy),
+                valueFor(second, orderBy)
+              );
+              if (difference === 0) return first.task.id - second.task.id;
+              const hasNullDate =
+                orderBy === 'dueDate' ||
+                orderBy === 'deadline' ||
+                orderBy === 'scheduledDate';
+              const firstValue = valueFor(first, orderBy);
+              const secondValue = valueFor(second, orderBy);
+              return hasNullDate &&
+                (firstValue === null || secondValue === null)
+                ? difference
+                : difference * direction;
+            })
+            .map(({ task }) => task.id);
+          const actual: number[] = [];
+          for (let page = 1; page <= 3; page += 1) {
+            const query = new URLSearchParams({
+              projectId: String(project.id),
+              orderBy,
+              orderDirection,
+              page: String(page),
+              pageSize: '2',
+            });
+            const response = await taskRequest(
+              'GET',
+              `/api/tasks?${query}`,
+              account.token
+            );
+            expect(response.status).toBe(200);
+            actual.push(...taskIds(response.body));
+          }
+          expect(actual).toEqual(expected);
+        }
+      }
     });
   });
 

@@ -44,8 +44,10 @@ integrationDescribe('projects integration', () => {
       description?: string | null;
       color?: string | null;
       isInbox?: boolean;
+      isFavorite?: boolean;
       isArchived?: boolean;
       sortOrder?: number;
+      createdAt?: Date;
       deletedAt?: Date | null;
       updatedAt?: Date;
     }
@@ -57,9 +59,11 @@ integrationDescribe('projects integration', () => {
         description: values.description,
         color: values.color,
         isInbox: values.isInbox,
+        isFavorite: values.isFavorite,
         isArchived: values.isArchived,
         archivedAt: values.isArchived ? new Date() : null,
         sortOrder: values.sortOrder,
+        createdAt: values.createdAt,
         deletedAt: values.deletedAt,
         updatedAt: values.updatedAt,
       },
@@ -236,6 +240,197 @@ integrationDescribe('projects integration', () => {
       headers: { Authorization: `Bearer ${account.token}` },
     });
     expect(invalidFilter.status).toBe(400);
+  });
+
+  it('limits project results with totals while preserving the no-limit array response', async () => {
+    const account = await createAccount();
+    const projects = await Promise.all(
+      [1, 2, 3, 4].map((sortOrder) =>
+        seedProject(account.id, {
+          name: `Limited project ${sortOrder}`,
+          sortOrder,
+        })
+      )
+    );
+    const headers = { Authorization: `Bearer ${account.token}` };
+
+    const withoutLimit = await request(app, '/api/projects', { headers });
+    expect(withoutLimit.status).toBe(200);
+    expect(Array.isArray(withoutLimit.body)).toBe(true);
+    expect(projectIds(withoutLimit.body)).toHaveLength(projects.length + 1);
+    expect(projectIds(withoutLimit.body)).toEqual(
+      expect.arrayContaining([
+        account.inboxProjectId,
+        ...projects.map(({ id }) => id),
+      ])
+    );
+
+    const limited = await request(app, '/api/projects?limit=2', { headers });
+    expect(limited.status).toBe(200);
+    if (
+      typeof limited.body !== 'object' ||
+      limited.body === null ||
+      !('projects' in limited.body) ||
+      !('total' in limited.body)
+    ) {
+      throw new Error(
+        'Expected limited project response to include projects and total'
+      );
+    }
+    expect(projectIds(limited.body.projects)).toHaveLength(2);
+    expect(limited.body.total).toBe(projects.length + 1);
+  });
+
+  it('filters projects by favorite, archive state, and color, and sorts every supported field', async () => {
+    const account = await createAccount();
+    const otherAccount = await createAccount();
+    const timestamp = (value: string) => new Date(`${value}T00:00:00.000Z`);
+    const rows = [
+      {
+        name: 'zeta',
+        sortOrder: 30,
+        isFavorite: true,
+        createdAt: timestamp('2026-01-03'),
+        updatedAt: timestamp('2026-01-04'),
+      },
+      {
+        name: 'alpha',
+        sortOrder: 10,
+        isFavorite: false,
+        createdAt: timestamp('2026-01-01'),
+        updatedAt: timestamp('2026-01-02'),
+      },
+      {
+        name: 'bravo',
+        sortOrder: 20,
+        isFavorite: false,
+        createdAt: timestamp('2026-01-02'),
+        updatedAt: timestamp('2026-01-03'),
+      },
+      {
+        name: 'alpha',
+        sortOrder: 10,
+        isFavorite: true,
+        createdAt: timestamp('2026-01-01'),
+        updatedAt: timestamp('2026-01-02'),
+      },
+      {
+        name: 'echo',
+        sortOrder: 40,
+        isFavorite: false,
+        createdAt: timestamp('2026-01-02'),
+        updatedAt: timestamp('2026-01-03'),
+      },
+    ] as const;
+    const seeded = await Promise.all(
+      rows.map(async (row) => ({
+        ...row,
+        project: await seedProject(account.id, {
+          ...row,
+          color: '#ABCDEF',
+        }),
+      }))
+    );
+    const archived = await seedProject(account.id, {
+      name: 'archived',
+      color: '#ABCDEF',
+      isFavorite: true,
+      isArchived: true,
+    });
+    const deleted = await seedProject(account.id, {
+      name: 'deleted',
+      color: '#ABCDEF',
+      deletedAt: new Date(),
+    });
+    const foreign = await seedProject(otherAccount.id, {
+      name: 'foreign',
+      color: '#ABCDEF',
+    });
+    const auth = { Authorization: `Bearer ${account.token}` };
+    const colorQuery = 'color=%23abcdef';
+
+    const favoriteResponse = await request(
+      app,
+      `/api/projects?${colorQuery}&isFavorite=true`,
+      { headers: auth }
+    );
+    expect(favoriteResponse.status).toBe(200);
+    expect(projectIds(favoriteResponse.body)).toEqual(
+      seeded
+        .filter(({ isFavorite }) => isFavorite)
+        .map(({ project }) => project.id)
+        .sort((a, b) => a - b)
+    );
+
+    const notFavoriteResponse = await request(
+      app,
+      `/api/projects?${colorQuery}&isFavorite=false`,
+      { headers: auth }
+    );
+    expect(notFavoriteResponse.status).toBe(200);
+    expect(projectIds(notFavoriteResponse.body)).toEqual(
+      seeded
+        .filter(({ isFavorite }) => !isFavorite)
+        .map(({ project }) => project.id)
+        .sort((a, b) => a - b)
+    );
+
+    const archivedResponse = await request(
+      app,
+      `/api/projects?${colorQuery}&isArchived=true`,
+      { headers: auth }
+    );
+    expect(archivedResponse.status).toBe(200);
+    expect(projectIds(archivedResponse.body)).toEqual([archived.id]);
+
+    const activeResponse = await request(app, `/api/projects?${colorQuery}`, {
+      headers: auth,
+    });
+    expect(activeResponse.status).toBe(200);
+    expect(projectIds(activeResponse.body)).toEqual(
+      seeded.map(({ project }) => project.id).sort((a, b) => a - b)
+    );
+    expect(projectIds(activeResponse.body)).not.toContain(deleted.id);
+    expect(projectIds(activeResponse.body)).not.toContain(foreign.id);
+
+    const fields = ['sortOrder', 'name', 'createdAt', 'updatedAt'] as const;
+    for (const orderBy of fields) {
+      for (const orderDirection of ['asc', 'desc'] as const) {
+        const direction = orderDirection === 'asc' ? 1 : -1;
+        const expected = [...seeded]
+          .sort((first, second) => {
+            const firstValue = first[orderBy];
+            const secondValue = second[orderBy];
+            const difference =
+              firstValue instanceof Date && secondValue instanceof Date
+                ? firstValue.getTime() - secondValue.getTime()
+                : typeof firstValue === 'string' &&
+                    typeof secondValue === 'string'
+                  ? firstValue.localeCompare(secondValue)
+                  : Number(firstValue) - Number(secondValue);
+            return difference === 0
+              ? first.project.id - second.project.id
+              : difference * direction;
+          })
+          .map(({ project }) => project.id);
+        const response = await request(
+          app,
+          `/api/projects?${colorQuery}&orderBy=${orderBy}&orderDirection=${orderDirection}`,
+          { headers: auth }
+        );
+        expect(response.status).toBe(200);
+        expect(projectIds(response.body)).toEqual(expected);
+      }
+    }
+
+    expect(
+      (
+        await request(app, '/api/projects?orderBy=unknown', {
+          headers: auth,
+        })
+      ).status
+    ).toBe(400);
+    expect((await request(app, '/api/projects')).status).toBe(401);
   });
 
   it('gets owned projects and hides other, missing, and invalid project IDs', async () => {
