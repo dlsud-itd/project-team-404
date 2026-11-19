@@ -5,6 +5,7 @@ import { RecurrenceService } from '../../../task-scheduling/services/recurrence.
 import { InvalidTaskPriorityError } from '../../errors/invalid-task-priority.error';
 import { TaskArchivedError } from '../../../shared/errors/task-archived.error';
 import { getNextTaskPosition } from './get-next-task-position.query';
+import { randomUUID } from 'node:crypto';
 
 const recurrenceService = new RecurrenceService();
 const taskInclude = {
@@ -28,11 +29,31 @@ export async function updateTask(
     }
 
     const completing = input.isDone === true && !currentTask.isDone;
+    const uncompleting = input.isDone === false && currentTask.isDone;
     const targetProjectId = input.projectId ?? currentTask.projectId;
-    const position =
-      targetProjectId !== currentTask.projectId
-        ? await getNextTaskPosition(transaction, userId, targetProjectId)
-        : undefined;
+    let position: number | undefined;
+    if (completing) {
+      position = await getNextTaskPosition(
+        transaction,
+        userId,
+        targetProjectId,
+        true
+      );
+    } else if (uncompleting) {
+      position = await getNextTaskPosition(
+        transaction,
+        userId,
+        targetProjectId,
+        false
+      );
+    } else if (targetProjectId !== currentTask.projectId) {
+      position = await getNextTaskPosition(
+        transaction,
+        userId,
+        targetProjectId,
+        currentTask.isDone
+      );
+    }
     const priorityLevel =
       input.priorityId !== undefined
         ? await transaction.priorityLevel.findFirst({
@@ -95,9 +116,13 @@ export async function updateTask(
           ? { priorityId: priorityLevel!.id }
           : {}),
         ...(input.isDone !== undefined ? { isDone: input.isDone } : {}),
-        ...(input.doneAt !== undefined
-          ? { doneAt: input.doneAt ? new Date(input.doneAt) : null }
-          : {}),
+        ...(completing
+          ? { doneAt: new Date() }
+          : uncompleting
+            ? { doneAt: null }
+            : input.doneAt !== undefined
+              ? { doneAt: input.doneAt ? new Date(input.doneAt) : null }
+              : {}),
       },
     });
 
@@ -116,9 +141,42 @@ export async function updateTask(
         where: { id: userId },
         select: { timezone: true },
       });
+      const timezone = owner?.timezone ?? 'UTC';
+      const today = new Intl.DateTimeFormat('en-CA', {
+        timeZone: timezone,
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+      }).format(new Date());
+      const seriesId =
+        updatedTask.recurrenceSeriesId ??
+        (updatedTask.recurrence && updatedTask.recurrence !== 'none'
+          ? randomUUID()
+          : null);
+      if (seriesId && !updatedTask.recurrenceSeriesId) {
+        await transaction.task.update({
+          where: { id: updatedTask.id },
+          data: { recurrenceSeriesId: seriesId },
+        });
+      }
+      await transaction.taskCompletionEvent.upsert({
+        where: {
+          taskId_completedOn: {
+            taskId: updatedTask.id,
+            completedOn: new Date(`${today}T00:00:00.000Z`),
+          },
+        },
+        create: {
+          taskId: updatedTask.id,
+          userId,
+          seriesId,
+          completedOn: new Date(`${today}T00:00:00.000Z`),
+        },
+        update: {},
+      });
       const next = recurrenceService.createNextOccurrence(
         updatedTask,
-        owner?.timezone ?? 'UTC'
+        timezone
       );
       if (next) {
         const dueDate = new Date(`${next.dueDate}T00:00:00.000Z`);
@@ -136,7 +194,8 @@ export async function updateTask(
             position: await getNextTaskPosition(
               transaction,
               updatedTask.userId,
-              updatedTask.projectId
+              updatedTask.projectId,
+              false
             ),
             title: updatedTask.title,
             description: updatedTask.description,
@@ -149,6 +208,7 @@ export async function updateTask(
             recurrence: updatedTask.recurrence ?? 'none',
             recurrenceDays: updatedTask.recurrenceDays ?? [],
             recurrenceEndDate: updatedTask.recurrenceEndDate,
+            recurrenceSeriesId: seriesId,
             isDone: false,
             doneAt: null,
             taskLabels: {

@@ -1,0 +1,538 @@
+{
+  "info": {
+    "_postman_id": "9a66bf55-7a3a-4ca6-9cb3-4a6c3ee9e101",
+    "name": "Project-Team-404 API - 17-sprint-6-streaks-views",
+    "description": "Sprint 6 streak, position, board, and timeline API acceptance checks.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "17-sprint-6-streaks-views",
+      "item": [
+        {
+          "name": "01 Login James",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "const response = pm.response.json();",
+                  "pm.test('Token is returned', function () { pm.expect(response.token).to.be.a('string').and.not.empty; });",
+                  "pm.environment.set('token', response.token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"identifier\": \"james@example.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": "{{baseUrl}}/auth/login"
+          }
+        },
+        {
+          "name": "02 Login Harvey",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "const response = pm.response.json();",
+                  "pm.environment.set('tokenB', response.token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"identifier\": \"harvey@example.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": "{{baseUrl}}/auth/login"
+          }
+        },
+        {
+          "name": "03 Setup streak project",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 201', function () { pm.response.to.have.status(201); });",
+                  "const response=pm.response.json();",
+                  "pm.environment.set('projectId', String(response.id));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Postman Sprint 6 {{$timestamp}}\",\n  \"description\": \"Streak and view fixture\",\n  \"color\": \"#7c3aed\"\n}"
+            },
+            "url": "{{baseUrl}}/projects"
+          }
+        },
+        {
+          "name": "04 Setup recurring task",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 201', function () { pm.response.to.have.status(201); });",
+                  "const response=pm.response.json();",
+                  "pm.expect(response.position).to.be.a('number');",
+                  "pm.environment.set('taskId', String(response.id));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"projectId\": {{projectId}},\n  \"title\": \"Postman daily streak\",\n  \"dueDate\": \"2026-11-19\",\n  \"scheduledDate\": \"2026-11-19\",\n  \"recurrence\": \"daily\",\n  \"recurrenceDays\": [],\n  \"recurrenceEndDate\": null\n}"
+            },
+            "url": "{{baseUrl}}/tasks"
+          }
+        },
+        {
+          "name": "05 Setup second active task",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 201', function () { pm.response.to.have.status(201); });",
+                  "const response=pm.response.json();",
+                  "pm.environment.set('taskId2', String(response.id));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"projectId\": {{projectId}},\n  \"title\": \"Postman second task\",\n  \"dueDate\": \"2026-11-20\"\n}"
+            },
+            "url": "{{baseUrl}}/tasks"
+          }
+        },
+        {
+          "name": "06 Complete recurring task",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "const response=pm.response.json();",
+                  "pm.test('Completion response contract', function () { pm.expect(response).to.have.property('id'); pm.expect(response).to.have.property('isDone', true); pm.expect(response).to.have.property('doneAt'); pm.expect(response).to.have.property('position'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"isDone\": true\n}" },
+            "url": "{{baseUrl}}/tasks/{{taskId}}"
+          }
+        },
+        {
+          "name": "07 Get task streak",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "const response=pm.response.json();",
+                  "pm.test('Streak shape', function () { pm.expect(response.taskId).to.be.a('number'); pm.expect(response.currentStreak).to.be.a('number'); pm.expect(response.longestStreak).to.be.a('number'); pm.expect(response.timezone).to.be.a('string'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/tasks/{{taskId}}/streak"
+          }
+        },
+        {
+          "name": "08 Get dashboard streaks",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "const response=pm.response.json();",
+                  "pm.test('Streak collection shape', function () { pm.expect(response).to.have.property('streaks').that.is.an('array'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/dashboard/streaks?limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["dashboard", "streaks"],
+              "query": [{ "key": "limit", "value": "20" }]
+            }
+          }
+        },
+        {
+          "name": "09 Invalid streak limit",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 400', function () { pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/dashboard/streaks?limit=101",
+              "host": ["{{baseUrl}}"],
+              "path": ["dashboard", "streaks"],
+              "query": [{ "key": "limit", "value": "101" }]
+            }
+          }
+        },
+        {
+          "name": "10 Get tasks and capture active IDs",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "const tasks=pm.response.json();",
+                  "pm.test('Position field is present', function () { pm.expect(tasks).to.be.an('array'); tasks.forEach(task => pm.expect(task).to.have.property('position')); });",
+                  "const activeIds=tasks.filter(task => !task.isDone).map(task => task.id);",
+                  "pm.test('Active task set is not empty', function () { pm.expect(activeIds).to.not.be.empty; });",
+                  "pm.environment.set('activeTaskIds', JSON.stringify(activeIds.reverse()));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/tasks?projectId={{projectId}}&orderBy=position&orderDirection=asc&page=1&pageSize=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["tasks"],
+              "query": [
+                { "key": "projectId", "value": "{{projectId}}" },
+                { "key": "orderBy", "value": "position" },
+                { "key": "orderDirection", "value": "asc" },
+                { "key": "page", "value": "1" },
+                { "key": "pageSize", "value": "20" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "11 Reorder complete active task set",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "const response=pm.response.json();",
+                  "pm.test('Reorder echoes complete active scope', function () { pm.expect(response.projectId).to.equal(Number(pm.environment.get('projectId'))); pm.expect(response.taskIds).to.deep.equal(JSON.parse(pm.environment.get('activeTaskIds'))); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"projectId\": {{projectId}},\n  \"taskIds\": {{activeTaskIds}}\n}"
+            },
+            "url": "{{baseUrl}}/tasks/reorder"
+          }
+        },
+        {
+          "name": "12 Reopen recurring task",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.expect(pm.response.json().isDone).to.equal(false);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"isDone\": false\n}" },
+            "url": "{{baseUrl}}/tasks/{{taskId}}"
+          }
+        },
+        {
+          "name": "13 Get project board",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "const response=pm.response.json();",
+                  "pm.test('Board columns exist', function () { pm.expect(response.columns).to.have.property('active').that.is.an('array'); pm.expect(response.columns).to.have.property('completed').that.is.an('array'); });",
+                  "pm.environment.set('boardActiveIds', JSON.stringify(response.columns.active.map(task => task.id).reverse()));",
+                  "pm.environment.set('boardCompletedIds', JSON.stringify(response.columns.completed.map(task => task.id).reverse()));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/tasks/board?projectId={{projectId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["tasks", "board"],
+              "query": [{ "key": "projectId", "value": "{{projectId}}" }]
+            }
+          }
+        },
+        {
+          "name": "14 Reorder board columns",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "const board=pm.response.json();",
+                  "pm.test('Board order echoed', function () { pm.expect(board.projectId).to.equal(Number(pm.environment.get('projectId'))); pm.expect(board.columns).to.have.keys('active','completed'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"projectId\": {{projectId}},\n  \"columns\": {\n    \"active\": {{boardActiveIds}},\n    \"completed\": {{boardCompletedIds}}\n  }\n}"
+            },
+            "url": "{{baseUrl}}/tasks/board/reorder"
+          }
+        },
+        {
+          "name": "15 Get timeline",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "const response=pm.response.json();",
+                  "pm.test('Timeline shape', function () { pm.expect(response).to.have.property('from','2026-11-01'); pm.expect(response).to.have.property('to','2026-11-30'); pm.expect(response.tasks).to.be.an('array'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/tasks/timeline?from=2026-11-01&to=2026-11-30&projectId={{projectId}}&includeCompleted=false",
+              "host": ["{{baseUrl}}"],
+              "path": ["tasks", "timeline"],
+              "query": [
+                { "key": "from", "value": "2026-11-01" },
+                { "key": "to", "value": "2026-11-30" },
+                { "key": "projectId", "value": "{{projectId}}" },
+                { "key": "includeCompleted", "value": "false" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "16 Invalid timeline range",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 400', function () { pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/tasks/timeline?from=2026-12-01&to=2026-11-01",
+              "host": ["{{baseUrl}}"],
+              "path": ["tasks", "timeline"],
+              "query": [
+                { "key": "from", "value": "2026-12-01" },
+                { "key": "to", "value": "2026-11-01" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "17 Invalid task streak ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 400', function () { pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/tasks/0/streak"
+          }
+        },
+        {
+          "name": "18 Foreign board project",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 404 or 401 contract', function () { pm.expect([401,404]).to.include(pm.response.code); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{tokenB}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/tasks/board?projectId={{projectId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["tasks", "board"],
+              "query": [{ "key": "projectId", "value": "{{projectId}}" }]
+            }
+          }
+        },
+        {
+          "name": "19 Missing auth streak",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 401', function () { pm.response.to.have.status(401); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/tasks/{{taskId}}/streak"
+          }
+        },
+        {
+          "name": "20 Incomplete reorder rejected",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 409', function () { pm.response.to.have.status(409); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"projectId\": {{projectId}},\n  \"taskIds\": [{{taskId}}]\n}"
+            },
+            "url": "{{baseUrl}}/tasks/reorder"
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -120,8 +120,10 @@ describe('TaskCrudController', () => {
 
     expect(res.status).toHaveBeenCalledWith(200);
     expect(res.json).toHaveBeenCalledWith({
-      taskId: task.id,
-      message: 'Task updated successfully',
+      id: task.id,
+      isDone: task.isDone,
+      doneAt: task.doneAt,
+      position: task.position,
     });
     expect(next).not.toHaveBeenCalled();
   });

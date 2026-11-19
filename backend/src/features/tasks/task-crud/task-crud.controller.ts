@@ -81,8 +81,10 @@ export function createTaskCrudController(service: TaskCrudService): {
           res.locals.validated as UpdateTaskInput
         );
         res.status(200).json({
-          taskId: task.id,
-          message: 'Task updated successfully',
+          id: task.id,
+          isDone: task.isDone,
+          doneAt: task.doneAt,
+          position: task.position,
         });
       } catch (error) {
         respondToError(error, res, next);

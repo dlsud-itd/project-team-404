@@ -1,5 +1,5 @@
 alter table public.tbl_task
-  add column position integer not null default 0;
+  add column if not exists position integer not null default 0;
 
 with ranked_tasks as (
   select

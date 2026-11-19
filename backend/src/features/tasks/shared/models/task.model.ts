@@ -1,11 +1,14 @@
 import type { Prisma } from '@prisma/client';
 
-export type TaskRecord = Prisma.TaskGetPayload<{
+type PrismaTaskRecord = Prisma.TaskGetPayload<{
   include: {
     priorityLevel: true;
     taskLabels: { include: { label: true } };
   };
 }>;
+export type TaskRecord = Omit<PrismaTaskRecord, 'recurrenceSeriesId'> & {
+  recurrenceSeriesId?: string | null;
+};
 export type Task = Omit<
   TaskRecord,
   | 'userId'
@@ -13,6 +16,7 @@ export type Task = Omit<
   | 'scheduledDate'
   | 'dueDate'
   | 'deadline'
+  | 'recurrenceSeriesId'
   | 'doneAt'
   | 'recurrenceEndDate'
   | 'priorityId'

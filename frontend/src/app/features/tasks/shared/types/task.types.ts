@@ -30,6 +30,7 @@ export type PriorityField = { priority: ApiTaskPriority } | { priorityId: number
 export interface ApiTask {
   id: number;
   projectId: number | null;
+  position?: number;
   title: string;
   description: string | null;
   priority: ApiTaskPriority | ApiTaskPriorityLevel;
@@ -110,8 +111,10 @@ export type UpdateTaskBody = Omit<UpdateTaskRequest, 'priorityId' | 'completedAt
   };
 
 export interface UpdateTaskResponse {
-  taskId: number;
-  message: string;
+  id: number;
+  isDone: boolean;
+  doneAt: string | null;
+  position: number;
 }
 
 /** Everything an edit form can change, split by the service that saves it. */
