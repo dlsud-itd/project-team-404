@@ -14,6 +14,7 @@ model User {
   userSetting    UserSetting?
   sessions       Session[]
   resetTokens    PasswordResetToken[]
+  completionEvents TaskCompletionEvent[]
 
   @@map("tbl_user")
 }

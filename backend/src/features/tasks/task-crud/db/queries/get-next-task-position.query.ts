@@ -3,7 +3,8 @@ import type { Prisma } from '@prisma/client';
 export async function getNextTaskPosition(
   transaction: Pick<Prisma.TransactionClient, 'task'>,
   userId: string,
-  projectId: number | null
+  projectId: number | null,
+  isDone?: boolean
 ) {
   const maximum = await transaction.task.aggregate({
     where: {
@@ -11,6 +12,7 @@ export async function getNextTaskPosition(
       projectId,
       deletedAt: null,
       archivedAt: null,
+      ...(isDone !== undefined ? { isDone } : {}),
     },
     _max: { position: true },
   });

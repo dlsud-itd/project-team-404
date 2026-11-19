@@ -169,3 +169,22 @@ where task.user_id = profile.user_id
   and task.project_id = project.project_id
   and task.title = fixture.title
   and task.deleted_at is null;
+alter table public.tbl_task
+  add column if not exists position integer not null default 0;
+
+with ranked_tasks as (
+  select
+    task_id,
+    row_number() over (
+      partition by user_id, project_id
+      order by created_at, task_id
+    ) as position
+  from public.tbl_task
+  where deleted_at is null
+)
+update public.tbl_task as task
+set position = ranked_tasks.position
+from ranked_tasks
+where task.task_id = ranked_tasks.task_id
+  and task.position = 0;
+

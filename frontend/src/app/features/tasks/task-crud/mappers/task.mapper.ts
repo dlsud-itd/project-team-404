@@ -36,6 +36,7 @@ export function toTask(task: ApiTask): Task {
     taskId: task.id,
     // A task loses its project when that project is deleted; 0 is never a real project id.
     projectId: task.projectId ?? 0,
+    position: task.position ?? 0,
     priorityId: toPriorityId(task.priority),
     title: task.title,
     description: task.description,

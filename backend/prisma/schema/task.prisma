@@ -12,6 +12,7 @@ model Task {
   userId        String          @db.Uuid @map("user_id")
   projectId     Int?            @db.Integer @map("project_id")
   position      Int             @default(0) @db.Integer
+  recurrenceSeriesId String?   @db.Uuid @map("recurrence_series_id")
   title         String          @db.VarChar(200)
   description   String?         @db.VarChar(1000)
   priorityId    Int             @db.Integer @map("priority_id")
@@ -33,6 +34,7 @@ model Task {
   project       Project?        @relation(fields: [projectId], references: [id], onDelete: SetNull)
   priorityLevel PriorityLevel   @relation(fields: [priorityId], references: [id])
   taskLabels    TaskLabel[]
+  completionEvents TaskCompletionEvent[]
 
   @@index([userId], map: "tbl_task_user_id_idx")
   @@index([projectId], map: "tbl_task_project_id_idx")

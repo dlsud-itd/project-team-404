@@ -5,6 +5,7 @@ import { createCurrentUpcomingTasksRouter } from './current-upcoming-tasks/curre
 import type { CurrentUpcomingTasksDependencies } from './current-upcoming-tasks/current-upcoming-tasks.service';
 import { createOverdueTasksRouter } from './overdue-tasks/overdue-tasks.routes';
 import type { OverdueTasksDependencies } from './overdue-tasks/overdue-tasks.service';
+import { createDashboardStreaksRouter } from './streaks/streaks.routes';
 
 export function createDashboardRouter(
   sessionService: SessionService,
@@ -15,5 +16,6 @@ export function createDashboardRouter(
   router.use(requireAuth(sessionService));
   router.use(createCurrentUpcomingTasksRouter(currentUpcomingDependencies));
   router.use(createOverdueTasksRouter(overdueDependencies));
+  router.use(createDashboardStreaksRouter());
   return router;
 }

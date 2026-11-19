@@ -1,0 +1,15 @@
+model TaskCompletionEvent {
+  id        Int      @id @default(autoincrement()) @map("completion_id")
+  taskId    Int      @map("task_id")
+  userId    String   @db.Uuid @map("user_id")
+  seriesId  String?  @db.Uuid @map("series_id")
+  completedOn DateTime @db.Date @map("completed_on")
+  completedAt DateTime @default(now()) @db.Timestamptz(6) @map("completed_at")
+
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([taskId, completedOn], map: "tbl_task_completion_task_date_key")
+  @@index([userId, seriesId, completedOn], map: "tbl_task_completion_series_idx")
+  @@map("tbl_task_completion")
+}

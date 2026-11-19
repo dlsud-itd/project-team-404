@@ -23,3 +23,12 @@ export const MAX_UPCOMING_DAYS = 30;
 export interface DashboardError {
   message: string;
 }
+
+export interface DashboardStreak {
+  taskId: number;
+  title: string;
+  currentStreak: number;
+  longestStreak: number;
+  lastCompletedOn: string | null;
+  nextOccurrenceOn: string | null;
+}

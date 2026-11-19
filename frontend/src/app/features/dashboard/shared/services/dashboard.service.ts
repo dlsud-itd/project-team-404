@@ -9,6 +9,7 @@ import {
   type DashboardError,
   type DashboardTaskList,
   type DashboardTasksResponse,
+  type DashboardStreak,
 } from '../types/dashboard.types';
 
 /** The current time, swappable in specs so "today" is fixed. */
@@ -40,6 +41,13 @@ export class DashboardService {
     return this.http
       .get<DashboardTasksResponse>(`${this.baseUrl}/overdue-tasks`)
       .pipe(map(toTaskList));
+  }
+
+  streaks(limit = 20): Observable<DashboardStreak[]> {
+    const params = new HttpParams().set('limit', Math.min(Math.max(limit, 1), 100));
+    return this.http
+      .get<{ streaks: DashboardStreak[] }>(`${this.baseUrl}/streaks`, { params })
+      .pipe(map(({ streaks }) => streaks));
   }
 }
 

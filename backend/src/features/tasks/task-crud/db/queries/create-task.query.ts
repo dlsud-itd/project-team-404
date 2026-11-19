@@ -3,6 +3,7 @@ import type { CreateTaskInput } from '../../types/task-crud.types';
 import { toRecurrenceData } from '../../../task-scheduling/utils/recurrence-data.util';
 import { InvalidTaskPriorityError } from '../../errors/invalid-task-priority.error';
 import { getNextTaskPosition } from './get-next-task-position.query';
+import { randomUUID } from 'node:crypto';
 
 export async function createTask(userId: string, input: CreateTaskInput) {
   const priorityLevel = await resolveUserPriorityLevel(userId, input);
@@ -42,6 +43,8 @@ export async function createTask(userId: string, input: CreateTaskInput) {
         }),
         isDone: input.isDone ?? false,
         doneAt: input.doneAt ? new Date(input.doneAt) : null,
+        recurrenceSeriesId:
+          input.recurrence && input.recurrence !== 'none' ? randomUUID() : null,
       },
       include: {
         priorityLevel: true,

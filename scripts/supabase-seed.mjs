@@ -24,6 +24,7 @@ const seedFiles = [
   'supabase/seeds/009_archiving.sql',
   'supabase/seeds/010_search.sql',
   'supabase/seeds/011_task_positions.sql',
+  'supabase/seeds/012_streaks.sql',
 ];
 const verificationFile = 'supabase/verify_seeds.sql';
 
