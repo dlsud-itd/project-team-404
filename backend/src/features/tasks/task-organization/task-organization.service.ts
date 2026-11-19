@@ -8,6 +8,7 @@ import type { TaskRecord } from '../shared/models/task.model';
 import { toTaskModel } from '../shared/models/task.model';
 import type { TaskPriority } from '../shared/models/task.model';
 import type { UpdateTaskInput } from '../task-crud/types/task-crud.types';
+import type { TaskPositionUpdate } from './utils/reorder-tasks.util';
 
 export type TaskOrganizationDependencies = {
   updateOwnedTask(
@@ -33,6 +34,11 @@ export type TaskOrganizationDependencies = {
     userId: string,
     isArchived: boolean
   ): Promise<TaskRecord | null>;
+  updateTaskPositions(
+    projectId: number,
+    taskIds: number[],
+    userId: string
+  ): Promise<TaskPositionUpdate[]>;
 };
 
 export class TaskOrganizationService {
@@ -112,6 +118,10 @@ export class TaskOrganizationService {
       isArchived: updated.archivedAt !== null,
       archivedAt: updated.archivedAt,
     };
+  }
+
+  reorder(projectId: number, taskIds: number[], userId: string) {
+    return this.dependencies.updateTaskPositions(projectId, taskIds, userId);
   }
 
   private assertTaskActive(task: TaskRecord) {

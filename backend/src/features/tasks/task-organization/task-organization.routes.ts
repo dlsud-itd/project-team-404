@@ -14,6 +14,7 @@ import {
 } from './db/queries/attach-task-labels.query';
 import { detachTaskLabel } from './db/queries/detach-task-label.query';
 import { setTaskArchived } from './db/queries/set-task-archived.query';
+import { updateTaskPositions } from './db/queries/update-task-positions.query';
 import { findOwnedLabels } from './db/queries/find-owned-labels.query';
 import { createTaskOrganizationController } from './task-organization.controller';
 import { TaskOrganizationService } from './task-organization.service';
@@ -24,6 +25,7 @@ import {
 } from './validators/task-labels.validator';
 import { taskPriorityValidator } from './validators/priority.validator';
 import { setTaskArchivedValidator } from './validators/set-task-archived.validator';
+import { reorderTasksValidator } from './validators/reorder-tasks.validator';
 
 export function createTaskOrganizationRouter(
   sessionService: SessionService,
@@ -35,6 +37,7 @@ export function createTaskOrganizationRouter(
     listTaskLabels,
     findOwnedLabel,
     setTaskArchived,
+    updateTaskPositions,
   }
 ): Router {
   const router = Router();
@@ -67,6 +70,13 @@ export function createTaskOrganizationRouter(
     res.locals.validatedLabelId = result.data;
     next();
   };
+
+  router.put(
+    '/reorder',
+    requireAuth(sessionService),
+    validateRequest(reorderTasksValidator, 'body', 'Invalid task order'),
+    controller.reorder
+  );
 
   router.put(
     '/:taskId/archive',

@@ -8,6 +8,7 @@ const task: TaskRecord = {
   id: 12,
   userId: 'user-123',
   projectId: 7,
+  position: 1,
   title: 'Plan sprint review',
   description: 'Outline the demo and risks.',
   priorityId: 3,

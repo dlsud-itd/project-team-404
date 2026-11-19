@@ -115,6 +115,9 @@ export function buildListTasksOrderBy(
   if (orderBy === 'priority') {
     return [{ priorityLevel: { sortOrder: direction } }, { id: 'asc' }];
   }
+  if (orderBy === 'position') {
+    return [{ isDone: 'asc' }, { position: direction }, { id: 'asc' }];
+  }
   if (
     orderBy === 'dueDate' ||
     orderBy === 'deadline' ||

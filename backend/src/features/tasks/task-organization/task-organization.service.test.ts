@@ -10,6 +10,7 @@ const task: TaskRecord = {
   id: 4,
   userId: 'user-1',
   projectId: null,
+  position: 1,
   title: 'Organize tasks',
   description: null,
   priorityId: 2,
@@ -58,6 +59,9 @@ function dependencies() {
     listTaskLabels: vi.fn().mockResolvedValue([label]),
     findOwnedLabel: vi.fn().mockResolvedValue(label),
     setTaskArchived: vi.fn().mockResolvedValue(task),
+    updateTaskPositions: vi
+      .fn()
+      .mockResolvedValue([{ taskId: 7, position: 1 }]),
   };
 }
 
@@ -151,5 +155,15 @@ describe('TaskOrganizationService', () => {
       service.attachLabels(task, 'user-1', [8])
     ).rejects.toBeInstanceOf(LabelArchivedError);
     expect(deps.attachTaskLabels).not.toHaveBeenCalled();
+  });
+
+  it('delegates task reordering with the project and user scope', async () => {
+    const deps = dependencies();
+    const service = new TaskOrganizationService(deps);
+
+    await expect(service.reorder(3, [7], 'user-1')).resolves.toEqual([
+      { taskId: 7, position: 1 },
+    ]);
+    expect(deps.updateTaskPositions).toHaveBeenCalledWith(3, [7], 'user-1');
   });
 });

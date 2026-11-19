@@ -12,8 +12,8 @@ export function createTasksRouter(
 ): Router {
   const router = Router();
   router.use(requireAuth(sessionService));
-  router.use(createTaskCrudRouter(dependencies));
-  router.use(createTaskSchedulingRouter(sessionService));
   router.use(createTaskOrganizationRouter(sessionService));
+  router.use(createTaskSchedulingRouter(sessionService));
+  router.use(createTaskCrudRouter(dependencies));
   return router;
 }

@@ -10,6 +10,7 @@ const task: TaskRecord = {
   id: 4,
   userId: 'user-1',
   projectId: null,
+  position: 1,
   title: 'Organize tasks',
   description: null,
   priorityId: 2,
@@ -51,6 +52,7 @@ function setup() {
       ...task,
       archivedAt: new Date(),
     }),
+    updateTaskPositions: vi.fn().mockResolvedValue([]),
   };
   const controller = createTaskOrganizationController(
     new TaskOrganizationService(dependencies)
@@ -89,5 +91,21 @@ describe('TaskOrganizationController', () => {
     expect(res.json).toHaveBeenCalledWith({
       error: new TaskNotFoundError().message,
     });
+  });
+
+  it('returns the requested order after reordering tasks', async () => {
+    const { controller, req, res, next, dependencies } = setup();
+    res.locals.validated = { projectId: 3, taskIds: [9, 4] };
+
+    await controller.reorder(req, res, next);
+
+    expect(dependencies.updateTaskPositions).toHaveBeenCalledWith(
+      3,
+      [9, 4],
+      'user-1'
+    );
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json).toHaveBeenCalledWith({ projectId: 3, taskIds: [9, 4] });
+    expect(next).not.toHaveBeenCalled();
   });
 });

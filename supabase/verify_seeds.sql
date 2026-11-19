@@ -257,6 +257,88 @@ begin
 end;
 $$;
 
+select
+  'task_positions_unique_per_project' as check_name,
+  case
+    when (
+      select count(*) = 0
+      from (
+        select user_id, project_id, position
+        from public.tbl_task
+        where deleted_at is null
+        and archived_at is null
+        and project_id is not null
+        group by user_id, project_id, position
+        having count(*) > 1
+      ) as duplicates
+    )
+      then 'PASS'
+    else 'FAIL'
+  end as result;
+
+select
+  'task_reorder_seed_positions' as check_name,
+  case
+    when (
+      select count(*) = 2
+      from (
+        select project.project_id
+        from public.tbl_project as project
+        join public.tbl_task as task on task.project_id = project.project_id
+        join public.tbl_user as profile on profile.user_id = project.user_id
+        where profile.email = 'james@example.com'
+          and project.name in ('Reorder - Project One', 'Reorder - Project Two')
+          and project.deleted_at is null
+          and task.deleted_at is null
+          and task.archived_at is null
+        group by project.project_id
+        having
+          (project.project_id in (
+            select project_id
+            from public.tbl_project
+            where name = 'Reorder - Project One'
+          ) and count(*) = 6)
+          or
+          (project.project_id in (
+            select project_id
+            from public.tbl_project
+            where name = 'Reorder - Project Two'
+          ) and count(*) = 3)
+      ) as fixture_projects
+    )
+      then 'PASS'
+    else 'FAIL'
+  end as result;
+
+select
+  'task_reorder_seed_custom_order' as check_name,
+  case
+    when exists (
+      select 1
+      from public.tbl_project as project
+      join public.tbl_task as task on task.project_id = project.project_id
+      join public.tbl_user as profile on profile.user_id = project.user_id
+      where profile.email = 'james@example.com'
+        and project.name = 'Reorder - Project One'
+        and task.title = 'Reorder seed 03'
+        and task.position = 3
+        and task.deleted_at is null
+    )
+    and exists (
+      select 1
+      from public.tbl_project as project
+      join public.tbl_task as task on task.project_id = project.project_id
+      join public.tbl_user as profile on profile.user_id = project.user_id
+      where profile.email = 'james@example.com'
+        and project.name = 'Reorder - Project One'
+        and task.title = 'Reorder seed 04'
+        and task.position = 4
+        and task.deleted_at is null
+    )
+      then 'PASS'
+    else 'FAIL'
+  end as result;
+
 do $$
 declare
   harvey_id uuid;

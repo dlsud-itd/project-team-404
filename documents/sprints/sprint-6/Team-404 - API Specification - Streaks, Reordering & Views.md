@@ -133,19 +133,19 @@ Status `200`:
 
 ## II. Task Ordering
 
-Task `position` is a zero-based integer, scoped to a project and completion column (`active` or `completed`). New tasks append to the end of their column. Archived and deleted tasks do not participate. `orderBy=position` returns active tasks before completed tasks, then orders by position in the requested direction and by ID ascending for ties.
+Task `position` is a non-negative integer ordered within a project and completion column. The initial backfill assigns consecutive positions per user and project. The project reorder endpoint below renumbers active tasks from `1` through `n`; newly created tasks and tasks moved to another project append after the maximum position in the destination project. Archived and deleted tasks do not participate in reordering. `orderBy=position` returns active tasks before completed tasks, then orders by position in the requested direction and by ID ascending for ties.
 
 ### A. Reorder Tasks
 
-| Item                  | Value                                                                                                                       |
-| --------------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| Endpoint              | `/api/tasks/reorder`                                                                                                        |
-| Method                | `PUT`                                                                                                                       |
-| Auth                  | Required bearer token.                                                                                                      |
-| Query/path parameters | None.                                                                                                                       |
-| Request body          | `projectId`: positive integer or `null` (Inbox); `status`: `active` or `completed`; `taskIds`: positive IDs, maximum `500`. |
+| Item                  | Value                                                                                              |
+| --------------------- | -------------------------------------------------------------------------------------------------- |
+| Endpoint              | `/api/tasks/reorder`                                                                               |
+| Method                | `PUT`                                                                                              |
+| Auth                  | Required bearer token.                                                                             |
+| Query/path parameters | None.                                                                                              |
+| Request body          | `projectId`: positive integer; `taskIds`: a non-empty array of unique positive IDs, maximum `500`. |
 
-`taskIds` must contain every non-archived, non-deleted task in the specified project and completion column exactly once. An empty list is allowed only when that scope has no reorderable tasks. The server validates and updates the complete ordering atomically.
+`taskIds` must contain every active (incomplete, non-archived, non-deleted) task in the specified project exactly once. Empty lists are rejected. The server validates and updates the complete ordering atomically, assigning positions `1` through `n` in the submitted order.
 
 #### Reorder Tasks Example Request
 
@@ -155,7 +155,6 @@ Content-Type: application/json
 
 {
   "projectId": 18,
-  "status": "active",
   "taskIds": [41, 38, 52]
 }
 ```
@@ -167,19 +166,18 @@ Status `200`:
 ```json
 {
   "projectId": 18,
-  "status": "active",
   "taskIds": [41, 38, 52]
 }
 ```
 
 #### Reorder Tasks Errors
 
-| Status | Description                                                                                                                                                    |
-| ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `400`  | Missing or malformed fields, invalid project/status/IDs, more than 500 IDs, duplicate IDs, or a list that is not a complete permutation of the selected scope. |
-| `401`  | Missing or invalid token.                                                                                                                                      |
-| `404`  | Project or task ID is missing, deleted, or not owned by caller.                                                                                                |
-| `409`  | A task's project or completion state changed while reordering; no positions are changed.                                                                       |
+| Status | Description                                                                                                    |
+| ------ | -------------------------------------------------------------------------------------------------------------- |
+| `400`  | Missing or malformed fields, an empty list, invalid project/IDs, more than 500 IDs, or duplicate IDs.          |
+| `401`  | Missing or invalid token.                                                                                      |
+| `404`  | A requested task ID is missing, deleted, archived, outside the project, or not owned by the caller.            |
+| `409`  | The list omits one or more active tasks, or the task set changes during the reorder; no positions are changed. |
 
 ### B. List Tasks by Position
 
@@ -210,7 +208,7 @@ Status `200`; returns the existing task array shape, with the added `position` f
     "projectId": 18,
     "title": "Draft sprint recap",
     "isDone": false,
-    "position": 0
+    "position": 1
   }
 ]
 ```
@@ -257,7 +255,7 @@ Status `200`:
         "id": 41,
         "title": "Draft sprint recap",
         "isDone": false,
-        "position": 0
+        "position": 1
       }
     ],
     "completed": [
@@ -265,7 +263,7 @@ Status `200`:
         "id": 38,
         "title": "Review requirements",
         "isDone": true,
-        "position": 0
+        "position": 2
       }
     ]
   }
@@ -355,7 +353,7 @@ Status `200`:
   "id": 41,
   "isDone": true,
   "doneAt": "2026-11-16T09:30:00.000Z",
-  "position": 0
+  "position": 1
 }
 ```
 

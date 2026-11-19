@@ -10,8 +10,10 @@ import type { TaskRecord } from '../shared/models/task.model';
 import type { TaskOrganizationService } from './task-organization.service';
 import type {
   AttachTaskLabelsInput,
+  ReorderTasksInput,
   SetTaskPriorityInput,
 } from './types/task-organization.types';
+import { TaskReorderConflictError } from './errors/task-reorder-conflict.error';
 
 export function createTaskOrganizationController(
   service: TaskOrganizationService
@@ -21,6 +23,7 @@ export function createTaskOrganizationController(
   attachLabels: RequestHandler;
   detachLabel: RequestHandler;
   archive: RequestHandler;
+  reorder: RequestHandler;
 } {
   const respondToError = (
     error: unknown,
@@ -43,7 +46,8 @@ export function createTaskOrganizationController(
     }
     if (
       error instanceof TaskArchivedError ||
-      error instanceof LabelArchivedError
+      error instanceof LabelArchivedError ||
+      error instanceof TaskReorderConflictError
     ) {
       res.status(409).json({ error: error.message });
       return;
@@ -113,6 +117,16 @@ export function createTaskOrganizationController(
           isArchived
         );
         res.status(200).json(result);
+      } catch (error) {
+        respondToError(error, res, next);
+      }
+    },
+    reorder: async (req, res, next) => {
+      try {
+        const { projectId, taskIds } = res.locals
+          .validated as ReorderTasksInput;
+        await service.reorder(projectId, taskIds, req.auth!.userId);
+        res.status(200).json({ projectId, taskIds });
       } catch (error) {
         respondToError(error, res, next);
       }

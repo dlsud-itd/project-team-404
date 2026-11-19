@@ -141,6 +141,12 @@ describe('listTasks query builders', () => {
     }
   );
 
+  it('keeps active tasks first when sorting by position', () => {
+    expect(
+      buildListTasksOrderBy({ orderBy: 'position', orderDirection: 'desc' })
+    ).toEqual([{ isDone: 'asc' }, { position: 'desc' }, { id: 'asc' }]);
+  });
+
   it('sorts priority by configured sort order and defaults to creation time', () => {
     for (const orderDirection of ['asc', 'desc'] as const) {
       expect(

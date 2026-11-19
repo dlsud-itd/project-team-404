@@ -2,6 +2,7 @@ import { prisma } from '../../../../../shared/db/prisma.client';
 import type { CreateTaskInput } from '../../types/task-crud.types';
 import { toRecurrenceData } from '../../../task-scheduling/utils/recurrence-data.util';
 import { InvalidTaskPriorityError } from '../../errors/invalid-task-priority.error';
+import { getNextTaskPosition } from './get-next-task-position.query';
 
 export async function createTask(userId: string, input: CreateTaskInput) {
   const priorityLevel = await resolveUserPriorityLevel(userId, input);
@@ -12,32 +13,41 @@ export async function createTask(userId: string, input: CreateTaskInput) {
     throw new Error('Default priority is not configured for this user');
   }
 
-  return prisma.task.create({
-    data: {
+  return prisma.$transaction(async (transaction) => {
+    const position = await getNextTaskPosition(
+      transaction,
       userId,
-      title: input.title,
-      description: input.description ?? null,
-      projectId: input.projectId ?? null,
-      priorityId: priorityLevel.id,
-      scheduledDate: input.scheduledDate
-        ? new Date(`${input.scheduledDate}T00:00:00.000Z`)
-        : null,
-      dueDate: input.dueDate
-        ? new Date(`${input.dueDate}T00:00:00.000Z`)
-        : null,
-      deadline: input.deadline ? new Date(input.deadline) : null,
-      ...toRecurrenceData({
-        recurrence: input.recurrence ?? 'none',
-        recurrenceDays: input.recurrenceDays,
-        recurrenceEndDate: input.recurrenceEndDate,
-      }),
-      isDone: input.isDone ?? false,
-      doneAt: input.doneAt ? new Date(input.doneAt) : null,
-    },
-    include: {
-      priorityLevel: true,
-      taskLabels: { include: { label: true } },
-    },
+      input.projectId ?? null
+    );
+
+    return transaction.task.create({
+      data: {
+        userId,
+        title: input.title,
+        description: input.description ?? null,
+        projectId: input.projectId ?? null,
+        position,
+        priorityId: priorityLevel.id,
+        scheduledDate: input.scheduledDate
+          ? new Date(`${input.scheduledDate}T00:00:00.000Z`)
+          : null,
+        dueDate: input.dueDate
+          ? new Date(`${input.dueDate}T00:00:00.000Z`)
+          : null,
+        deadline: input.deadline ? new Date(input.deadline) : null,
+        ...toRecurrenceData({
+          recurrence: input.recurrence ?? 'none',
+          recurrenceDays: input.recurrenceDays,
+          recurrenceEndDate: input.recurrenceEndDate,
+        }),
+        isDone: input.isDone ?? false,
+        doneAt: input.doneAt ? new Date(input.doneAt) : null,
+      },
+      include: {
+        priorityLevel: true,
+        taskLabels: { include: { label: true } },
+      },
+    });
   });
 }
 
