@@ -155,7 +155,11 @@ describe('TaskForm', () => {
     harness = await RouterTestingHarness.create();
   });
 
-  afterEach(() => http.verify());
+  afterEach(() => {
+    // Repeating tasks also load their streak; streak-detail.spec.ts covers that view.
+    http.match((req) => req.url.endsWith('/streak'));
+    http.verify();
+  });
 
   describe('create mode', () => {
     let closed: number;
@@ -546,6 +550,28 @@ describe('TaskForm', () => {
       await open({ ...STUDY, recurrence: 'monthly', isRecurring: true });
 
       expect(text('.summary')).toBe('Repeats every month');
+    });
+
+    it("shows a repeating task's streak above the form", async () => {
+      await open({ ...STUDY, recurrence: 'daily', isRecurring: true });
+
+      http.expectOne(`${URL}/1/streak`).flush({
+        taskId: 1,
+        currentStreak: 2,
+        longestStreak: 5,
+        lastCompletedOn: null,
+        nextOccurrenceOn: null,
+        timezone: 'Asia/Manila',
+      });
+      harness.detectChanges();
+      expect(el('app-streak-detail')?.querySelector('h2')?.textContent?.trim()).toBe('Streak');
+    });
+
+    it('shows no streak for a task that does not repeat', async () => {
+      await open();
+
+      expect(el('app-streak-detail')).toBeNull();
+      http.expectNone(`${URL}/1/streak`);
     });
 
     it('keeps Save off until something changes', async () => {

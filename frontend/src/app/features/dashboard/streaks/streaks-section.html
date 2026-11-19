@@ -1,0 +1,72 @@
+<section class="card" aria-labelledby="streaks-heading">
+  <h2 id="streaks-heading" class="pill">
+    Streaks
+    @if (loadState() === 'ready') {
+      <span class="visually-hidden">, {{ countLabel() }}</span>
+    }
+  </h2>
+
+  @if (notice(); as message) {
+    <p class="notice" role="status">{{ message }}</p>
+  }
+  @if (actionError(); as message) {
+    <p class="action-error" role="alert">{{ message }}</p>
+  }
+
+  @switch (loadState()) {
+    @case ('loading') {
+      <p class="status" role="status">Loading streaks…</p>
+    }
+    @case ('error') {
+      <div class="error" role="alert">
+        <p>{{ error() }}</p>
+        <button type="button" class="retry" (click)="load()">Try again</button>
+      </div>
+    }
+    @default {
+      @if (error(); as message) {
+        <p class="action-error" role="alert">{{ message }}</p>
+      }
+      <ul class="list" tabindex="0" aria-label="Active streaks">
+        @for (row of rows(); track row.streak.taskId) {
+          <li class="row" [class.at-risk]="row.streak.atRisk">
+            <app-streak-badge [streak]="row.streak" />
+            <span class="name">
+              @if (row.link; as link) {
+                <a class="title" [routerLink]="link" [title]="row.title">{{ row.title }}</a>
+              } @else {
+                <span class="title" [title]="row.title">{{ row.title }}</span>
+              }
+              <span class="sub">
+                @if (row.streak.atRisk) {
+                  <span class="risk">At risk · due today</span>
+                } @else {
+                  {{ longestText(row) }}
+                }
+              </span>
+            </span>
+            @if (row.streak.atRisk) {
+              @if (row.open) {
+                <button
+                  type="button"
+                  class="complete"
+                  [disabled]="isCompleting(row)"
+                  [attr.aria-label]="'Complete ' + row.title"
+                  (click)="complete(row)"
+                >
+                  {{ isCompleting(row) ? 'Saving…' : 'Complete' }}
+                </button>
+              } @else {
+                <span class="hint">Open the task to complete it</span>
+              }
+            } @else {
+              <span class="done">{{ doneLabel(row) }}</span>
+            }
+          </li>
+        } @empty {
+          <li class="empty">No active streaks. Complete a repeating task to start one.</li>
+        }
+      </ul>
+    }
+  }
+</section>

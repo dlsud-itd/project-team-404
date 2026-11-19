@@ -110,6 +110,12 @@ export type UpdateTaskBody = Omit<UpdateTaskRequest, 'priorityId' | 'completedAt
     doneAt?: string | null;
   };
 
+/** A task was marked done (completedAt set) or reopened (completedAt null). */
+export interface TaskCompletion {
+  taskId: number;
+  completedAt: string | null;
+}
+
 export interface UpdateTaskResponse {
   id: number;
   isDone: boolean;

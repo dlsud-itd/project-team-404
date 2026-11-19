@@ -13,6 +13,8 @@ import { DashboardPage } from './dashboard-page';
 const URL = `${environment.apiBaseUrl}/api/dashboard/current-upcoming-tasks?days=7`;
 const OVERDUE_URL = `${environment.apiBaseUrl}/api/dashboard/overdue-tasks`;
 const PROJECTS_URL = `${environment.apiBaseUrl}/api/projects`;
+const STREAKS_URL = `${environment.apiBaseUrl}/api/dashboard/streaks?limit=20`;
+const TASKS_URL = `${environment.apiBaseUrl}/api/tasks`;
 
 describe('DashboardPage', () => {
   let http: HttpTestingController;
@@ -45,7 +47,7 @@ describe('DashboardPage', () => {
     user.set(null);
   });
 
-  it('renders at /dashboard for a signed-in user with the Current & Upcoming and Overdue sections', async () => {
+  it('renders at /dashboard for a signed-in user with the Current & Upcoming, Streaks and Overdue sections', async () => {
     user.set({ username: 'james', timezone: 'Asia/Manila' });
     setup();
     const harness = await RouterTestingHarness.create();
@@ -53,6 +55,8 @@ describe('DashboardPage', () => {
     const page = await harness.navigateByUrl('/dashboard', DashboardPage);
     http.expectOne(URL).flush({ tasks: [] });
     http.expectOne(OVERDUE_URL).flush({ tasks: [] });
+    http.expectOne(STREAKS_URL).flush({ streaks: [] });
+    http.expectOne((req) => req.url === TASKS_URL).flush([]);
     http.expectOne(`${PROJECTS_URL}?isArchived=false`).flush([]);
     http.expectOne(`${PROJECTS_URL}?isArchived=true`).flush([]);
     harness.detectChanges();
@@ -64,6 +68,7 @@ describe('DashboardPage', () => {
     expect(el.querySelector('app-current-upcoming-tasks h2')?.textContent?.trim()).toBe(
       'Current & Upcoming',
     );
+    expect(el.querySelector('app-dashboard-streaks h2')?.textContent).toContain('Streaks');
     expect(el.querySelector('app-overdue-tasks h2')?.textContent).toContain('Overdue');
     expect(document.title).toBe('Dashboard · HabitTracker');
   });

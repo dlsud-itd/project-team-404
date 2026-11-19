@@ -9,10 +9,11 @@ import {
   userTimeZone,
 } from '../../../task-scheduling/utils/date-format.util';
 import { recurrenceSummary } from '../../../task-scheduling/utils/recurrence-label.util';
+import { StreakBadge } from '../../../task-streaks/components/streak-badge/streak-badge';
 
 @Component({
   selector: 'app-task-item',
-  imports: [RouterLink],
+  imports: [RouterLink, StreakBadge],
   template: `
     <article class="item" [class.done]="done()">
       <span
@@ -42,6 +43,9 @@ import { recurrenceSummary } from '../../../task-scheduling/utils/recurrence-lab
             }
             @if (repeats(); as repeats) {
               <span class="badge">{{ repeats }}</span>
+            }
+            @if (task().isRecurring) {
+              <app-streak-badge [task]="task()" />
             }
             @if (done()) {
               <span class="badge complete">Done</span>

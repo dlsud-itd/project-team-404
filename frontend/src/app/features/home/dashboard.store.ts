@@ -1,6 +1,7 @@
 import { Injectable, computed, signal } from '@angular/core';
 import type { Project as ApiProject } from '../projects/shared/types/project.types';
 import type { Task as ApiTask } from '../tasks/shared/types/task.types';
+import type { TaskRecurrence } from '../tasks/task-scheduling/types/task-scheduling.types';
 
 export type TaskStatus = 'current' | 'upcoming' | 'overdue' | 'done' | 'unscheduled';
 
@@ -20,6 +21,8 @@ export interface Task {
   due: string | null;
   done: boolean;
   isRecurring?: boolean;
+  /** How often the task repeats; the streak badge needs it. */
+  recurrence?: TaskRecurrence;
   /** Local date the task was completed, YYYY-MM-DD. */
   doneOn?: string;
 }
@@ -50,6 +53,7 @@ function fromApiTask(task: ApiTask): Task {
     due: task.dueDate,
     done: task.completedAt !== null,
     isRecurring: task.recurrence !== 'none',
+    recurrence: task.recurrence,
     doneOn: completionDate(task.completedAt),
   };
 }

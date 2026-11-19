@@ -32,10 +32,11 @@ import {
   toTaskListFilter,
 } from '../../tasks/task-organization/utils/task-query-params.util';
 import { instantToDate, userTimeZone } from '../../tasks/task-scheduling/utils/date-format.util';
+import { StreakBadge } from '../../tasks/task-streaks/components/streak-badge/streak-badge';
 
 @Component({
   selector: 'app-tasks-page',
-  imports: [ConfirmDeleteTaskDialog, NewTaskDialog, TaskFilterBar, SortMenu],
+  imports: [ConfirmDeleteTaskDialog, NewTaskDialog, TaskFilterBar, SortMenu, StreakBadge],
   providers: [TaskQueryStore],
   templateUrl: './tasks-page.html',
   styleUrl: './tasks-page.scss',

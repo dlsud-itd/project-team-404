@@ -1,0 +1,60 @@
+<section class="streak" aria-labelledby="streak-heading">
+  <header class="head">
+    <h2 id="streak-heading">Streak</h2>
+    <app-streak-badge [task]="task()" />
+  </header>
+
+  @if (streak(); as streak) {
+    @if (streak.atRisk) {
+      <p class="risk" role="status">Due today. Complete it to keep your streak going.</p>
+    } @else if (streak.status === 'broken') {
+      <p class="note">
+        The last occurrence was missed. Complete the next one to start a new streak.
+      </p>
+    }
+
+    <dl class="stats">
+      <div class="stat">
+        <dt>Current</dt>
+        <dd class="current">{{ current() }}</dd>
+      </div>
+      <div class="stat">
+        <dt>Longest</dt>
+        <dd class="longest">{{ longest() }}</dd>
+      </div>
+      <div class="stat">
+        <dt>Last completed</dt>
+        <dd class="last">{{ lastCompleted() }}</dd>
+      </div>
+      @if (nextDue(); as nextDue) {
+        <div class="stat">
+          <dt>Next due</dt>
+          <dd class="next">{{ nextDue }}</dd>
+        </div>
+      }
+    </dl>
+
+    <ol class="strip" aria-label="Last 14 periods, oldest first">
+      @for (period of periods(); track period.date) {
+        <li
+          class="cell"
+          [attr.data-state]="period.state"
+          [attr.aria-label]="period.description"
+          [title]="period.description"
+        ></li>
+      }
+    </ol>
+    <ul class="legend" aria-hidden="true">
+      @for (item of legend; track item.state) {
+        <li><span class="cell" [attr.data-state]="item.state"></span>{{ item.label }}</li>
+      }
+    </ul>
+  } @else if (loadState() === 'error') {
+    <div class="error" role="alert">
+      <p>Couldn't load this streak.</p>
+      <button type="button" class="retry" (click)="retry()">Try again</button>
+    </div>
+  } @else {
+    <p class="status" role="status">Loading streak…</p>
+  }
+</section>

@@ -20,6 +20,7 @@ import { SettingsStore } from '../../settings/state/settings.store';
 import { DashboardStore, type Task } from '../dashboard.store';
 import { mapTaskError } from '../../tasks/task-crud/mappers/task-error.mapper';
 import { TaskService } from '../../tasks/task-crud/services/task.service';
+import { StreakBadge } from '../../tasks/task-streaks/components/streak-badge/streak-badge';
 
 /** Like Validators.required, but a title of only spaces counts as empty too. */
 const notBlank: ValidatorFn = ({ value }) =>
@@ -27,7 +28,7 @@ const notBlank: ValidatorFn = ({ value }) =>
 
 @Component({
   selector: 'app-all-tasks',
-  imports: [ReactiveFormsModule, ConfirmDeleteTaskDialog, NewTaskDialog, ViewAllLink],
+  imports: [ReactiveFormsModule, ConfirmDeleteTaskDialog, NewTaskDialog, ViewAllLink, StreakBadge],
   templateUrl: './all-tasks.html',
   styleUrl: './all-tasks.scss',
   host: {

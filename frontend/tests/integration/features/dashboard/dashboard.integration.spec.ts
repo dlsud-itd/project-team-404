@@ -169,6 +169,12 @@ describe('Dashboard integration (Current & Upcoming + API)', () => {
 
   afterEach(() => {
     try {
+      // The Streaks section has its own specs (dashboard/streaks).
+      http?.match(
+        (r) =>
+          r.url.endsWith('/api/dashboard/streaks') ||
+          (r.url.endsWith('/api/tasks') && r.params.get('recurring') === 'true'),
+      );
       if (http) http.verify();
     } finally {
       TestBed.resetTestingModule();
