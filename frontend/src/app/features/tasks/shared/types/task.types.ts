@@ -53,7 +53,6 @@ export interface ApiTask {
 export interface Task {
   taskId: number;
   projectId: number;
-  position?: number;
   /** One of the user's priority levels; PrioritiesStore has its name, color and order. */
   priorityId: number;
   title: string;

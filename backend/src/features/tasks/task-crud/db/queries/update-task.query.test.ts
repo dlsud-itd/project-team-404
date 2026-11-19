@@ -52,6 +52,7 @@ describe('updateTask', () => {
         projectId: 7,
         deletedAt: null,
         archivedAt: null,
+        isDone: false,
       },
       _max: { position: true },
     });
