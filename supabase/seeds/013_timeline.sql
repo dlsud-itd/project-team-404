@@ -127,6 +127,7 @@ insert into public.tbl_task (
   due_date,
   deadline,
   is_done,
+  board_status,
   done_at,
   archived_at,
   deleted_at
@@ -141,6 +142,8 @@ select
   fixture.due_date,
   fixture.deadline,
   fixture.is_done,
+  case when fixture.is_done then 'done'::public.task_board_status
+       else 'todo'::public.task_board_status end,
   case when fixture.is_done then now() else null end,
   null,
   null
@@ -212,6 +215,8 @@ set
   due_date = fixture.due_date,
   deadline = fixture.deadline,
   is_done = fixture.is_done,
+  board_status = case when fixture.is_done then 'done'::public.task_board_status
+                      else 'todo'::public.task_board_status end,
   done_at = case when fixture.is_done then coalesce(task.done_at, now()) else null end,
   archived_at = null,
   deleted_at = null,

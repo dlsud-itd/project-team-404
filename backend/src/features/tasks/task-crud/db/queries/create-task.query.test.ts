@@ -49,7 +49,24 @@ describe('createTask', () => {
     });
     expect(transaction.task.create).toHaveBeenCalledWith(
       expect.objectContaining({
-        data: expect.objectContaining({ position: 5 }),
+        data: expect.objectContaining({ position: 5, boardStatus: 'todo' }),
+      })
+    );
+  });
+
+  it('creates completed tasks in the done board status', async () => {
+    await createTask('user-1', {
+      title: 'Completed task',
+      projectId: 7,
+      isDone: true,
+    });
+
+    expect(transaction.task.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          isDone: true,
+          boardStatus: 'done',
+        }),
       })
     );
   });

@@ -133,7 +133,7 @@ Status `200`:
 
 ## II. Task Ordering
 
-Task `position` is a non-negative integer ordered within a project and completion column. The initial backfill assigns consecutive positions per user and project. The project reorder endpoint below renumbers active tasks from `1` through `n`; newly created tasks and tasks moved to another project append after the maximum position in the destination project. Archived and deleted tasks do not participate in reordering. `orderBy=position` returns active tasks before completed tasks, then orders by position in the requested direction and by ID ascending for ties.
+Task `position` is a non-negative integer. Existing task-list ordering is scoped to a project's active or completed tasks; board ordering is scoped to a project's `todo`, `in_progress`, or `done` column. The initial backfill assigns consecutive positions per user and project. The project reorder endpoint below renumbers active tasks from `1` through `n`; newly created tasks and tasks moved to another project append after the maximum position in the destination project. Archived and deleted tasks do not participate in reordering. `orderBy=position` returns active tasks before completed tasks, then orders by position in the requested direction and by ID ascending for ties.
 
 ### A. Reorder Tasks
 
@@ -224,17 +224,17 @@ Status `200`; returns the existing task array shape, with the added `position` f
 
 ## III. Board View
 
-The board has two columns: `active` (not completed) and `completed`. Archived and deleted tasks, tasks in archived projects, and tasks outside the authenticated user's scope are omitted. Each column is ordered by its task `position`, then task ID ascending.
+The board has three columns: `todo`, `inProgress`, and `done`. The persisted `boardStatus` is `todo`, `in_progress`, or `done`; `done` must always agree with `isDone`. Archived and deleted tasks, tasks in archived projects, and tasks outside the authenticated user's scope are omitted. `todo` and `inProgress` are ordered by `position`, then task ID ascending. The `done` column returns the 50 most recently completed tasks, ordered by `position`, then task ID ascending; its count reports all matching completed tasks, not just the returned page.
 
 ### A. Get Task Board
 
-| Item            | Value                                                                                                                                       |
-| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| Endpoint        | `/api/tasks/board`                                                                                                                          |
-| Method          | `GET`                                                                                                                                       |
-| Auth            | Required bearer token.                                                                                                                      |
-| Query parameter | `projectId`: optional positive integer. When omitted, includes tasks across the user's non-archived projects and Inbox, grouped by project. |
-| Request body    | None.                                                                                                                                       |
+| Item            | Value                                                                                                                                                                                        |
+| --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Endpoint        | `/api/tasks/board`                                                                                                                                                                           |
+| Method          | `GET`                                                                                                                                                                                        |
+| Auth            | Required bearer token.                                                                                                                                                                       |
+| Query parameter | Required `projectId`: positive integer identifying a caller-owned, non-archived project. The Sprint 5 task filters are also accepted, except archived tasks are never included in the board. |
+| Request body    | None.                                                                                                                                                                                        |
 
 #### Task Board Example Request
 
@@ -250,48 +250,54 @@ Status `200`:
 {
   "projectId": 18,
   "columns": {
-    "active": [
+    "todo": [
       {
         "id": 41,
         "title": "Draft sprint recap",
+        "boardStatus": "todo",
         "isDone": false,
         "position": 1
       }
     ],
-    "completed": [
+    "inProgress": [],
+    "done": [
       {
         "id": 38,
         "title": "Review requirements",
+        "boardStatus": "done",
         "isDone": true,
         "position": 2
       }
     ]
+  },
+  "counts": {
+    "todo": 1,
+    "inProgress": 0,
+    "done": 1
   }
 }
 ```
-
-When `projectId` is omitted, the response is `{ "projects": [{ "projectId": 18, "columns": { "active": [], "completed": [] } }] }`. Inbox is represented by `projectId: null`.
 
 #### Task Board Errors
 
 | Status | Description                                                             |
 | ------ | ----------------------------------------------------------------------- |
-| `400`  | `projectId` is not a positive integer.                                  |
+| `400`  | Missing/malformed `projectId`, invalid filters, or conflicting filters. |
 | `401`  | Missing or invalid token.                                               |
 | `404`  | Supplied project is missing, archived, deleted, or not owned by caller. |
 | `409`  | Not applicable to this read-only endpoint.                              |
 
 ### B. Reorder Board Tasks
 
-| Item                  | Value                                                                                                                                                                              |
-| --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Endpoint              | `/api/tasks/board/reorder`                                                                                                                                                         |
-| Method                | `PUT`                                                                                                                                                                              |
-| Auth                  | Required bearer token.                                                                                                                                                             |
-| Query/path parameters | None.                                                                                                                                                                              |
-| Request body          | Required `projectId` (positive integer or `null` for Inbox); `columns.active` and `columns.completed`, each an ordered array of positive integer IDs. Combined maximum: `500` IDs. |
+| Item                  | Value                                                                                                                                                                                             |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Endpoint              | `/api/tasks/board/reorder`                                                                                                                                                                        |
+| Method                | `PUT`                                                                                                                                                                                             |
+| Auth                  | Required bearer token.                                                                                                                                                                            |
+| Query/path parameters | None.                                                                                                                                                                                             |
+| Request body          | Required `projectId` (positive integer), `boardStatus` (`todo`, `in_progress`, or `done`), and `tasks`: unique positive task IDs in the target column's order after the drop. Maximum: `500` IDs. |
 
-The two arrays together must contain every non-archived, non-deleted task in the selected project exactly once. Membership must match current completion state: active IDs must have `isDone=false`; completed IDs must have `isDone=true`. Each array may be empty. Ordering is updated atomically; IDs are assigned zero-based positions within their column.
+For a reorder within a column, `tasks` must contain the complete unfiltered target column as returned by the board (Done is limited to its 50 most recently completed tasks). Reordering a filtered or otherwise partial column is not supported; stale or incomplete target lists are rejected without changing state. Moving a task between columns adds exactly one task from another status to the target list. The write and position updates are atomic. Moving into `done` performs the same completion transition as the task checkbox, including completion history and recurring occurrence creation. Moving out of `done` clears completion state and `doneAt`.
 
 #### Reorder Board Example Request
 
@@ -301,10 +307,8 @@ Content-Type: application/json
 
 {
   "projectId": 18,
-  "columns": {
-    "active": [41, 52],
-    "completed": [38]
-  }
+  "boardStatus": "in_progress",
+  "tasks": [41, 52]
 }
 ```
 
@@ -315,25 +319,23 @@ Status `200`:
 ```json
 {
   "projectId": 18,
-  "columns": {
-    "active": [41, 52],
-    "completed": [38]
-  }
+  "boardStatus": "in_progress",
+  "tasks": [41, 52]
 }
 ```
 
 #### Reorder Board Errors
 
-| Status | Description                                                                                                     |
-| ------ | --------------------------------------------------------------------------------------------------------------- |
-| `400`  | Missing/malformed fields, non-positive IDs, duplicate IDs, more than 500 IDs, or an incomplete/extra ID set.    |
-| `401`  | Missing or invalid token.                                                                                       |
-| `404`  | Project or task ID is missing, deleted, or not owned by caller.                                                 |
-| `409`  | A task's completion state, project, or membership changed since the board was loaded; no positions are changed. |
+| Status | Description                                                                                                        |
+| ------ | ------------------------------------------------------------------------------------------------------------------ |
+| `400`  | Missing/malformed fields, an unsupported board status, non-positive IDs, duplicate IDs, or more than 500 IDs.      |
+| `401`  | Missing or invalid token.                                                                                          |
+| `404`  | Project or task ID is missing, deleted, or not owned by caller.                                                    |
+| `409`  | A task's board status, project, or column membership changed since the board was loaded; no positions are changed. |
 
 ### C. Completion and Board Column Changes
 
-Completion continues to use `PUT /api/tasks/:taskId` with `{ "isDone": true|false }`. A successful transition to `true` removes the task from `active` and appends it to the end of `completed`; a transition to `false` removes it from `completed` and appends it to the end of `active`. The server sets or clears `doneAt` as appropriate and updates positions atomically. Repeating the current state does not create another move. For recurring tasks, completing an occurrence also creates its next occurrence when allowed; the new occurrence appears at the end of `active` and remains in the same project.
+Completion continues to use `PUT /api/tasks/:taskId` with `{ "isDone": true|false }`. A successful transition to `true` moves the task to `done`; a transition to `false` moves it to `todo`. The server updates `boardStatus`, `isDone`, and `doneAt` consistently and updates positions atomically. Repeating the current state does not create another move. For recurring tasks, completing an occurrence also creates its next occurrence when allowed; the new occurrence appears at the end of `todo` and remains in the same project.
 
 #### Completion Example Request
 
@@ -418,7 +420,8 @@ Status `200`:
 
 ## V. Implementation Requirements
 
-- Add persistent task position data and make reorder writes transactional. Position is scoped by project and completion state.
+- Persist task positions and make reorder writes transactional. Existing project-wide task ordering remains scoped by completion state; board ordering is scoped by project and board status.
+- Persist `boardStatus` as `todo`, `in_progress`, or `done`; `done` must be equivalent to `isDone`. Three-column board moves update status and target-column positions atomically.
 - Persist completion events and recurrence-series identity; do not infer streak history only from the current `isDone`/`doneAt` value.
 - Recalculate or atomically maintain positions when tasks are completed/un-completed, moved between projects, archived, restored, or deleted.
 - Validate all ownership and complete-set constraints before writing any reorder operation. Failed reorder requests must not partially update positions.

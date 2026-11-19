@@ -411,6 +411,68 @@ select
     else 'FAIL'
   end as result;
 
+select
+  'task_board_status_seed_columns' as check_name,
+  case
+    when (
+      select count(*) = 8
+        and count(*) filter (where task.board_status = 'todo' and not task.is_done) = 3
+        and count(*) filter (where task.board_status = 'in_progress' and not task.is_done) = 2
+        and count(*) filter (where task.board_status = 'done' and task.is_done) = 3
+      from public.tbl_task as task
+      join public.tbl_project as project on project.project_id = task.project_id
+      join public.tbl_user as profile on profile.user_id = task.user_id
+      where profile.email = 'james@example.com'
+        and project.name = 'Board Status - Project'
+        and task.title like 'Board status seed - %'
+        and task.deleted_at is null
+        and task.archived_at is null
+    )
+      then 'PASS'
+    else 'FAIL'
+  end as result;
+
+do $$
+declare
+  done_task_id integer;
+  todo_task_id integer;
+begin
+  select task.task_id into strict done_task_id
+  from public.tbl_task as task
+  join public.tbl_project as project on project.project_id = task.project_id
+  join public.tbl_user as profile on profile.user_id = task.user_id
+  where profile.email = 'james@example.com'
+    and project.name = 'Board Status - Project'
+    and task.title = 'Board status seed - Done 01'
+    and task.deleted_at is null;
+
+  select task.task_id into strict todo_task_id
+  from public.tbl_task as task
+  join public.tbl_project as project on project.project_id = task.project_id
+  join public.tbl_user as profile on profile.user_id = task.user_id
+  where profile.email = 'james@example.com'
+    and project.name = 'Board Status - Project'
+    and task.title = 'Board status seed - Todo 01'
+    and task.deleted_at is null;
+
+  begin
+    update public.tbl_task set is_done = false where task_id = done_task_id;
+    raise exception 'FAIL: completion changes without board status must be rejected';
+  exception when check_violation then
+    raise notice 'PASS: completion changes without board status are rejected';
+  end;
+
+  begin
+    update public.tbl_task
+    set board_status = 'done'
+    where task_id = todo_task_id;
+    raise exception 'FAIL: board status changes without completion must be rejected';
+  exception when check_violation then
+    raise notice 'PASS: board status changes without completion are rejected';
+  end;
+end;
+$$;
+
 do $$
 declare
   harvey_id uuid;

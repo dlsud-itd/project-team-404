@@ -42,6 +42,7 @@ export async function createTask(userId: string, input: CreateTaskInput) {
           recurrenceEndDate: input.recurrenceEndDate,
         }),
         isDone: input.isDone ?? false,
+        boardStatus: input.isDone ? 'done' : 'todo',
         doneAt: input.doneAt ? new Date(input.doneAt) : null,
         recurrenceSeriesId:
           input.recurrence && input.recurrence !== 'none' ? randomUUID() : null,

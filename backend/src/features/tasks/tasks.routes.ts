@@ -7,6 +7,7 @@ import { createTaskSchedulingRouter } from './task-scheduling/task-scheduling.ro
 import { createTaskOrganizationRouter } from './task-organization/task-organization.routes';
 import { createTaskStreaksRouter } from './task-streaks/task-streaks.routes';
 import { createTaskTimelineRouter } from './task-timeline/task-timeline.routes';
+import { createTaskBoardRouter } from './task-board/task-board.routes';
 
 export function createTasksRouter(
   sessionService: SessionService,
@@ -15,6 +16,7 @@ export function createTasksRouter(
   const router = Router();
   router.use(requireAuth(sessionService));
   router.use(createTaskOrganizationRouter(sessionService));
+  router.use(createTaskBoardRouter(sessionService));
   router.use(createTaskStreaksRouter(sessionService));
   router.use(createTaskSchedulingRouter(sessionService));
   router.use(createTaskTimelineRouter(sessionService));

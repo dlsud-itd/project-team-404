@@ -141,7 +141,7 @@ export async function listTasks(userId: string, filters: ListTasksFilters) {
   });
 }
 
-async function getUserToday(userId: string) {
+export async function getUserToday(userId: string) {
   const owner = await prisma.user.findUnique({
     where: { id: userId },
     select: { timezone: true },

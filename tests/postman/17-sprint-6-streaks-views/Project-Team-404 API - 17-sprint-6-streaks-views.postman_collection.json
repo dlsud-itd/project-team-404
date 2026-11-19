@@ -338,9 +338,8 @@
                 "exec": [
                   "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
                   "const response=pm.response.json();",
-                  "pm.test('Board columns exist', function () { pm.expect(response.columns).to.have.property('active').that.is.an('array'); pm.expect(response.columns).to.have.property('completed').that.is.an('array'); });",
-                  "pm.environment.set('boardActiveIds', JSON.stringify(response.columns.active.map(task => task.id).reverse()));",
-                  "pm.environment.set('boardCompletedIds', JSON.stringify(response.columns.completed.map(task => task.id).reverse()));"
+                  "pm.test('Three board columns and counts exist', function () { pm.expect(response.columns).to.have.property('todo').that.is.an('array'); pm.expect(response.columns).to.have.property('inProgress').that.is.an('array'); pm.expect(response.columns).to.have.property('done').that.is.an('array'); pm.expect(response.counts).to.have.keys('todo','inProgress','done'); });",
+                  "pm.environment.set('boardTodoIds', JSON.stringify(response.columns.todo.map(task => task.id).reverse()));"
                 ]
               }
             }
@@ -357,7 +356,7 @@
           }
         },
         {
-          "name": "14 Reorder board columns",
+          "name": "14 Reorder the To Do column",
           "event": [
             {
               "listen": "test",
@@ -366,7 +365,7 @@
                 "exec": [
                   "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
                   "const board=pm.response.json();",
-                  "pm.test('Board order echoed', function () { pm.expect(board.projectId).to.equal(Number(pm.environment.get('projectId'))); pm.expect(board.columns).to.have.keys('active','completed'); });"
+                  "pm.test('Board order echoed', function () { pm.expect(board.projectId).to.equal(Number(pm.environment.get('projectId'))); pm.expect(board.boardStatus).to.equal('todo'); pm.expect(board.tasks).to.eql(JSON.parse(pm.environment.get('boardTodoIds'))); });"
                 ]
               }
             }
@@ -379,7 +378,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"projectId\": {{projectId}},\n  \"columns\": {\n    \"active\": {{boardActiveIds}},\n    \"completed\": {{boardCompletedIds}}\n  }\n}"
+              "raw": "{\n  \"projectId\": {{projectId}},\n  \"boardStatus\": \"todo\",\n  \"tasks\": {{boardTodoIds}}\n}"
             },
             "url": "{{baseUrl}}/tasks/board/reorder"
           }

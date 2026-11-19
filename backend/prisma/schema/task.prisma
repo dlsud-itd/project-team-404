@@ -7,11 +7,20 @@ enum TaskRecurrence {
   @@map("task_recurrence")
 }
 
+enum TaskBoardStatus {
+  todo
+  in_progress
+  done
+
+  @@map("task_board_status")
+}
+
 model Task {
   id            Int             @id @default(autoincrement()) @map("task_id")
   userId        String          @db.Uuid @map("user_id")
   projectId     Int?            @db.Integer @map("project_id")
   position      Int             @default(0) @db.Integer
+  boardStatus   TaskBoardStatus @default(todo) @map("board_status")
   recurrenceSeriesId String?   @db.Uuid @map("recurrence_series_id")
   title         String          @db.VarChar(200)
   description   String?         @db.VarChar(1000)
