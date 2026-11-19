@@ -4,6 +4,7 @@ import { toRecurrenceData } from '../../../task-scheduling/utils/recurrence-data
 import { RecurrenceService } from '../../../task-scheduling/services/recurrence.service';
 import { InvalidTaskPriorityError } from '../../errors/invalid-task-priority.error';
 import { TaskArchivedError } from '../../../shared/errors/task-archived.error';
+import { getNextTaskPosition } from './get-next-task-position.query';
 
 const recurrenceService = new RecurrenceService();
 const taskInclude = {
@@ -27,6 +28,11 @@ export async function updateTask(
     }
 
     const completing = input.isDone === true && !currentTask.isDone;
+    const targetProjectId = input.projectId ?? currentTask.projectId;
+    const position =
+      targetProjectId !== currentTask.projectId
+        ? await getNextTaskPosition(transaction, userId, targetProjectId)
+        : undefined;
     const priorityLevel =
       input.priorityId !== undefined
         ? await transaction.priorityLevel.findFirst({
@@ -66,6 +72,7 @@ export async function updateTask(
         ...(input.projectId !== undefined
           ? { projectId: input.projectId }
           : {}),
+        ...(position !== undefined ? { position } : {}),
         ...(input.scheduledDate !== undefined
           ? {
               scheduledDate: input.scheduledDate
@@ -126,6 +133,11 @@ export async function updateTask(
           data: {
             userId: updatedTask.userId,
             projectId: updatedTask.projectId,
+            position: await getNextTaskPosition(
+              transaction,
+              updatedTask.userId,
+              updatedTask.projectId
+            ),
             title: updatedTask.title,
             description: updatedTask.description,
             priorityId: updatedTask.priorityId,

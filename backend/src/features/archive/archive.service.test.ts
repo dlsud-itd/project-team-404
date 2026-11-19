@@ -10,6 +10,7 @@ const latestTask: TaskRecord = {
   id: 7,
   userId: 'user-1',
   projectId: 18,
+  position: 1,
   title: 'Archived task',
   description: null,
   priorityId: 1,

@@ -62,6 +62,7 @@ export function toTaskModel(task: TaskRecord): Task {
   return {
     id: task.id,
     projectId: task.projectId,
+    position: task.position,
     title: task.title,
     description: task.description,
     priority,

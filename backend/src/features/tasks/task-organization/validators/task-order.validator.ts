@@ -9,6 +9,7 @@ export const taskOrderValidator = z
         'scheduledDate',
         'priority',
         'title',
+        'position',
         'createdAt',
         'updatedAt',
       ])

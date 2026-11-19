@@ -6,6 +6,7 @@ const record: TaskRecord = {
   id: 21,
   userId: 'owner-1',
   projectId: 4,
+  position: 1,
   title: 'Review sprint plan',
   description: 'Check the milestones',
   priorityId: 3,
@@ -42,6 +43,7 @@ describe('toTaskModel', () => {
     expect(model).not.toHaveProperty('userId');
     expect(model).not.toHaveProperty('deletedAt');
     expect(model.dueDate).toBe('2026-11-02');
+    expect(model.position).toBe(1);
     expect(model.isArchived).toBe(false);
     expect(model.archivedAt).toBeNull();
     expect(model.priority).toBe('high');

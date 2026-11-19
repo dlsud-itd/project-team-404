@@ -1,0 +1,597 @@
+{
+  "info": {
+    "_postman_id": "624c1650-3c45-4f82-9c75-b933adf0cc16",
+    "name": "Project-Team-404 API - 16-task-reorder",
+    "description": "Task reorder API cases. Uses seeded James and Harvey users; run against an isolated test database.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "16-task-reorder",
+      "item": [
+        {
+          "name": "01 Login James",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "if (pm.response.code !== 200) { pm.execution.setNextRequest(null); }",
+                  "const response = pm.response.json();",
+                  "pm.test('James token is returned', function () { pm.expect(response.token).to.be.a('string').and.not.empty; });",
+                  "pm.environment.set('token', response.token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"identifier\": \"james@example.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": "{{baseUrl}}/auth/login"
+          }
+        },
+        {
+          "name": "02 Login Harvey",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "if (pm.response.code !== 200) { pm.execution.setNextRequest(null); }",
+                  "const response = pm.response.json();",
+                  "pm.test('Harvey token is returned', function () { pm.expect(response.token).to.be.a('string').and.not.empty; });",
+                  "pm.environment.set('tokenB', response.token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"identifier\": \"harvey@example.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": "{{baseUrl}}/auth/login"
+          }
+        },
+        {
+          "name": "03 Setup James project",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 201', function () { pm.response.to.have.status(201); });",
+                  "if (pm.response.code !== 201) { pm.execution.setNextRequest(null); }",
+                  "const response = pm.response.json();",
+                  "pm.test('Project has an ID', function () { pm.expect(response.id).to.be.a('number'); });",
+                  "pm.environment.set('projectId', String(response.id));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Postman reorder project {{$timestamp}}\",\n  \"description\": \"Task reorder fixture\",\n  \"color\": \"#246b5e\"\n}"
+            },
+            "url": "{{baseUrl}}/projects"
+          }
+        },
+        {
+          "name": "04 Setup second James project",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 201', function () { pm.response.to.have.status(201); });",
+                  "if (pm.response.code !== 201) { pm.execution.setNextRequest(null); }",
+                  "const response = pm.response.json();",
+                  "pm.test('Project has an ID', function () { pm.expect(response.id).to.be.a('number'); });",
+                  "pm.environment.set('projectId2', String(response.id));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Postman reorder other project {{$timestamp}}\",\n  \"description\": \"Cross-project fixture\",\n  \"color\": \"#246b5e\"\n}"
+            },
+            "url": "{{baseUrl}}/projects"
+          }
+        },
+        {
+          "name": "05 Setup Harvey project",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 201', function () { pm.response.to.have.status(201); });",
+                  "if (pm.response.code !== 201) { pm.execution.setNextRequest(null); }",
+                  "const response = pm.response.json();",
+                  "pm.test('Project has an ID', function () { pm.expect(response.id).to.be.a('number'); });",
+                  "pm.environment.set('projectIdB', String(response.id));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{tokenB}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Postman reorder Harvey project {{$timestamp}}\",\n  \"description\": \"Cross-user fixture\",\n  \"color\": \"#246b5e\"\n}"
+            },
+            "url": "{{baseUrl}}/projects"
+          }
+        },
+        {
+          "name": "06 Setup task A",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 201', function () { pm.response.to.have.status(201); });",
+                  "if (pm.response.code !== 201) { pm.execution.setNextRequest(null); }",
+                  "const response = pm.response.json();",
+                  "pm.test('Task belongs to the project and has a position', function () { pm.expect(response.projectId).to.equal(Number(pm.environment.get('projectId'))); pm.expect(response.position).to.be.a('number'); });",
+                  "pm.environment.set('taskAId', String(response.id));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Reorder fixture A\",\n  \"projectId\": {{projectId}}\n}"
+            },
+            "url": "{{baseUrl}}/tasks"
+          }
+        },
+        {
+          "name": "07 Setup task B",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 201', function () { pm.response.to.have.status(201); });",
+                  "if (pm.response.code !== 201) { pm.execution.setNextRequest(null); }",
+                  "const response = pm.response.json();",
+                  "pm.test('Task belongs to the project', function () { pm.expect(response.projectId).to.equal(Number(pm.environment.get('projectId'))); });",
+                  "pm.environment.set('taskBId', String(response.id));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Reorder fixture B\",\n  \"projectId\": {{projectId}}\n}"
+            },
+            "url": "{{baseUrl}}/tasks"
+          }
+        },
+        {
+          "name": "08 Setup task C",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 201', function () { pm.response.to.have.status(201); });",
+                  "if (pm.response.code !== 201) { pm.execution.setNextRequest(null); }",
+                  "const response = pm.response.json();",
+                  "pm.test('Task belongs to the project', function () { pm.expect(response.projectId).to.equal(Number(pm.environment.get('projectId'))); });",
+                  "pm.environment.set('taskCId', String(response.id));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Reorder fixture C\",\n  \"projectId\": {{projectId}}\n}"
+            },
+            "url": "{{baseUrl}}/tasks"
+          }
+        },
+        {
+          "name": "09 Setup task in other project",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 201', function () { pm.response.to.have.status(201); });",
+                  "if (pm.response.code !== 201) { pm.execution.setNextRequest(null); }",
+                  "const response = pm.response.json();",
+                  "pm.environment.set('otherProjectTaskId', String(response.id));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Reorder other project task\",\n  \"projectId\": {{projectId2}}\n}"
+            },
+            "url": "{{baseUrl}}/tasks"
+          }
+        },
+        {
+          "name": "10 Setup task owned by Harvey",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 201', function () { pm.response.to.have.status(201); });",
+                  "if (pm.response.code !== 201) { pm.execution.setNextRequest(null); }",
+                  "const response = pm.response.json();",
+                  "pm.environment.set('otherUserTaskId', String(response.id));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{tokenB}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Reorder other user task\",\n  \"projectId\": {{projectIdB}}\n}"
+            },
+            "url": "{{baseUrl}}/tasks"
+          }
+        },
+        {
+          "name": "11 Setup task to delete",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 201', function () { pm.response.to.have.status(201); });",
+                  "if (pm.response.code !== 201) { pm.execution.setNextRequest(null); }",
+                  "const response = pm.response.json();",
+                  "pm.environment.set('deletedTaskId', String(response.id));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Reorder deleted task fixture\",\n  \"projectId\": {{projectId}}\n}"
+            },
+            "url": "{{baseUrl}}/tasks"
+          }
+        },
+        {
+          "name": "12 Soft-delete task fixture",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "if (pm.response.code !== 200) { pm.execution.setNextRequest(null); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/tasks/{{deletedTaskId}}"
+          }
+        },
+        {
+          "name": "13 Reorder and GET confirms requested order",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Reorder status is 200', function () { pm.response.to.have.status(200); });",
+                  "if (pm.response.code !== 200) { pm.execution.setNextRequest(null); }",
+                  "const result = pm.response.json();",
+                  "const expected = [Number(pm.environment.get('taskBId')), Number(pm.environment.get('taskAId')), Number(pm.environment.get('taskCId'))];",
+                  "pm.test('Response echoes the requested task order', function () { pm.expect(result.taskIds).to.eql(expected); });",
+                  "pm.sendRequest({ url: pm.environment.get('baseUrl') + '/tasks?projectId=' + pm.environment.get('projectId') + '&orderBy=position', method: 'GET', header: { Authorization: 'Bearer ' + pm.environment.get('token') } }, function (error, response) { pm.test('GET position order returns the reordered IDs and gap-free positions', function () { if (error || !response) { pm.expect(error).to.equal(null); pm.expect(response).to.exist; return; } pm.expect(response.code).to.equal(200); const tasks = response.json().slice(0, 3); pm.expect(tasks.map(function (task) { return task.id; })).to.eql(expected); pm.expect(tasks.map(function (task) { return task.position; })).to.eql([1, 2, 3]); }); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"projectId\": {{projectId}},\n  \"taskIds\": [{{taskBId}}, {{taskAId}}, {{taskCId}}]\n}"
+            },
+            "url": "{{baseUrl}}/tasks/reorder"
+          }
+        },
+        {
+          "name": "14 New task appears last",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Create status is 201', function () { pm.response.to.have.status(201); });",
+                  "if (pm.response.code !== 201) { pm.execution.setNextRequest(null); }",
+                  "const created = pm.response.json();",
+                  "pm.environment.set('appendedTaskId', String(created.id));",
+                  "pm.test('New task position follows existing tasks', function () { pm.expect(created.position).to.be.greaterThan(3); });",
+                  "pm.sendRequest({ url: pm.environment.get('baseUrl') + '/tasks?projectId=' + pm.environment.get('projectId') + '&orderBy=position', method: 'GET', header: { Authorization: 'Bearer ' + pm.environment.get('token') } }, function (error, response) { pm.test('New task is last in position order', function () { if (error || !response) { pm.expect(error).to.equal(null); pm.expect(response).to.exist; return; } pm.expect(response.code).to.equal(200); const tasks = response.json(); pm.expect(tasks[tasks.length - 1].id).to.equal(created.id); }); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Reorder appended task\",\n  \"projectId\": {{projectId}}\n}"
+            },
+            "url": "{{baseUrl}}/tasks"
+          }
+        },
+        {
+          "name": "15 Duplicate task IDs return 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Duplicate IDs return 400', function () { pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"projectId\": {{projectId}},\n  \"taskIds\": [{{taskAId}}, {{taskAId}}]\n}"
+            },
+            "url": "{{baseUrl}}/tasks/reorder"
+          }
+        },
+        {
+          "name": "16 Empty task list returns 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Empty ID list returns 400', function () { pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"projectId\": {{projectId}},\n  \"taskIds\": []\n}"
+            },
+            "url": "{{baseUrl}}/tasks/reorder"
+          }
+        },
+        {
+          "name": "17 Other-project task ID returns 404",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Other-project ID returns 404', function () { pm.response.to.have.status(404); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"projectId\": {{projectId}},\n  \"taskIds\": [{{otherProjectTaskId}}]\n}"
+            },
+            "url": "{{baseUrl}}/tasks/reorder"
+          }
+        },
+        {
+          "name": "18 Other-user task ID returns 404",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Other-user ID returns 404', function () { pm.response.to.have.status(404); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"projectId\": {{projectId}},\n  \"taskIds\": [{{otherUserTaskId}}]\n}"
+            },
+            "url": "{{baseUrl}}/tasks/reorder"
+          }
+        },
+        {
+          "name": "19 Deleted task ID returns 404",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Deleted task ID returns 404', function () { pm.response.to.have.status(404); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"projectId\": {{projectId}},\n  \"taskIds\": [{{deletedTaskId}}]\n}"
+            },
+            "url": "{{baseUrl}}/tasks/reorder"
+          }
+        },
+        {
+          "name": "20 Missing an active task returns 409",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Incomplete task list returns 409', function () { pm.response.to.have.status(409); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"projectId\": {{projectId}},\n  \"taskIds\": [{{taskAId}}, {{taskBId}}, {{taskCId}}]\n}"
+            },
+            "url": "{{baseUrl}}/tasks/reorder"
+          }
+        },
+        {
+          "name": "21 Reorder requires authentication",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Missing token returns 401', function () { pm.response.to.have.status(401); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"projectId\": {{projectId}},\n  \"taskIds\": [{{taskAId}}, {{taskBId}}, {{taskCId}}]\n}"
+            },
+            "url": "{{baseUrl}}/tasks/reorder"
+          }
+        }
+      ]
+    }
+  ]
+}

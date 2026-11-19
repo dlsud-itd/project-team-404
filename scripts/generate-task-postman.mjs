@@ -4,7 +4,7 @@ import path from 'node:path';
 import prettier from 'prettier';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
-const outputDirectory = path.join(root, 'tests/postman/337-task-crud');
+const outputDirectory = path.join(root, 'tests/postman/07-task-crud');
 const baseUrl = '{{baseUrl}}';
 const [frontendEnvExample, backendEnvExample] = await Promise.all([
   readFile(path.join(root, 'frontend/.env.example'), 'utf8'),
@@ -114,7 +114,7 @@ const noContent = bodyCheck(
 );
 
 const taskFolder = {
-  name: '337-task-crud',
+  name: '07-task-crud',
   description:
     'Task CRUD cases for ownership, validation, list filters/paging, soft deletion, and authentication.',
   item: [
@@ -754,7 +754,7 @@ const taskFolder = {
 };
 
 const organizationFolder = {
-  name: '339-task-organization',
+  name: '08-task-organization',
   description:
     'Task priorities, filtering, task ordering, and per-user labels with ownership checks.',
   item: [
@@ -1270,7 +1270,7 @@ const collection = {
 
 const environment = {
   id: 'd8c67329-9d3f-4f4d-9b44-1d4f79ec7d64',
-  name: 'Project-Team-404 Local (337 CRUD and 339 Organization)',
+  name: 'Project-Team-404 Local (07 CRUD and 08 Organization)',
   values: [
     ['baseUrl', postmanBaseUrl, 'Local API URL from the example env files.'],
     [
