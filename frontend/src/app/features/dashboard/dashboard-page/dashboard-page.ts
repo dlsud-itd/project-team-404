@@ -2,11 +2,15 @@ import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/c
 import { SessionService } from '../../auth/session/session.service';
 import { CurrentUpcomingTasks } from '../current-upcoming-tasks/current-upcoming-tasks';
 import { OverdueTasks } from '../overdue-tasks/overdue-tasks';
+import { StreaksSection } from '../streaks/streaks-section';
 
-/** The signed-in user's dashboard at /dashboard. Hosts the Current & Upcoming and Overdue sections. */
+/**
+ * The signed-in user's dashboard at /dashboard. Hosts the Current & Upcoming, Streaks and Overdue
+ * sections.
+ */
 @Component({
   selector: 'app-dashboard-page',
-  imports: [CurrentUpcomingTasks, OverdueTasks],
+  imports: [CurrentUpcomingTasks, StreaksSection, OverdueTasks],
   templateUrl: './dashboard-page.html',
   styleUrl: './dashboard-page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

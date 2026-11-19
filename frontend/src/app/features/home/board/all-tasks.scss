@@ -121,6 +121,11 @@
   }
 }
 
+// A repeating task's streak badge, beside the checkbox label so clicking it never ticks the task.
+.streak {
+  flex-shrink: 0;
+}
+
 .check {
   display: flex;
   flex: 1;

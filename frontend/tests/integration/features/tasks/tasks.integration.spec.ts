@@ -247,6 +247,8 @@ describe('Tasks integration (Task Scheduling screens + API)', () => {
 
   afterEach(() => {
     try {
+      // Repeating tasks also load their streak; task-streaks has its own specs for that.
+      http?.match((r) => r.url.endsWith('/streak'));
       if (http) http.verify();
     } finally {
       TestBed.resetTestingModule();
@@ -761,7 +763,9 @@ describe('Tasks integration (Task Scheduling screens + API)', () => {
       const req = expectDetailsPut();
       expect(req.request.body).toEqual({ priority: 'medium' });
       // Nothing about the schedule changed, so no scheduling route is called.
-      http.expectNone((r) => r.url.startsWith(`${TASKS_API}/${SCHEDULED.id}/`));
+      http.expectNone(
+        (r) => r.url.startsWith(`${TASKS_API}/${SCHEDULED.id}/`) && !r.url.endsWith('/streak'),
+      );
       req.flush(UPDATED);
       await settle();
 
@@ -819,7 +823,9 @@ describe('Tasks integration (Task Scheduling screens + API)', () => {
       expect(selectedPriority()).toBe('High');
       // The saved task is unchanged, so the change can be sent again.
       expect(saveButton().disabled).toBe(false);
-      http.expectNone((r) => r.url.startsWith(`${TASKS_API}/${SCHEDULED.id}/`));
+      http.expectNone(
+        (r) => r.url.startsWith(`${TASKS_API}/${SCHEDULED.id}/`) && !r.url.endsWith('/streak'),
+      );
     });
 
     // FE-ORG-05, FE-ORG-07

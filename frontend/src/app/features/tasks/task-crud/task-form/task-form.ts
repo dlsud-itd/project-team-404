@@ -42,6 +42,7 @@ import {
 import { deadlineAfterDueDateValidator } from '../../task-scheduling/validators/deadline-after-due-date.validator';
 import { recurrenceRequiresDueDateValidator } from '../../task-scheduling/validators/recurrence-requires-due-date.validator';
 import { recurrenceRuleValidator } from '../../task-scheduling/validators/recurrence-rule.validator';
+import { StreakDetail } from '../../task-streaks/components/streak-detail/streak-detail';
 import { mapTaskError } from '../mappers/task-error.mapper';
 import { TaskService } from '../services/task.service';
 import { taskTitleValidator } from '../validators/task-title.validator';
@@ -53,7 +54,14 @@ type LoadState = 'loading' | 'ready' | 'not-found' | 'error';
 
 @Component({
   selector: 'app-task-form',
-  imports: [ReactiveFormsModule, RouterLink, DueDatePicker, DeadlinePicker, RecurrencePicker],
+  imports: [
+    ReactiveFormsModule,
+    RouterLink,
+    DueDatePicker,
+    DeadlinePicker,
+    RecurrencePicker,
+    StreakDetail,
+  ],
   templateUrl: './task-form.html',
   styleUrl: './task-form.scss',
   host: {

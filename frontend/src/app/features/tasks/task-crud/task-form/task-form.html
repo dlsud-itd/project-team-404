@@ -32,6 +32,12 @@
         <p class="form-error" role="alert">{{ message }}</p>
       }
 
+      @if (task(); as task) {
+        @if (task.isRecurring) {
+          <app-streak-detail class="streak" [task]="task" />
+        }
+      }
+
       <form
         class="card"
         [formGroup]="form"

@@ -52,6 +52,17 @@
           />
           <span class="title">{{ task.title }}</span>
         </label>
+        @if (task.isRecurring && task.recurrence) {
+          <app-streak-badge
+            class="streak"
+            [task]="{
+              taskId: task.id,
+              projectId: task.projectId ?? 0,
+              recurrence: task.recurrence,
+              title: task.title,
+            }"
+          />
+        }
         @if (store.projectById(task.projectId); as project) {
           <span class="project">
             <span class="swatch" [style.background]="project.color"></span>{{ project.name }}

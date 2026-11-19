@@ -42,20 +42,26 @@
     <ul class="list" [attr.aria-busy]="refreshing()">
       @for (task of tasks(); track task.taskId) {
         <li class="task" [class.done]="task.completedAt !== null">
-          <label class="check">
-            <input
-              type="checkbox"
-              [checked]="task.completedAt !== null"
-              [disabled]="isBusy(task)"
-              [attr.aria-label]="
-                task.completedAt !== null
-                  ? 'Mark ' + task.title + ' incomplete'
-                  : 'Mark ' + task.title + ' complete'
-              "
-              (change)="toggleCompleted(task)"
-            />
-            <span class="title">{{ task.title }}</span>
-          </label>
+          <!-- The badge sits beside the label, not in it, so clicking it never ticks the task. -->
+          <span class="name">
+            <label class="check">
+              <input
+                type="checkbox"
+                [checked]="task.completedAt !== null"
+                [disabled]="isBusy(task)"
+                [attr.aria-label]="
+                  task.completedAt !== null
+                    ? 'Mark ' + task.title + ' incomplete'
+                    : 'Mark ' + task.title + ' complete'
+                "
+                (change)="toggleCompleted(task)"
+              />
+              <span class="title">{{ task.title }}</span>
+            </label>
+            @if (task.isRecurring) {
+              <app-streak-badge class="streak" [task]="task" />
+            }
+          </span>
           <span class="project">
             <span class="swatch" [style.background]="projectColor(task.projectId)"></span>
             {{ projectName(task.projectId) }}

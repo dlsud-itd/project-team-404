@@ -1,6 +1,6 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { EMPTY, Observable, concat, expand, last, map, of, tap, toArray } from 'rxjs';
+import { EMPTY, Observable, Subject, concat, expand, last, map, of, tap, toArray } from 'rxjs';
 import { environment } from '../../../../../environments/environment';
 import { PrioritiesStore } from '../../../settings/state/priorities.store';
 import { TasksStore } from '../../shared/state/tasks.store';
@@ -10,6 +10,7 @@ import type {
   DeleteTaskResponse,
   Task,
   TaskChanges,
+  TaskCompletion,
   UpdateTaskRequest,
   UpdateTaskResponse,
 } from '../../shared/types/task.types';
@@ -66,6 +67,10 @@ export class TaskService {
   private readonly priorities = inject(PrioritiesStore);
   private readonly legacyPriority = (priorityId: number) => this.priorities.legacyName(priorityId);
   private readonly baseUrl = `${environment.apiBaseUrl}/api/tasks`;
+  private readonly completed = new Subject<TaskCompletion>();
+
+  /** Each saved completion or reopening, wherever in the app it was made. */
+  readonly completions: Observable<TaskCompletion> = this.completed.asObservable();
 
   /** GET /api/tasks, open and completed, optionally limited to one project. */
   list(filter: TaskListFilter = {}): Observable<Task[]> {
@@ -149,7 +154,14 @@ export class TaskService {
         `${this.baseUrl}/${taskId}`,
         toUpdateTaskBody(changes, this.legacyPriority),
       )
-      .pipe(tap(() => this.store.patch(taskId, changes)));
+      .pipe(
+        tap(() => {
+          this.store.patch(taskId, changes);
+          if (changes.completedAt !== undefined) {
+            this.completed.next({ taskId, completedAt: changes.completedAt });
+          }
+        }),
+      );
   }
 
   /**
