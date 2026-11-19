@@ -64,12 +64,10 @@ export function createTaskCrudRouter(
         .strict();
       const parsed = validator.safeParse(req.query);
       if (!parsed.success) {
-        res
-          .status(400)
-          .json({
-            error: 'Invalid timeline parameters',
-            code: 'invalid-timeline-parameters',
-          });
+        res.status(400).json({
+          error: 'Invalid timeline parameters',
+          code: 'invalid-timeline-parameters',
+        });
         return;
       }
       const { from, to, projectId, includeCompleted } = parsed.data;
@@ -81,12 +79,10 @@ export function createTaskCrudRouter(
         start > end ||
         (end.getTime() - start.getTime()) / 86_400_000 > 365
       ) {
-        res
-          .status(400)
-          .json({
-            error: 'Invalid timeline range',
-            code: 'invalid-timeline-range',
-          });
+        res.status(400).json({
+          error: 'Invalid timeline range',
+          code: 'invalid-timeline-range',
+        });
         return;
       }
       if (

@@ -175,12 +175,10 @@ export function createTaskOrganizationRouter(
         >;
         const allIds = [...columns.active, ...columns.completed];
         if (allIds.length > 500 || new Set(allIds).size !== allIds.length) {
-          res
-            .status(400)
-            .json({
-              error: 'Invalid board order',
-              code: 'invalid-board-order',
-            });
+          res.status(400).json({
+            error: 'Invalid board order',
+            code: 'invalid-board-order',
+          });
           return;
         }
         await prisma.$transaction(async (transaction) => {
