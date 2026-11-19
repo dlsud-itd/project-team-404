@@ -149,6 +149,7 @@ insert into public.tbl_task (
   priority_id,
   recurrence,
   is_done,
+  board_status,
   done_at,
   archived_at
 )
@@ -160,6 +161,8 @@ select
   priority.priority_id,
   fixture.recurrence::public.task_recurrence,
   fixture.is_done,
+  case when fixture.is_done then 'done'::public.task_board_status
+       else 'todo'::public.task_board_status end,
   case when fixture.is_done then now() else null end,
   case
     when fixture.archived_days is null then null
@@ -261,6 +264,8 @@ set project_id = project.project_id,
     priority_id = priority.priority_id,
     recurrence = fixture.recurrence::public.task_recurrence,
     is_done = fixture.is_done,
+    board_status = case when fixture.is_done then 'done'::public.task_board_status
+                        else 'todo'::public.task_board_status end,
     done_at = case when fixture.is_done then now() else null end,
     archived_at = case
       when fixture.archived_days is null then null

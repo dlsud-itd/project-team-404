@@ -1,0 +1,843 @@
+{
+  "info": {
+    "_postman_id": "19b806e0-bef0-4bd1-a885-7f6a0a845642",
+    "name": "Project-Team-404 API - 19-task-board",
+    "description": "Three-column task board, filtering, movement, completion, ownership, and validation checks.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "19-task-board",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const manilaNow = new Date(Date.now() + 8 * 60 * 60 * 1000);",
+              "const pad = (value) => String(value).padStart(2, '0');",
+              "const today = `${manilaNow.getUTCFullYear()}-${pad(manilaNow.getUTCMonth() + 1)}-${pad(manilaNow.getUTCDate())}`;",
+              "pm.environment.set('boardToday', today);"
+            ]
+          }
+        }
+      ],
+      "item": [
+        {
+          "name": "01 Login James",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('James login succeeds', function () { pm.response.to.have.status(200); });",
+                  "pm.environment.set('token', pm.response.json().token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"identifier\": \"james@example.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": "{{baseUrl}}/auth/login"
+          }
+        },
+        {
+          "name": "02 Login Harvey",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Harvey login succeeds', function () { pm.response.to.have.status(200); });",
+                  "pm.environment.set('tokenB', pm.response.json().token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"identifier\": \"harvey@example.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": "{{baseUrl}}/auth/login"
+          }
+        },
+        {
+          "name": "03 Create James board project",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Project is created', function () { pm.response.to.have.status(201); });",
+                  "pm.environment.set('projectId', String(pm.response.json().id));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Postman Task Board {{$timestamp}}\",\n  \"color\": \"#0F766E\"\n}"
+            },
+            "url": "{{baseUrl}}/projects"
+          }
+        },
+        {
+          "name": "04 Create second James project",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Second project is created', function () { pm.response.to.have.status(201); });",
+                  "pm.environment.set('otherProjectId', String(pm.response.json().id));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Postman Other Board {{$timestamp}}\",\n  \"color\": \"#7C3AED\"\n}"
+            },
+            "url": "{{baseUrl}}/projects"
+          }
+        },
+        {
+          "name": "05 Create Harvey project",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Harvey project is created', function () { pm.response.to.have.status(201); });",
+                  "pm.environment.set('foreignProjectId', String(pm.response.json().id));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenB}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Postman Foreign Board {{$timestamp}}\",\n  \"color\": \"#D97706\"\n}"
+            },
+            "url": "{{baseUrl}}/projects"
+          }
+        },
+        {
+          "name": "06 Create To Do high task",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Task is created in To Do', function () { pm.response.to.have.status(201); pm.expect(pm.response.json().isDone).to.equal(false); });",
+                  "pm.environment.set('taskTodoId', String(pm.response.json().id));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"projectId\": {{projectId}},\n  \"title\": \"Board To Do High\",\n  \"priority\": \"high\"\n}"
+            },
+            "url": "{{baseUrl}}/tasks"
+          }
+        },
+        {
+          "name": "07 Create To Do low task",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Low-priority task is created', function () { pm.response.to.have.status(201); });",
+                  "pm.environment.set('taskLowId', String(pm.response.json().id));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"projectId\": {{projectId}},\n  \"title\": \"Board To Do Low\",\n  \"priority\": \"low\"\n}"
+            },
+            "url": "{{baseUrl}}/tasks"
+          }
+        },
+        {
+          "name": "08 Create recurring task",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Recurring task is created', function () { pm.response.to.have.status(201); });",
+                  "pm.environment.set('taskRecurringId', String(pm.response.json().id));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"projectId\": {{projectId}},\n  \"title\": \"Board Recurring\",\n  \"priority\": \"medium\",\n  \"dueDate\": \"{{boardToday}}\",\n  \"scheduledDate\": \"{{boardToday}}\",\n  \"recurrence\": \"daily\",\n  \"recurrenceDays\": [],\n  \"recurrenceEndDate\": null\n}"
+            },
+            "url": "{{baseUrl}}/tasks"
+          }
+        },
+        {
+          "name": "09 Create task in another James project",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Other-project task is created', function () { pm.response.to.have.status(201); });",
+                  "pm.environment.set('otherProjectTaskId', String(pm.response.json().id));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"projectId\": {{otherProjectId}},\n  \"title\": \"Board Other Project Task\"\n}"
+            },
+            "url": "{{baseUrl}}/tasks"
+          }
+        },
+        {
+          "name": "10 Get three-column board",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Board returns 200', function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test('Board has three status columns and counts', function () { pm.expect(body.columns).to.have.keys('todo','inProgress','done'); pm.expect(body.counts).to.have.keys('todo','inProgress','done'); });",
+                  "pm.test('Tasks are ordered within each column', function () { for (const column of Object.values(body.columns)) { pm.expect(column.map(task => task.position)).to.eql([...column].map(task => task.position).sort((a,b) => a-b)); } });",
+                  "pm.test('Completion state agrees with Done status', function () { for (const task of [...body.columns.todo,...body.columns.inProgress]) pm.expect(task.isDone).to.equal(false); for (const task of body.columns.done) pm.expect(task.isDone).to.equal(true); });",
+                  "pm.environment.set('todoIds', JSON.stringify(body.columns.todo.map(task => task.id)));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/tasks/board?projectId={{projectId}}"
+          }
+        },
+        {
+          "name": "11 Task filters apply to board columns",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Filtered board returns 200', function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "const ids = [...body.columns.todo,...body.columns.inProgress,...body.columns.done].map(task => String(task.id));",
+                  "pm.test('Priority filter keeps the matching task only', function () { pm.expect(ids).to.include(pm.environment.get('taskTodoId')); pm.expect(ids).not.to.include(pm.environment.get('taskLowId')); });",
+                  "pm.test('Filtered counts match filtered results', function () { pm.expect(body.counts.todo + body.counts.inProgress + body.counts.done).to.equal(ids.length); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/tasks/board?projectId={{projectId}}&priority=high"
+          }
+        },
+        {
+          "name": "12 Stale target column returns conflict",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Stale board returns 409', function () { pm.response.to.have.status(409); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"projectId\": {{projectId}},\n  \"boardStatus\": \"todo\",\n  \"tasks\": [{{taskTodoId}}]\n}"
+            },
+            "url": "{{baseUrl}}/tasks/board/reorder"
+          }
+        },
+        {
+          "name": "13 Move To Do task to In Progress",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Move returns 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Move targets In Progress', function () { pm.expect(pm.response.json().boardStatus).to.equal('in_progress'); pm.expect(pm.response.json().tasks).to.include(Number(pm.environment.get('taskTodoId'))); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"projectId\": {{projectId}},\n  \"boardStatus\": \"in_progress\",\n  \"tasks\": [{{taskTodoId}}]\n}"
+            },
+            "url": "{{baseUrl}}/tasks/board/reorder"
+          }
+        },
+        {
+          "name": "14 Move recurring task to Done",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Done move returns 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Done move returns the target column order', function () { pm.expect(pm.response.json()).to.include({ projectId: Number(pm.environment.get('projectId')), boardStatus: 'done' }); pm.expect(pm.response.json().tasks).to.eql([Number(pm.environment.get('taskRecurringId'))]); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"projectId\": {{projectId}},\n  \"boardStatus\": \"done\",\n  \"tasks\": [{{taskRecurringId}}]\n}"
+            },
+            "url": "{{baseUrl}}/tasks/board/reorder"
+          }
+        },
+        {
+          "name": "15 Recurring completion creates one next occurrence",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Task list returns 200', function () { pm.response.to.have.status(200); });",
+                  "const tasks = pm.response.json().filter(task => task.title === 'Board Recurring');",
+                  "pm.test('Exactly one new incomplete occurrence exists', function () { pm.expect(tasks).to.have.length(2); pm.expect(tasks.filter(task => task.isDone)).to.have.length(1); pm.expect(tasks.filter(task => !task.isDone)).to.have.length(1); });",
+                  "pm.environment.set('nextOccurrenceId', String(tasks.find(task => !task.isDone).id));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/tasks?projectId={{projectId}}&page=1&pageSize=100"
+          }
+        },
+        {
+          "name": "16 Completion is recorded in task streak",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Streak endpoint returns 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Completion contributes to the streak', function () { pm.expect(pm.response.json().currentStreak).to.be.at.least(1); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/tasks/{{taskRecurringId}}/streak"
+          }
+        },
+        {
+          "name": "17 Prepare move back out of Done",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Board refresh returns 200', function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "const ids = body.columns.todo.map(task => task.id).filter(id => id !== Number(pm.environment.get('taskRecurringId')));",
+                  "ids.push(Number(pm.environment.get('taskRecurringId')));",
+                  "pm.environment.set('todoAfterDoneIds', JSON.stringify(ids));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/tasks/board?projectId={{projectId}}"
+          }
+        },
+        {
+          "name": "18 Move out of Done to To Do",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Move out of Done returns 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Task is moved to To Do', function () { pm.expect(pm.response.json().boardStatus).to.equal('todo'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"projectId\": {{projectId}},\n  \"boardStatus\": \"todo\",\n  \"tasks\": {{todoAfterDoneIds}}\n}"
+            },
+            "url": "{{baseUrl}}/tasks/board/reorder"
+          }
+        },
+        {
+          "name": "19 Old completion endpoint places task in Done",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Checkbox completion returns 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Checkbox completion sets done', function () { pm.expect(pm.response.json().isDone).to.equal(true); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"isDone\": true\n}"
+            },
+            "url": "{{baseUrl}}/tasks/{{taskTodoId}}"
+          }
+        },
+        {
+          "name": "20 Capture To Do order for reorder",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Board refresh returns 200', function () { pm.response.to.have.status(200); });",
+                  "const ids = pm.response.json().columns.todo.map(task => task.id).reverse();",
+                  "pm.environment.set('todoReorderedIds', JSON.stringify(ids));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/tasks/board?projectId={{projectId}}"
+          }
+        },
+        {
+          "name": "21 Reorder within To Do",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('To Do reorder returns 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Reordered list is echoed', function () { pm.expect(pm.response.json().boardStatus).to.equal('todo'); pm.expect(pm.response.json().tasks).to.eql(JSON.parse(pm.environment.get('todoReorderedIds'))); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"projectId\": {{projectId}},\n  \"boardStatus\": \"todo\",\n  \"tasks\": {{todoReorderedIds}}\n}"
+            },
+            "url": "{{baseUrl}}/tasks/board/reorder"
+          }
+        },
+        {
+          "name": "22 Verify checkbox and move statuses",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Board refresh returns 200', function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test('Checkbox completion is in Done', function () { const task = body.columns.done.find(task => task.id === Number(pm.environment.get('taskTodoId'))); pm.expect(task).to.exist; pm.expect(task.boardStatus).to.equal('done'); pm.expect(task.isDone).to.equal(true); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/tasks/board?projectId={{projectId}}"
+          }
+        },
+        {
+          "name": "23 Invalid board status returns 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Invalid status returns 400', function () { pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"projectId\": {{projectId}},\n  \"boardStatus\": \"blocked\",\n  \"tasks\": [{{taskTodoId}}]\n}"
+            },
+            "url": "{{baseUrl}}/tasks/board/reorder"
+          }
+        },
+        {
+          "name": "24 Invalid task IDs return 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Invalid task ID returns 400', function () { pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"projectId\": {{projectId}},\n  \"boardStatus\": \"todo\",\n  \"tasks\": [0]\n}"
+            },
+            "url": "{{baseUrl}}/tasks/board/reorder"
+          }
+        },
+        {
+          "name": "25 Foreign project returns 404",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Foreign project is hidden', function () { pm.response.to.have.status(404); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/tasks/board?projectId={{foreignProjectId}}"
+          }
+        },
+        {
+          "name": "26 Other project task returns 404",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Other-project task is hidden', function () { pm.response.to.have.status(404); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"projectId\": {{projectId}},\n  \"boardStatus\": \"todo\",\n  \"tasks\": [{{otherProjectTaskId}}]\n}"
+            },
+            "url": "{{baseUrl}}/tasks/board/reorder"
+          }
+        },
+        {
+          "name": "27 Missing token returns 401",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Missing auth returns 401', function () { pm.response.to.have.status(401); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/tasks/board?projectId={{projectId}}"
+          }
+        }
+      ]
+    }
+  ]
+}

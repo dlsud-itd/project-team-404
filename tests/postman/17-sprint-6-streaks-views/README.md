@@ -27,7 +27,7 @@ The seeded accounts are James and Harvey:
 5. Select `Project-Team-404 Local (17-sprint-6-streaks-views)`.
 6. Confirm `baseUrl` is `http://localhost:3000/api`.
 
-Leave `token`, `tokenB`, `projectId`, `taskId`, `taskId2`, `activeTaskIds`, `boardActiveIds`, and `boardCompletedIds` blank. Login, setup, and task/board listing requests populate them.
+Leave `token`, `tokenB`, `projectId`, `taskId`, `taskId2`, `activeTaskIds`, and `boardTodoIds` blank. Login, setup, and task/board listing requests populate them.
 
 ## Run
 
@@ -46,6 +46,6 @@ Run all 20 requests in order in the Collection Runner. The list and board reques
 - Recurring-task completion
 - Repeated and missing state transitions
 - Project position ordering
-- Board and board reordering
+- Three-column board and To Do reordering
 - Timeline filtering
 - Ownership and authentication boundaries

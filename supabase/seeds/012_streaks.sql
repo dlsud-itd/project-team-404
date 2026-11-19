@@ -90,6 +90,7 @@ set
   scheduled_date = (now() at time zone profile.timezone)::date,
   due_date = (now() at time zone profile.timezone)::date,
   is_done = false,
+  board_status = 'todo',
   done_at = null,
   archived_at = null,
   deleted_at = null

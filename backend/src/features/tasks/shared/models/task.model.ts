@@ -6,7 +6,10 @@ type PrismaTaskRecord = Prisma.TaskGetPayload<{
     taskLabels: { include: { label: true } };
   };
 }>;
-export type TaskRecord = Omit<PrismaTaskRecord, 'recurrenceSeriesId'> & {
+export type TaskRecord = Omit<
+  PrismaTaskRecord,
+  'recurrenceSeriesId' | 'boardStatus'
+> & {
   recurrenceSeriesId?: string | null;
 };
 export type Task = Omit<

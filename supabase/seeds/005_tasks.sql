@@ -71,6 +71,7 @@ insert into public.tbl_task (
   priority_id,
   due_date,
   is_done,
+  board_status,
   done_at
 )
 select
@@ -81,6 +82,8 @@ select
   priority_id,
   due_date,
   is_done,
+  case when is_done then 'done'::public.task_board_status
+       else 'todo'::public.task_board_status end,
   case when is_done then now() else null end as done_at
 from seeded_tasks
 where not exists (
@@ -165,6 +168,7 @@ insert into public.tbl_task (
   deadline,
   recurrence,
   is_done,
+  board_status,
   done_at
 )
 select
@@ -178,6 +182,8 @@ select
   task_fixtures_data.deadline,
   task_fixtures_data.recurrence::public.task_recurrence,
   task_fixtures_data.is_done,
+  case when task_fixtures_data.is_done then 'done'::public.task_board_status
+       else 'todo'::public.task_board_status end,
   case when task_fixtures_data.is_done then now() else null end
 from task_fixtures_data
 join public.tbl_project as project

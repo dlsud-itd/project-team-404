@@ -97,6 +97,7 @@ insert into public.tbl_task (
   deadline,
   recurrence,
   is_done,
+  board_status,
   done_at
 )
 select
@@ -110,6 +111,8 @@ select
   now() + fixture.deadline_day_offset * interval '1 day',
   fixture.recurrence::public.task_recurrence,
   fixture.is_done,
+  case when fixture.is_done then 'done'::public.task_board_status
+       else 'todo'::public.task_board_status end,
   case when fixture.is_done then now() else null end
 from task_fixtures as fixture
 join public.tbl_user as profile on profile.email = 'harvey@example.com'
