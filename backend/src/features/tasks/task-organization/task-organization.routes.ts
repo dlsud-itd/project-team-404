@@ -118,7 +118,17 @@ export function createTaskOrganizationRouter(
         },
         orderBy: [{ isDone: 'asc' }, { position: 'asc' }, { id: 'asc' }],
       });
-      const map = ({ id, title, isDone, position }: any) => ({
+      const map = ({
+        id,
+        title,
+        isDone,
+        position,
+      }: {
+        id: number;
+        title: string;
+        isDone: boolean;
+        position: number;
+      }) => ({
         id,
         title,
         isDone,

@@ -29,7 +29,7 @@ export class TaskStreaksService {
     const timezone = owner?.timezone ?? 'UTC';
     const today = localDateString(timezone);
 
-    let events =
+    const events =
       task.recurrenceSeriesId !== null
         ? await prisma.taskCompletionEvent.findMany({
             where: { userId, seriesId: task.recurrenceSeriesId },

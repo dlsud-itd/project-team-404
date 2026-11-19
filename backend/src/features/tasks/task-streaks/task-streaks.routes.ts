@@ -4,7 +4,6 @@ import { requireAuth } from '../../auth/session/middleware/require-auth.middlewa
 import { validateRequest } from '../../../shared/middleware/validate-request.middleware';
 import { taskIdParamValidator } from '../task-crud/validators/task-id-param.validator';
 import { TaskStreaksService } from './task-streaks.service';
-import { z } from 'zod';
 
 export function createTaskStreaksRouter(
   sessionService: SessionService
