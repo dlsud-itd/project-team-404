@@ -1,0 +1,89 @@
+newman
+
+Project-Team-404 API - 18-task-timeline
+
+□ 18-task-timeline
+└ 01 Login James
+  POST http://localhost:3000/api/auth/login [200 OK, 500B, 2.7s]
+  √  James login succeeds
+  √  James token is returned
+
+└ 02 Login Harvey
+  POST http://localhost:3000/api/auth/login [200 OK, 502B, 2.1s]
+  √  Harvey login succeeds
+  √  Harvey token is returned
+
+└ 03 Baseline spans and undated count
+  GET http://localhost:3000/api/tasks/timeline?from=2026-11-11&to=2026-11-25 [200 OK, 3.61kB, 4.4s]
+  √  Timeline returns 200
+  √  Multi-day bar uses scheduled date and deadline
+  √  Due-date-only task is a single-day bar
+  √  Seed fixtures cross both current-week boundaries
+  √  Undated task is excluded and counted
+  √  Overdue fixture is marked overdue
+
+└ 04 Include bars crossing the request window
+  GET http://localhost:3000/api/tasks/timeline?from=2026-11-15&to=2026-11-21 [200 OK, 3.61kB, 5.2s]
+  √  Timeline returns 200
+  √  A bar starting before from overlaps into the window
+  √  A bar ending after to overlaps out of the window
+
+└ 05 Completed tasks are opt-in
+  GET http://localhost:3000/api/tasks/timeline?from=2026-11-11&to=2026-11-25 [200 OK, 3.61kB, 4.5s]
+  √  Timeline returns 200
+  √  Completed task is absent by default
+
+└ 06 Include completed task
+  GET http://localhost:3000/api/tasks/timeline?from=2026-11-11&to=2026-11-25&includeCompleted=true [200 OK, 4.26kB, 4.5s]
+  √  Timeline returns 200
+  √  Completed task appears only when requested
+
+└ 07 Project and task filters apply
+  GET http://localhost:3000/api/tasks/timeline?from=2026-11-11&to=2026-11-25&projectId=147&includeCompleted=true&isDone=true [200 OK, 670B, 5.2s]
+  √  Filtered timeline returns 200
+  √  Project filter returns only the selected project
+
+└ 08 Other users tasks never appear
+  GET http://localhost:3000/api/tasks/timeline?from=2026-11-11&to=2026-11-25 [200 OK, 922B, 4.5s]
+  √  Timeline returns 200
+  √  Harvey timeline fixtures are not visible to James
+
+└ 09 Reject to before from
+  GET http://localhost:3000/api/tasks/timeline?from=2026-11-25&to=2026-11-11 [400 Bad Request, 416B, 3.1s]
+  √  Reverse range returns 400
+
+└ 10 Reject range longer than 92 days
+  GET http://localhost:3000/api/tasks/timeline?from=2026-11-19&to=2027-02-19 [400 Bad Request, 432B, 3.1s]
+  √  93-day inclusive range returns 400
+
+└ 11 Reject invalid calendar date
+  GET http://localhost:3000/api/tasks/timeline?from=2026-02-30&to=2026-03-01 [400 Bad Request, 436B, 3.2s]
+  √  Invalid calendar date returns 400
+
+└ 12 Reject malformed project filter
+  GET http://localhost:3000/api/tasks/timeline?from=2026-11-11&to=2026-11-25&projectId=not-a-number [400 Bad Request, 440B, 3.2s]
+  √  Malformed projectId returns 400
+
+└ 13 Reject missing token
+  GET http://localhost:3000/api/tasks/timeline?from=2026-11-11&to=2026-11-25 [401 Unauthorized, 346B, 3ms]
+  √  Missing token returns 401
+
+┌─────────────────────────┬───────────────────┬───────────────────┐
+│                         │          executed │            failed │
+├─────────────────────────┼───────────────────┼───────────────────┤
+│              iterations │                 1 │                 0 │
+├─────────────────────────┼───────────────────┼───────────────────┤
+│                requests │                13 │                 0 │
+├─────────────────────────┼───────────────────┼───────────────────┤
+│            test-scripts │                13 │                 0 │
+├─────────────────────────┼───────────────────┼───────────────────┤
+│      prerequest-scripts │                13 │                 0 │
+├─────────────────────────┼───────────────────┼───────────────────┤
+│              assertions │                26 │                 0 │
+├─────────────────────────┴───────────────────┴───────────────────┤
+│ total run duration: 47.4s                                       │
+├─────────────────────────────────────────────────────────────────┤
+│ total data received: 15.78kB (approx)                           │
+├─────────────────────────────────────────────────────────────────┤
+│ average response time: 3.5s [min: 3ms, max: 5.2s, s.d.: 1397ms] │
+└─────────────────────────────────────────────────────────────────┘

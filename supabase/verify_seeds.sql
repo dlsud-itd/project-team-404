@@ -803,5 +803,113 @@ begin
     raise exception 'FAIL: distinctive archived search task fixture is missing';
   end if;
   raise notice 'PASS: distinctive archived search task fixture is present';
+
+  select count(*)
+  into actual_count
+  from public.tbl_task as task
+  join public.tbl_user as profile on profile.user_id = task.user_id
+  where profile.email = 'harvey@example.com'
+    and task.title like 'Timeline fixture - %'
+    and task.deleted_at is null;
+  if actual_count <> 7 then
+    raise exception 'FAIL: expected 7 active timeline tasks, found %', actual_count;
+  end if;
+
+  select count(distinct project.project_id)
+  into actual_count
+  from public.tbl_task as task
+  join public.tbl_project as project on project.project_id = task.project_id
+  join public.tbl_user as profile on profile.user_id = task.user_id
+  where profile.email = 'harvey@example.com'
+    and task.title like 'Timeline fixture - %'
+    and task.deleted_at is null;
+  if actual_count <> 2 then
+    raise exception 'FAIL: timeline tasks must span 2 projects, found %', actual_count;
+  end if;
+  raise notice 'PASS: timeline fixtures span two projects';
+
+  if not exists (
+    select 1
+    from public.tbl_task as task
+    join public.tbl_user as profile on profile.user_id = task.user_id
+    where profile.email = 'harvey@example.com'
+      and task.title = 'Timeline fixture - Multi-day'
+      and task.scheduled_date = (now() at time zone profile.timezone)::date + 1
+      and (task.deadline at time zone profile.timezone)::date
+        = (now() at time zone profile.timezone)::date + 4
+      and task.deleted_at is null
+  ) or not exists (
+    select 1
+    from public.tbl_task as task
+    join public.tbl_user as profile on profile.user_id = task.user_id
+    where profile.email = 'harvey@example.com'
+      and task.title = 'Timeline fixture - Single-day'
+      and task.scheduled_date is null
+      and task.due_date = (now() at time zone profile.timezone)::date + 2
+      and task.deadline is null
+      and task.deleted_at is null
+  ) then
+    raise exception 'FAIL: timeline multi-day or single-day fixture is incorrect';
+  end if;
+  raise notice 'PASS: timeline fixtures cover multi-day and due-date-only bars';
+
+  if not exists (
+    select 1
+    from public.tbl_task as task
+    join public.tbl_user as profile on profile.user_id = task.user_id
+    where profile.email = 'harvey@example.com'
+      and task.title = 'Timeline fixture - Starts before week'
+      and task.scheduled_date < (now() at time zone profile.timezone)::date
+        - extract(dow from (now() at time zone profile.timezone)::date)::integer
+      and (task.deadline at time zone profile.timezone)::date >=
+        (now() at time zone profile.timezone)::date
+        - extract(dow from (now() at time zone profile.timezone)::date)::integer
+      and task.deleted_at is null
+  ) or not exists (
+    select 1
+    from public.tbl_task as task
+    join public.tbl_user as profile on profile.user_id = task.user_id
+    where profile.email = 'harvey@example.com'
+      and task.title = 'Timeline fixture - Ends after week'
+      and task.scheduled_date >= (now() at time zone profile.timezone)::date
+        - extract(dow from (now() at time zone profile.timezone)::date)::integer
+      and (task.deadline at time zone profile.timezone)::date >
+        (now() at time zone profile.timezone)::date
+        - extract(dow from (now() at time zone profile.timezone)::date)::integer + 6
+      and task.deleted_at is null
+  ) then
+    raise exception 'FAIL: timeline week-boundary fixtures are incorrect';
+  end if;
+  raise notice 'PASS: timeline fixtures cross both week boundaries';
+
+  if not exists (
+    select 1 from public.tbl_task as task
+    join public.tbl_user as profile on profile.user_id = task.user_id
+    where profile.email = 'harvey@example.com'
+      and task.title = 'Timeline fixture - Completed'
+      and task.is_done
+      and task.deleted_at is null
+  ) or not exists (
+    select 1 from public.tbl_task as task
+    join public.tbl_user as profile on profile.user_id = task.user_id
+    where profile.email = 'harvey@example.com'
+      and task.title = 'Timeline fixture - Overdue'
+      and not task.is_done
+      and (task.deadline at time zone profile.timezone)::date
+        < (now() at time zone profile.timezone)::date
+      and task.deleted_at is null
+  ) or not exists (
+    select 1 from public.tbl_task as task
+    join public.tbl_user as profile on profile.user_id = task.user_id
+    where profile.email = 'harvey@example.com'
+      and task.title = 'Timeline fixture - Undated'
+      and task.scheduled_date is null
+      and task.due_date is null
+      and task.deadline is null
+      and task.deleted_at is null
+  ) then
+    raise exception 'FAIL: timeline completed, overdue, or undated fixture is incorrect';
+  end if;
+  raise notice 'PASS: timeline fixtures cover completed, overdue, and undated tasks';
 end;
 $$;

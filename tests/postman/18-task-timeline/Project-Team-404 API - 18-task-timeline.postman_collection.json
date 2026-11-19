@@ -1,0 +1,344 @@
+{
+  "info": {
+    "_postman_id": "4e8a7785-a0c9-4c7e-91de-32d50e6a822a",
+    "name": "Project-Team-404 API - 18-task-timeline",
+    "description": "Timeline range, filtering, ownership, and validation acceptance checks.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "18-task-timeline",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const manilaNow = new Date(Date.now() + 8 * 60 * 60 * 1000);",
+              "const pad = (value) => String(value).padStart(2, '0');",
+              "const today = `${manilaNow.getUTCFullYear()}-${pad(manilaNow.getUTCMonth() + 1)}-${pad(manilaNow.getUTCDate())}`;",
+              "const date = new Date(`${today}T00:00:00.000Z`);",
+              "const dateString = (value) => value.toISOString().slice(0, 10);",
+              "const weekStart = new Date(date); weekStart.setUTCDate(date.getUTCDate() - date.getUTCDay());",
+              "const from = new Date(weekStart); from.setUTCDate(weekStart.getUTCDate() - 4);",
+              "const to = new Date(weekStart); to.setUTCDate(weekStart.getUTCDate() + 10);",
+              "const weekTo = new Date(weekStart); weekTo.setUTCDate(weekStart.getUTCDate() + 6);",
+              "const rangeEnd = new Date(date); rangeEnd.setUTCDate(date.getUTCDate() + 92);",
+              "pm.environment.set('seedToday', today);",
+              "pm.environment.set('weekStart', dateString(weekStart));",
+              "pm.environment.set('windowFrom', dateString(from));",
+              "pm.environment.set('windowTo', dateString(to));",
+              "pm.environment.set('weekTo', dateString(weekTo));",
+              "pm.environment.set('rangeEnd', dateString(rangeEnd));"
+            ]
+          }
+        }
+      ],
+      "item": [
+        {
+          "name": "01 Login James",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('James login succeeds', function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test('James token is returned', function () { pm.expect(body.token).to.be.a('string').and.not.empty; });",
+                  "pm.environment.set('token', body.token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"identifier\": \"james@example.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": "{{baseUrl}}/auth/login"
+          }
+        },
+        {
+          "name": "02 Login Harvey",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Harvey login succeeds', function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test('Harvey token is returned', function () { pm.expect(body.token).to.be.a('string').and.not.empty; });",
+                  "pm.environment.set('tokenB', body.token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"identifier\": \"harvey@example.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": "{{baseUrl}}/auth/login"
+          }
+        },
+        {
+          "name": "03 Baseline spans and undated count",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Timeline returns 200', function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "const bars = body.projects.flatMap((project) => project.bars);",
+                  "const byTitle = (title) => bars.find((bar) => bar.title === title);",
+                  "const plusDays = (date, days) => { const value = new Date(`${date}T00:00:00.000Z`); value.setUTCDate(value.getUTCDate() + days); return value.toISOString().slice(0, 10); };",
+                  "pm.test('Multi-day bar uses scheduled date and deadline', function () { pm.expect(byTitle('Timeline fixture - Multi-day')).to.include({ start: plusDays(pm.environment.get('seedToday'), 1), end: plusDays(pm.environment.get('seedToday'), 4) }); });",
+                  "pm.test('Due-date-only task is a single-day bar', function () { const bar = byTitle('Timeline fixture - Single-day'); pm.expect(bar).to.include({ start: plusDays(pm.environment.get('seedToday'), 2), end: plusDays(pm.environment.get('seedToday'), 2) }); });",
+                  "pm.test('Seed fixtures cross both current-week boundaries', function () { const week = pm.environment.get('weekStart'); pm.expect(byTitle('Timeline fixture - Starts before week')).to.include({ start: plusDays(week, -2), end: plusDays(week, 2) }); pm.expect(byTitle('Timeline fixture - Ends after week')).to.include({ start: plusDays(week, 2), end: plusDays(week, 8) }); });",
+                  "pm.test('Undated task is excluded and counted', function () { pm.expect(byTitle('Timeline fixture - Undated')).to.equal(undefined); pm.expect(body.undatedCount).to.be.at.least(1); });",
+                  "pm.test('Overdue fixture is marked overdue', function () { pm.expect(byTitle('Timeline fixture - Overdue').isOverdue).to.equal(true); });",
+                  "pm.environment.set('timelineProjectId', String(byTitle('Timeline fixture - Multi-day').projectId));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{tokenB}}" }
+            ],
+            "url": "{{baseUrl}}/tasks/timeline?from={{windowFrom}}&to={{windowTo}}"
+          }
+        },
+        {
+          "name": "04 Include bars crossing the request window",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Timeline returns 200', function () { pm.response.to.have.status(200); });",
+                  "const bars = pm.response.json().projects.flatMap((project) => project.bars);",
+                  "const before = bars.find((bar) => bar.title === 'Timeline fixture - Starts before week');",
+                  "const after = bars.find((bar) => bar.title === 'Timeline fixture - Ends after week');",
+                  "pm.test('A bar starting before from overlaps into the window', function () { const from = pm.environment.get('weekStart'); pm.expect(before.start < from).to.equal(true); pm.expect(before.end >= from).to.equal(true); });",
+                  "pm.test('A bar ending after to overlaps out of the window', function () { const to = pm.environment.get('weekTo'); pm.expect(after.start <= to).to.equal(true); pm.expect(after.end > to).to.equal(true); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{tokenB}}" }
+            ],
+            "url": "{{baseUrl}}/tasks/timeline?from={{weekStart}}&to={{weekTo}}"
+          }
+        },
+        {
+          "name": "05 Completed tasks are opt-in",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Timeline returns 200', function () { pm.response.to.have.status(200); });",
+                  "const bars = pm.response.json().projects.flatMap((project) => project.bars);",
+                  "pm.test('Completed task is absent by default', function () { pm.expect(bars.some((bar) => bar.title === 'Timeline fixture - Completed')).to.equal(false); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{tokenB}}" }
+            ],
+            "url": "{{baseUrl}}/tasks/timeline?from={{windowFrom}}&to={{windowTo}}"
+          }
+        },
+        {
+          "name": "06 Include completed task",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Timeline returns 200', function () { pm.response.to.have.status(200); });",
+                  "const bars = pm.response.json().projects.flatMap((project) => project.bars);",
+                  "pm.test('Completed task appears only when requested', function () { pm.expect(bars.some((bar) => bar.title === 'Timeline fixture - Completed' && bar.isDone)).to.equal(true); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{tokenB}}" }
+            ],
+            "url": "{{baseUrl}}/tasks/timeline?from={{windowFrom}}&to={{windowTo}}&includeCompleted=true"
+          }
+        },
+        {
+          "name": "07 Project and task filters apply",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Filtered timeline returns 200', function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "const bars = body.projects.flatMap((project) => project.bars);",
+                  "pm.test('Project filter returns only the selected project', function () { pm.expect(bars.length).to.be.greaterThan(0); pm.expect(bars.every((bar) => String(bar.projectId) === pm.environment.get('timelineProjectId'))).to.equal(true); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{tokenB}}" }
+            ],
+            "url": "{{baseUrl}}/tasks/timeline?from={{windowFrom}}&to={{windowTo}}&projectId={{timelineProjectId}}&includeCompleted=true&isDone=true"
+          }
+        },
+        {
+          "name": "08 Other users tasks never appear",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Timeline returns 200', function () { pm.response.to.have.status(200); });",
+                  "const bars = pm.response.json().projects.flatMap((project) => project.bars);",
+                  "pm.test('Harvey timeline fixtures are not visible to James', function () { pm.expect(bars.some((bar) => bar.title.startsWith('Timeline fixture -'))).to.equal(false); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/tasks/timeline?from={{windowFrom}}&to={{windowTo}}"
+          }
+        },
+        {
+          "name": "09 Reject to before from",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Reverse range returns 400', function () { pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{tokenB}}" }
+            ],
+            "url": "{{baseUrl}}/tasks/timeline?from={{windowTo}}&to={{windowFrom}}"
+          }
+        },
+        {
+          "name": "10 Reject range longer than 92 days",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('93-day inclusive range returns 400', function () { pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{tokenB}}" }
+            ],
+            "url": "{{baseUrl}}/tasks/timeline?from={{seedToday}}&to={{rangeEnd}}",
+            "description": "The inclusive range contains 93 dates and must be rejected."
+          }
+        },
+        {
+          "name": "11 Reject invalid calendar date",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Invalid calendar date returns 400', function () { pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{tokenB}}" }
+            ],
+            "url": "{{baseUrl}}/tasks/timeline?from=2026-02-30&to=2026-03-01"
+          }
+        },
+        {
+          "name": "12 Reject malformed project filter",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Malformed projectId returns 400', function () { pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{tokenB}}" }
+            ],
+            "url": "{{baseUrl}}/tasks/timeline?from={{windowFrom}}&to={{windowTo}}&projectId=not-a-number"
+          }
+        },
+        {
+          "name": "13 Reject missing token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Missing token returns 401', function () { pm.response.to.have.status(401); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/tasks/timeline?from={{windowFrom}}&to={{windowTo}}"
+          }
+        }
+      ]
+    }
+  ]
+}
