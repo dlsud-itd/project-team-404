@@ -88,12 +88,16 @@ Tests: `frontend/tests/integration/features/tasks/sort-filter.integration.spec.t
 
 | ID        | Test Case                                         | Expected Result                                                                                               | Status  |
 | --------- | ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- | ------- |
-| E2E-SF-01 | Combine task filters and reload the results       | Only tasks matching the selected criteria appear, and the same result set is shown after reload.              | Blocked |
-| E2E-SF-02 | Sort tasks and projects                           | Results follow the selected order, including stable ties and null-date placement, after reload.               | Blocked |
+| E2E-SF-01 | Combine task filters and reload the results       | Only tasks matching the selected criteria appear, and the same result set is shown after reload.              | Passing |
+| E2E-SF-02 | Sort tasks and projects                           | Results follow the selected order, including stable ties and null-date placement, after reload.               | Passing |
 | E2E-SF-03 | Filter tasks by due-date range and overdue status | Inclusive date bounds and the user's timezone determine the displayed tasks correctly.                        | Blocked |
 | E2E-SF-04 | Filter projects and limit the list                | Matching projects and the total count are displayed; existing project pages continue to work without a limit. | Blocked |
 
-All Sorting & Filtering E2E cases remain blocked until the draft contract is approved and their relevant backend and frontend integration rows pass.
+Tests: `tests/e2e/organization/sort-filter.e2e.spec.ts` (2 tests); run with `npm run test:e2e -- organization/ settings/` from the repository root (headless Chromium; passed twice in a row with `--repeat-each=2` and again as a separate run on 20 November 2026, on a locally seeded database). They sign in as `harvey` and use `alex` as the other user, check what the page shows against service-role queries, and put every changed row back after each test, failing if Harvey's seeded rows differ afterwards.
+
+- E2E-SF-01: in Harvey's `Filtering - Client Work` project, choosing High, Low and the Review label sends one debounced `GET /tasks` with both filters, writes them to the URL, and shows exactly the tasks a service-role query finds for that project, priority and label. After a reload the chips, the sort menu and the request are the same. Clear all brings back every task in the project.
+- E2E-SF-02: sorting by Deadline, descending, shows the tasks in the order the service-role rows give (null deadlines last, then task id), open tasks before completed ones, before and after a reload. On `/projects`, Favorites sorted by Name shows the favorite projects in name order, and both are restored after a reload.
+- E2E-SF-03 and E2E-SF-04 stay Blocked: there is no E2E for due-date ranges or overdue yet, and the project list has no result limit in the frontend (see FE-SF-04).
 
 ## 2. Archive
 
@@ -175,10 +179,19 @@ Tests: `frontend/tests/integration/features/settings/labels-priorities.integrati
 
 | ID         | Test Case                                            | Expected Result                                                                                                       | Status  |
 | ---------- | ---------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- | ------- |
-| E2E-LPM-01 | Create and edit a priority, then assign it to a task | The priority appears in management and task views and remains assigned after reload.                                  | Blocked |
-| E2E-LPM-02 | Reorder priorities and labels                        | Both management lists retain the chosen order after reload.                                                           | Blocked |
-| E2E-LPM-03 | Delete a used priority and reassign its tasks        | The selected target priority is applied to affected tasks and the removed priority no longer appears.                 | Blocked |
-| E2E-LPM-04 | Create, assign, edit, and remove a label             | The task reflects the saved label set; management changes persist after reload without affecting another user's data. | Blocked |
+| E2E-LPM-01 | Create and edit a priority, then assign it to a task | The priority appears in management and task views and remains assigned after reload.                                  | Passing |
+| E2E-LPM-02 | Reorder priorities and labels                        | Both management lists retain the chosen order after reload.                                                           | Failing |
+| E2E-LPM-03 | Delete a used priority and reassign its tasks        | The selected target priority is applied to affected tasks and the removed priority no longer appears.                 | Passing |
+| E2E-LPM-04 | Create, assign, edit, and remove a label             | The task reflects the saved label set; management changes persist after reload without affecting another user's data. | Failing |
+
+Tests: `tests/e2e/settings/labels-priorities.e2e.spec.ts` (2 tests, plus 1 `fixme`); run with `npm run test:e2e -- organization/ settings/` from the repository root (headless Chromium; passed twice in a row with `--repeat-each=2` and again as a separate run on 20 November 2026, on a locally seeded database). They sign in as `harvey` and use `alex` as the other user, check what the page shows against service-role queries, and put every changed row back after each test, failing if Harvey's seeded rows differ afterwards.
+
+- E2E-LPM-01: Settings > Priorities creates "Urgent", moves it to the top with Move up and makes it the default; both are kept after a reload. A new task in the Inbox preselects Urgent, is saved with Urgent's `priority_id`, and comes first when the list is sorted by Priority.
+- E2E-LPM-03: deleting Urgent asks where its tasks go; choosing High sends `DELETE /priorities/:id?reassignTo=<High>`, the level disappears and the task now has High's `priority_id`. Alex still sees only Low, Medium and High.
+- E2E-LPM-02 is Failing: reordering priorities passes, but `PUT /api/labels/reorder` has no backend route. The request falls through to `PUT /api/labels/:labelId`, which answers `400`, so the page puts the old order back. The label reorder test is written and marked `test.fixme` until the route exists.
+- E2E-LPM-04 is Failing: creating, renaming and deleting a label is covered, and the task form's label choices and the filter bar's Labels panel follow each change. Assigning the label to a task and checking another user's labels are not covered yet.
+- Fixed while writing these tests: `PUT /api/priorities/reorder` was registered after `PUT /api/priorities/:priorityId`, so Express took `reorder` as an id and every reorder answered `400` "Priority ID must be a positive integer". The route now comes first.
+- Found, not fixed: deleting the default level (Urgent here) leaves Harvey with no default level; BE-LPM-03 expects the default to move to another level.
 
 ## 4. Settings (Configuration & Preferences)
 
@@ -215,9 +228,15 @@ Tests: `frontend/tests/integration/features/settings/settings.integration.spec.t
 
 | ID         | Test Case                                | Expected Result                                                                                | Status  |
 | ---------- | ---------------------------------------- | ---------------------------------------------------------------------------------------------- | ------- |
-| E2E-SET-01 | Change font size and font family         | The application appearance changes and remains selected after reload and sign-in.              | Blocked |
-| E2E-SET-02 | Change dashboard task and project limits | Dashboard sections honor the saved limits and display the matching total count after reload.   | Blocked |
-| E2E-SET-03 | Keep preferences isolated between users  | Changes made by one account do not alter another account's settings or application appearance. | Blocked |
+| E2E-SET-01 | Change font size and font family         | The application appearance changes and remains selected after reload and sign-in.              | Passing |
+| E2E-SET-02 | Change dashboard task and project limits | Dashboard sections honor the saved limits and display the matching total count after reload.   | Passing |
+| E2E-SET-03 | Keep preferences isolated between users  | Changes made by one account do not alter another account's settings or application appearance. | Passing |
+
+Tests: `tests/e2e/settings/settings.e2e.spec.ts` (2 tests); run with `npm run test:e2e -- organization/ settings/` from the repository root (headless Chromium; passed twice in a row with `--repeat-each=2` and again as a separate run on 20 November 2026, on a locally seeded database). They sign in as `harvey` and use `alex` as the other user, check what the page shows against service-role queries, and put every changed row back after each test, failing if Harvey's seeded rows differ afterwards.
+
+- E2E-SET-02: Settings > Config saves 3 tasks and 4 projects with `PATCH /settings`. At 1280 px and 390 px wide, the home dashboard's three status columns and All Tasks each show at most 3 tasks, with "View all (N)" whenever there are more. All Tasks always offers it for Harvey. The sidebar shows 4 projects with "View all (N)", where N is Harvey's active projects by service-role count. On `/dashboard`, Current & Upcoming and Overdue are capped the same way, and no two widgets overlap at either width.
+- E2E-SET-01: Settings > Preferences applies Large and Serif to the whole page as soon as they are picked, before saving (`--app-font-size` 112.5%, Georgia, and a larger body font). Save stores them, and they are still applied after a reload and after signing in from a fresh browser context with no cached settings.
+- E2E-SET-03: after Harvey saves Large and Serif, Alex's saved settings and the page Alex sees keep Medium and System.
 
 ## 5. Search
 

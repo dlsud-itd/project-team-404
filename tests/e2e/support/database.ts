@@ -424,6 +424,30 @@ export async function serviceRoleRows<T = Record<string, unknown>>(
   return supabaseRequest<T[]>(`/rest/v1/${table}?${query}`);
 }
 
+/** Updates the rows `query` matches with the service-role key, e.g. to put seeded values back. */
+export async function patchServiceRoleRows(
+  table: string,
+  query: URLSearchParams,
+  values: Record<string, unknown>
+): Promise<void> {
+  await supabaseRequest(`/rest/v1/${table}?${query}`, {
+    method: 'PATCH',
+    headers: { Prefer: 'return=minimal' },
+    body: JSON.stringify(values),
+  });
+}
+
+/** Hard-deletes the rows `query` matches with the service-role key, e.g. rows a test created. */
+export async function deleteServiceRoleRows(
+  table: string,
+  query: URLSearchParams
+): Promise<void> {
+  await supabaseRequest(`/rest/v1/${table}?${query}`, {
+    method: 'DELETE',
+    headers: { Prefer: 'return=minimal' },
+  });
+}
+
 /** Overwrites one task row with saved column values, e.g. to undo a completion. */
 export async function patchTaskRow(
   taskId: number,

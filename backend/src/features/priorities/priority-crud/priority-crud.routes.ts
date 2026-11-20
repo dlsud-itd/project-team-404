@@ -51,6 +51,17 @@ export function createPriorityCrudRouter(
     ),
     controller.create
   );
+  // Before the /:priorityId routes, which would otherwise take 'reorder' as an id.
+  router.put(
+    '/reorder',
+    auth,
+    validateRequest(
+      reorderPrioritiesValidator,
+      'body',
+      'Invalid priority order'
+    ),
+    controller.reorder
+  );
   router.get('/:priorityId', auth, validatePriorityId, controller.get);
   router.put(
     '/:priorityId',
@@ -64,16 +75,6 @@ export function createPriorityCrudRouter(
     auth,
     validatePriorityId,
     controller.setDefault
-  );
-  router.put(
-    '/reorder',
-    auth,
-    validateRequest(
-      reorderPrioritiesValidator,
-      'body',
-      'Invalid priority order'
-    ),
-    controller.reorder
   );
   router.delete(
     '/:priorityId',
