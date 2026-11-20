@@ -3,6 +3,7 @@ import { afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { request, type TestResponse } from './helpers/request';
 import {
   configureSupabaseTest,
+  defaultPriorityIdFor,
   deleteIntegrationAccounts,
   loginAs,
   type IntegrationAccount,
@@ -14,7 +15,6 @@ const integrationDescribe = testSupabase ? describe : describe.skip;
 integrationDescribe('tasks integration', () => {
   let app: Express;
   let prisma: typeof import('../../src/shared/db/prisma.client').prisma;
-  let mediumPriorityId: number;
 
   beforeAll(async () => {
     const [{ app: productionApp }, prismaModule] = await Promise.all([
@@ -23,11 +23,6 @@ integrationDescribe('tasks integration', () => {
     ]);
     app = productionApp;
     prisma = prismaModule.prisma;
-    const mediumPriority = await prisma.priorityLevel.findUniqueOrThrow({
-      where: { name: 'medium' },
-      select: { id: true },
-    });
-    mediumPriorityId = mediumPriority.id;
   });
 
   afterEach(async () => {
@@ -89,11 +84,12 @@ integrationDescribe('tasks integration', () => {
       data: {
         userId,
         projectId,
-        priorityId: values.priorityId ?? mediumPriorityId,
+        priorityId: values.priorityId ?? (await defaultPriorityIdFor(userId)),
         position: values.position,
         title: values.title,
         description: values.description,
         isDone: values.isDone,
+        boardStatus: values.isDone ? 'done' : 'todo',
         scheduledDate: values.scheduledDate,
         dueDate: values.dueDate,
         deadline: values.deadline,
@@ -165,7 +161,9 @@ integrationDescribe('tasks integration', () => {
       otherAccount.id,
       'Another user task project'
     );
-    const countBefore = await prisma.task.count();
+    const countBefore = await prisma.task.count({
+      where: { userId: account.id },
+    });
 
     for (const body of [
       { title: '' },
@@ -194,7 +192,9 @@ integrationDescribe('tasks integration', () => {
       expect(response.body).toEqual({ error: 'Project not found' });
     }
 
-    expect(await prisma.task.count()).toBe(countBefore);
+    expect(await prisma.task.count({ where: { userId: account.id } })).toBe(
+      countBefore
+    );
   });
 
   it('filters lists by project and status, paginates, and excludes deleted and other users’ tasks', async () => {
@@ -1104,7 +1104,7 @@ integrationDescribe('tasks integration', () => {
           include: { priorityLevel: true },
         })
       ).toMatchObject({
-        priorityLevel: { name: 'high' },
+        priorityLevel: { name: 'High' },
       });
 
       const invalidPriority = await taskRequest(
@@ -1120,7 +1120,7 @@ integrationDescribe('tasks integration', () => {
           include: { priorityLevel: true },
         })
       ).toMatchObject({
-        priorityLevel: { name: 'high' },
+        priorityLevel: { name: 'High' },
       });
 
       const filteredTaskIds = async (query: URLSearchParams) => {

@@ -12,6 +12,38 @@ Run backend integration tests with `npm run test:integration` from `backend`, fr
 
 Status values: `Failing` means the case is planned but not yet passing; `Blocked` means a prerequisite must pass first; `Passing` means verified.
 
+## Latest Regression Run: November 20, 2026
+
+The database was reset and seeded locally before the run; all 14 seed SQL files
+and `verify_seeds.sql` passed. `npm run test:regression` completed without E2E.
+The run had **0 skipped tests**, but did not pass overall:
+
+| Suite                       | Passed | Failed | Skipped | Result        |
+| --------------------------- | -----: | -----: | ------: | ------------- |
+| Backend unit                |    329 |      0 |       0 | Pass          |
+| Backend integration         |    146 |     16 |       0 | Fail          |
+| Backend API regression      |     13 |      5 |       0 | Fail          |
+| Frontend unit + integration |   1166 |      0 |       0 | Pass (1 todo) |
+| Frontend regression         |     17 |      0 |       0 | Pass          |
+
+Sprint 5 regression spec results:
+
+| Spec                                   | Result | Finding                                                                  |
+| -------------------------------------- | ------ | ------------------------------------------------------------------------ |
+| `sort-filter.regression.spec.ts`       | Pass   | Legacy priority/label filters and default ordering passed.               |
+| `archive.regression.spec.ts`           | Pass   | Project archive/restore compatibility and task data preservation passed. |
+| `labels-priorities.regression.spec.ts` | Pass   | Priority-by-name and label CRUD compatibility passed.                    |
+| `settings.regression.spec.ts`          | Fail   | Dashboard response is missing the expected `total`.                      |
+| `search.regression.spec.ts`            | Pass   | Search isolation/exclusions and unchanged dashboard results passed.      |
+
+The full backend suites also exposed failures in dashboard limit overrides,
+label/priority reordering, settings auth expectations, task update response
+compatibility, project filtering/sorting, and the Sprint 6 streak scenarios.
+See [`Sprint5_Regression_Log.md`](./Sprint5_Regression_Log.md) for the exact run
+summary and unresolved blockers. Existing matrix rows remain unchanged unless
+their entire case was verified; this partial regression run does not justify
+marking the broader cases Passing.
+
 ## 1. Sorting & Filtering
 
 ### 1.1 Backend Integration Tests

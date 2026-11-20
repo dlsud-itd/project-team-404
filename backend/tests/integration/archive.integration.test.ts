@@ -3,6 +3,7 @@ import { afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { request, type TestResponse } from './helpers/request';
 import {
   configureSupabaseTest,
+  defaultPriorityIdFor,
   deleteIntegrationAccounts,
   loginAs,
   type IntegrationAccount,
@@ -14,7 +15,6 @@ const integrationDescribe = testSupabase ? describe : describe.skip;
 integrationDescribe('archive integration', () => {
   let app: Express;
   let prisma: typeof import('../../src/shared/db/prisma.client').prisma;
-  let mediumPriorityId: number;
 
   beforeAll(async () => {
     const [{ app: productionApp }, prismaModule] = await Promise.all([
@@ -23,11 +23,6 @@ integrationDescribe('archive integration', () => {
     ]);
     app = productionApp;
     prisma = prismaModule.prisma;
-    const mediumPriority = await prisma.priorityLevel.findUniqueOrThrow({
-      where: { name: 'medium' },
-      select: { id: true },
-    });
-    mediumPriorityId = mediumPriority.id;
   });
 
   afterEach(async () => {
@@ -100,11 +95,12 @@ integrationDescribe('archive integration', () => {
       data: {
         userId,
         projectId,
-        priorityId: mediumPriorityId,
+        priorityId: await defaultPriorityIdFor(userId),
         title: values.title,
         dueDate: values.dueDate,
         deadline: values.deadline,
         isDone: values.isDone,
+        boardStatus: values.isDone ? 'done' : 'todo',
         recurrence: values.recurrence,
         archivedAt: values.archivedAt,
         deletedAt: values.deletedAt,
@@ -221,7 +217,7 @@ integrationDescribe('archive integration', () => {
     });
     expect(taskArchive.status).toBe(200);
     expect(taskArchive.body).toMatchObject({
-      id: task.id,
+      taskId: task.id,
       isArchived: true,
     });
     const taskArchivedAt = taskArchive.body.archivedAt;
