@@ -55,6 +55,30 @@ export interface TaskListFilter {
 }
 
 /**
+ * Adds the Sprint 5 filters (priorities, labels, due date, repeat) to a request's params.
+ * Shared by the task list and the board, which accept the same filters.
+ */
+export function appendTaskFilters(params: HttpParams, filter: TaskListFilter): HttpParams {
+  const priorities = filter.priorities ?? (filter.priority ? [filter.priority] : []);
+  if (priorities.length === 1 && LEGACY_PRIORITY_NAMES.includes(priorities[0].toLowerCase())) {
+    // One built-in level goes through the legacy filter, which Sprint 3 servers also understand.
+    params = params.set('priority', priorities[0].toLowerCase());
+  } else if (priorities.length) {
+    params = params.set('priorities', priorities.join(','));
+  }
+  const labelIds = filter.labelIds ?? (filter.labelId !== undefined ? [filter.labelId] : []);
+  if (labelIds.length === 1) params = params.set('labelId', labelIds[0]);
+  else if (labelIds.length) params = params.set('labelIds', labelIds.join(','));
+  if (filter.labelMatch) params = params.set('labelMatch', filter.labelMatch);
+  if (filter.dueFrom) params = params.set('dueFrom', filter.dueFrom);
+  if (filter.dueTo) params = params.set('dueTo', filter.dueTo);
+  if (filter.hasDueDate !== undefined) params = params.set('hasDueDate', filter.hasDueDate);
+  if (filter.overdue) params = params.set('overdue', true);
+  if (filter.recurring !== undefined) params = params.set('recurring', filter.recurring);
+  return params;
+}
+
+/**
  * Create, read, update and delete calls for /api/tasks. Successful calls also update
  * TasksStore, so every view of a project's tasks stays in step without a reload.
  * The auth interceptor adds the token and handles expired sessions.
@@ -72,27 +96,20 @@ export class TaskService {
   /** Each saved completion or reopening, wherever in the app it was made. */
   readonly completions: Observable<TaskCompletion> = this.completed.asObservable();
 
+  /**
+   * Tells the rest of the app about a completion saved elsewhere, such as a task dragged into
+   * the board's Done column, so streaks and the dashboard refresh as they do for the checkbox.
+   */
+  announceCompletion(completion: TaskCompletion): void {
+    this.completed.next(completion);
+  }
+
   /** GET /api/tasks, open and completed, optionally limited to one project. */
   list(filter: TaskListFilter = {}): Observable<Task[]> {
     let params = new HttpParams();
     if (filter.projectId !== undefined) params = params.set('projectId', filter.projectId);
     params = params.set('status', filter.status ?? 'all').set('pageSize', MAX_PAGE_SIZE);
-    const priorities = filter.priorities ?? (filter.priority ? [filter.priority] : []);
-    if (priorities.length === 1 && LEGACY_PRIORITY_NAMES.includes(priorities[0].toLowerCase())) {
-      // One built-in level goes through the legacy filter, which Sprint 3 servers also understand.
-      params = params.set('priority', priorities[0].toLowerCase());
-    } else if (priorities.length) {
-      params = params.set('priorities', priorities.join(','));
-    }
-    const labelIds = filter.labelIds ?? (filter.labelId !== undefined ? [filter.labelId] : []);
-    if (labelIds.length === 1) params = params.set('labelId', labelIds[0]);
-    else if (labelIds.length) params = params.set('labelIds', labelIds.join(','));
-    if (filter.labelMatch) params = params.set('labelMatch', filter.labelMatch);
-    if (filter.dueFrom) params = params.set('dueFrom', filter.dueFrom);
-    if (filter.dueTo) params = params.set('dueTo', filter.dueTo);
-    if (filter.hasDueDate !== undefined) params = params.set('hasDueDate', filter.hasDueDate);
-    if (filter.overdue) params = params.set('overdue', true);
-    if (filter.recurring !== undefined) params = params.set('recurring', filter.recurring);
+    params = appendTaskFilters(params, filter);
     if (filter.orderBy) params = params.set('orderBy', filter.orderBy);
     if (filter.orderDirection) params = params.set('orderDirection', filter.orderDirection);
     if (filter.page !== undefined) params = params.set('page', filter.page);

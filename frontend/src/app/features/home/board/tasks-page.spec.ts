@@ -248,3 +248,116 @@ describe('TasksPage filters and sort', () => {
     expect(titles()).toEqual(['Review actual project work']);
   });
 });
+
+describe('TasksPage board view', () => {
+  let fixture: ComponentFixture<TasksPage>;
+  let http: HttpTestingController;
+  let router: Router;
+
+  const BOARD_URL = `${TASKS_URL}/board`;
+  const page = () => fixture.nativeElement as HTMLElement;
+  const el = <T extends HTMLElement>(selector: string) =>
+    page().querySelector(selector) as T | null;
+  const views = () => [...page().querySelectorAll<HTMLAnchorElement>('app-view-switcher .view')];
+
+  /** Opens the tab at this URL and answers the page's own first requests. */
+  async function open(url: string): Promise<void> {
+    await router.navigateByUrl(url);
+    fixture = TestBed.createComponent(TasksPage);
+    fixture.detectChanges();
+    http
+      .expectOne(`${PROJECTS_URL}?isArchived=false`)
+      .flush([apiProject(INBOX), apiProject(DESIGN)]);
+    http.expectOne(`${PROJECTS_URL}?isArchived=true`).flush([]);
+    http.expectOne(LIST_URL).flush([asApiTask(TASK)]);
+    http.expectOne(LABELS_URL).flush([]);
+    fixture.detectChanges();
+  }
+
+  /** Answers the board's requests for one project. */
+  function flushBoard(projectId: number, tasks: Task[]): void {
+    http.expectOne(`${BOARD_URL}?projectId=${projectId}`).flush({
+      projectId,
+      columns: {
+        todo: tasks.map((t, position) => ({
+          id: t.taskId,
+          title: t.title,
+          boardStatus: 'todo',
+          isDone: false,
+          position,
+          doneAt: null,
+        })),
+        inProgress: [],
+        done: [],
+      },
+      counts: { todo: tasks.length, inProgress: 0, done: 0 },
+    });
+    http
+      .expectOne(`${TASKS_URL}?projectId=${projectId}&status=all&pageSize=100&page=1`)
+      .flush(tasks.map(asApiTask));
+    fixture.detectChanges();
+  }
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      imports: [TasksPage],
+      providers: [
+        provideRouter([]),
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        { provide: TASK_QUERY_DEBOUNCE_MS, useValue: 0 },
+      ],
+    });
+    http = TestBed.inject(HttpTestingController);
+    router = TestBed.inject(Router);
+  });
+
+  afterEach(() => http.verify());
+
+  it('offers a List and Board switch that keeps the tab', async () => {
+    await open('/?tab=tasks');
+
+    expect(views().map((v) => [v.textContent?.trim(), v.getAttribute('aria-current')])).toEqual([
+      ['List', 'page'],
+      ['Board', null],
+    ]);
+    expect(views()[1].getAttribute('href')).toBe('/?tab=tasks&taskView=board');
+    expect(el('app-board-view')).toBeNull();
+  });
+
+  it('shows the first real project’s board and hides the sort', async () => {
+    await open('/?tab=tasks&taskView=board');
+    flushBoard(DESIGN.projectId, [TASK]);
+
+    expect(el<HTMLSelectElement>('#board-project')!.value).toBe(String(DESIGN.projectId));
+    expect(el('app-board-column .open')?.textContent?.trim()).toBe(TASK.title);
+    expect(el('app-sort-menu')).toBeNull();
+    expect(el('li.task')).toBeNull();
+  });
+
+  it('switches the board to another project through the URL', async () => {
+    await open('/?tab=tasks&taskView=board');
+    flushBoard(DESIGN.projectId, [TASK]);
+
+    const select = el<HTMLSelectElement>('#board-project')!;
+    select.value = String(INBOX.projectId);
+    select.dispatchEvent(new Event('change'));
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(router.url).toBe(`/?tab=tasks&taskView=board&boardProject=${INBOX.projectId}`);
+    flushBoard(INBOX.projectId, []);
+    expect(el('app-board-view .empty-title')?.textContent?.trim()).toBe('No tasks here yet.');
+  });
+
+  it('creates new tasks in the board’s project', async () => {
+    await open(`/?tab=tasks&taskView=board&boardProject=${DESIGN.projectId}`);
+    flushBoard(DESIGN.projectId, [TASK]);
+
+    el<HTMLButtonElement>('.heading-row .new')!.click();
+    fixture.detectChanges();
+    http.match(LABELS_URL).forEach((r) => r.flush([]));
+
+    expect(TestBed.inject(TasksStore).creating()).toEqual({ projectId: DESIGN.projectId });
+  });
+});

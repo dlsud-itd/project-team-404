@@ -1,6 +1,7 @@
 <section class="panel" aria-labelledby="all-tasks-heading">
   <header class="heading-row">
     <h2 id="all-tasks-heading" class="heading">All Tasks</h2>
+    <app-view-switcher class="views" [view]="view()" [param]="viewParam" />
     <button type="button" class="new" [disabled]="loading()" (click)="openNewTaskDialog()">
       + New task
     </button>
@@ -14,14 +15,17 @@
       (changed)="query.set($event)"
       (cleared)="query.clear()"
     />
-    <app-sort-menu
-      class="sort"
-      label="Sort tasks"
-      [options]="sortOptions"
-      [value]="query.query().orderBy ?? ''"
-      [direction]="query.query().orderDirection"
-      (changed)="setSort($event)"
-    />
+    <!-- The board keeps its own order, so sorting only applies to the list. -->
+    @if (view() === 'list') {
+      <app-sort-menu
+        class="sort"
+        label="Sort tasks"
+        [options]="sortOptions"
+        [value]="query.query().orderBy ?? ''"
+        [direction]="query.query().orderDirection"
+        (changed)="setSort($event)"
+      />
+    }
   </section>
 
   @if (labelsError(); as message) {
@@ -33,6 +37,33 @@
 
   @if (loading()) {
     <p class="status" role="status">Loading your tasks…</p>
+  } @else if (view() === 'board') {
+    @if (boardProjectId(); as projectId) {
+      <div class="board-project">
+        <label for="board-project">Project</label>
+        <select id="board-project" (change)="selectBoardProject($event)">
+          @for (project of projectsStore.active(); track project.projectId) {
+            <option [value]="project.projectId" [selected]="project.projectId === projectId">
+              {{ project.name }}
+            </option>
+          }
+        </select>
+      </div>
+      <app-board-view
+        [projectId]="projectId"
+        [filter]="boardFilter()"
+        [filtersActive]="query.count() > 0"
+        (clearFilters)="query.clear()"
+        (newTask)="openNewTaskDialog()"
+      />
+    } @else if (loadError(); as message) {
+      <div class="load-error" role="alert">
+        <p>Couldn't load your projects and tasks. {{ message }}</p>
+        <button type="button" class="retry" (click)="load()">Try again</button>
+      </div>
+    } @else {
+      <p class="empty">Create a project to see its tasks on a board.</p>
+    }
   } @else if (loadError(); as message) {
     <div class="load-error" role="alert">
       <p>Couldn't load your projects and tasks. {{ message }}</p>

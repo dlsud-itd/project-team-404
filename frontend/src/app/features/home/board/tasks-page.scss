@@ -11,6 +11,7 @@
 
 .heading-row {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
@@ -20,6 +21,41 @@
 .heading {
   margin: 0;
   font-size: 1rem;
+}
+
+// Sits beside the heading; the New task button stays at the end.
+.views {
+  margin-right: auto;
+}
+
+// The board shows one project at a time; this picks it.
+.board-project {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 0 0.875rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+
+  select {
+    min-height: 2.5rem;
+    min-width: 12rem;
+    max-width: 100%;
+    padding: 0 2rem 0 0.75rem;
+    border: 1px solid #d9cbc4;
+    border-radius: 999px;
+    background: #fff;
+    color: var(--ink);
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+
+    &:focus-visible {
+      outline: 2px solid var(--ink);
+      outline-offset: 2px;
+    }
+  }
 }
 
 .new,

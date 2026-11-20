@@ -1,0 +1,59 @@
+<p class="visually-hidden" aria-live="polite">{{ announcement() }}</p>
+
+@if (error(); as message) {
+  <div class="load-error" role="alert">
+    <p>Couldn't load the board. {{ message }}</p>
+    <button type="button" class="retry" [disabled]="loading()" (click)="reload()">
+      {{ loading() ? 'Retrying…' : 'Try again' }}
+    </button>
+  </div>
+}
+
+@if (board(); as board) {
+  @if (isEmpty()) {
+    @if (filtersActive()) {
+      <div class="empty">
+        <p class="empty-title">No tasks match these filters.</p>
+        <p>Try removing a filter, or clear them all to see the whole board.</p>
+        <button type="button" class="action" (click)="clearFilters.emit()">Clear filters</button>
+      </div>
+    } @else {
+      <div class="empty">
+        <p class="empty-title">No tasks here yet.</p>
+        <p>Add the first thing you need to get done, then drag it across as you work on it.</p>
+        <button type="button" class="action" (click)="newTask.emit()">Add a task</button>
+      </div>
+    }
+  } @else {
+    @if (filtersActive()) {
+      <p class="filter-note">
+        Filters are on, so some tasks are hidden. A moved card stays next to the cards you can see.
+      </p>
+    }
+    <div class="board" cdkDropListGroup cdkScrollable [attr.aria-busy]="saving() || loading()">
+      @for (key of columns; track key) {
+        <app-board-column
+          [key]="key"
+          [cards]="board.columns[key]"
+          [count]="board.counts[key]"
+          [projectId]="projectId()"
+          [collapsible]="key === 'done'"
+          [collapsed]="key === 'done' && doneCollapsed()"
+          [busy]="saving()"
+          (moved)="move($event)"
+          (toggled)="toggleDone()"
+        />
+      }
+    </div>
+  }
+} @else if (loading()) {
+  <div class="board skeleton" role="status" aria-label="Loading board">
+    @for (key of columns; track key) {
+      <div class="ghost-column" aria-hidden="true">
+        <span class="ghost-head"></span>
+        <span class="ghost-card"></span>
+        <span class="ghost-card short"></span>
+      </div>
+    }
+  </div>
+}
