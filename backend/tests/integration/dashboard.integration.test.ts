@@ -3,6 +3,7 @@ import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { request, type TestResponse } from './helpers/request';
 import {
   configureSupabaseTest,
+  defaultPriorityIdFor,
   deleteIntegrationAccounts,
   loginAs,
   type IntegrationAccount,
@@ -17,7 +18,6 @@ const maximumDays = 30;
 integrationDescribe('dashboard integration', () => {
   let app: Express;
   let prisma: typeof import('../../src/shared/db/prisma.client').prisma;
-  let mediumPriorityId: number;
 
   beforeAll(async () => {
     const [{ app: productionApp }, prismaModule] = await Promise.all([
@@ -26,11 +26,6 @@ integrationDescribe('dashboard integration', () => {
     ]);
     app = productionApp;
     prisma = prismaModule.prisma;
-    const mediumPriority = await prisma.priorityLevel.findUniqueOrThrow({
-      where: { name: 'medium' },
-      select: { id: true },
-    });
-    mediumPriorityId = mediumPriority.id;
   });
 
   afterEach(async () => {
@@ -82,11 +77,12 @@ integrationDescribe('dashboard integration', () => {
       data: {
         userId,
         projectId,
-        priorityId: mediumPriorityId,
+        priorityId: await defaultPriorityIdFor(userId),
         title: values.title,
         dueDate: values.dueDate,
         deadline: values.deadline,
         isDone: values.isDone,
+        boardStatus: values.isDone ? 'done' : 'todo',
         deletedAt: values.deletedAt,
       },
     });

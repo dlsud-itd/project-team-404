@@ -3,6 +3,7 @@ import { afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { request, type TestResponse } from './helpers/request';
 import {
   configureSupabaseTest,
+  defaultPriorityIdFor,
   deleteIntegrationAccounts,
   loginAs,
   type IntegrationAccount,
@@ -14,7 +15,6 @@ const integrationDescribe = testSupabase ? describe : describe.skip;
 integrationDescribe('labels integration', () => {
   let app: Express;
   let prisma: typeof import('../../src/shared/db/prisma.client').prisma;
-  let mediumPriorityId: number;
 
   beforeAll(async () => {
     const [{ app: productionApp }, prismaModule] = await Promise.all([
@@ -23,11 +23,6 @@ integrationDescribe('labels integration', () => {
     ]);
     app = productionApp;
     prisma = prismaModule.prisma;
-    const mediumPriority = await prisma.priorityLevel.findUniqueOrThrow({
-      where: { name: 'medium' },
-      select: { id: true },
-    });
-    mediumPriorityId = mediumPriority.id;
   });
 
   afterEach(async () => {
@@ -181,13 +176,14 @@ integrationDescribe('labels integration', () => {
     const project = await prisma.project.create({
       data: { userId: account.id, name: 'Label order task project' },
     });
+    const priorityId = await defaultPriorityIdFor(account.id);
     const tasks = await Promise.all(
       ['First count task', 'Second count task'].map((title) =>
         prisma.task.create({
           data: {
             userId: account.id,
             projectId: project.id,
-            priorityId: mediumPriorityId,
+            priorityId,
             title,
           },
         })
@@ -297,7 +293,7 @@ integrationDescribe('labels integration', () => {
       data: {
         userId: account.id,
         projectId: project.id,
-        priorityId: mediumPriorityId,
+        priorityId: await defaultPriorityIdFor(account.id),
         title: 'Keep task after deleting label',
       },
     });
