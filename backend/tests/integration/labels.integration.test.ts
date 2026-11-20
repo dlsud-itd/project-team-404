@@ -148,6 +148,146 @@ integrationDescribe('labels integration', () => {
     });
   });
 
+  it('lists labels with task counts in sort order and persists a complete reorder', async () => {
+    const account = await createAccount();
+    const createdLabels = [];
+    for (const name of [
+      'First reorder label',
+      'Second reorder label',
+      'Third reorder label',
+    ]) {
+      const response = await apiRequest('POST', '/api/labels', account.token, {
+        name,
+      });
+      expect(response.status).toBe(201);
+      createdLabels.push({ id: labelId(response.body), name });
+    }
+
+    await Promise.all([
+      prisma.label.update({
+        where: { id: createdLabels[0].id },
+        data: { sortOrder: 20 },
+      }),
+      prisma.label.update({
+        where: { id: createdLabels[1].id },
+        data: { sortOrder: 30 },
+      }),
+      prisma.label.update({
+        where: { id: createdLabels[2].id },
+        data: { sortOrder: 10 },
+      }),
+    ]);
+
+    const project = await prisma.project.create({
+      data: { userId: account.id, name: 'Label order task project' },
+    });
+    const tasks = await Promise.all(
+      ['First count task', 'Second count task'].map((title) =>
+        prisma.task.create({
+          data: {
+            userId: account.id,
+            projectId: project.id,
+            priorityId: mediumPriorityId,
+            title,
+          },
+        })
+      )
+    );
+    await prisma.taskLabel.createMany({
+      data: [
+        { taskId: tasks[0].id, labelId: createdLabels[0].id },
+        { taskId: tasks[1].id, labelId: createdLabels[0].id },
+        { taskId: tasks[0].id, labelId: createdLabels[1].id },
+      ],
+    });
+
+    const initial = await apiRequest('GET', '/api/labels', account.token);
+    expect(initial.status).toBe(200);
+    expect(initial.body).toMatchObject([
+      { id: createdLabels[2].id, sortOrder: 10, taskCount: 0 },
+      { id: createdLabels[0].id, sortOrder: 20, taskCount: 2 },
+      { id: createdLabels[1].id, sortOrder: 30, taskCount: 1 },
+    ]);
+
+    const reorderedIds = [
+      createdLabels[1].id,
+      createdLabels[2].id,
+      createdLabels[0].id,
+    ];
+    const reorder = await apiRequest(
+      'PUT',
+      '/api/labels/reorder',
+      account.token,
+      { labelIds: reorderedIds }
+    );
+    expect(reorder.status).toBe(200);
+    expect(reorder.body).toEqual({ labelIds: reorderedIds });
+
+    const updatedList = await apiRequest('GET', '/api/labels', account.token);
+    expect(updatedList.status).toBe(200);
+    expect(updatedList.body).toMatchObject([
+      { id: reorderedIds[0], sortOrder: 1, taskCount: 1 },
+      { id: reorderedIds[1], sortOrder: 2, taskCount: 0 },
+      { id: reorderedIds[2], sortOrder: 3, taskCount: 2 },
+    ]);
+    expect(
+      (
+        await prisma.label.findMany({
+          where: { userId: account.id },
+          orderBy: { sortOrder: 'asc' },
+          select: { id: true },
+        })
+      ).map(({ id }) => id)
+    ).toEqual(reorderedIds);
+
+    for (const labelIds of [
+      reorderedIds.slice(1),
+      [reorderedIds[0], reorderedIds[0], reorderedIds[2]],
+    ]) {
+      const invalid = await apiRequest(
+        'PUT',
+        '/api/labels/reorder',
+        account.token,
+        { labelIds }
+      );
+      expect(invalid.status).toBe(400);
+    }
+  });
+
+  it('hides another user’s label and validates label ID params', async () => {
+    const account = await createAccount();
+    const otherAccount = await createAccount();
+    const foreign = await apiRequest(
+      'POST',
+      '/api/labels',
+      otherAccount.token,
+      { name: 'Private label' }
+    );
+    expect(foreign.status).toBe(201);
+    const foreignId = labelId(foreign.body);
+
+    for (const [method, path, body] of [
+      ['GET', `/api/labels/${foreignId}`, undefined],
+      ['PUT', `/api/labels/${foreignId}`, { name: 'Should not update' }],
+      ['DELETE', `/api/labels/${foreignId}`, undefined],
+    ] as const) {
+      const response = await apiRequest(method, path, account.token, body);
+      expect(response.status).toBe(404);
+    }
+
+    expect(
+      (await apiRequest('GET', '/api/labels/not-a-number', account.token))
+        .status
+    ).toBe(400);
+    expect(
+      (
+        await apiRequest('PUT', '/api/labels/not-a-number', account.token, {
+          name: 'Invalid label ID',
+        })
+      ).status
+    ).toBe(400);
+  });
+
   it('deletes a label and its task links without deleting the task', async () => {
     const account = await createAccount();
     const project = await prisma.project.create({

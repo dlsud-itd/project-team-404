@@ -114,6 +114,84 @@ integrationDescribe('dashboard integration', () => {
     });
   }
 
+  function dashboardTotal(body: unknown): number {
+    if (
+      typeof body !== 'object' ||
+      body === null ||
+      !('total' in body) ||
+      typeof body.total !== 'number'
+    ) {
+      throw new Error('Expected dashboard response to include a numeric total');
+    }
+    return body.total;
+  }
+
+  async function setDashboardTaskLimit(
+    account: IntegrationAccount,
+    limit: number
+  ): Promise<void> {
+    const response = await request(app, '/api/settings', {
+      method: 'PATCH',
+      headers: { Authorization: `Bearer ${account.token}` },
+      body: { dashboardTaskLimit: limit },
+    });
+    expect(response.status).toBe(200);
+  }
+
+  async function seedLimitedDashboardTasks(
+    account: IntegrationAccount,
+    count: number,
+    prefix: string
+  ): Promise<void> {
+    const project = await seedProject(account.id, `${prefix} project`);
+    const today = dateInTimezone(new Date(), account.timezone);
+    const dueDate = dateOnly(addDays(today, 1));
+    const deadline = new Date(Date.now() - 60_000);
+    await Promise.all(
+      Array.from({ length: count }, (_, index) =>
+        seedTask(account.id, project.id, {
+          title: `${prefix} task ${index + 1}`,
+          dueDate,
+          deadline,
+        })
+      )
+    );
+  }
+
+  it.each([
+    ['current/upcoming', currentUpcomingPath],
+    ['overdue', '/api/dashboard/overdue-tasks'],
+  ])(
+    'applies each caller’s saved dashboard limit and reports totals for %s tasks',
+    async (_label, endpoint) => {
+      const smallerLimitAccount = await createAccount();
+      const largerLimitAccount = await createAccount();
+      await Promise.all([
+        setDashboardTaskLimit(smallerLimitAccount, 2),
+        setDashboardTaskLimit(largerLimitAccount, 3),
+        seedLimitedDashboardTasks(smallerLimitAccount, 5, 'Smaller limit'),
+        seedLimitedDashboardTasks(largerLimitAccount, 5, 'Larger limit'),
+      ]);
+
+      const [smallerDefault, largerDefault, explicitOverride] =
+        await Promise.all([
+          dashboardRequest(endpoint, smallerLimitAccount.token),
+          dashboardRequest(endpoint, largerLimitAccount.token),
+          dashboardRequest(`${endpoint}?limit=4`, smallerLimitAccount.token),
+        ]);
+
+      expect(smallerDefault.status).toBe(200);
+      expect(largerDefault.status).toBe(200);
+      expect(explicitOverride.status).toBe(200);
+      expect(dashboardTotal(smallerDefault.body)).toBe(5);
+      expect(taskIds(smallerDefault.body)).toHaveLength(2);
+      expect(dashboardTotal(largerDefault.body)).toBe(5);
+      expect(taskIds(largerDefault.body)).toHaveLength(3);
+      expect(dashboardTotal(explicitOverride.body)).toBe(5);
+      expect(taskIds(explicitOverride.body)).toHaveLength(4);
+    }
+  );
+
   it('returns due tasks from today through the default window end only', async () => {
     const account = await createAccount();
     const project = await seedProject(account.id, 'Current and upcoming');
