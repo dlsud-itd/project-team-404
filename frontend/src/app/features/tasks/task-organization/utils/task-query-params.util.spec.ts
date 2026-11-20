@@ -1,13 +1,16 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { convertToParamMap } from '@angular/router';
 import { DEFAULT_TASK_QUERY, type TaskQuery } from '../types/task-query.types';
 import {
   activeFilterCount,
   hasInvalidRange,
+  rejectedTaskParams,
   sameTaskQuery,
   taskQueryFromParams,
   taskQueryToParams,
   toTaskListFilter,
   updateTaskQuery,
+  withoutRejectedParams,
 } from './task-query-params.util';
 
 const query = (changes: Partial<TaskQuery> = {}): TaskQuery => ({
@@ -239,6 +242,85 @@ describe('toTaskListFilter', () => {
       status: 'active',
       orderBy: 'priority',
       orderDirection: 'desc',
+    });
+  });
+});
+
+describe('rejectedTaskParams', () => {
+  const badRequest = (error: unknown, status = 400) => new HttpErrorResponse({ status, error });
+
+  it('reads the fields of a validate-request 400', () => {
+    expect(
+      rejectedTaskParams(
+        badRequest({
+          error: 'Invalid task filters',
+          details: [
+            { field: 'priorities', message: 'Priorities must be …' },
+            { field: 'dueFrom', message: 'dueFrom must not be later than dueTo' },
+          ],
+        }),
+      ),
+    ).toEqual(['priorities', 'dueFrom']);
+  });
+
+  it('gives an empty list for a 400 without details', () => {
+    expect(rejectedTaskParams(badRequest({ error: 'Invalid task filters' }))).toEqual([]);
+    expect(rejectedTaskParams(badRequest(null))).toEqual([]);
+  });
+
+  it('gives null for anything that is not a 400', () => {
+    expect(rejectedTaskParams(badRequest({ error: 'Internal server error' }, 500))).toBeNull();
+    expect(rejectedTaskParams(new Error('offline'))).toBeNull();
+  });
+});
+
+describe('withoutRejectedParams', () => {
+  const full = query({
+    priorities: ['urgent'],
+    labelIds: [4, 9],
+    labelMatch: 'all',
+    due: 'custom',
+    dueFrom: '2026-11-22',
+    dueTo: '2026-11-16',
+    recurring: true,
+    status: 'active',
+    orderBy: 'title',
+    orderDirection: 'desc',
+  });
+
+  it('removes only the refused part and names it', () => {
+    expect(withoutRejectedParams(full, ['priorities'])).toEqual({
+      query: { ...full, priorities: [] },
+      message: "Priority filter couldn't be applied, so it was removed.",
+    });
+  });
+
+  it('removes each refused part once and lists them all', () => {
+    const { query: next, message } = withoutRejectedParams(full, [
+      'labelIds',
+      'labelMatch',
+      'dueFrom',
+      'orderBy',
+    ]);
+    expect(next).toEqual({
+      ...full,
+      labelIds: [],
+      labelMatch: 'any',
+      due: null,
+      dueFrom: null,
+      dueTo: null,
+      orderBy: null,
+      orderDirection: 'asc',
+    });
+    expect(message).toBe(
+      "Label filter, due date filter and sort couldn't be applied, so they were removed.",
+    );
+  });
+
+  it('clears every filter but keeps the sort when the refused params are unknown', () => {
+    expect(withoutRejectedParams(full, ['pageSize'])).toEqual({
+      query: { ...DEFAULT_TASK_QUERY, orderBy: 'title', orderDirection: 'desc' },
+      message: "Your filters couldn't be applied, so they were cleared.",
     });
   });
 });

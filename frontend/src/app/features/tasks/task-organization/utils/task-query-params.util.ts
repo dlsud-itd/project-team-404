@@ -1,12 +1,14 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import type { ParamMap, Params } from '@angular/router';
 import { addDays } from '../../../dashboard/current-upcoming-tasks/utils/group-by-day.util';
 import type { TaskListFilter } from '../../task-crud/services/task.service';
 import type { SortOption } from '../components/sort-menu/sort-menu';
-import type {
-  DuePreset,
-  TaskQuery,
-  TaskSortField,
-  TaskStatusFilter,
+import {
+  DEFAULT_TASK_QUERY,
+  type DuePreset,
+  type TaskQuery,
+  type TaskSortField,
+  type TaskStatusFilter,
 } from '../types/task-query.types';
 
 export const TASK_SORT_FIELDS: readonly TaskSortField[] = [
@@ -179,6 +181,93 @@ export function toTaskListFilter(
     filter.orderDirection = query.orderDirection;
   }
   return filter;
+}
+
+type QueryPart = 'priorities' | 'labels' | 'due' | 'recurring' | 'status' | 'sort';
+
+/** The query part each GET /api/tasks parameter comes from, for reading a 400's details. */
+const PARAM_PARTS: Readonly<Record<string, QueryPart>> = {
+  priority: 'priorities',
+  priorities: 'priorities',
+  priorityIds: 'priorities',
+  labelId: 'labels',
+  labelIds: 'labels',
+  labelMatch: 'labels',
+  dueFrom: 'due',
+  dueTo: 'due',
+  hasDueDate: 'due',
+  overdue: 'due',
+  recurring: 'recurring',
+  status: 'status',
+  isDone: 'status',
+  orderBy: 'sort',
+  orderDirection: 'sort',
+};
+
+const PART_RESETS: Readonly<Record<QueryPart, Partial<TaskQuery>>> = {
+  priorities: { priorities: [] },
+  labels: { labelIds: [], labelMatch: 'any' },
+  due: { due: null, dueFrom: null, dueTo: null },
+  recurring: { recurring: null },
+  status: { status: 'all' },
+  sort: { orderBy: null, orderDirection: 'asc' },
+};
+
+const PART_NAMES: Readonly<Record<QueryPart, string>> = {
+  priorities: 'priority filter',
+  labels: 'label filter',
+  due: 'due date filter',
+  recurring: 'repeat filter',
+  status: 'status filter',
+  sort: 'sort',
+};
+
+/**
+ * The parameters a 400 from GET /api/tasks names in its details (validate-request.middleware),
+ * or null when the error is not such a 400.
+ */
+export function rejectedTaskParams(error: unknown): string[] | null {
+  if (!(error instanceof HttpErrorResponse) || error.status !== 400) return null;
+  const body: unknown = error.error;
+  const details =
+    body && typeof body === 'object' && 'details' in body && Array.isArray(body.details)
+      ? (body.details as unknown[])
+      : [];
+  return details.flatMap((detail) =>
+    detail && typeof detail === 'object' && 'field' in detail && typeof detail.field === 'string'
+      ? [detail.field]
+      : [],
+  );
+}
+
+/**
+ * The query without the parts the server refused, and a sentence saying what was removed. When
+ * the refused parameters are unknown, every filter goes but the sort stays.
+ */
+export function withoutRejectedParams(
+  query: TaskQuery,
+  params: readonly string[],
+): { query: TaskQuery; message: string } {
+  const parts = [...new Set(params.flatMap((param) => PARAM_PARTS[param] ?? []))];
+  if (!parts.length) {
+    const { orderBy, orderDirection } = query;
+    return {
+      query: { ...DEFAULT_TASK_QUERY, orderBy, orderDirection },
+      message: "Your filters couldn't be applied, so they were cleared.",
+    };
+  }
+  const next = parts.reduce<TaskQuery>(
+    (current, part) => updateTaskQuery(current, PART_RESETS[part]),
+    query,
+  );
+  const names = parts.map((part) => PART_NAMES[part]);
+  const list =
+    names.length === 1 ? names[0] : `${names.slice(0, -1).join(', ')} and ${names.at(-1)}`;
+  const subject = list.charAt(0).toUpperCase() + list.slice(1);
+  return {
+    query: next,
+    message: `${subject} couldn't be applied, so ${names.length === 1 ? 'it was' : 'they were'} removed.`,
+  };
 }
 
 function split(value: string | null): string[] {

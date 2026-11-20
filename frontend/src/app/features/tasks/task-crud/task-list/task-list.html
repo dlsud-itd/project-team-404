@@ -34,8 +34,8 @@
         [query]="query.query()"
         [levels]="priorities.levels()"
         [labels]="labels()"
-        (changed)="query.set($event)"
-        (cleared)="query.clear()"
+        (changed)="changeQuery($event)"
+        (cleared)="clearFilters()"
       />
       <app-sort-menu
         class="sort"
@@ -46,6 +46,10 @@
         (changed)="setSort($event)"
       />
     </section>
+
+    @if (filterError(); as message) {
+      <p class="banner-error filter-error" role="alert">{{ message }}</p>
+    }
 
     @if (store.error(); as message) {
       <div class="load-error" role="alert">
@@ -91,7 +95,7 @@
         <div class="empty">
           <p class="empty-title">No tasks match these filters.</p>
           <p>Try removing a filter, or clear them all to see every task in this project.</p>
-          <button type="button" class="new" (click)="query.clear()">Clear filters</button>
+          <button type="button" class="new" (click)="clearFilters()">Clear filters</button>
         </div>
       } @else {
         <div class="empty">
