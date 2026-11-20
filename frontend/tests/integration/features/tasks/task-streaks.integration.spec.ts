@@ -26,7 +26,14 @@ import { environment } from '../../../../src/environments/environment';
  * TaskStreaksService, TaskService, DashboardService, SessionService and authInterceptor. The user
  * is signed in by restoring a stored token and answering GET /api/auth/me, whose timezone decides
  * "today". Only the network and the clock are faked; responses follow the Sprint 6 API
- * specification and backend/src/features/tasks/task-streaks.
+ * specification and backend/src/features/tasks/task-streaks, with the 404 from
+ * task-streaks.routes.ts, require-auth's 401 and the error handler's 500.
+ *
+ * Cases: (1) recurring tasks show a badge with the count and a text label, others none; (2) the
+ * tooltip and detail show the longest streak and the last 14 periods; (3) at-risk styling while
+ * today's occurrence is open; (4) completing refetches and shows the new count and the next
+ * occurrence; (5) the dashboard lists at-risk streaks first and has an empty state; (6) a failed
+ * streak request hides the badge without breaking the list, and a 401 opens /login.
  */
 
 const API = environment.apiBaseUrl;
@@ -124,6 +131,11 @@ function series(id: number, title: string, overrides: Partial<ApiTask> = {}): Ap
 
 const MORNING_REVIEW = apiTask(41, 'Morning review');
 
+// Error bodies from task-streaks.routes.ts, require-auth.middleware.ts and error-handler.middleware.ts.
+const NOT_FOUND = { error: 'Task not found', code: 'task-not-found' };
+const TOKEN_REJECTED = { error: 'Token invalid or expired' };
+const SERVER_ERROR = { error: 'Internal server error' };
+
 const status = (code: number, statusText = 'Error') => ({ status: code, statusText });
 
 describe('Task Streaks integration (streak badge, detail and dashboard + API)', () => {
@@ -180,10 +192,25 @@ describe('Task Streaks integration (streak badge, detail and dashboard + API)', 
     );
   }
 
+  /** The badge tooltip's lines; it is a CDK overlay outside the page. */
+  const tooltipLines = () =>
+    [...document.querySelectorAll('.cdk-overlay-container .tooltip .line')].map((line) =>
+      line.textContent?.trim(),
+    );
+
+  /** The streak detail's 14 cells, oldest first, as their state. */
+  const stripStates = () => all('app-streak-detail ol.strip .cell').map((c) => c.dataset['state']);
+
   /** Opens a task's edit page and answers everything but its streak. */
   async function openTask(task: ApiTask = MORNING_REVIEW): Promise<void> {
     await harness.navigateByUrl(`/projects/${CAPSTONE.id}/tasks/${task.id}/edit`);
     await settle();
+    answerEditPage(task);
+    await settle();
+  }
+
+  /** Answers the edit page's project, label and task requests. */
+  function answerEditPage(task: ApiTask): void {
     http
       .match((req) => req.url === PROJECTS_API)
       .forEach((req) =>
@@ -191,6 +218,17 @@ describe('Task Streaks integration (streak badge, detail and dashboard + API)', 
       );
     http.match(LABELS_API).forEach((req) => req.flush([]));
     http.expectOne(`${TASKS_API}/${task.id}`).flush(task);
+  }
+
+  /** Opens the project's task list and answers everything but the streaks. */
+  async function openProjectList(tasks: ApiTask[]): Promise<void> {
+    await harness.navigateByUrl(`/projects/${CAPSTONE.id}/tasks`);
+    await settle();
+    http.expectOne(LABELS_API).flush([]);
+    http.expectOne(`${PROJECTS_API}/${CAPSTONE.id}`).flush(CAPSTONE);
+    http
+      .expectOne((r) => r.url === TASKS_API && r.params.get('projectId') === `${CAPSTONE.id}`)
+      .flush(tasks);
     await settle();
   }
 
@@ -259,6 +297,65 @@ describe('Task Streaks integration (streak badge, detail and dashboard + API)', 
       expect(el<HTMLInputElement>('#task-title').value).toBe('Morning review');
     });
 
+    // Case 2
+    it('shows the longest streak in the tooltip and the last 14 periods in the detail', async () => {
+      await startSignedIn();
+      await openTask();
+      expectTaskStreak(41).flush(
+        taskStreak(41, {
+          currentStreak: 4,
+          longestStreak: 7,
+          lastCompletedOn: '2026-11-18',
+          nextOccurrenceOn: TODAY,
+        }),
+      );
+      await settle();
+
+      const badge = el('app-streak-detail app-streak-badge .badge');
+      // Screen readers get the tooltip's text through aria-describedby at all times.
+      const description = document.getElementById(badge.getAttribute('aria-describedby')!);
+      expect(description?.textContent?.trim()).toBe(
+        'Longest streak: 7 days. Last completed: Nov 18. Due today. Complete it to keep the streak.',
+      );
+      expect(tooltipLines()).toEqual([]);
+
+      badge.dispatchEvent(new Event('mouseenter'));
+      await settle();
+      expect(tooltipLines()).toEqual([
+        'Longest streak: 7 days',
+        'Last completed: Nov 18',
+        'Due today. Complete it to keep the streak',
+      ]);
+      badge.dispatchEvent(new Event('mouseleave'));
+      await settle();
+      expect(tooltipLines()).toEqual([]);
+
+      // Keyboard users get the same tooltip on focus.
+      badge.dispatchEvent(new Event('focus'));
+      await settle();
+      expect(tooltipLines()[0]).toBe('Longest streak: 7 days');
+      badge.dispatchEvent(new Event('blur'));
+      await settle();
+
+      expect(text('app-streak-detail .longest')).toBe('7 days');
+      expect(el('app-streak-detail ol.strip').getAttribute('aria-label')).toBe(
+        'Last 14 periods, oldest first',
+      );
+      // The 4-day run ending yesterday, today still open, and nothing known before the run.
+      expect(stripStates()).toEqual([
+        ...Array(9).fill('unknown'),
+        'done',
+        'done',
+        'done',
+        'done',
+        'open',
+      ]);
+      const cells = all('app-streak-detail ol.strip .cell');
+      expect(cells[0].getAttribute('aria-label')).toBe('Nov 6: No record');
+      expect(cells[9].getAttribute('aria-label')).toBe('Nov 15: Done');
+      expect(cells[13].getAttribute('aria-label')).toBe('Nov 19: Open');
+    });
+
     it('shows a clear "No streak yet" state for a streak of 0', async () => {
       await startSignedIn();
       await openTask();
@@ -305,6 +402,61 @@ describe('Task Streaks integration (streak badge, detail and dashboard + API)', 
       expect(badge.classList).toContain('at-risk');
       expect(badge.tabIndex).toBe(0);
       expect(once.querySelector('app-streak-badge')).toBeNull();
+    });
+  });
+
+  // Case 3 (FE-STR-01)
+  describe('At-risk styling', () => {
+    it("marks the badge and detail at risk while today's occurrence is open", async () => {
+      await startSignedIn();
+      await openTask();
+      expectTaskStreak(41).flush(
+        taskStreak(41, { lastCompletedOn: '2026-11-18', nextOccurrenceOn: TODAY }),
+      );
+      await settle();
+
+      const badge = el('app-streak-detail app-streak-badge .badge');
+      expect(badge.classList).toContain('at-risk');
+      expect(badge.getAttribute('aria-label')).toBe('Streak: 4 days, at risk');
+      expect(text('app-streak-detail .risk')).toBe(
+        'Due today. Complete it to keep your streak going.',
+      );
+      expect(text('app-streak-detail .next')).toBe('Nov 19');
+    });
+
+    it("drops the at-risk styling once today's occurrence is done", async () => {
+      await startSignedIn();
+      await openTask();
+      expectTaskStreak(41).flush(taskStreak(41, { lastCompletedOn: TODAY }));
+      await settle();
+
+      const badge = el('app-streak-detail app-streak-badge .badge');
+      expect(badge.classList).not.toContain('at-risk');
+      expect(badge.getAttribute('aria-label')).toBe('Streak: 4 days');
+      expect(el('app-streak-detail .risk')).toBeNull();
+      expect(text('app-streak-detail .next')).toBe('Nov 20');
+      expect(stripStates().at(-1)).toBe('done');
+    });
+
+    it('shows a missed occurrence as an ended streak, not at risk', async () => {
+      await startSignedIn();
+      await openTask();
+      // Done on the 17th, missed on the 18th: the server has reset the current streak.
+      expectTaskStreak(41).flush(
+        taskStreak(41, { currentStreak: 0, longestStreak: 7, lastCompletedOn: '2026-11-17' }),
+      );
+      await settle();
+
+      const badge = el('app-streak-detail app-streak-badge .badge');
+      expect(badge.classList).not.toContain('at-risk');
+      expect(badge.classList).toContain('cold');
+      expect(text('app-streak-detail .current')).toBe('No streak yet');
+      expect(el('app-streak-detail .risk')).toBeNull();
+      expect(text('app-streak-detail .note')).toBe(
+        'The last occurrence was missed. Complete the next one to start a new streak.',
+      );
+      expect(el('app-streak-detail .next')).toBeNull();
+      expect(stripStates().slice(-3)).toEqual(['done', 'missed', 'open']);
     });
   });
 
@@ -405,6 +557,28 @@ describe('Task Streaks integration (streak badge, detail and dashboard + API)', 
       expect(el('app-dashboard-streaks button.complete')).toBeNull();
       expect(text('app-dashboard-streaks .notice')).toBe('“Stretch” is done. Streak kept.');
       expect(router.url).toBe('/dashboard');
+
+      // The row now opens the next occurrence, whose detail shows the new count and date.
+      const next = apiTask(22, 'Stretch', { dueDate: '2026-11-20', scheduledDate: '2026-11-20' });
+      const link = el<HTMLAnchorElement>('app-dashboard-streaks a.title');
+      expect(link.getAttribute('href')).toBe(`/projects/${CAPSTONE.id}/tasks/22/edit`);
+      await click(link);
+      answerEditPage(next);
+      await settle();
+      expectTaskStreak(22).flush(
+        taskStreak(22, {
+          currentStreak: 3,
+          longestStreak: 5,
+          lastCompletedOn: TODAY,
+          nextOccurrenceOn: '2026-11-20',
+        }),
+      );
+      await settle();
+
+      expect(text('app-streak-detail .current')).toBe('3 days');
+      expect(text('app-streak-detail .last')).toBe('Nov 19');
+      expect(text('app-streak-detail .next')).toBe('Nov 20');
+      expect(el<HTMLInputElement>('#task-due-date').value).toBe('2026-11-20');
     });
 
     it('completes from the home task list and requests the streak again', async () => {
@@ -447,7 +621,7 @@ describe('Task Streaks integration (streak badge, detail and dashboard + API)', 
       await startSignedIn();
       await openTask();
 
-      expectTaskStreak(41).flush({ error: 'Task not found', code: 'task-not-found' }, status(404));
+      expectTaskStreak(41).flush(NOT_FOUND, status(404));
       await settle();
 
       expect(text('app-streak-detail [role="alert"] p')).toBe("Couldn't load this streak.");
@@ -459,7 +633,7 @@ describe('Task Streaks integration (streak badge, detail and dashboard + API)', 
       await startSignedIn();
       await openTask();
 
-      expectTaskStreak(41).flush({ error: 'Internal error' }, status(500));
+      expectTaskStreak(41).flush(SERVER_ERROR, status(500));
       await settle();
       expect(text('app-streak-detail [role="alert"] p')).toBe("Couldn't load this streak.");
 
@@ -474,7 +648,7 @@ describe('Task Streaks integration (streak badge, detail and dashboard + API)', 
     it('keeps the other dashboard sections when the streaks fail, and retries', async () => {
       await startSignedIn();
       await openDashboard();
-      expectDashboardStreaks().flush({ error: 'Internal error' }, status(500));
+      expectDashboardStreaks().flush(SERVER_ERROR, status(500));
       expect(expectRecurringTasks().cancelled).toBe(true);
       await settle();
 
@@ -490,11 +664,52 @@ describe('Task Streaks integration (streak badge, detail and dashboard + API)', 
       expect(rowTitles()).toEqual(['Read']);
     });
 
+    // Case 6
+    it('hides the badge when its streak request fails and keeps the task list working', async () => {
+      await startSignedIn();
+      await openProjectList([
+        MORNING_REVIEW,
+        apiTask(42, 'Stretch', { recurrence: 'weekly', recurrenceDays: [4] }),
+        apiTask(50, 'Submit essay', { recurrence: null }),
+      ]);
+
+      expectTaskStreak(41).flush(SERVER_ERROR, status(500));
+      expectTaskStreak(42).flush(
+        taskStreak(42, { currentStreak: 3, longestStreak: 3, lastCompletedOn: '2026-11-12' }),
+      );
+      await settle();
+
+      const [failed, weekly, once] = all('app-task-item');
+      expect(failed.querySelector('app-streak-badge .badge')).toBeNull();
+      expect(weekly.querySelector('app-streak-badge .count')?.textContent?.trim()).toBe('3 weeks');
+      expect(once.querySelector('app-streak-badge')).toBeNull();
+      expect(all('app-task-item .title').map((t) => t.textContent?.trim())).toEqual([
+        'Morning review',
+        'Stretch',
+        'Submit essay',
+      ]);
+      // The list itself reports no error and stays usable.
+      expect(el('app-task-list .load-error')).toBeNull();
+      expect(el('app-task-list [role="alert"]')).toBeNull();
+      expect(el<HTMLButtonElement>('app-task-list button.new').disabled).toBe(false);
+    });
+
+    it('clears the session and opens /login on a 401 for a list badge', async () => {
+      await startSignedIn();
+      await openProjectList([MORNING_REVIEW]);
+
+      expectTaskStreak(41).flush(TOKEN_REJECTED, status(401, 'Unauthorized'));
+      await settle();
+
+      expect(router.url).toBe('/login');
+      expect(localStorage.getItem(TOKEN_STORAGE_KEY)).toBeNull();
+    });
+
     it('clears the session and opens /login on a 401', async () => {
       await startSignedIn();
       await openTask();
 
-      expectTaskStreak(41).flush({ error: 'Invalid token', code: 'unauthorized' }, status(401));
+      expectTaskStreak(41).flush(TOKEN_REJECTED, status(401));
       await settle();
 
       expect(router.url).toBe('/login');

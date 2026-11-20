@@ -24,10 +24,14 @@ import { TaskFilterBar } from '../../task-organization/components/filter-bar/fil
 import { SortMenu, type SortChange } from '../../task-organization/components/sort-menu/sort-menu';
 import { LabelService, type Label } from '../../task-organization/services/label.service';
 import { TaskQueryStore } from '../../task-organization/state/task-query.store';
+import type { TaskQuery } from '../../task-organization/types/task-query.types';
 import {
   TASK_SORT_OPTIONS,
+  rejectedTaskParams,
+  sameTaskQuery,
   taskSortField,
   toTaskListFilter,
+  withoutRejectedParams,
 } from '../../task-organization/utils/task-query-params.util';
 import { instantToDate, userTimeZone } from '../../task-scheduling/utils/date-format.util';
 
@@ -70,6 +74,8 @@ export class TaskList {
   protected readonly deleteError = signal<string | null>(null);
   protected readonly notice = signal<string | null>(null);
   protected readonly actionError = signal<string | null>(null);
+  /** Says which filter the server refused and was removed; cleared by the next change. */
+  protected readonly filterError = signal<string | null>(null);
 
   constructor() {
     this.reloads
@@ -78,7 +84,12 @@ export class TaskList {
           this.tasks
             .refresh(this.projectId(), toTaskListFilter(this.query.query(), this.today()))
             // The store records the error for the template.
-            .pipe(catchError(() => EMPTY)),
+            .pipe(
+              catchError((error: unknown) => {
+                this.dropRejectedFilters(error);
+                return EMPTY;
+              }),
+            ),
         ),
         takeUntilDestroyed(),
       )
@@ -113,8 +124,34 @@ export class TaskList {
     this.reloads.next();
   }
 
+  protected changeQuery(changes: Partial<TaskQuery>): void {
+    this.filterError.set(null);
+    this.query.set(changes);
+  }
+
+  protected clearFilters(): void {
+    this.filterError.set(null);
+    this.query.clear();
+  }
+
   protected setSort({ value, direction }: SortChange): void {
-    this.query.set({ orderBy: taskSortField(value), orderDirection: direction });
+    this.changeQuery({ orderBy: taskSortField(value), orderDirection: direction });
+  }
+
+  /**
+   * A 400 names the parameters the server refused, e.g. a priority level it does not know.
+   * Retrying would fail the same way, so those filters are removed and the list reloads.
+   * Other errors stay in the store, where the page offers a retry.
+   */
+  private dropRejectedFilters(error: unknown): void {
+    const params = rejectedTaskParams(error);
+    if (!params) return;
+    const current = this.query.query();
+    const { query, message } = withoutRejectedParams(current, params);
+    if (sameTaskQuery(query, current)) return;
+    this.store.error.set(null);
+    this.filterError.set(message);
+    this.query.set(query);
   }
 
   /** Today in the user's timezone, the day the server compares due dates against. */
