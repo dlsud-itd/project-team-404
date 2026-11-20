@@ -6,6 +6,16 @@
   max-width: 48rem;
   margin: 0 auto;
   padding: 2rem 1rem 4rem;
+
+  /* Three board columns need more room than the list. */
+  &.wide {
+    max-width: 76rem;
+  }
+}
+
+/* List / Board switch, between the title and the filters. */
+.views {
+  margin: 0 0 1rem;
 }
 
 .back {

@@ -1,0 +1,162 @@
+@use '../../task-organization/components/filter-chips' as chips;
+
+:host {
+  display: block;
+}
+
+.visually-hidden {
+  @include chips.visually-hidden;
+}
+
+/*
+ * Three equal columns on wide screens. On narrow ones each column is most of the screen wide
+ * and the board scrolls sideways, snapping to a column.
+ */
+.board {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+  align-items: stretch;
+
+  @media (max-width: 767px) {
+    grid-template-columns: none;
+    grid-auto-columns: min(85%, 22rem);
+    grid-auto-flow: column;
+    gap: 0.75rem;
+    margin: 0 -1rem;
+    padding: 0 1rem 0.75rem;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-padding: 0 1rem;
+    scroll-snap-type: x mandatory;
+
+    > * {
+      scroll-snap-align: start;
+    }
+  }
+}
+
+.filter-note {
+  margin: 0 0 0.75rem;
+  color: var(--ink-muted);
+  font-size: 0.8125rem;
+}
+
+.load-error {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin: 0 0 1.25rem;
+  padding: 0.75rem 1rem;
+  border-left: 3px solid var(--error);
+  background: #fff;
+  color: var(--error);
+  font-size: 0.875rem;
+
+  p {
+    margin: 0;
+  }
+}
+
+.retry {
+  padding: 0.375rem 1rem;
+  border: 1px solid var(--error);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--error);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+
+  &:disabled {
+    cursor: progress;
+    opacity: 0.7;
+  }
+
+  @include chips.focus-ring;
+}
+
+.empty {
+  padding: 2rem 1.5rem;
+  border: 1px dashed var(--orange-light);
+  border-radius: 0.75rem;
+  background: #fff;
+  text-align: center;
+
+  p {
+    margin: 0 0 0.5rem;
+    color: var(--ink-muted);
+    font-size: 0.875rem;
+  }
+}
+
+.empty-title {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.action {
+  margin-top: 0.75rem;
+  padding: 0.5rem 1.125rem;
+  border: 0;
+  border-radius: 999px;
+  background: #7b23a8;
+  color: #fff;
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+
+  &:hover {
+    filter: brightness(1.1);
+  }
+
+  @include chips.focus-ring;
+}
+
+/* Loading placeholder in the board's shape, so the page does not jump when it arrives. */
+.ghost-column {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-height: 14rem;
+  padding: 0.75rem;
+  border-radius: 0.875rem;
+  background: #fbf3ef;
+}
+
+.ghost-head,
+.ghost-card {
+  border-radius: 0.5rem;
+  background: #f3e3db;
+  animation: pulse 1.4s ease-in-out infinite;
+}
+
+.ghost-head {
+  width: 40%;
+  height: 1rem;
+  margin: 0.375rem 0 0.5rem;
+}
+
+.ghost-card {
+  height: 4.5rem;
+
+  &.short {
+    height: 3.25rem;
+  }
+}
+
+@keyframes pulse {
+  50% {
+    opacity: 0.55;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ghost-head,
+  .ghost-card {
+    animation: none;
+  }
+}

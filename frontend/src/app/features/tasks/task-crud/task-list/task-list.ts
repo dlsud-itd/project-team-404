@@ -3,12 +3,14 @@ import {
   Component,
   DestroyRef,
   computed,
+  effect,
   inject,
   signal,
+  untracked,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { EMPTY, Subject, catchError, finalize, switchMap } from 'rxjs';
+import { EMPTY, Subject, catchError, distinctUntilChanged, finalize, map, switchMap } from 'rxjs';
 import { SessionService } from '../../../auth/session/session.service';
 import { mapProjectError } from '../../../projects/project-crud/mappers/project-error.mapper';
 import { ProjectService } from '../../../projects/project-crud/services/project.service';
@@ -34,11 +36,23 @@ import {
   withoutRejectedParams,
 } from '../../task-organization/utils/task-query-params.util';
 import { instantToDate, userTimeZone } from '../../task-scheduling/utils/date-format.util';
+import { BoardView } from '../../task-views/board-view/board-view';
+import { toBoardFilter } from '../../task-views/board-view/services/task-board.service';
+import type { BoardFilter } from '../../task-views/board-view/types/task-board.types';
+import { ViewSwitcher, type TaskView } from '../../task-views/view-switcher/view-switcher';
 
 /** The tasks of one project, at /projects/:projectId/tasks. */
 @Component({
   selector: 'app-task-list',
-  imports: [RouterLink, TaskItem, ConfirmDeleteTaskDialog, TaskFilterBar, SortMenu],
+  imports: [
+    RouterLink,
+    TaskItem,
+    ConfirmDeleteTaskDialog,
+    TaskFilterBar,
+    SortMenu,
+    BoardView,
+    ViewSwitcher,
+  ],
   providers: [TaskQueryStore],
   templateUrl: './task-list.html',
   styleUrl: './task-list.scss',
@@ -61,7 +75,11 @@ export class TaskList {
   /** Each request replaces the one before it, so a slow old answer never overwrites a newer one. */
   private readonly reloads = new Subject<void>();
 
-  private readonly projectId = signal(0);
+  protected readonly projectId = signal(0);
+  /** List or board; the URL keeps it, so links and reloads open the same view. */
+  protected readonly view = signal<TaskView>('list');
+  /** The board's filters; a new object reloads the board. Null until the board first opens. */
+  protected readonly boardFilter = signal<BoardFilter | null>(null);
   protected readonly project = computed(() => this.projectsStore.byId(this.projectId()) ?? null);
   /** The project does not exist or belongs to someone else. */
   protected readonly projectMissing = signal(false);
@@ -78,6 +96,25 @@ export class TaskList {
   protected readonly filterError = signal<string | null>(null);
 
   constructor() {
+    // Read first, so the project's first load below already knows which view to fill.
+    this.route.queryParamMap
+      .pipe(
+        map((params): TaskView => (params.get('view') === 'board' ? 'board' : 'list')),
+        distinctUntilChanged(),
+        takeUntilDestroyed(),
+      )
+      .subscribe((view) => {
+        const changed = view !== this.view();
+        this.view.set(view);
+        if (changed && this.projectId() && !this.projectMissing()) this.load();
+      });
+    // The new-task popup adds to the list's store; the board has its own copy, so reload it.
+    let wasCreating = false;
+    effect(() => {
+      const creating = this.store.creating() !== null;
+      if (wasCreating && !creating) untracked(() => this.view() === 'board' && this.load());
+      wasCreating = creating;
+    });
     this.reloads
       .pipe(
         switchMap(() =>
@@ -121,7 +158,11 @@ export class TaskList {
   }
 
   protected load(): void {
-    this.reloads.next();
+    if (this.view() === 'board') {
+      this.boardFilter.set(toBoardFilter(toTaskListFilter(this.query.query(), this.today())));
+    } else {
+      this.reloads.next();
+    }
   }
 
   protected changeQuery(changes: Partial<TaskQuery>): void {
@@ -143,7 +184,7 @@ export class TaskList {
    * Retrying would fail the same way, so those filters are removed and the list reloads.
    * Other errors stay in the store, where the page offers a retry.
    */
-  private dropRejectedFilters(error: unknown): void {
+  protected dropRejectedFilters(error: unknown): void {
     const params = rejectedTaskParams(error);
     if (!params) return;
     const current = this.query.query();

@@ -457,4 +457,70 @@ describe('TaskList', () => {
       expect(titles()).toEqual(['Write chapter 1']);
     });
   });
+
+  describe('board view', () => {
+    const BOARD_URL = `${TASKS_URL}/board`;
+
+    it('switches between list and board, keeping the filters', async () => {
+      await open('/projects/10/tasks?recurring=true');
+      http.expectOne(`${PROJECTS_URL}/10`).flush(asApi(CAPSTONE));
+      http.expectOne(listUrl('recurring=true')).flush([asApiTask(CHAPTER)]);
+      harness.detectChanges();
+
+      const views = () => [
+        ...page().querySelectorAll<HTMLAnchorElement>('app-view-switcher .view'),
+      ];
+      expect(views().map((v) => [v.textContent?.trim(), v.getAttribute('aria-current')])).toEqual([
+        ['List', 'page'],
+        ['Board', null],
+      ]);
+      expect(el('app-sort-menu')).not.toBeNull();
+
+      views()[1].click();
+      await harness.fixture.whenStable();
+      harness.detectChanges();
+
+      expect(TestBed.inject(Router).url).toBe('/projects/10/tasks?recurring=true&view=board');
+      expect(el('app-sort-menu')).toBeNull();
+      expect(el('app-task-filter-bar')).not.toBeNull();
+      // The board loads itself with the same filters; the list is not asked again.
+      http.expectOne(`${BOARD_URL}?projectId=10&recurring=true`).flush({
+        projectId: 10,
+        columns: { todo: [], inProgress: [], done: [] },
+        counts: { todo: 0, inProgress: 0, done: 0 },
+      });
+      http.expectOne(listUrl('recurring=true&page=1')).flush([]);
+      harness.detectChanges();
+      expect(text('app-board-view .empty-title')).toBe('No tasks match these filters.');
+    });
+
+    it('opens on the board from a link', async () => {
+      await open('/projects/10/tasks?view=board');
+      http.expectOne(`${PROJECTS_URL}/10`).flush(asApi(CAPSTONE));
+      http.expectOne(`${BOARD_URL}?projectId=10`).flush({
+        projectId: 10,
+        columns: {
+          todo: [
+            {
+              id: 1,
+              title: 'Write chapter 1',
+              boardStatus: 'todo',
+              isDone: false,
+              position: 0,
+              doneAt: null,
+            },
+          ],
+          inProgress: [],
+          done: [],
+        },
+        counts: { todo: 1, inProgress: 0, done: 0 },
+      });
+      http.expectOne(listUrl('page=1')).flush([asApiTask(CHAPTER)]);
+      harness.detectChanges();
+
+      expect(el('.page')!.classList).toContain('wide');
+      expect(text('app-board-column .open')).toBe('Write chapter 1');
+      expect(el('app-task-item')).toBeNull();
+    });
+  });
 });

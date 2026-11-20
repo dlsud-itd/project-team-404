@@ -7,6 +7,7 @@ import {
   signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { ActivatedRoute, Router } from '@angular/router';
 import { EMPTY, Subject, catchError, finalize, forkJoin, switchMap } from 'rxjs';
 import { SessionService } from '../../auth/session/session.service';
 import { mapProjectError } from '../../projects/project-crud/mappers/project-error.mapper';
@@ -33,10 +34,29 @@ import {
 } from '../../tasks/task-organization/utils/task-query-params.util';
 import { instantToDate, userTimeZone } from '../../tasks/task-scheduling/utils/date-format.util';
 import { StreakBadge } from '../../tasks/task-streaks/components/streak-badge/streak-badge';
+import { BoardView } from '../../tasks/task-views/board-view/board-view';
+import { toBoardFilter } from '../../tasks/task-views/board-view/services/task-board.service';
+import type { BoardFilter } from '../../tasks/task-views/board-view/types/task-board.types';
+import { ViewSwitcher, type TaskView } from '../../tasks/task-views/view-switcher/view-switcher';
+
+/**
+ * The query parameters for the Tasks tab's view and board project. Home already uses `view`
+ * for the Projects tab, so these have their own names.
+ */
+export const TASK_VIEW_PARAM = 'taskView';
+export const BOARD_PROJECT_PARAM = 'boardProject';
 
 @Component({
   selector: 'app-tasks-page',
-  imports: [ConfirmDeleteTaskDialog, NewTaskDialog, TaskFilterBar, SortMenu, StreakBadge],
+  imports: [
+    ConfirmDeleteTaskDialog,
+    NewTaskDialog,
+    TaskFilterBar,
+    SortMenu,
+    StreakBadge,
+    BoardView,
+    ViewSwitcher,
+  ],
   providers: [TaskQueryStore],
   templateUrl: './tasks-page.html',
   styleUrl: './tasks-page.scss',
@@ -82,7 +102,35 @@ export class TasksPage {
   protected readonly deleting = signal(false);
   protected readonly deleteError = signal<string | null>(null);
 
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  protected readonly viewParam = TASK_VIEW_PARAM;
+  /** List of every task, or one project's board; the URL keeps it. */
+  protected readonly view = signal<TaskView>('list');
+  /** The project named in the URL, if any. */
+  private readonly requestedProject = signal<number | null>(null);
+  /**
+   * The board's project: the one in the URL if it still exists, otherwise the first project
+   * that is not the Inbox, otherwise the Inbox.
+   */
+  protected readonly boardProjectId = computed(() => {
+    const projects = this.projectsStore.active();
+    const requested = this.requestedProject();
+    if (requested !== null && projects.some((p) => p.projectId === requested)) return requested;
+    return (projects.find((p) => !p.isInbox) ?? projects[0])?.projectId ?? null;
+  });
+  /** The board's filters; a new object reloads the board. */
+  protected readonly boardFilter = signal<BoardFilter>({});
+
   constructor() {
+    this.route.queryParamMap.pipe(takeUntilDestroyed()).subscribe((params) => {
+      const view: TaskView = params.get(TASK_VIEW_PARAM) === 'board' ? 'board' : 'list';
+      const project = Number(params.get(BOARD_PROJECT_PARAM));
+      this.requestedProject.set(Number.isInteger(project) && project > 0 ? project : null);
+      if (view === this.view()) return;
+      this.view.set(view);
+      this.reloadView();
+    });
     this.reloads
       .pipe(
         switchMap(() => {
@@ -99,7 +147,7 @@ export class TasksPage {
         takeUntilDestroyed(),
       )
       .subscribe((tasks) => this.taskList.set(tasks));
-    this.query.changes$.pipe(takeUntilDestroyed()).subscribe(() => this.reloads.next());
+    this.query.changes$.pipe(takeUntilDestroyed()).subscribe(() => this.reloadView());
     this.labelsApi
       .list()
       .pipe(takeUntilDestroyed())
@@ -135,6 +183,21 @@ export class TasksPage {
           );
         },
       });
+  }
+
+  /** Reloads whichever view is on screen with the current filters. */
+  private reloadView(): void {
+    if (this.view() === 'board') this.boardFilter.set(toBoardFilter(this.filter()));
+    else this.reloads.next();
+  }
+
+  protected selectBoardProject(event: Event): void {
+    const projectId = Number((event.target as HTMLSelectElement).value);
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { [BOARD_PROJECT_PARAM]: projectId },
+      queryParamsHandling: 'merge',
+    });
   }
 
   protected setSort({ value, direction }: SortChange): void {
@@ -186,13 +249,17 @@ export class TasksPage {
       });
   }
 
+  /** New tasks go to the Inbox, or to the board's project while the board is shown. */
   protected openNewTaskDialog(): void {
-    this.tasksStore.creating.set({
-      projectId: this.projectsStore.inbox()?.projectId ?? null,
-    });
+    const projectId =
+      this.view() === 'board'
+        ? this.boardProjectId()
+        : (this.projectsStore.inbox()?.projectId ?? null);
+    this.tasksStore.creating.set({ projectId });
   }
 
   protected addCreatedTask(task: Task): void {
+    if (this.view() === 'board') this.reloadView();
     this.taskList.update((tasks) =>
       tasks.some((item) => item.taskId === task.taskId) ? tasks : [...tasks, task],
     );
