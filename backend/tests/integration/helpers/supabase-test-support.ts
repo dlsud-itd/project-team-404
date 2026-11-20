@@ -157,6 +157,15 @@ export async function loginAs(
   };
 }
 
+export async function defaultPriorityIdFor(userId: string): Promise<number> {
+  const { prisma } = await import('../../../src/shared/db/prisma.client');
+  const priority = await prisma.priorityLevel.findFirstOrThrow({
+    where: { userId, isDefault: true, deletedAt: null },
+    select: { id: true },
+  });
+  return priority.id;
+}
+
 export async function registerAndLoginAs(
   app: Express
 ): Promise<RegisteredIntegrationAccount> {
