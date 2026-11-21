@@ -234,7 +234,7 @@ describe('Task Streaks integration (streak badge, detail and dashboard + API)', 
 
   /** Opens /dashboard and answers its other sections, leaving the Streaks requests open. */
   async function openDashboard(): Promise<void> {
-    await harness.navigateByUrl('/dashboard');
+    await harness.navigateByUrl('/streak');
     await settle();
     http.expectOne((r) => r.url === `${DASHBOARD_API}/current-upcoming-tasks`).flush({ tasks: [] });
     http.expectOne(`${DASHBOARD_API}/overdue-tasks`).flush({ tasks: [] });
@@ -556,7 +556,7 @@ describe('Task Streaks integration (streak badge, detail and dashboard + API)', 
       expect(text('app-dashboard-streaks .row .done')).toBe('Done today');
       expect(el('app-dashboard-streaks button.complete')).toBeNull();
       expect(text('app-dashboard-streaks .notice')).toBe('“Stretch” is done. Streak kept.');
-      expect(router.url).toBe('/dashboard');
+      expect(router.url).toBe('/streak');
 
       // The row now opens the next occurrence, whose detail shows the new count and date.
       const next = apiTask(22, 'Stretch', { dueDate: '2026-11-20', scheduledDate: '2026-11-20' });

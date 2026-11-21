@@ -21,6 +21,10 @@ import { DashboardStore, type Task } from '../dashboard.store';
 import { mapTaskError } from '../../tasks/task-crud/mappers/task-error.mapper';
 import { TaskService } from '../../tasks/task-crud/services/task.service';
 import { StreakBadge } from '../../tasks/task-streaks/components/streak-badge/streak-badge';
+import {
+  availableOnLabel,
+  occurrenceAvailableOn,
+} from '../../tasks/shared/utils/occurrence-due.util';
 
 /** Like Validators.required, but a title of only spaces counts as empty too. */
 const notBlank: ValidatorFn = ({ value }) =>
@@ -131,8 +135,17 @@ export class AllTasks {
     return this.busyTasks().has(task.id);
   }
 
+  /** "Available on Nov 22" for a repeat that isn't due yet, otherwise null. */
+  protected notDueLabel(task: Task): string | null {
+    const day = occurrenceAvailableOn(
+      { isRecurring: task.isRecurring, done: task.done, occurrence: task.due },
+      this.store.today(),
+    );
+    return day ? availableOnLabel(day) : null;
+  }
+
   protected toggleTask(task: Task): void {
-    if (this.isBusy(task)) return;
+    if (this.isBusy(task) || this.notDueLabel(task)) return;
     const completedAt = task.done ? null : new Date().toISOString();
     this.setBusy(task.id, true);
     this.actionError.set(null);

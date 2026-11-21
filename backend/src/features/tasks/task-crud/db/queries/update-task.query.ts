@@ -5,6 +5,7 @@ import { toRecurrenceData } from '../../../task-scheduling/utils/recurrence-data
 import { RecurrenceService } from '../../../task-scheduling/services/recurrence.service';
 import { InvalidTaskPriorityError } from '../../errors/invalid-task-priority.error';
 import { TaskArchivedError } from '../../../shared/errors/task-archived.error';
+import { TaskNotDueYetError } from '../../../shared/errors/task-not-due-yet.error';
 import { getNextTaskPosition } from './get-next-task-position.query';
 import { randomUUID } from 'node:crypto';
 
@@ -45,6 +46,9 @@ async function updateTaskInTransaction(
 
   const completing = input.isDone === true && !currentTask.isDone;
   const uncompleting = input.isDone === false && currentTask.isDone;
+  if (completing) {
+    await assertOccurrenceIsDue(transaction, userId, currentTask);
+  }
   const targetProjectId = input.projectId ?? currentTask.projectId;
   let position: number | undefined;
   if (completing) {
@@ -240,4 +244,34 @@ async function updateTaskInTransaction(
   }
 
   return updatedTask;
+}
+
+/**
+ * A repeating task's occurrence can only be completed on or after its own day, so ticking ahead
+ * can't run the series into the future while the streak stays put.
+ */
+async function assertOccurrenceIsDue(
+  transaction: Prisma.TransactionClient,
+  userId: string,
+  task: {
+    recurrence: string | null;
+    dueDate: Date | null;
+    scheduledDate: Date | null;
+  }
+) {
+  if (!task.recurrence || task.recurrence === 'none') return;
+  const occurrence = task.dueDate ?? task.scheduledDate;
+  if (!occurrence) return;
+  const owner = await transaction.user.findUnique({
+    where: { id: userId },
+    select: { timezone: true },
+  });
+  const today = new Intl.DateTimeFormat('en-CA', {
+    timeZone: owner?.timezone ?? 'UTC',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(new Date());
+  const occurrenceDay = occurrence.toISOString().slice(0, 10);
+  if (occurrenceDay > today) throw new TaskNotDueYetError(occurrenceDay);
 }

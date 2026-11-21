@@ -1,6 +1,7 @@
 import type { RequestHandler } from 'express';
 import type { TaskRecord } from '../shared/models/task.model';
 import { TaskArchivedError } from '../shared/errors/task-archived.error';
+import { TaskNotDueYetError } from '../shared/errors/task-not-due-yet.error';
 import { toTaskModel } from '../shared/models/task.model';
 import {
   InvalidTaskPriorityError,
@@ -38,6 +39,14 @@ export function createTaskCrudController(service: TaskCrudService): {
     }
     if (error instanceof TaskArchivedError) {
       res.status(409).json({ error: error.message });
+      return;
+    }
+    if (error instanceof TaskNotDueYetError) {
+      res.status(409).json({
+        code: 'task-not-due',
+        error: error.message,
+        availableOn: error.availableOn,
+      });
       return;
     }
     next(error);

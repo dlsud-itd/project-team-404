@@ -75,11 +75,12 @@
         <li class="task" [class.done]="task.completedAt !== null">
           <!-- The badge sits beside the label, not in it, so clicking it never ticks the task. -->
           <span class="name">
-            <label class="check">
+            <label class="check" [attr.title]="notDueLabel(task)">
               <input
                 type="checkbox"
                 [checked]="task.completedAt !== null"
-                [disabled]="isBusy(task)"
+                [disabled]="isBusy(task) || notDueLabel(task) !== null"
+                [attr.aria-describedby]="notDueLabel(task) ? 'not-due-' + task.taskId : null"
                 [attr.aria-label]="
                   task.completedAt !== null
                     ? 'Mark ' + task.title + ' incomplete'
@@ -88,6 +89,9 @@
                 (change)="toggleCompleted(task)"
               />
               <span class="title">{{ task.title }}</span>
+              @if (notDueLabel(task); as label) {
+                <span class="not-due" [id]="'not-due-' + task.taskId">{{ label }}</span>
+              }
             </label>
             @if (task.isRecurring) {
               <app-streak-badge class="streak" [task]="task" />

@@ -43,14 +43,18 @@
   <ul class="list" tabindex="0" aria-label="Tasks">
     @for (task of visibleTasks(); track task.id) {
       <li class="task" [class.done]="task.done" (contextmenu)="showContextMenu($event, task.id)">
-        <label class="check">
+        <label class="check" [attr.title]="notDueLabel(task)">
           <input
             type="checkbox"
             [checked]="task.done"
-            [disabled]="isBusy(task)"
+            [disabled]="isBusy(task) || notDueLabel(task) !== null"
+            [attr.aria-describedby]="notDueLabel(task) ? 'not-due-' + task.id : null"
             (change)="toggleTask(task)"
           />
           <span class="title">{{ task.title }}</span>
+          @if (notDueLabel(task); as label) {
+            <span class="not-due" [id]="'not-due-' + task.id">{{ label }}</span>
+          }
         </label>
         @if (task.isRecurring && task.recurrence) {
           <app-streak-badge
