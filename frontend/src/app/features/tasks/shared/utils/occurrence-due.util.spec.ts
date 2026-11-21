@@ -49,8 +49,6 @@ describe('task-not-due errors', () => {
   });
 
   it('explains when the repeat can be completed', () => {
-    expect(mapTaskError(notDue).message).toBe(
-      "This repeat isn't due yet. Available on Nov 22.",
-    );
+    expect(mapTaskError(notDue).message).toBe("This repeat isn't due yet. Available on Nov 22.");
   });
 });
