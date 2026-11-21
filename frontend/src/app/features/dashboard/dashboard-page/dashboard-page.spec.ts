@@ -63,14 +63,15 @@ describe('DashboardPage', () => {
 
     const el = harness.routeNativeElement as HTMLElement;
     expect(page).toBeInstanceOf(DashboardPage);
-    expect(el.querySelector('h1')?.textContent?.trim()).toBe('Dashboard');
+    expect(el.querySelector('h1')?.textContent?.trim()).toBe('Streak');
     expect(el.querySelector('.greeting')?.textContent?.trim()).toBe('Welcome back, james.');
+    expect(el.querySelector('app-streak-pet h2')?.textContent?.trim()).toBe('Streak pet');
     expect(el.querySelector('app-current-upcoming-tasks h2')?.textContent?.trim()).toBe(
       'Current & Upcoming',
     );
     expect(el.querySelector('app-dashboard-streaks h2')?.textContent).toContain('Streaks');
     expect(el.querySelector('app-overdue-tasks h2')?.textContent).toContain('Overdue');
-    expect(document.title).toBe('Dashboard · HabitTracker');
+    expect(document.title).toBe('Streak · HabitTracker');
   });
 
   it('sends signed-out visitors to the login page', async () => {

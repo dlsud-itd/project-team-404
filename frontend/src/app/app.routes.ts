@@ -23,10 +23,11 @@ export const routes: Routes = [
     loadComponent: () => import('./shared/components/app-shell/app-shell').then((m) => m.AppShell),
     children: [
       {
-        path: 'dashboard',
+        path: 'streak',
         loadChildren: () =>
           import('./features/dashboard/dashboard.routes').then((m) => m.DASHBOARD_ROUTES),
       },
+      { path: 'dashboard', pathMatch: 'full', redirectTo: 'streak' },
       {
         // Before 'projects' so the projects routes don't claim these URLs.
         path: 'projects/:projectId/tasks',

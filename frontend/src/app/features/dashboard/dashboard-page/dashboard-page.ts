@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/c
 import { SessionService } from '../../auth/session/session.service';
 import { CurrentUpcomingTasks } from '../current-upcoming-tasks/current-upcoming-tasks';
 import { OverdueTasks } from '../overdue-tasks/overdue-tasks';
+import { StreakPet } from '../streak-pet/streak-pet';
 import { StreaksSection } from '../streaks/streaks-section';
 
 /**
@@ -10,7 +11,7 @@ import { StreaksSection } from '../streaks/streaks-section';
  */
 @Component({
   selector: 'app-dashboard-page',
-  imports: [CurrentUpcomingTasks, StreaksSection, OverdueTasks],
+  imports: [StreakPet, CurrentUpcomingTasks, StreaksSection, OverdueTasks],
   templateUrl: './dashboard-page.html',
   styleUrl: './dashboard-page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
