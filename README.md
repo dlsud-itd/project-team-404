@@ -61,6 +61,29 @@ Use the VS Code tasks to install dependencies, create and configure local
 environment files, and start development. See the [setup guide](documents/setup.md)
 for prerequisites, environment variable details, and the complete workflow.
 
+### Seeded accounts
+
+Running the Supabase seed data creates these test accounts. Their shared password
+is `password123`.
+
+| Username | Email |
+| --- | --- |
+| `james` | `james@example.com` |
+| `harvey` | `harvey@example.com` |
+| `alex` | `alex@example.com` |
+| `olivia` | `olivia@example.com` |
+| `ethan` | `ethan@example.com` |
+| `mia` | `mia@example.com` |
+| `rafael` | `rafael@example.com` |
+| `grace` | `grace@example.com` |
+| `felix` | `felix@example.com` |
+| `amina` | `amina@example.com` |
+| `priya` | `priya@example.com` |
+| `kenji` | `kenji@example.com` |
+| `sofia` | `sofia@example.com` |
+| `ava` | `ava@example.com` |
+| `noah` | `noah@example.com` |
+
 ## VS Code tasks
 
 Open the Command Palette (`Ctrl+Shift+P`) and choose **Tasks: Run Task**, then
