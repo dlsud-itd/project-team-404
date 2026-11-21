@@ -19,7 +19,7 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { EMPTY, Observable, Subject, catchError, finalize, map, of, switchMap, tap } from 'rxjs';
 import { ToastService } from '../../../../shared/services/toast.service';
-import { mapTaskError } from '../../task-crud/mappers/task-error.mapper';
+import { mapTaskError, notDueAvailableOn } from '../../task-crud/mappers/task-error.mapper';
 import { TaskService } from '../../task-crud/services/task.service';
 import { BoardColumn } from './components/board-column/board-column';
 import { TaskBoardService } from './services/task-board.service';
@@ -193,6 +193,11 @@ export class BoardView {
   private moveFailed(error: unknown, card: BoardCard, before: BoardState, after: BoardState): void {
     // Only put the card back if nothing has replaced the board since, e.g. a reload.
     if (this.board() === after) this.board.set(before);
+    if (notDueAvailableOn(error)) {
+      this.toast.info(mapTaskError(error).message);
+      this.announcement.set(`“${card.title}” was not moved.`);
+      return;
+    }
     const stale =
       error instanceof HttpErrorResponse && (error.status === 409 || error.status === 404);
     if (stale) {

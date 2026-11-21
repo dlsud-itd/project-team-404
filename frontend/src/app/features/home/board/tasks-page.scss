@@ -110,6 +110,18 @@ button:disabled {
   flex-shrink: 0;
 }
 
+// A repeat that can't be ticked before its day.
+.not-due {
+  flex-shrink: 0;
+  color: var(--ink-muted);
+  font-size: 0.75rem;
+  white-space: nowrap;
+}
+
+.check:has(input:disabled) {
+  cursor: default;
+}
+
 .check {
   display: flex;
   min-width: 0;

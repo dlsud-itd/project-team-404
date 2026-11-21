@@ -33,6 +33,10 @@ import {
   toTaskListFilter,
 } from '../../tasks/task-organization/utils/task-query-params.util';
 import { instantToDate, userTimeZone } from '../../tasks/task-scheduling/utils/date-format.util';
+import {
+  availableOnLabel,
+  occurrenceAvailableOn,
+} from '../../tasks/shared/utils/occurrence-due.util';
 import { StreakBadge } from '../../tasks/task-streaks/components/streak-badge/streak-badge';
 import { BoardView } from '../../tasks/task-views/board-view/board-view';
 import { toBoardFilter } from '../../tasks/task-views/board-view/services/task-board.service';
@@ -229,8 +233,25 @@ export class TasksPage {
     return this.busyTasks().has(task.taskId);
   }
 
+  /** "Available on Nov 22" for a repeat that isn't due yet, otherwise null. */
+  protected notDueLabel(task: Task): string | null {
+    const today = instantToDate(
+      new Date().toISOString(),
+      userTimeZone(this.session.currentUser()?.timezone),
+    );
+    const day = occurrenceAvailableOn(
+      {
+        isRecurring: task.isRecurring,
+        done: task.completedAt !== null,
+        occurrence: task.dueDate ?? task.scheduledDate,
+      },
+      today,
+    );
+    return day ? availableOnLabel(day) : null;
+  }
+
   protected toggleCompleted(task: Task): void {
-    if (this.isBusy(task)) return;
+    if (this.isBusy(task) || this.notDueLabel(task)) return;
     const completedAt = task.completedAt === null ? new Date().toISOString() : null;
     this.setBusy(task.taskId, true);
     this.actionError.set(null);

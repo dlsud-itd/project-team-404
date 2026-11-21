@@ -1,6 +1,7 @@
 import type { RequestHandler } from 'express';
 import { TaskNotFoundError } from '../task-crud/errors/task-not-found.error';
 import { TaskReorderConflictError } from '../task-organization/errors/task-reorder-conflict.error';
+import { TaskNotDueYetError } from '../shared/errors/task-not-due-yet.error';
 import type { TaskBoardService } from './task-board.service';
 import type { BoardQuery, BoardReorderInput } from './types/task-board.types';
 
@@ -21,6 +22,14 @@ export function createTaskBoardController(service: TaskBoardService): {
       res
         .status(409)
         .json({ error: error.message, code: 'task-reorder-conflict' });
+      return;
+    }
+    if (error instanceof TaskNotDueYetError) {
+      res.status(409).json({
+        code: 'task-not-due',
+        error: error.message,
+        availableOn: error.availableOn,
+      });
       return;
     }
     next(error);
