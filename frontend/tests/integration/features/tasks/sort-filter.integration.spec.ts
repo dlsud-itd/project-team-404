@@ -175,8 +175,17 @@ const SLIDES = apiTask(32, 'Make slides', LOW, {
 const NOTES = apiTask(33, 'Read notes', MEDIUM);
 const ALL_TASKS = [REPORT, SLIDES, NOTES];
 
-/** The params TaskService always sends for a project's list. */
-const BASE_PARAMS = { projectId: `${CAPSTONE.id}`, status: 'all', pageSize: '100' };
+/**
+ * The params TaskService always sends for a project's list. With no sort picked, the list asks
+ * for the project's own (drag-and-drop) order.
+ */
+const BASE_PARAMS = {
+  projectId: `${CAPSTONE.id}`,
+  status: 'all',
+  pageSize: '100',
+  orderBy: 'position',
+  orderDirection: 'asc',
+};
 
 // Error bodies from validate-request.middleware.ts, require-auth and error-handler.middleware.ts.
 const UNKNOWN_PRIORITY = {
@@ -675,7 +684,7 @@ describe('Sort & filter integration (task list, projects page + API)', () => {
         );
       }
 
-      // Back to the project's own order: no sort params at all.
+      // Back to the project's own order: no sort params in the URL, position order in the request.
       await changeFilters(() => sortBy('Default order'));
       const req = expectTaskList();
       expect(paramsOf(req)).toEqual(BASE_PARAMS);

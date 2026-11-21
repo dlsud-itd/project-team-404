@@ -5,6 +5,7 @@ import { filter, finalize, map } from 'rxjs';
 import { SessionService } from '../../../features/auth/session/session.service';
 import { TasksStore } from '../../../features/tasks/shared/state/tasks.store';
 import type { Task } from '../../../features/tasks/shared/types/task.types';
+import { SearchBox } from '../../../features/search/components/search-box/search-box';
 import { NewTaskDialog } from '../../../features/tasks/task-crud/components/new-task-dialog/new-task-dialog';
 
 export type HomeTab = 'dashboard' | 'tasks' | 'projects';
@@ -24,7 +25,7 @@ export function asTab(value: string | null | undefined): HomeTab {
 /** The bar above every signed-in page: tabs and the account menu. */
 @Component({
   selector: 'app-top-bar',
-  imports: [RouterLink, NewTaskDialog],
+  imports: [RouterLink, NewTaskDialog, SearchBox],
   templateUrl: './top-bar.html',
   styleUrl: './top-bar.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

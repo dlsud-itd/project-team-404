@@ -1,6 +1,19 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { EMPTY, Observable, Subject, concat, expand, last, map, of, tap, toArray } from 'rxjs';
+import {
+  EMPTY,
+  Observable,
+  Subject,
+  catchError,
+  concat,
+  expand,
+  last,
+  map,
+  of,
+  tap,
+  throwError,
+  toArray,
+} from 'rxjs';
 import { environment } from '../../../../../environments/environment';
 import { PrioritiesStore } from '../../../settings/state/priorities.store';
 import { TasksStore } from '../../shared/state/tasks.store';
@@ -25,7 +38,8 @@ import { mapTaskError } from '../mappers/task-error.mapper';
 import { toCreateTaskBody, toTask, toUpdateTaskBody } from '../mappers/task.mapper';
 
 /** The most tasks one list request can return. */
-const MAX_PAGE_SIZE = 100;
+/** The most tasks one GET /api/tasks page returns; a list this long may be missing some. */
+export const MAX_PAGE_SIZE = 100;
 
 /** Sprint 3 servers only know these names, and only through the single `priority` filter. */
 const LEGACY_PRIORITY_NAMES = ['high', 'medium', 'low'];
@@ -50,7 +64,8 @@ export interface TaskListFilter {
   recurring?: boolean;
   /** Defaults to 'all'. */
   status?: TaskStatusFilter;
-  orderBy?: TaskSortField;
+  /** 'position' is the project's own order, set by drag and drop; it is not a Sort menu choice. */
+  orderBy?: TaskSortField | 'position';
   orderDirection?: SortDirection;
 }
 
@@ -193,6 +208,25 @@ export class TaskService {
     return concat(...requests).pipe(
       last(),
       map(() => undefined),
+    );
+  }
+
+  /**
+   * PUT /api/tasks/reorder. `taskIds` must be every open task of the project, in the new order.
+   * The store shows the new order straight away and is put back if the request fails.
+   */
+  reorder(projectId: number, taskIds: number[]): Observable<void> {
+    const previous = taskIds.map((taskId) => [taskId, this.store.byId(taskId)?.sortOrder] as const);
+    taskIds.forEach((taskId, sortOrder) => this.store.patch(taskId, { sortOrder }));
+
+    return this.http.put(`${this.baseUrl}/reorder`, { projectId, taskIds }).pipe(
+      map(() => undefined),
+      catchError((error: unknown) => {
+        for (const [taskId, sortOrder] of previous) {
+          if (sortOrder !== undefined) this.store.patch(taskId, { sortOrder });
+        }
+        return throwError(() => error);
+      }),
     );
   }
 

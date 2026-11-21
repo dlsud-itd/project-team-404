@@ -43,6 +43,10 @@ export const routes: Routes = [
         loadChildren: () => import('./features/archive/archive.routes').then((m) => m.ARCHIVE_ROUTES),
       },
       {
+        path: 'search',
+        loadChildren: () => import('./features/search/search.routes').then((m) => m.SEARCH_ROUTES),
+      },
+      {
         // Profile, Preferences, Config, Labels and Priorities tabs; /settings/profile is unchanged.
         path: 'settings',
         loadChildren: () =>
