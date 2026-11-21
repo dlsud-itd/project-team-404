@@ -104,6 +104,13 @@
               >
                 Edit
               </button>
+              <app-archive-action
+                kind="task"
+                variant="menuitem"
+                [itemId]="task.id"
+                [name]="task.title"
+                [hooks]="archiveHooks"
+              />
               <button
                 type="button"
                 class="task-menu-item delete"

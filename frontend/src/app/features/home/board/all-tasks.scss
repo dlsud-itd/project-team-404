@@ -230,6 +230,10 @@
 }
 
 .task-menu {
+  --archive-action-font-size: 0.75rem;
+  --archive-action-padding: 0.5rem 0.625rem;
+  --archive-action-hover: #fdeee6;
+
   position: absolute;
   top: calc(100% + 0.25rem);
   right: 0;

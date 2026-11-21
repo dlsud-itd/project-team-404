@@ -180,6 +180,16 @@ export class DashboardStore {
     );
   }
 
+  /** Puts a task back where it was, e.g. when archiving it failed or was undone. */
+  restoreTask(task: Task, index: number): void {
+    this.taskList.update((tasks) => {
+      if (tasks.some((item) => item.id === task.id)) return tasks;
+      const next = [...tasks];
+      next.splice(Math.min(Math.max(index, 0), next.length), 0, task);
+      return next;
+    });
+  }
+
   removeTask(taskId: number): void {
     this.taskList.update((tasks) => tasks.filter((task) => task.id !== taskId));
   }

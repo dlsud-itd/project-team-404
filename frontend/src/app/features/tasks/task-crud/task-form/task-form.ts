@@ -47,6 +47,11 @@ import { mapTaskError } from '../mappers/task-error.mapper';
 import { TaskService } from '../services/task.service';
 import { taskTitleValidator } from '../validators/task-title.validator';
 import { LabelService, type Label } from '../../task-organization/services/label.service';
+import { ArchiveAction } from '../../../archive/components/archive-action/archive-action';
+import {
+  type ArchiveHooks,
+  ArchiveUndoService,
+} from '../../../archive/services/archive-undo.service';
 
 export type TaskFormMode = 'create' | 'edit';
 
@@ -61,6 +66,7 @@ type LoadState = 'loading' | 'ready' | 'not-found' | 'error';
     DeadlinePicker,
     RecurrencePicker,
     StreakDetail,
+    ArchiveAction,
   ],
   templateUrl: './task-form.html',
   styleUrl: './task-form.scss',
@@ -90,6 +96,7 @@ export class TaskForm implements OnInit {
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
   private readonly route = inject(ActivatedRoute).snapshot;
+  private readonly archiveUndo = inject(ArchiveUndoService);
 
   /** What the new-task popup asked for; null on the edit page. */
   private readonly popup = this.tasksStore.creating();
@@ -120,6 +127,25 @@ export class TaskForm implements OnInit {
     this.mode === 'edit' ? (this.tasksStore.byId(this.taskId) ?? null) : null,
   );
   protected readonly loadState = signal<LoadState>('ready');
+  /** Archived tasks are read-only until they are restored. */
+  protected readonly archived = computed(() => this.task()?.isArchived ?? false);
+  /** Archived labels already on the task: shown greyed, and they can't be picked again. */
+  protected readonly archivedLabels = computed(() => {
+    const active = new Set(this.labels().map((label) => label.labelId));
+    return (this.task()?.labels ?? []).filter(
+      (label) => label.isArchived && !active.has(label.labelId),
+    );
+  });
+  protected readonly restoring = signal(false);
+
+  /** Archiving from the form closes it; the Undo toast brings the task back. */
+  protected readonly archiveHooks = (taskId: number): ArchiveHooks => ({
+    apply: () => {
+      this.tasksStore.patch(taskId, { isArchived: true });
+      this.leave();
+    },
+    rollback: () => this.tasksStore.patch(taskId, { isArchived: false }),
+  });
 
   /** Active projects, plus the URL's and the task's project if they are not among them. */
   protected readonly projectOptions = computed(() => {
@@ -168,6 +194,11 @@ export class TaskForm implements OnInit {
   );
 
   constructor() {
+    // An archived task can be read but not edited.
+    effect(() => {
+      if (this.archived()) this.form.disable({ emitEvent: false });
+      else if (this.form.disabled) this.form.enable({ emitEvent: false });
+    });
     effect(() => {
       const inbox = this.projectsStore.inbox();
       const project = this.form.controls.projectId;
@@ -237,9 +268,26 @@ export class TaskForm implements OnInit {
       });
   }
 
+  /** Restores the archived task in place so it can be edited again. */
+  protected restore(): void {
+    const task = this.task();
+    if (!task || this.restoring()) return;
+    this.restoring.set(true);
+    this.archiveUndo.restore(
+      { kind: 'task', id: task.taskId, name: task.title },
+      {
+        announce: true,
+        apply: () => this.tasksStore.patch(task.taskId, { isArchived: false }),
+        rollback: () => this.tasksStore.patch(task.taskId, { isArchived: true }),
+        done: () => this.restoring.set(false),
+        failed: () => this.restoring.set(false),
+      },
+    );
+  }
+
   /** In edit mode, Save stays off until something actually changed. */
   protected canSave(): boolean {
-    if (this.submitting()) return false;
+    if (this.submitting() || this.archived()) return false;
     if (this.mode === 'create') return true;
     const { details, schedule } = this.changes();
     return (
@@ -248,7 +296,7 @@ export class TaskForm implements OnInit {
   }
 
   protected submit(): void {
-    if (this.submitting()) return;
+    if (this.submitting() || this.archived()) return;
     this.formError.set(null);
     this.saved.set(null);
     this.serverErrors.set({});
@@ -263,6 +311,10 @@ export class TaskForm implements OnInit {
 
   protected cancel(): void {
     if (this.submitting()) return;
+    this.leave();
+  }
+
+  private leave(): void {
     if (this.dialog) this.closed.emit();
     else void this.router.navigateByUrl(this.listUrl);
   }
@@ -274,6 +326,7 @@ export class TaskForm implements OnInit {
   }
 
   protected toggleLabel(labelId: number, event: Event): void {
+    if (this.archived()) return;
     const target = event.target;
     if (!(target instanceof HTMLInputElement)) return;
     const selected = new Set(this.form.controls.labelIds.value);

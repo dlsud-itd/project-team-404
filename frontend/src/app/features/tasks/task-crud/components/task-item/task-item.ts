@@ -10,10 +10,13 @@ import {
 } from '../../../task-scheduling/utils/date-format.util';
 import { recurrenceSummary } from '../../../task-scheduling/utils/recurrence-label.util';
 import { StreakBadge } from '../../../task-streaks/components/streak-badge/streak-badge';
+import { ArchiveAction } from '../../../../archive/components/archive-action/archive-action';
+import type { ArchiveHooks } from '../../../../archive/services/archive-undo.service';
+import { TasksStore } from '../../../shared/state/tasks.store';
 
 @Component({
   selector: 'app-task-item',
-  imports: [RouterLink, StreakBadge],
+  imports: [RouterLink, StreakBadge, ArchiveAction],
   template: `
     <article class="item" [class.done]="done()">
       <span
@@ -56,7 +59,14 @@ import { StreakBadge } from '../../../task-streaks/components/streak-badge/strea
         @if (task().labels.length) {
           <ul class="labels" aria-label="Labels">
             @for (label of task().labels; track label.labelId) {
-              <li class="label" [style.border-color]="label.color ?? null">{{ label.name }}</li>
+              <li
+                class="label"
+                [class.archived]="label.isArchived"
+                [style.border-color]="label.color ?? null"
+                [attr.title]="label.isArchived ? label.name + ' (archived)' : null"
+              >
+                {{ label.name }}
+              </li>
             }
           </ul>
         }
@@ -69,6 +79,12 @@ import { StreakBadge } from '../../../task-streaks/components/streak-badge/strea
           [attr.aria-label]="'Edit ' + task().title"
           >Edit</a
         >
+        <app-archive-action
+          kind="task"
+          [itemId]="task().taskId"
+          [name]="task().title"
+          [hooks]="archiveHooks"
+        />
         <button
           type="button"
           class="action delete"
@@ -162,11 +178,21 @@ import { StreakBadge } from '../../../task-streaks/components/streak-badge/strea
       border: 1px solid #e6dcd7;
       border-radius: 999px;
       font-size: 0.6875rem;
+      &.archived {
+        border-style: dashed;
+        color: var(--ink-muted);
+        opacity: 0.6;
+      }
     }
     .actions {
       display: flex;
+      flex-wrap: wrap;
       flex-shrink: 0;
+      justify-content: flex-end;
       gap: 0.375rem;
+      --archive-action-font-size: 0.75rem;
+      --archive-action-padding: 0.25rem 0.75rem;
+      --archive-action-glyph: none;
     }
     .action {
       padding: 0.25rem 0.75rem;
@@ -197,6 +223,13 @@ import { StreakBadge } from '../../../task-streaks/components/streak-badge/strea
 export class TaskItem {
   readonly task = input.required<Task>();
   readonly deleteRequested = output<Task>();
+
+  private readonly tasksStore = inject(TasksStore);
+  /** Archiving hides the task from the list at once; a failure or Undo brings it back. */
+  protected readonly archiveHooks = (taskId: number): ArchiveHooks => ({
+    apply: () => this.tasksStore.patch(taskId, { isArchived: true }),
+    rollback: () => this.tasksStore.patch(taskId, { isArchived: false }),
+  });
 
   private readonly session = inject(SessionService);
 

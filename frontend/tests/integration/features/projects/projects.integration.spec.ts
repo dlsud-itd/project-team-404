@@ -16,6 +16,7 @@ import { SessionService } from '../../../../src/app/features/auth/session/sessio
 import { TOKEN_STORAGE_KEY } from '../../../../src/app/features/auth/session/token-storage.service';
 import { ProjectsStore } from '../../../../src/app/features/projects/shared/state/projects.store';
 import { environment } from '../../../../src/environments/environment';
+import { ToastService } from '../../../../src/app/shared/services/toast.service';
 
 /**
  * Project CRUD and Project Organization frontend integration tests (Sprint 2: FE-LST, FE-CRT,
@@ -841,7 +842,7 @@ describe('Projects integration (Project CRUD screens + API)', () => {
     });
 
     // Case 3: FE-ORG-02, FE-ORG-03, FE-ORG-09
-    it('archives a project into the archived section and restores it back', async () => {
+    it('archives a project into the archived section and restores it with Undo', async () => {
       await startSignedIn();
       await openSwitcher();
       await click('Archive Thesis');
@@ -855,8 +856,14 @@ describe('Projects integration (Project CRUD screens + API)', () => {
       expect(active()).toEqual(['Capstone']);
       expect(archived()).toEqual(['Thesis', 'Old class']);
       expect(button('Archive Thesis')).toBeNull();
+      // Archived projects are restored from the Archive page, or with the toast's Undo.
+      expect(button('Restore Thesis')).toBeNull();
 
-      await click('Restore Thesis');
+      const toasts = TestBed.inject(ToastService);
+      const toast = toasts.toasts().at(-1)!;
+      expect(toast.action?.label).toBe('Undo');
+      toasts.runAction(toast.id);
+      await settle();
       req = http.expectOne(`${API}/11/archive`);
       expect(req.request.body).toEqual({ isArchived: false });
       req.flush({ projectId: 11, isArchived: false, message: 'Project restored from archive' });

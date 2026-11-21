@@ -14,6 +14,7 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { finalize, forkJoin } from 'rxjs';
 import { ToastService } from '../../../shared/services/toast.service';
+import { ArchiveUndoService } from '../../archive/services/archive-undo.service';
 import { NameColorEditor } from '../components/name-color-editor/name-color-editor';
 import { LabelsService } from '../services/labels.service';
 import { NO_COLOR, type LabelSetting, type NameAndColor } from '../types/settings.types';
@@ -33,6 +34,7 @@ export const LABEL_REORDER_FAILED_MESSAGE =
 export class LabelSettings {
   private readonly api = inject(LabelsService);
   private readonly toast = inject(ToastService);
+  private readonly archiveUndo = inject(ArchiveUndoService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly injector = inject(Injector);
   private readonly createEditor = viewChild<NameColorEditor>('createEditor');
@@ -183,35 +185,46 @@ export class LabelSettings {
     return this.busyIds().has(label.id);
   }
 
+  /**
+   * Moves the label between the active and archived lists straight away, then saves. Archiving
+   * shows an Undo toast; a failed request moves the label back and shows an error toast.
+   */
   protected setArchived(label: LabelSetting, isArchived: boolean): void {
     if (this.isBusy(label)) return;
-    this.setBusy(label.id, true);
-    this.api
-      .setArchived(label.id, isArchived)
-      .pipe(
-        finalize(() => this.setBusy(label.id, false)),
-        takeUntilDestroyed(this.destroyRef),
-      )
-      .subscribe({
-        next: (updated) => {
-          const result = { ...updated, taskCount: updated.taskCount ?? label.taskCount };
-          if (isArchived) {
-            this.labels.update((labels) => labels.filter((item) => item.id !== label.id));
-            this.archived.update((labels) => [...labels, result]);
-            this.announcement.set(`Label “${label.name}” archived.`);
-          } else {
-            this.archived.update((labels) => labels.filter((item) => item.id !== label.id));
-            this.labels.update((labels) => [...labels, result]);
-            this.announcement.set(`Label “${label.name}” restored.`);
-          }
-        },
-        error: () =>
-          this.toast.error(
-            isArchived
-              ? `Couldn't archive “${label.name}”. Please try again.`
-              : `Couldn't restore “${label.name}”. Please try again.`,
-          ),
+    const from = isArchived ? this.labels : this.archived;
+    const to = isArchived ? this.archived : this.labels;
+    const index = from().findIndex((item) => item.id === label.id);
+    const moved: LabelSetting = {
+      ...label,
+      isArchived,
+      archivedAt: isArchived ? new Date().toISOString() : null,
+    };
+
+    const apply = () => {
+      from.update((labels) => labels.filter((item) => item.id !== label.id));
+      to.update((labels) => [...labels.filter((item) => item.id !== label.id), moved]);
+      this.announcement.set(`Label “${label.name}” ${isArchived ? 'archived' : 'restored'}.`);
+    };
+    const rollback = () => {
+      to.update((labels) => labels.filter((item) => item.id !== label.id));
+      from.update((labels) => {
+        if (labels.some((item) => item.id === label.id)) return labels;
+        const next = [...labels];
+        next.splice(Math.min(Math.max(index, 0), next.length), 0, label);
+        return next;
       });
+    };
+
+    this.setBusy(label.id, true);
+    const target = { kind: 'label' as const, id: label.id, name: label.name };
+    const hooks = {
+      apply,
+      rollback,
+      done: () => this.setBusy(label.id, false),
+      failed: () => this.setBusy(label.id, false),
+    };
+    if (isArchived) this.archiveUndo.archive(target, hooks);
+    else this.archiveUndo.restore(target, hooks);
   }
 
   protected askDelete(label: LabelSetting): void {

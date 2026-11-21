@@ -19,6 +19,7 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { EMPTY, Observable, Subject, catchError, finalize, map, of, switchMap, tap } from 'rxjs';
 import { ToastService } from '../../../../shared/services/toast.service';
+import { ArchiveUndoService } from '../../../archive/services/archive-undo.service';
 import { mapTaskError, notDueAvailableOn } from '../../task-crud/mappers/task-error.mapper';
 import { TaskService } from '../../task-crud/services/task.service';
 import { BoardColumn } from './components/board-column/board-column';
@@ -66,6 +67,7 @@ export class BoardView {
   private readonly api = inject(TaskBoardService);
   private readonly tasks = inject(TaskService);
   private readonly toast = inject(ToastService);
+  private readonly archiveUndo = inject(ArchiveUndoService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly injector = inject(Injector);
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
@@ -154,6 +156,36 @@ export class BoardView {
         next: () => this.moved(card, from.column, to),
         error: (error: unknown) => this.moveFailed(error, card, before, after),
       });
+  }
+
+  /** Takes the card off the board at once; a failure or Undo puts it back. */
+  protected archive(card: BoardCard): void {
+    const before = this.board();
+    if (!before) return;
+    const from = findCard(before, card.taskId);
+    if (!from) return;
+    const after: BoardState = {
+      columns: {
+        ...before.columns,
+        [from.column]: before.columns[from.column].filter((item) => item.taskId !== card.taskId),
+      },
+      counts: { ...before.counts, [from.column]: Math.max(before.counts[from.column] - 1, 0) },
+    };
+
+    this.archiveUndo.archive(
+      { kind: 'task', id: card.taskId, name: card.title },
+      {
+        apply: () => {
+          this.board.set(after);
+          this.announcement.set(`“${card.title}” was archived.`);
+        },
+        rollback: () => {
+          // Only put the card back if nothing has replaced the board since, e.g. a reload.
+          if (this.board() === after) this.board.set(before);
+          else this.reload(true);
+        },
+      },
+    );
   }
 
   /**

@@ -27,8 +27,8 @@ function priorityField(priorityId: number, legacyName: LegacyPriorityLookup): Pr
 }
 
 /**
- * Turns a task from the API into the shape the app uses. The API has no sort order or archiving
- * for tasks, so those get fixed values and the list falls back to id order.
+ * Turns a task from the API into the shape the app uses. The API has no sort order for tasks,
+ * so the list falls back to id order. Older servers leave out the archive fields.
  */
 export function toTask(task: ApiTask): Task {
   const recurrence = task.recurrence ?? 'none';
@@ -48,8 +48,14 @@ export function toTask(task: ApiTask): Task {
     completedAt: task.doneAt ?? (task.isDone ? task.updatedAt : null),
     sortOrder: 0,
     isRecurring: recurrence !== 'none',
-    isArchived: false,
-    labels: task.labels.map(({ id, name, color }) => ({ labelId: id, name, color })),
+    isArchived: task.isArchived ?? Boolean(task.archivedAt),
+    ...(task.archivedAt ? { archivedAt: task.archivedAt } : {}),
+    labels: task.labels.map(({ id, name, color, isArchived, archivedAt }) => ({
+      labelId: id,
+      name,
+      color,
+      ...(isArchived || archivedAt ? { isArchived: true } : {}),
+    })),
   };
 }
 

@@ -90,7 +90,7 @@ button:disabled {
 
 .task {
   display: grid;
-  grid-template-columns: minmax(12rem, 1fr) minmax(5rem, auto) 3.5rem 5.5rem 2rem;
+  grid-template-columns: minmax(12rem, 1fr) minmax(5rem, auto) 3.5rem 5.5rem auto;
   align-items: center;
   gap: 0.75rem;
   min-height: 2.75rem;
@@ -180,6 +180,12 @@ button:disabled {
 .overdue {
   color: var(--error);
   font-weight: 600;
+}
+
+.row-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.125rem;
 }
 
 .delete {

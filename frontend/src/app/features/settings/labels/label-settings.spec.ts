@@ -274,7 +274,7 @@ describe('LabelSettings', () => {
     render();
     expect(activeNames()).toContain('Errands');
     expect(TestBed.inject(ToastService).toasts()[0].message).toBe(
-      "Couldn't archive “Errands”. Please try again.",
+      "Couldn't archive label “Errands”. Please try again.",
     );
   });
 

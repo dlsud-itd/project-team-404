@@ -170,6 +170,12 @@
   &.more::before {
     content: none;
   }
+
+  &.archived {
+    border-style: dashed;
+    color: var(--ink-muted);
+    opacity: 0.6;
+  }
 }
 
 .menu {

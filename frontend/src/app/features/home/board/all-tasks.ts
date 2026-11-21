@@ -21,6 +21,8 @@ import { DashboardStore, type Task } from '../dashboard.store';
 import { mapTaskError } from '../../tasks/task-crud/mappers/task-error.mapper';
 import { TaskService } from '../../tasks/task-crud/services/task.service';
 import { StreakBadge } from '../../tasks/task-streaks/components/streak-badge/streak-badge';
+import { ArchiveAction } from '../../archive/components/archive-action/archive-action';
+import type { ArchiveHooks } from '../../archive/services/archive-undo.service';
 import {
   availableOnLabel,
   occurrenceAvailableOn,
@@ -32,7 +34,14 @@ const notBlank: ValidatorFn = ({ value }) =>
 
 @Component({
   selector: 'app-all-tasks',
-  imports: [ReactiveFormsModule, ConfirmDeleteTaskDialog, NewTaskDialog, ViewAllLink, StreakBadge],
+  imports: [
+    ReactiveFormsModule,
+    ConfirmDeleteTaskDialog,
+    NewTaskDialog,
+    ViewAllLink,
+    StreakBadge,
+    ArchiveAction,
+  ],
   templateUrl: './all-tasks.html',
   styleUrl: './all-tasks.scss',
   host: {
@@ -212,6 +221,21 @@ export class AllTasks {
         error: (error: unknown) => this.deleteError.set(mapTaskError(error).message),
       });
   }
+
+  /** Archive takes the task off the dashboard at once and puts it back on failure or Undo. */
+  protected readonly archiveHooks = (taskId: number): ArchiveHooks => {
+    const index = this.store.tasks().findIndex((task) => task.id === taskId);
+    const task = this.store.tasks()[index];
+    return {
+      apply: () => {
+        this.closeTaskMenu();
+        this.store.removeTask(taskId);
+      },
+      rollback: () => {
+        if (task) this.store.restoreTask(task, index);
+      },
+    };
+  };
 
   protected shortDate(key: string | null): string {
     if (!key) return 'No due date';

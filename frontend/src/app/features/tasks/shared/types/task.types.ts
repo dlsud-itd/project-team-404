@@ -10,6 +10,8 @@ export interface TaskLabel {
   name: string;
   /** Hex color such as #2563EB, or null for none. */
   color: string | null;
+  /** True when the label was archived after it was put on the task; shown greyed. */
+  isArchived?: boolean;
 }
 
 /** The Sprint 3 priority names, still accepted and sent by older servers. */
@@ -46,7 +48,16 @@ export interface ApiTask {
   doneAt: string | null;
   createdAt: string;
   updatedAt: string;
-  labels: { id: number; name: string; color: string | null }[];
+  /** Sprint 5: archived tasks are read-only until restored. */
+  isArchived?: boolean;
+  archivedAt?: string | null;
+  labels: {
+    id: number;
+    name: string;
+    color: string | null;
+    isArchived?: boolean;
+    archivedAt?: string | null;
+  }[];
 }
 
 /** A task as the app uses it. */
@@ -73,6 +84,8 @@ export interface Task {
   sortOrder: number;
   isRecurring: boolean;
   isArchived: boolean;
+  /** ISO instant the task was archived; left out while it is active. */
+  archivedAt?: string | null;
   labels: TaskLabel[];
 }
 

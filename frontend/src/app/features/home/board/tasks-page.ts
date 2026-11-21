@@ -26,6 +26,8 @@ import {
   type SortChange,
 } from '../../tasks/task-organization/components/sort-menu/sort-menu';
 import { LabelService, type Label } from '../../tasks/task-organization/services/label.service';
+import { ArchiveAction } from '../../archive/components/archive-action/archive-action';
+import type { ArchiveHooks } from '../../archive/services/archive-undo.service';
 import { TaskQueryStore } from '../../tasks/task-organization/state/task-query.store';
 import {
   TASK_SORT_OPTIONS,
@@ -60,6 +62,7 @@ export const BOARD_PROJECT_PARAM = 'boardProject';
     StreakBadge,
     BoardView,
     ViewSwitcher,
+    ArchiveAction,
   ],
   providers: [TaskQueryStore],
   templateUrl: './tasks-page.html',
@@ -315,6 +318,20 @@ export class TasksPage {
         error: (error: unknown) => this.deleteError.set(mapTaskError(error).message),
       });
   }
+
+  /** Archive takes the row out at once and puts it back on failure or Undo. */
+  protected readonly archiveHooks = (taskId: number): ArchiveHooks => {
+    const task = this.taskList().find((item) => item.taskId === taskId);
+    return {
+      apply: () => this.taskList.update((tasks) => tasks.filter((item) => item.taskId !== taskId)),
+      rollback: () => {
+        if (!task) return;
+        this.taskList.update((tasks) =>
+          tasks.some((item) => item.taskId === taskId) ? tasks : [...tasks, task],
+        );
+      },
+    };
+  };
 
   protected formatDueDate(dueDate: string | null): string {
     if (!dueDate) return 'No due date';
