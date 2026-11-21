@@ -35,6 +35,8 @@ export class BoardColumn {
 
   readonly moved = output<BoardMove>();
   readonly toggled = output<void>();
+  /** A card's menu asked to archive it. */
+  readonly archived = output<BoardCardModel>();
 
   protected readonly dragDelay = DRAG_START_DELAY;
   protected readonly name = computed(() => BOARD_COLUMN_NAMES[this.key()]);

@@ -199,3 +199,42 @@ select {
 .streak {
   margin-bottom: 1rem;
 }
+
+.actions .archive {
+  margin-right: auto;
+}
+
+.archived-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 0 0 1.25rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--orange-light, #f6d3c1);
+  border-left: 3px solid var(--orange);
+  border-radius: 0.5rem;
+  background: #fff7f2;
+
+  svg {
+    width: 1.25rem;
+    height: 1.25rem;
+    flex: none;
+    fill: none;
+    stroke: var(--brown);
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  p {
+    flex: 1 1 14rem;
+    margin: 0;
+    font-size: 0.875rem;
+  }
+}
+
+.label-option.archived {
+  color: var(--ink-muted);
+  opacity: 0.6;
+}

@@ -1,0 +1,154 @@
+<main class="archive">
+  <header class="head">
+    <a class="back" routerLink="/home">
+      <span aria-hidden="true">←</span>
+      Home
+    </a>
+    <h1>Archive</h1>
+    <p class="intro">
+      Archived tasks, projects and labels are hidden everywhere else. Restore them or delete them
+      for good.
+    </p>
+  </header>
+
+  <div class="tabs" role="tablist" aria-label="Archived items" (keydown)="onTabKey($event)">
+    @for (item of tabs; track item) {
+      <button
+        type="button"
+        class="tab"
+        role="tab"
+        [id]="'archive-tab-' + item"
+        [class.active]="tab() === item"
+        [attr.aria-selected]="tab() === item"
+        aria-controls="archive-panel"
+        [tabIndex]="tab() === item ? 0 : -1"
+        (click)="select(item)"
+      >
+        <span>{{ tabLabel(item) }}</span>
+        @if (count(item) !== null) {
+          <span class="count">{{ count(item) }}</span>
+        }
+      </button>
+    }
+  </div>
+
+  <section
+    id="archive-panel"
+    class="panel"
+    role="tabpanel"
+    [attr.aria-labelledby]="'archive-tab-' + tab()"
+    [attr.aria-busy]="loading()"
+  >
+    @if (loading()) {
+      <p class="state" role="status">Loading…</p>
+    } @else if (error(); as message) {
+      <div class="state error" role="alert">
+        <p>{{ message }}</p>
+        <button type="button" class="secondary" (click)="retry()">Try again</button>
+      </div>
+    } @else {
+      <ul class="list">
+        @for (item of items(); track item.kind + ':' + item.id) {
+          <li class="row" [attr.data-kind]="item.kind">
+            <div class="details">
+              <p class="name">
+                @if (item.kind === 'label') {
+                  <span
+                    class="dot"
+                    [style.background]="item.color ?? null"
+                    aria-hidden="true"
+                  ></span>
+                } @else if (item.kind === 'project') {
+                  <span
+                    class="swatch"
+                    [style.background]="item.color ?? null"
+                    aria-hidden="true"
+                  ></span>
+                }
+                <span class="title">{{ item.name }}</span>
+              </p>
+              <p class="meta">
+                <span class="kind">{{ kindNoun(item.kind) }}</span>
+                @if (item.kind === 'task') {
+                  @if (projectName(item); as project) {
+                    <span class="chip">
+                      <span
+                        class="dot"
+                        [style.background]="projectColor(item)"
+                        aria-hidden="true"
+                      ></span>
+                      {{ project }}
+                    </span>
+                  }
+                } @else if (item.kind === 'label' && item.taskCount) {
+                  <span>{{ item.taskCount }} {{ item.taskCount === 1 ? 'task' : 'tasks' }}</span>
+                }
+                <span class="when">{{ archivedLabel(item) }}</span>
+              </p>
+            </div>
+            <div class="actions">
+              <button
+                type="button"
+                class="restore"
+                [attr.aria-label]="'Restore ' + kindNoun(item.kind).toLowerCase() + ' ' + item.name"
+                (click)="restore(item)"
+              >
+                Restore
+              </button>
+              <button
+                type="button"
+                class="delete"
+                [attr.aria-label]="
+                  'Delete ' + kindNoun(item.kind).toLowerCase() + ' ' + item.name + ' permanently'
+                "
+                (click)="askDelete(item)"
+              >
+                Delete permanently
+              </button>
+            </div>
+          </li>
+        } @empty {
+          <li class="empty">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <rect x="3" y="4" width="18" height="5" rx="1" />
+              <path d="M5 9v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V9M10 13h4" />
+            </svg>
+            <p class="empty-title">{{ empty().title }}</p>
+            <p class="empty-hint">{{ empty().hint }}</p>
+          </li>
+        }
+      </ul>
+
+      @if (nextCursor()) {
+        <div class="more">
+          @if (loadMoreError(); as message) {
+            <p class="more-error" role="alert">{{ message }}</p>
+          }
+          <button
+            type="button"
+            class="secondary"
+            [disabled]="loadingMore()"
+            [attr.aria-busy]="loadingMore()"
+            (click)="loadMore()"
+          >
+            {{ loadingMore() ? 'Loading…' : 'Load more' }}
+          </button>
+        </div>
+      }
+    }
+  </section>
+
+  <p class="visually-hidden" aria-live="polite">{{ announcement() }}</p>
+</main>
+
+@if (confirmText(); as text) {
+  <app-confirm-dialog
+    [title]="text.title"
+    [message]="text.message"
+    confirmLabel="Delete permanently"
+    [busy]="deleting()"
+    [error]="deleteError()"
+    (confirmed)="confirmDelete()"
+    (cancelled)="cancelDelete()"
+  />
+}

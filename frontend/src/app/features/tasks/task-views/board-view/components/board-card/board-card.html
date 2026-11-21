@@ -50,7 +50,14 @@
   @if (labels().length) {
     <ul class="labels" aria-label="Labels">
       @for (label of labels(); track label.labelId) {
-        <li class="label" [style.--label-color]="label.color">{{ label.name }}</li>
+        <li
+          class="label"
+          [class.archived]="label.isArchived"
+          [style.--label-color]="label.color"
+          [attr.title]="label.isArchived ? label.name + ' (archived)' : null"
+        >
+          {{ label.name }}
+        </li>
       }
       @if (hiddenLabels(); as more) {
         <li class="label more" [attr.aria-label]="more + ' more labels'">+{{ more }}</li>
@@ -90,6 +97,16 @@
       (cdkMenuItemTriggered)="moveBy.emit(1)"
     >
       Move down
+    </button>
+    <div class="separator" role="separator"></div>
+    <button
+      type="button"
+      class="item"
+      cdkMenuItem
+      [cdkMenuItemDisabled]="disabled()"
+      (cdkMenuItemTriggered)="archive.emit()"
+    >
+      Archive
     </button>
   </div>
 </ng-template>

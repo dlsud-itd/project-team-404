@@ -51,6 +51,7 @@
             [disabled]="busy()"
             (moveTo)="moveTo(card, $event)"
             (moveBy)="moveBy(card, i, $event)"
+            (archive)="archived.emit(card)"
           />
         </li>
       } @empty {

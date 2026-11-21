@@ -2,7 +2,6 @@ import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { filter, map, startWith } from 'rxjs';
-import { ToastOutlet } from '../../../../shared/components/toast-outlet/toast-outlet';
 
 export interface SettingsTab {
   path: string;
@@ -20,7 +19,7 @@ export const SETTINGS_TABS: readonly SettingsTab[] = [
 /** The /settings frame: side tabs (a select on small screens) around the open settings page. */
 @Component({
   selector: 'app-settings-layout',
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, ToastOutlet],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive],
   template: `
     <div class="settings">
       <header class="head">
@@ -54,7 +53,6 @@ export const SETTINGS_TABS: readonly SettingsTab[] = [
         <router-outlet />
       </section>
     </div>
-    <app-toast-outlet />
   `,
   styles: `
     :host {

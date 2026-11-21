@@ -7,7 +7,7 @@ import {
   signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { forkJoin, finalize } from 'rxjs';
 import { TopBar, HOME_TABS, type HomeTab, asTab } from '../../shared/components/top-bar/top-bar';
 import { SessionService } from '../auth/session/session.service';
@@ -31,6 +31,7 @@ const tabIndex = (tab: HomeTab) => HOME_TABS.findIndex((t) => t.id === tab);
 @Component({
   selector: 'app-home',
   imports: [
+    RouterLink,
     TopBar,
     ProjectList,
     PriorityList,

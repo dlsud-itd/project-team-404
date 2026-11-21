@@ -14,6 +14,7 @@ interface ApiLabel {
   id: number;
   name: string;
   color: string | null;
+  isArchived?: boolean;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -22,8 +23,11 @@ export class LabelService {
   private readonly baseUrl = `${environment.apiBaseUrl}/api/labels`;
   private readonly tasksUrl = `${environment.apiBaseUrl}/api/tasks`;
 
+  /** Active labels only: archived ones are hidden from pickers and filters. */
   list(): Observable<Label[]> {
-    return this.http.get<ApiLabel[]>(this.baseUrl).pipe(map((labels) => labels.map(toLabel)));
+    return this.http
+      .get<ApiLabel[]>(this.baseUrl)
+      .pipe(map((labels) => labels.filter((label) => !label.isArchived).map(toLabel)));
   }
 
   create(input: { name: string; color: string | null }): Observable<Label> {

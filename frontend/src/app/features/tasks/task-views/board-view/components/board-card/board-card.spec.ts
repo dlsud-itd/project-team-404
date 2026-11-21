@@ -106,7 +106,19 @@ describe('BoardCard', () => {
       ['Move to Done', false],
       ['Move up', true],
       ['Move down', true],
+      ['Archive', false],
     ]);
+  });
+
+  it('asks to archive the card from its menu', () => {
+    let archived = 0;
+    fixture.componentInstance.archive.subscribe(() => archived++);
+    render(card(boardTask(7, 'Write')));
+
+    openMenu();
+    items()[5].click();
+
+    expect(archived).toBe(1);
   });
 
   it('reports the chosen column', () => {

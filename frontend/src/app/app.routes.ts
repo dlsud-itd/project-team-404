@@ -39,6 +39,10 @@ export const routes: Routes = [
           import('./features/projects/projects.routes').then((m) => m.PROJECTS_ROUTES),
       },
       {
+        path: 'archive',
+        loadChildren: () => import('./features/archive/archive.routes').then((m) => m.ARCHIVE_ROUTES),
+      },
+      {
         // Profile, Preferences, Config, Labels and Priorities tabs; /settings/profile is unchanged.
         path: 'settings',
         loadChildren: () =>

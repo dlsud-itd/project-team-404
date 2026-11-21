@@ -41,6 +41,13 @@
             <app-project-list id="projects" />
             <app-priority-list />
             <app-mini-calendar (addTask)="composing.set(true)" />
+            <a class="archive-link" routerLink="/archive">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <rect x="3" y="4" width="18" height="5" rx="1" />
+                <path d="M5 9v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V9M10 13h4" />
+              </svg>
+              Archive
+            </a>
           </aside>
 
           <main class="main">

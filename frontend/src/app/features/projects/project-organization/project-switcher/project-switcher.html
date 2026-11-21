@@ -131,6 +131,11 @@
             </li>
           }
         </ul>
+        <p class="empty">
+          <a class="create" routerLink="/archive" [queryParams]="{ tab: 'projects' }"
+            >Restore archived projects from the Archive page</a
+          >
+        </p>
       </details>
     }
   }
@@ -187,16 +192,6 @@
           (click)="setArchived(project, true)"
         >
           Archive
-        </button>
-      } @else if (project.isArchived) {
-        <button
-          type="button"
-          class="action"
-          [attr.aria-label]="'Restore ' + project.name"
-          [disabled]="isPending(project)"
-          (click)="setArchived(project, false)"
-        >
-          Restore
         </button>
       }
     </div>

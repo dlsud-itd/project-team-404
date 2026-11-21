@@ -18,6 +18,7 @@ import { provideUserSettings } from '../../../../src/app/features/settings/state
 import type { ApiTask } from '../../../../src/app/features/tasks/shared/types/task.types';
 import { TASK_QUERY_DEBOUNCE_MS } from '../../../../src/app/features/tasks/task-organization/state/task-query.store';
 import { environment } from '../../../../src/environments/environment';
+import { ToastService } from '../../../../src/app/shared/services/toast.service';
 
 /**
  * Settings > Labels and Settings > Priorities frontend integration tests (Sprint 5: FE-LPM rows).
@@ -269,8 +270,11 @@ describe('Labels & Priorities integration (Settings, task form and filters + API
     });
   }
 
+  /** The root App renders the toast outlet, which the router harness leaves out; read the service. */
   function toasts(): string[] {
-    return all('app-toast-outlet .toast > span').map((message) => clean(message.textContent));
+    return TestBed.inject(ToastService)
+      .toasts()
+      .map((toast) => toast.message);
   }
 
   /**

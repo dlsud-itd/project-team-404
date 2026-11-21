@@ -40,6 +40,8 @@ export class BoardCard {
 
   readonly moveTo = output<BoardColumnKey>();
   readonly moveBy = output<-1 | 1>();
+  /** The menu's "Archive"; the board takes the card off and shows the Undo toast. */
+  readonly archive = output<void>();
 
   private readonly priorities = inject(PrioritiesStore);
   private readonly session = inject(SessionService);

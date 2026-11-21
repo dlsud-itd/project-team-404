@@ -7,6 +7,7 @@ import { provideRouter } from '@angular/router';
 import { environment } from '../../../../../environments/environment';
 import { ProjectsStore } from '../../shared/state/projects.store';
 import type { Project } from '../../shared/types/project.types';
+import { ToastService } from '../../../../shared/services/toast.service';
 import { ProjectSwitcher } from './project-switcher';
 import { apiProject } from '../../testing/helpers/api-project';
 
@@ -185,13 +186,34 @@ describe('ProjectSwitcher', () => {
         .flush({ projectId: 11, isArchived: true, message: 'Project archived successfully' });
     });
 
-    it('restores an archived project', () => {
-      click('Restore Old class');
+    it('offers Undo after archiving, which restores the project', () => {
+      const toasts = TestBed.inject(ToastService);
+      click('Archive Capstone');
+      http
+        .expectOne(`${URL}/11/archive`)
+        .flush({ projectId: 11, isArchived: true, message: 'Project archived successfully' });
 
-      expect(others()).toEqual(['Capstone', 'Old class']);
-      const req = http.expectOne(`${URL}/13/archive`);
+      const toast = toasts.toasts().at(-1)!;
+      expect(toast.message).toBe('Project “Capstone” archived');
+      expect(toast.action?.label).toBe('Undo');
+
+      toasts.runAction(toast.id);
+      render();
+
+      expect(others()).toEqual(['Capstone']);
+      const req = http.expectOne(`${URL}/11/archive`);
       expect(req.request.body).toEqual({ isArchived: false });
-      req.flush({ projectId: 13, isArchived: false, message: 'Project restored from archive' });
+      req.flush({ projectId: 11, isArchived: false, message: 'Project restored from archive' });
+    });
+
+    it('sends archived projects to the Archive page to be restored', () => {
+      expect(button('Restore Old class')).toBeNull();
+      const link = el<HTMLAnchorElement>('.archived a.create');
+      expect(link?.getAttribute('href')).toBe('/archive?tab=projects');
+    });
+
+    it('has no Archive action for the Inbox', () => {
+      expect(button('Archive Inbox')).toBeNull();
     });
 
     it('reloads the list when the project no longer exists', () => {

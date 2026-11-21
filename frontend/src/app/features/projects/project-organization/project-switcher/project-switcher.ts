@@ -15,9 +15,11 @@ import {
   signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { RouterLink } from '@angular/router';
 import { Observable, finalize } from 'rxjs';
 import { mapProjectError } from '../../project-crud/mappers/project-error.mapper';
 import { ProjectService } from '../../project-crud/services/project.service';
+import { ArchiveUndoService } from '../../../archive/services/archive-undo.service';
 import { ProjectsHeader } from '../../shared/components/projects-header/projects-header';
 import { ProjectsStore } from '../../shared/state/projects.store';
 import type { Project } from '../../shared/types/project.types';
@@ -34,6 +36,7 @@ import { splitProjects } from '../utils/split-projects.util';
   selector: 'app-project-switcher',
   imports: [
     NgTemplateOutlet,
+    RouterLink,
     CdkDropList,
     CdkDrag,
     CdkDragHandle,
@@ -49,6 +52,7 @@ export class ProjectSwitcher {
   private readonly projects = inject(ProjectService);
   private readonly organization = inject(ProjectOrganizationService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly archiveUndo = inject(ArchiveUndoService);
 
   protected readonly split = computed(() => splitProjects(this.store.projects()));
   /** True until the first list request settles. */
@@ -93,11 +97,22 @@ export class ProjectSwitcher {
     );
   }
 
+  /**
+   * Archived projects are restored from the Archive page; the switcher only restores through the
+   * Undo button of the toast shown after archiving.
+   */
   protected setArchived(project: Project, isArchived: boolean): void {
     this.run(
       project,
       this.organization.setArchived(project, isArchived),
       isArchived ? `Archived ${project.name}.` : `Restored ${project.name}.`,
+      () => {
+        if (!isArchived) return;
+        this.archiveUndo.offerUndo(
+          { kind: 'project', id: project.projectId, name: project.name },
+          () => this.setArchived(this.store.byId(project.projectId) ?? project, false),
+        );
+      },
     );
   }
 
@@ -128,7 +143,12 @@ export class ProjectSwitcher {
   }
 
   /** Sends a favorite or archive change, marking the project busy until it settles. */
-  private run(project: Project, request: Observable<unknown>, done: string): void {
+  private run(
+    project: Project,
+    request: Observable<unknown>,
+    done: string,
+    saved?: () => void,
+  ): void {
     if (this.isPending(project)) return;
     const id = project.projectId;
     this.actionError.set(null);
@@ -146,7 +166,7 @@ export class ProjectSwitcher {
         ),
         takeUntilDestroyed(this.destroyRef),
       )
-      .subscribe({ error: (error: unknown) => this.failed(error) });
+      .subscribe({ next: () => saved?.(), error: (error: unknown) => this.failed(error) });
   }
 
   /** The service has already undone the change; tell the user why. */

@@ -12,7 +12,12 @@ import { ToastService } from '../../services/toast.service';
           [class.error]="toast.kind === 'error'"
           [attr.role]="toast.kind === 'error' ? 'alert' : 'status'"
         >
-          <span>{{ toast.message }}</span>
+          <span class="message">{{ toast.message }}</span>
+          @if (toast.action; as action) {
+            <button type="button" class="action" (click)="toasts.runAction(toast.id)">
+              {{ action.label }}
+            </button>
+          }
           <button type="button" class="close" (click)="toasts.dismiss(toast.id)">
             <span aria-hidden="true">×</span>
             <span class="visually-hidden">Dismiss</span>
@@ -48,6 +53,26 @@ import { ToastService } from '../../services/toast.service';
     }
     .toast.error {
       background: var(--error);
+    }
+    .message {
+      flex: 1;
+    }
+    .action {
+      padding: 0.25rem 0.5rem;
+      border: 1px solid rgb(255 255 255 / 0.6);
+      border-radius: 0.375rem;
+      background: none;
+      color: inherit;
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+      &:hover {
+        background: rgb(255 255 255 / 0.12);
+      }
+      &:focus-visible {
+        outline: 2px solid #fff;
+        outline-offset: 2px;
+      }
     }
     .close {
       border: 0;
