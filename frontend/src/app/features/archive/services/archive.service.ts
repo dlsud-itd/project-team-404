@@ -49,7 +49,11 @@ export class ArchiveService {
   readonly labelArchiveChanges = this.labelChanges.asObservable();
 
   /** One page of archived items for a tab, newest first. */
-  list(tab: ArchiveTab, cursor?: string | null, limit = ARCHIVE_PAGE_SIZE): Observable<ArchivePage> {
+  list(
+    tab: ArchiveTab,
+    cursor?: string | null,
+    limit = ARCHIVE_PAGE_SIZE,
+  ): Observable<ArchivePage> {
     let params = new HttpParams().set('type', tab).set('limit', String(limit));
     if (cursor) params = params.set('cursor', cursor);
     return this.http
@@ -122,25 +126,21 @@ export class ArchiveService {
           color: project?.color ?? null,
         };
       }),
-      ...body.projects.items.map(
-        (project): ArchiveItem => ({
-          kind: 'project',
-          id: project.id,
-          name: project.name,
-          archivedAt: project.archivedAt ?? '',
-          color: project.color,
-        }),
-      ),
-      ...body.labels.items.map(
-        (label): ArchiveItem => ({
-          kind: 'label',
-          id: label.id,
-          name: label.name,
-          archivedAt: label.archivedAt ?? '',
-          color: label.color,
-          taskCount: label.taskCount ?? null,
-        }),
-      ),
+      ...body.projects.items.map((project): ArchiveItem => ({
+        kind: 'project',
+        id: project.id,
+        name: project.name,
+        archivedAt: project.archivedAt ?? '',
+        color: project.color,
+      })),
+      ...body.labels.items.map((label): ArchiveItem => ({
+        kind: 'label',
+        id: label.id,
+        name: label.name,
+        archivedAt: label.archivedAt ?? '',
+        color: label.color,
+        taskCount: label.taskCount ?? null,
+      })),
     ].sort(newestFirst);
 
     const counts = {
