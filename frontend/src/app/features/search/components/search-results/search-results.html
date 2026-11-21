@@ -1,0 +1,213 @@
+<div class="results" [class.page]="mode() === 'page'">
+  @if (mode() === 'dropdown') {
+    <div class="toolbar">
+      <label class="archived-toggle">
+        <input
+          type="checkbox"
+          [checked]="includeArchived()"
+          (change)="includeArchivedChange.emit($any($event.target).checked)"
+          (mousedown)="$event.preventDefault()"
+        />
+        <span class="switch" aria-hidden="true"></span>
+        Include archived
+      </label>
+    </div>
+  }
+
+  @if (state() === 'loading') {
+    <p class="state" role="status">Searching…</p>
+  } @else if (state() === 'error') {
+    <div class="state error" role="alert">
+      <p>Search isn't working right now.</p>
+      <button
+        type="button"
+        class="retry"
+        (mousedown)="$event.preventDefault()"
+        (click)="retry.emit()"
+      >
+        Try again
+      </button>
+    </div>
+  } @else if (empty()) {
+    <p class="state" role="status">
+      No tasks or projects match “<span class="query">{{ query() }}</span
+      >”.
+      @if (!includeArchived()) {
+        <br /><span class="hint">Archived items are hidden.</span>
+      }
+    </p>
+  }
+
+  @if (state() === 'done') {
+    <div
+      [attr.id]="idPrefix() + '-listbox'"
+      [attr.role]="mode() === 'dropdown' ? 'listbox' : null"
+      [attr.aria-label]="mode() === 'dropdown' ? 'Search results' : null"
+    >
+      @if (showTasks()) {
+        <ng-container
+          *ngTemplateOutlet="
+            group;
+            context: { $implicit: tasks(), heading: 'Tasks', total: counts().tasks, key: 'tasks' }
+          "
+        />
+      }
+      @if (showProjects()) {
+        <ng-container
+          *ngTemplateOutlet="
+            group;
+            context: {
+              $implicit: projects(),
+              heading: 'Projects',
+              total: counts().projects,
+              key: 'projects',
+            }
+          "
+        />
+      }
+    </div>
+
+    @if (mode() === 'dropdown' && !empty()) {
+      <button
+        type="button"
+        class="see-all"
+        (mousedown)="$event.preventDefault()"
+        (click)="seeAll.emit()"
+      >
+        {{ hasMore() ? 'See all results' : 'Open search page' }}
+        <span aria-hidden="true">→</span>
+      </button>
+    }
+  }
+</div>
+
+<ng-template #group let-items let-heading="heading" let-total="total" let-key="key">
+  <div
+    class="group"
+    [attr.role]="mode() === 'dropdown' ? 'group' : null"
+    [attr.aria-labelledby]="idPrefix() + '-' + key + '-heading'"
+  >
+    <h3
+      class="group-heading"
+      [id]="idPrefix() + '-' + key + '-heading'"
+      [attr.role]="mode() === 'dropdown' ? 'presentation' : null"
+    >
+      {{ heading }} <span class="group-count">{{ total }}</span>
+    </h3>
+    <ul class="rows" [attr.role]="mode() === 'dropdown' ? 'presentation' : null">
+      @for (item of items; track item.kind + ':' + item.id) {
+        @if (mode() === 'dropdown') {
+          <li
+            class="row"
+            role="option"
+            [id]="rowId(item)"
+            [class.active]="activeId() === rowId(item)"
+            [attr.aria-selected]="activeId() === rowId(item)"
+            (mousedown)="$event.preventDefault()"
+            (mouseenter)="activated.emit(item)"
+            (click)="opened.emit(item)"
+          >
+            <ng-container *ngTemplateOutlet="row; context: { $implicit: item }" />
+          </li>
+        } @else {
+          <li>
+            <button type="button" class="row" [id]="rowId(item)" (click)="opened.emit(item)">
+              <ng-container *ngTemplateOutlet="row; context: { $implicit: item }" />
+            </button>
+          </li>
+        }
+      }
+    </ul>
+  </div>
+</ng-template>
+
+<ng-template #row let-item>
+  @if (item.kind === 'task') {
+    <span
+      class="priority"
+      [style.background]="item.priorityColor"
+      [class.unknown]="!item.priorityColor"
+      [attr.title]="item.priorityName ? item.priorityName + ' priority' : null"
+      aria-hidden="true"
+    ></span>
+    <span class="body">
+      <span class="line">
+        <span class="title">
+          @for (part of highlight(item.title, query()); track $index) {
+            @if (part.match) {
+              <mark>{{ part.text }}</mark>
+            } @else {
+              <span>{{ part.text }}</span>
+            }
+          }
+        </span>
+        @if (item.dueDate) {
+          <span class="due">
+            <span class="visually-hidden">Due </span>{{ item.dueDate | date: 'MMM d' }}
+          </span>
+        }
+      </span>
+      <span class="meta">
+        <span class="project">
+          <span class="swatch" [style.background]="item.projectColor" aria-hidden="true"></span>
+          {{ item.projectName ?? 'Project' }}
+        </span>
+        @if (item.priorityName) {
+          <span class="visually-hidden">, {{ item.priorityName }} priority</span>
+        }
+        @if (item.isArchived) {
+          <span class="tag archived">Archived</span>
+        }
+        @if (item.inDescription) {
+          <span class="tag">in description</span>
+        }
+      </span>
+      @if (item.inDescription && item.snippet) {
+        <span class="snippet">
+          @for (part of highlight(item.snippet, query()); track $index) {
+            @if (part.match) {
+              <mark>{{ part.text }}</mark>
+            } @else {
+              <span>{{ part.text }}</span>
+            }
+          }
+        </span>
+      }
+    </span>
+  } @else {
+    <span class="swatch project-swatch" [style.background]="item.color" aria-hidden="true"></span>
+    <span class="body">
+      <span class="line">
+        <span class="title">
+          @for (part of highlight(item.name, query()); track $index) {
+            @if (part.match) {
+              <mark>{{ part.text }}</mark>
+            } @else {
+              <span>{{ part.text }}</span>
+            }
+          }
+        </span>
+      </span>
+      <span class="meta">
+        <span>Project</span>
+        @if (item.isArchived) {
+          <span class="tag archived">Archived</span>
+        }
+        @if (item.inDescription) {
+          <span class="tag">in description</span>
+        }
+      </span>
+      @if (item.inDescription && item.snippet) {
+        <span class="snippet">
+          @for (part of highlight(item.snippet, query()); track $index) {
+            @if (part.match) {
+              <mark>{{ part.text }}</mark>
+            } @else {
+              <span>{{ part.text }}</span>
+            }
+          }
+        </span>
+      }
+    </span>
+  }
+</ng-template>

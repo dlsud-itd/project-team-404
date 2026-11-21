@@ -1,0 +1,100 @@
+<main class="search-page">
+  <header class="head">
+    <a class="back" routerLink="/home">
+      <span aria-hidden="true">←</span>
+      Home
+    </a>
+    <h1>Search</h1>
+  </header>
+
+  <form class="query" role="search" (submit)="submit($event)">
+    <label class="field">
+      <svg class="icon" viewBox="0 0 20 20" aria-hidden="true">
+        <circle cx="8.5" cy="8.5" r="5.5" fill="none" stroke="currentColor" stroke-width="2" />
+        <path d="m13 13 4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+      </svg>
+      <span class="visually-hidden">Search tasks and projects</span>
+      <input
+        type="text"
+        name="q"
+        autocomplete="off"
+        spellcheck="false"
+        enterkeyhint="search"
+        placeholder="Search tasks and projects"
+        aria-describedby="search-page-hint"
+        [maxLength]="maxLength"
+        [value]="draft()"
+        (input)="onInput($any($event.target).value)"
+      />
+    </label>
+    <label class="archived-toggle">
+      <input
+        type="checkbox"
+        [checked]="includeArchived()"
+        (change)="setIncludeArchived($any($event.target).checked)"
+      />
+      <span class="switch" aria-hidden="true"></span>
+      Include archived
+    </label>
+  </form>
+  <p id="search-page-hint" class="hint" [class.warn]="tooShort()">
+    @if (tooShort()) {
+      Type at least 2 characters to search.
+    } @else {
+      Searches task titles and descriptions, and project names.
+    }
+  </p>
+
+  <div class="tabs" role="tablist" aria-label="Result types" (keydown)="onTabKey($event)">
+    @for (item of tabs; track item) {
+      <button
+        type="button"
+        class="tab"
+        role="tab"
+        [id]="'search-tab-' + item"
+        [class.active]="type() === item"
+        [attr.aria-selected]="type() === item"
+        aria-controls="search-panel"
+        [tabIndex]="type() === item ? 0 : -1"
+        (click)="select(item)"
+      >
+        <span>{{ tabLabel[item] }}</span>
+        @if (count(item) !== null) {
+          <span class="count">{{ count(item) }}</span>
+        }
+      </button>
+    }
+  </div>
+
+  <section
+    id="search-panel"
+    class="panel"
+    role="tabpanel"
+    [attr.aria-labelledby]="'search-tab-' + type()"
+    [attr.aria-busy]="state() === 'loading'"
+  >
+    @if (state() === 'idle') {
+      <p class="empty">Results for your search will show up here.</p>
+    } @else {
+      <app-search-results
+        mode="page"
+        idPrefix="search-page"
+        [show]="type()"
+        [tasks]="rows().tasks"
+        [projects]="rows().projects"
+        [counts]="counts()"
+        [query]="results()?.query ?? draft()"
+        [state]="state()"
+        [includeArchived]="includeArchived()"
+        (opened)="open($event)"
+        (retry)="retry()"
+      />
+      @if (state() === 'done' && truncated()) {
+        <p class="more">
+          {{ truncated() }} more {{ truncated() === 1 ? 'match' : 'matches' }} not shown. Add words
+          to narrow your search.
+        </p>
+      }
+    }
+  </section>
+</main>

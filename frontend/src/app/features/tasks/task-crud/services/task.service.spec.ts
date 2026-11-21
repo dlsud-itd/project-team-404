@@ -277,4 +277,60 @@ describe('TaskService', () => {
 
     expect(store.tasks()).toEqual([DOCS]);
   });
+
+  describe('reorder', () => {
+    const CHAPTER: Task = { ...STUDY, taskId: 3, title: 'Write chapter' };
+
+    beforeEach(() =>
+      store.setTasks(10, [
+        { ...STUDY, sortOrder: 0 },
+        { ...DOCS, sortOrder: 1 },
+        { ...CHAPTER, sortOrder: 2 },
+      ]),
+    );
+
+    const order = () => store.open().map((task) => task.taskId);
+
+    it('sends the project and every open id, and shows the new order straight away', () => {
+      let done = false;
+      service.reorder(10, [3, 1, 2]).subscribe(() => (done = true));
+
+      expect(order()).toEqual([3, 1, 2]);
+      const req = http.expectOne(`${URL}/reorder`);
+      expect(req.request.method).toBe('PUT');
+      expect(req.request.body).toEqual({ projectId: 10, taskIds: [3, 1, 2] });
+      req.flush({ projectId: 10, taskIds: [3, 1, 2] });
+
+      expect(done).toBe(true);
+      expect(order()).toEqual([3, 1, 2]);
+    });
+
+    it('puts the old order back and passes the error on when the request fails', () => {
+      let failed: unknown;
+      service.reorder(10, [3, 1, 2]).subscribe({ error: (error: unknown) => (failed = error) });
+
+      http
+        .expectOne(`${URL}/reorder`)
+        .flush({ error: 'Task order changed' }, { status: 409, statusText: 'Conflict' });
+
+      expect(order()).toEqual([1, 2, 3]);
+      expect(failed).toBeTruthy();
+    });
+  });
+
+  it('asks for position order when told to, keeping the returned order', () => {
+    let result: Task[] | undefined;
+    service
+      .list({ projectId: 10, orderBy: 'position', orderDirection: 'asc' })
+      .subscribe((tasks) => (result = tasks));
+
+    http
+      .expectOne(`${URL}?projectId=10&${LIST_QUERY}&orderBy=position&orderDirection=asc`)
+      .flush([asApiTask(DOCS), asApiTask(STUDY)]);
+
+    expect(result?.map((task) => [task.taskId, task.sortOrder])).toEqual([
+      [2, 0],
+      [1, 1],
+    ]);
+  });
 });

@@ -1,7 +1,18 @@
 import {
+  CdkDrag,
+  type CdkDragDrop,
+  CdkDragHandle,
+  CdkDragPlaceholder,
+  CdkDropList,
+} from '@angular/cdk/drag-drop';
+import { HttpErrorResponse } from '@angular/common/http';
+import {
   ChangeDetectionStrategy,
   Component,
   DestroyRef,
+  ElementRef,
+  Injector,
+  afterNextRender,
   computed,
   effect,
   inject,
@@ -35,6 +46,11 @@ import {
   toTaskListFilter,
   withoutRejectedParams,
 } from '../../task-organization/utils/task-query-params.util';
+import {
+  reorderBlockedReason,
+  reorderTaskIds,
+  withPositionOrder,
+} from '../../task-organization/utils/reorder-tasks.util';
 import { instantToDate, userTimeZone } from '../../task-scheduling/utils/date-format.util';
 import { BoardView } from '../../task-views/board-view/board-view';
 import { toBoardFilter } from '../../task-views/board-view/services/task-board.service';
@@ -52,6 +68,10 @@ import { ViewSwitcher, type TaskView } from '../../task-views/view-switcher/view
     SortMenu,
     BoardView,
     ViewSwitcher,
+    CdkDropList,
+    CdkDrag,
+    CdkDragHandle,
+    CdkDragPlaceholder,
   ],
   providers: [TaskQueryStore],
   templateUrl: './task-list.html',
@@ -66,6 +86,8 @@ export class TaskList {
   private readonly route = inject(ActivatedRoute);
   private readonly session = inject(SessionService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly injector = inject(Injector);
+  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly labelsApi = inject(LabelService);
   protected readonly priorities = inject(PrioritiesStore);
   protected readonly labels = signal<Label[]>([]);
@@ -86,6 +108,16 @@ export class TaskList {
 
   /** True until the first list request for this project settles. */
   protected readonly firstLoad = computed(() => this.store.loading() && !this.store.loaded());
+
+  /** A reorder is being saved; further moves wait for it. */
+  protected readonly reordering = signal(false);
+  /** Read out by screen readers after a move. */
+  protected readonly announcement = signal('');
+  /** Why the open tasks can't be reordered right now (filters, a sort, a long list), or null. */
+  protected readonly reorderBlocked = computed(() =>
+    reorderBlockedReason(this.query.query(), this.store.open().length),
+  );
+  protected readonly canReorder = computed(() => this.reorderBlocked() === null);
 
   protected readonly pendingDelete = signal<Task | null>(null);
   protected readonly deleting = signal(false);
@@ -119,7 +151,10 @@ export class TaskList {
       .pipe(
         switchMap(() =>
           this.tasks
-            .refresh(this.projectId(), toTaskListFilter(this.query.query(), this.today()))
+            .refresh(
+              this.projectId(),
+              withPositionOrder(toTaskListFilter(this.query.query(), this.today())),
+            )
             // The store records the error for the template.
             .pipe(
               catchError((error: unknown) => {
@@ -200,6 +235,63 @@ export class TaskList {
     return instantToDate(
       new Date().toISOString(),
       userTimeZone(this.session.currentUser()?.timezone),
+    );
+  }
+
+  protected dropped(event: CdkDragDrop<unknown>): void {
+    this.moveTask(event.previousIndex, event.currentIndex);
+  }
+
+  /**
+   * Moves an open task and saves the whole new order. The list changes at once; a failure puts
+   * it back with a message, and a 409 (the list changed elsewhere) reloads it. A keyboard move
+   * keeps focus on the same button of the moved task.
+   */
+  protected moveTask(from: number, to: number, button?: 'up' | 'down'): void {
+    const open = this.store.open();
+    const taskIds = reorderTaskIds(open, from, to);
+    if (!taskIds || !this.canReorder() || this.reordering()) return;
+
+    const task = open[from];
+    const position = taskIds.indexOf(task.taskId) + 1;
+    this.notice.set(null);
+    this.actionError.set(null);
+    this.reordering.set(true);
+    this.announcement.set(`Moved ${task.title} to position ${position} of ${taskIds.length}.`);
+    if (button) this.refocus(task.taskId, button);
+
+    this.tasks
+      .reorder(this.projectId(), taskIds)
+      .pipe(
+        finalize(() => this.reordering.set(false)),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe({
+        error: (error: unknown) => {
+          if (error instanceof HttpErrorResponse && error.status === 409) {
+            this.actionError.set(
+              "Your new order wasn't saved because this list changed somewhere else. It has been reloaded.",
+            );
+            this.load();
+          } else {
+            this.actionError.set(`Your new order wasn't saved. ${mapTaskError(error).message}`);
+          }
+          this.announcement.set("Your new order wasn't saved.");
+        },
+      });
+  }
+
+  /** After the moved row renders in its new place, focus its button again (or the other one at an end). */
+  private refocus(taskId: number, button: 'up' | 'down'): void {
+    afterNextRender(
+      () => {
+        const find = (which: string) =>
+          this.host.nativeElement.querySelector<HTMLButtonElement>(`#task-${taskId}-${which}`);
+        const same = find(button);
+        const target = same && !same.disabled ? same : find(button === 'up' ? 'down' : 'up');
+        target?.focus();
+      },
+      { injector: this.injector },
     );
   }
 

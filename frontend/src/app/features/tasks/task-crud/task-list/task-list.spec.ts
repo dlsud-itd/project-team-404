@@ -18,7 +18,8 @@ const LABELS_URL = `${environment.apiBaseUrl}/api/labels`;
 
 /** Projects as the API sends them: `id` instead of `projectId`. */
 const asApi = ({ projectId, ...rest }: Project): ApiProject => ({ id: projectId, ...rest });
-const LIST_URL = `${TASKS_URL}?projectId=10&status=all&pageSize=100`;
+const POSITION_ORDER = 'orderBy=position&orderDirection=asc';
+const LIST_URL = `${TASKS_URL}?projectId=10&status=all&pageSize=100&${POSITION_ORDER}`;
 
 const CAPSTONE: Project = {
   projectId: 10,
@@ -116,8 +117,14 @@ describe('TaskList', () => {
     harness.detectChanges();
   }
 
+  /**
+   * With no sort picked, the list asks for the project's own (drag-and-drop) order. The board's
+   * paged detail requests (`page=`) keep their own order, so they don't.
+   */
   const listUrl = (params = '') =>
-    `${TASKS_URL}?projectId=10&status=all&pageSize=100${params ? `&${params}` : ''}`;
+    `${TASKS_URL}?projectId=10&status=all&pageSize=100${params ? `&${params}` : ''}${
+      params.includes('orderBy=') || params.includes('page=') ? '' : `&${POSITION_ORDER}`
+    }`;
 
   function askToDelete(title: string): void {
     el<HTMLButtonElement>(`button[aria-label="Delete ${title}"]`)!.click();
@@ -164,11 +171,11 @@ describe('TaskList', () => {
     expect(text('.subtitle')).toBe('Final requirements');
   });
 
-  it('lists open tasks by id, with completed tasks in their own section', async () => {
+  it('lists open tasks in the project order the server sends, with completed tasks in their own section', async () => {
     await open();
     loadWith([OUTLINE, PROPOSAL, CHAPTER]);
 
-    expect(titles('[aria-labelledby="open-heading"]')).toEqual(['Write chapter 1', 'Outline']);
+    expect(titles('[aria-labelledby="open-heading"]')).toEqual(['Outline', 'Write chapter 1']);
     expect(titles('[aria-labelledby="completed-heading"]')).toEqual(['Proposal']);
     expect(text('#open-heading')).toBe('To do · 2');
   });
@@ -237,7 +244,9 @@ describe('TaskList', () => {
     // The server refuses overdue together with completed; the newest choice wins.
     await pick('Status', 'Completed');
     http
-      .expectOne(`${TASKS_URL}?projectId=10&status=completed&pageSize=100&recurring=true`)
+      .expectOne(
+        `${TASKS_URL}?projectId=10&status=completed&pageSize=100&recurring=true&${POSITION_ORDER}`,
+      )
       .flush([]);
     expect(chipText('Due')).toBe('Due');
   });
@@ -245,7 +254,9 @@ describe('TaskList', () => {
   it('offers to clear the filters when nothing matches them', async () => {
     await open('/projects/10/tasks?status=completed');
     http.expectOne(`${PROJECTS_URL}/10`).flush(asApi(CAPSTONE));
-    http.expectOne(`${TASKS_URL}?projectId=10&status=completed&pageSize=100`).flush([]);
+    http
+      .expectOne(`${TASKS_URL}?projectId=10&status=completed&pageSize=100&${POSITION_ORDER}`)
+      .flush([]);
     harness.detectChanges();
 
     expect(text('.empty-title')).toBe('No tasks match these filters.');
@@ -338,7 +349,7 @@ describe('TaskList', () => {
       await harness.fixture.whenStable();
       http.expectOne(`${PROJECTS_URL}/11`).flush(asApi(GYM));
       http
-        .expectOne(`${TASKS_URL}?projectId=11&status=all&pageSize=100`)
+        .expectOne(`${TASKS_URL}?projectId=11&status=all&pageSize=100&${POSITION_ORDER}`)
         .flush([asApiTask({ ...OUTLINE, projectId: 11 })]);
       harness.detectChanges();
 
@@ -383,7 +394,7 @@ describe('TaskList', () => {
     http
       .expectOne(`${PROJECTS_URL}/99`)
       .flush({ error: 'Project not found' }, { status: 404, statusText: 'Not Found' });
-    http.expectOne(`${TASKS_URL}?projectId=99&status=all&pageSize=100`).flush([]);
+    http.expectOne(`${TASKS_URL}?projectId=99&status=all&pageSize=100&${POSITION_ORDER}`).flush([]);
     harness.detectChanges();
 
     expect(text('.message p')).toBe('Project not found.');
@@ -439,7 +450,7 @@ describe('TaskList', () => {
 
       expect(text('.dialog [role="alert"]')).toBe('Something went wrong. Please try again.');
       expect(el<HTMLButtonElement>('button.confirm')!.disabled).toBe(false);
-      expect(titles()).toEqual(['Write chapter 1', 'Outline']);
+      expect(titles()).toEqual(['Outline', 'Write chapter 1']);
     });
 
     it('closes the dialog and reloads the list when the task is already gone', () => {
