@@ -12,7 +12,9 @@ import { projectPermissions } from '../../utils/project-permissions.util';
 
       <div class="body">
         <h3 class="name">
-          {{ project().name }}
+          <a class="tasks-link" [routerLink]="['/projects', project().projectId, 'tasks']">{{
+            project().name
+          }}</a>
           @if (project().isInbox) {
             <span class="badge">Read-only</span>
           }
@@ -88,6 +90,17 @@ import { projectPermissions } from '../../utils/project-permissions.util';
       font-size: 0.9375rem;
       font-weight: 600;
       overflow-wrap: anywhere;
+    }
+    .tasks-link {
+      color: inherit;
+      text-decoration: none;
+      &:hover {
+        text-decoration: underline;
+      }
+      &:focus-visible {
+        outline: 2px solid #7b23a8;
+        outline-offset: 2px;
+      }
     }
     .badge {
       padding: 0.0625rem 0.5rem;

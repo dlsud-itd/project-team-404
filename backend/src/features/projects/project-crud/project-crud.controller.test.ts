@@ -14,6 +14,7 @@ const project: ProjectRecord = {
   isInbox: false,
   isFavorite: false,
   isArchived: false,
+  archivedAt: null,
   sortOrder: 0,
   createdAt: new Date('2026-10-20T00:00:00.000Z'),
   updatedAt: new Date('2026-10-20T00:00:00.000Z'),
@@ -28,6 +29,7 @@ function context(validated: unknown = undefined, ownedProject?: ProjectRecord) {
     locals: { validated, ownedProject },
     status: vi.fn().mockReturnThis(),
     json: vi.fn().mockReturnThis(),
+    setHeader: vi.fn().mockReturnThis(),
     end: vi.fn().mockReturnThis(),
   } as unknown as Response;
   const next = vi.fn() as NextFunction;
@@ -39,7 +41,7 @@ function service() {
     createProject: vi.fn().mockResolvedValue(project),
     findOwnedProjects: vi.fn().mockResolvedValue([project]),
     updateOwnedProject: vi.fn().mockResolvedValue(project),
-    softDeleteOwnedProject: vi.fn().mockResolvedValue(true),
+    softDeleteOwnedProject: vi.fn().mockResolvedValue(3),
   };
   return new ProjectCrudService(dependencies);
 }
@@ -76,6 +78,7 @@ describe('ProjectCrudController', () => {
 
     await controller.delete(req, res, next);
 
+    expect(res.setHeader).toHaveBeenCalledWith('X-Moved-Task-Count', '3');
     expect(res.status).toHaveBeenCalledWith(204);
     expect(res.end).toHaveBeenCalledOnce();
   });

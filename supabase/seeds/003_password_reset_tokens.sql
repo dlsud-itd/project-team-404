@@ -42,3 +42,84 @@ set
   user_id = excluded.user_id,
   expires_at = excluded.expires_at,
   used_at = excluded.used_at;
+
+with additional_users(email) as (
+  values
+    ('olivia@example.com'),
+    ('ethan@example.com'),
+    ('mia@example.com'),
+    ('rafael@example.com'),
+    ('grace@example.com'),
+    ('felix@example.com'),
+    ('amina@example.com'),
+    ('priya@example.com'),
+    ('kenji@example.com'),
+    ('sofia@example.com'),
+    ('ava@example.com'),
+    ('noah@example.com')
+)
+insert into public.auth_session (
+  user_id,
+  token_hash,
+  expires_at,
+  revoked_at,
+  created_at
+)
+select
+  auth_user.id,
+  encode(extensions.digest('inactive-session-' || additional_users.email, 'sha256'), 'hex'),
+  now() - interval '1 day',
+  now() - interval '1 day',
+  now() - interval '2 days'
+from additional_users
+join auth.users as auth_user on auth_user.email = additional_users.email
+on conflict (token_hash) do update
+set
+  expires_at = excluded.expires_at,
+  revoked_at = excluded.revoked_at,
+  created_at = excluded.created_at;
+
+with additional_users(email) as (
+  values
+    ('olivia@example.com'),
+    ('ethan@example.com'),
+    ('mia@example.com'),
+    ('rafael@example.com'),
+    ('grace@example.com'),
+    ('felix@example.com'),
+    ('amina@example.com'),
+    ('priya@example.com'),
+    ('kenji@example.com'),
+    ('sofia@example.com'),
+    ('ava@example.com'),
+    ('noah@example.com')
+),
+token_kinds(kind, expires_at, used_at) as (
+  values
+    ('expired', now() - interval '2 days', null::timestamptz),
+    ('used', now() + interval '1 day', now() - interval '1 hour')
+)
+insert into public.password_reset_token (
+  user_id,
+  token_hash,
+  expires_at,
+  used_at
+)
+select
+  auth_user.id,
+  encode(
+    extensions.digest(
+      'expired-reset-' || additional_users.email || '-' || token_kinds.kind,
+      'sha256'
+    ),
+    'hex'
+  ),
+  token_kinds.expires_at,
+  token_kinds.used_at
+from additional_users
+join auth.users as auth_user on auth_user.email = additional_users.email
+cross join token_kinds
+on conflict (token_hash) do update
+set
+  expires_at = excluded.expires_at,
+  used_at = excluded.used_at;

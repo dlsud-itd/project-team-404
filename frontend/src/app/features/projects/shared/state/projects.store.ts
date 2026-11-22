@@ -25,6 +25,17 @@ export class ProjectsStore {
   readonly inbox = computed(() => this.projects().find((p) => p.isInbox) ?? null);
   /** Projects shown in the main list: not archived, Inbox first. */
   readonly active = computed(() => this.projects().filter((p) => !p.isArchived));
+  readonly archived = computed(() => this.projects().filter((p) => p.isArchived));
+
+  /** The project the user switched to, if any. */
+  readonly selectedProjectId = signal<number | null>(null);
+  /** Whether the new-project popup is open. */
+  readonly creating = signal(false);
+  private readonly navigationError = signal<string | null>(null);
+  readonly selected = computed(() => {
+    const id = this.selectedProjectId();
+    return id === null ? null : (this.projects().find((p) => p.projectId === id) ?? null);
+  });
 
   byId(projectId: number): Project | undefined {
     return this.list().find((p) => p.projectId === projectId);
@@ -61,6 +72,28 @@ export class ProjectsStore {
     );
   }
 
+  /** Sets the sortOrder of many projects at once; projects not listed keep theirs. */
+  applySortOrders(orders: readonly Pick<Project, 'projectId' | 'sortOrder'>[]): void {
+    const byId = new Map(orders.map((o) => [o.projectId, o.sortOrder]));
+    this.list.update((list) =>
+      list.map((p) => (byId.has(p.projectId) ? { ...p, sortOrder: byId.get(p.projectId)! } : p)),
+    );
+  }
+
+  select(projectId: number | null): void {
+    this.selectedProjectId.set(projectId);
+  }
+
+  setNavigationError(message: string): void {
+    this.navigationError.set(message);
+  }
+
+  consumeNavigationError(): string | null {
+    const message = this.navigationError();
+    this.navigationError.set(null);
+    return message;
+  }
+
   remove(projectId: number): void {
     this.list.update((list) => list.filter((p) => p.projectId !== projectId));
   }
@@ -71,5 +104,8 @@ export class ProjectsStore {
     this.loading.set(false);
     this.loaded.set(false);
     this.error.set(null);
+    this.selectedProjectId.set(null);
+    this.creating.set(false);
+    this.navigationError.set(null);
   }
 }

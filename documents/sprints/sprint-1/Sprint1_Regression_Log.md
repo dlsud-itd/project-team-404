@@ -1,6 +1,6 @@
 # Sprint 1 Regression Log
 
-Each entry records one full run of `npm run test:regression` (VS Code task **`🔁 Regression: Run All`**). The runner fails a suite that has failed or skipped tests, and reports a suite as Not run when it cannot start. The first entry that passes every suite becomes the Sprint 1 baseline that later sprints compare against.
+Each entry records one full run of `npm run test:regression` (VS Code task **`🧪 Regression: Tests (run once)`**). The runner fails a suite that has failed or skipped tests, and reports a suite as Not run when it cannot start. The first entry that passes every suite becomes the Sprint 1 baseline that later sprints compare against.
 
 How to run: see the Regression tests section in [`documents/setup.md`](../../setup.md).
 

@@ -1,0 +1,164 @@
+<section class="panel" aria-labelledby="all-tasks-heading">
+  <header class="heading-row">
+    <h2 id="all-tasks-heading" class="heading">All Tasks</h2>
+    <app-view-switcher class="views" [view]="view()" [param]="viewParam" />
+    <button type="button" class="new" [disabled]="loading()" (click)="openNewTaskDialog()">
+      + New task
+    </button>
+  </header>
+
+  <section class="toolbar" aria-label="Filter and sort tasks">
+    <app-task-filter-bar
+      [query]="query.query()"
+      [levels]="priorities.levels()"
+      [labels]="labels()"
+      (changed)="query.set($event)"
+      (cleared)="query.clear()"
+    />
+    <!-- The board keeps its own order, so sorting only applies to the list. -->
+    @if (view() === 'list') {
+      <app-sort-menu
+        class="sort"
+        label="Sort tasks"
+        [options]="sortOptions"
+        [value]="query.query().orderBy ?? ''"
+        [direction]="query.query().orderDirection"
+        (changed)="setSort($event)"
+      />
+    }
+  </section>
+
+  @if (labelsError(); as message) {
+    <p class="error" role="alert">{{ message }}</p>
+  }
+  @if (actionError(); as message) {
+    <p class="error" role="alert">{{ message }}</p>
+  }
+
+  @if (loading()) {
+    <p class="status" role="status">Loading your tasks…</p>
+  } @else if (view() === 'board') {
+    @if (boardProjectId(); as projectId) {
+      <div class="board-project">
+        <label for="board-project">Project</label>
+        <select id="board-project" (change)="selectBoardProject($event)">
+          @for (project of projectsStore.active(); track project.projectId) {
+            <option [value]="project.projectId" [selected]="project.projectId === projectId">
+              {{ project.name }}
+            </option>
+          }
+        </select>
+      </div>
+      <app-board-view
+        [projectId]="projectId"
+        [filter]="boardFilter()"
+        [filtersActive]="query.count() > 0"
+        (clearFilters)="query.clear()"
+        (newTask)="openNewTaskDialog()"
+      />
+    } @else if (loadError(); as message) {
+      <div class="load-error" role="alert">
+        <p>Couldn't load your projects and tasks. {{ message }}</p>
+        <button type="button" class="retry" (click)="load()">Try again</button>
+      </div>
+    } @else {
+      <p class="empty">Create a project to see its tasks on a board.</p>
+    }
+  } @else if (loadError(); as message) {
+    <div class="load-error" role="alert">
+      <p>Couldn't load your projects and tasks. {{ message }}</p>
+      <button type="button" class="retry" (click)="load()">Try again</button>
+    </div>
+  } @else {
+    <ul class="list" [attr.aria-busy]="refreshing()">
+      @for (task of tasks(); track task.taskId) {
+        <li class="task" [class.done]="task.completedAt !== null">
+          <!-- The badge sits beside the label, not in it, so clicking it never ticks the task. -->
+          <span class="name">
+            <label class="check" [attr.title]="notDueLabel(task)">
+              <input
+                type="checkbox"
+                [checked]="task.completedAt !== null"
+                [disabled]="isBusy(task) || notDueLabel(task) !== null"
+                [attr.aria-describedby]="notDueLabel(task) ? 'not-due-' + task.taskId : null"
+                [attr.aria-label]="
+                  task.completedAt !== null
+                    ? 'Mark ' + task.title + ' incomplete'
+                    : 'Mark ' + task.title + ' complete'
+                "
+                (change)="toggleCompleted(task)"
+              />
+              <span class="title">{{ task.title }}</span>
+              @if (notDueLabel(task); as label) {
+                <span class="not-due" [id]="'not-due-' + task.taskId">{{ label }}</span>
+              }
+            </label>
+            @if (task.isRecurring) {
+              <app-streak-badge class="streak" [task]="task" />
+            }
+          </span>
+          <span class="project">
+            <span class="swatch" [style.background]="projectColor(task.projectId)"></span>
+            {{ projectName(task.projectId) }}
+          </span>
+          <span
+            class="priority"
+            [attr.data-priority]="task.priorityId"
+            [style.background]="priorities.colorOf(task.priorityId)"
+          >
+            {{ priorityName(task.priorityId) }}
+          </span>
+          <span class="due" [class.overdue]="isOverdue(task)">
+            {{ formatDueDate(task.dueDate) }}
+          </span>
+          <div class="row-actions">
+            <app-archive-action
+              kind="task"
+              variant="icon"
+              [itemId]="task.taskId"
+              [name]="task.title"
+              [disabled]="isBusy(task)"
+              [hooks]="archiveHooks"
+            />
+            <button
+              type="button"
+              class="delete"
+              [disabled]="isBusy(task)"
+              [attr.aria-label]="'Delete ' + task.title"
+              (click)="askDelete(task)"
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6" />
+              </svg>
+            </button>
+          </div>
+        </li>
+      } @empty {
+        @if (query.count() > 0) {
+          <li class="empty">
+            <p class="empty-title">No tasks match these filters.</p>
+            <button type="button" class="clear-filters" (click)="query.clear()">
+              Clear filters
+            </button>
+          </li>
+        } @else {
+          <li class="empty">No tasks yet. Create one to see it here.</li>
+        }
+      }
+    </ul>
+  }
+</section>
+
+@if (pendingDelete(); as task) {
+  <app-confirm-delete-task-dialog
+    [task]="task"
+    [busy]="deleting()"
+    [error]="deleteError()"
+    (confirmed)="confirmDelete()"
+    (cancelled)="cancelDelete()"
+  />
+}
+
+@if (tasksStore.creating()) {
+  <app-new-task-dialog (created)="addCreatedTask($event)" />
+}

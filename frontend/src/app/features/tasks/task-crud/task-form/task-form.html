@@ -1,0 +1,239 @@
+<div class="page" [attr.role]="dialog ? null : 'main'">
+  @if (dialog) {
+    <h2 id="new-task-title" class="dialog-title">
+      {{ mode === 'create' ? 'New task' : 'Edit task' }}
+    </h2>
+  } @else {
+    <a class="back" [routerLink]="listUrl">← Tasks</a>
+    <h1>{{ mode === 'create' ? 'New task' : 'Edit task' }}</h1>
+  }
+
+  @switch (loadState()) {
+    @case ('loading') {
+      <p class="status" role="status">Loading task…</p>
+    }
+    @case ('not-found') {
+      <div class="message" role="alert">
+        <p>{{ mode === 'create' ? 'Project not found.' : 'Task not found.' }}</p>
+        <a routerLink="/projects">Back to your projects</a>
+      </div>
+    }
+    @case ('error') {
+      <div class="message" role="alert">
+        <p>Couldn't load this task. Something went wrong. Please try again.</p>
+        <button type="button" class="secondary" (click)="load()">Try again</button>
+      </div>
+    }
+    @default {
+      @if (saved(); as message) {
+        <p class="form-notice" role="status">{{ message }}</p>
+      }
+      @if (formError(); as message) {
+        <p class="form-error" role="alert">{{ message }}</p>
+      }
+
+      @if (task(); as task) {
+        @if (task.isArchived) {
+          <div class="archived-banner" role="status">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <rect x="3" y="4" width="18" height="5" rx="1" />
+              <path d="M5 9v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V9M10 13h4" />
+            </svg>
+            <p>This task is archived and read-only. Restore it to make changes.</p>
+            <button type="button" class="primary" [disabled]="restoring()" (click)="restore()">
+              {{ restoring() ? 'Restoring…' : 'Restore' }}
+            </button>
+          </div>
+        }
+        @if (task.isRecurring) {
+          <app-streak-detail class="streak" [task]="task" />
+        }
+      }
+
+      <form
+        class="card"
+        [formGroup]="form"
+        (ngSubmit)="submit()"
+        (keydown.escape)="dialog || cancel()"
+        novalidate
+      >
+        <div class="field">
+          <div class="label-row">
+            <label for="task-title">Title</label>
+            <span class="count" [class.over]="form.controls.title.value.trim().length > titleMax">
+              {{ form.controls.title.value.trim().length }}/{{ titleMax }}
+            </span>
+          </div>
+          <input
+            id="task-title"
+            type="text"
+            formControlName="title"
+            autocomplete="off"
+            placeholder="e.g. Study ILT Module 4"
+            [attr.aria-invalid]="!!fieldError('title')"
+            aria-describedby="task-title-status"
+            (input)="clearServerError('title')"
+          />
+          <p id="task-title-status" class="field-message" aria-live="polite">
+            {{ fieldError('title') }}
+          </p>
+        </div>
+
+        <div class="field">
+          <label for="task-description">Description <span>(optional)</span></label>
+          <textarea
+            id="task-description"
+            formControlName="description"
+            rows="3"
+            placeholder="Notes, links or steps"
+            [attr.aria-invalid]="!!fieldError('description')"
+            aria-describedby="task-description-status"
+            (input)="clearServerError('description')"
+          ></textarea>
+          <p id="task-description-status" class="field-message" aria-live="polite">
+            {{ fieldError('description') }}
+          </p>
+        </div>
+
+        <div class="row">
+          <div class="field">
+            <label for="task-priority">Priority</label>
+            <select
+              id="task-priority"
+              formControlName="priorityId"
+              [attr.aria-invalid]="!!fieldError('priorityId')"
+              aria-describedby="task-priority-status"
+              (change)="clearServerError('priorityId')"
+            >
+              @for (priority of priorities(); track priority.priorityId) {
+                <option [ngValue]="priority.priorityId">{{ priority.label }}</option>
+              }
+            </select>
+            <p id="task-priority-status" class="field-message" aria-live="polite">
+              {{ fieldError('priorityId') }}
+            </p>
+          </div>
+
+          <div class="field">
+            <label for="task-project">Project</label>
+            <select
+              id="task-project"
+              formControlName="projectId"
+              [attr.aria-invalid]="!!fieldError('projectId')"
+              aria-describedby="task-project-status"
+              (change)="clearServerError('projectId')"
+            >
+              @for (project of projectOptions(); track project.projectId) {
+                <option [ngValue]="project.projectId">{{ project.name }}</option>
+              }
+            </select>
+            <p id="task-project-status" class="field-message" aria-live="polite">
+              {{ fieldError('projectId') }}
+            </p>
+          </div>
+        </div>
+
+        <section class="field" aria-labelledby="task-labels-heading">
+          <div class="label-row">
+            <h2 id="task-labels-heading">Labels</h2>
+            <a routerLink="/settings/labels">Manage labels</a>
+          </div>
+          @if (labelsError(); as message) {
+            <p class="field-message" role="alert">{{ message }}</p>
+          } @else if (labels().length || archivedLabels().length) {
+            <div class="label-options">
+              @for (label of labels(); track label.labelId) {
+                <label class="label-option">
+                  <input
+                    type="checkbox"
+                    [checked]="form.controls.labelIds.value.includes(label.labelId)"
+                    [disabled]="archived()"
+                    (change)="toggleLabel(label.labelId, $event)"
+                  />
+                  {{ label.name }}
+                </label>
+              }
+              @for (label of archivedLabels(); track label.labelId) {
+                <label class="label-option archived" [attr.title]="label.name + ' is archived'">
+                  <input type="checkbox" checked disabled />
+                  {{ label.name }}
+                  <span class="visually-hidden">(archived)</span>
+                </label>
+              }
+            </div>
+          } @else {
+            <p class="field-message">No labels yet.</p>
+          }
+        </section>
+
+        <section class="schedule" aria-labelledby="task-schedule-heading">
+          <h2 id="task-schedule-heading">Date and deadline</h2>
+          <div class="row">
+            <div class="field">
+              <label for="task-scheduled-date">Scheduled date <span>(optional)</span></label>
+              <input
+                id="task-scheduled-date"
+                type="date"
+                formControlName="scheduledDate"
+                [attr.aria-invalid]="!!fieldError('scheduledDate')"
+                aria-describedby="task-scheduled-date-status"
+                (input)="clearServerError('scheduledDate')"
+              />
+              <p id="task-scheduled-date-status" class="field-message" aria-live="polite">
+                {{ fieldError('scheduledDate') }}
+              </p>
+            </div>
+            <app-due-date-picker
+              [control]="form.controls.dueDate"
+              [error]="fieldError('dueDate')"
+              (edited)="clearServerError('dueDate')"
+            />
+            <app-deadline-picker
+              [control]="form.controls.deadline"
+              [dueDate]="form.controls.dueDate.value"
+              [error]="fieldError('deadline')"
+              (edited)="clearServerError('deadline')"
+            />
+          </div>
+          <app-recurrence-picker
+            [control]="form.controls.recurrence"
+            [days]="form.controls.recurrenceDays"
+            [ends]="form.controls.recurrenceEnds"
+            [endDate]="form.controls.recurrenceEndDate"
+            [dueDate]="form.controls.dueDate.value"
+            [error]="fieldError('recurrence')"
+            [daysError]="fieldError('recurrenceDays')"
+            [endDateError]="fieldError('recurrenceEndDate')"
+            (edited)="clearServerError('recurrence')"
+          />
+        </section>
+
+        <div class="actions">
+          @if (mode === 'edit' && task(); as task) {
+            @if (!task.isArchived) {
+              <span class="archive">
+                <app-archive-action
+                  kind="task"
+                  [itemId]="task.taskId"
+                  [name]="task.title"
+                  [disabled]="submitting()"
+                  [hooks]="archiveHooks"
+                />
+              </span>
+            }
+          }
+          <button type="button" class="secondary" [disabled]="submitting()" (click)="cancel()">
+            {{ archived() ? 'Close' : 'Cancel' }}
+          </button>
+          <button type="submit" class="primary" [disabled]="!canSave()">
+            @if (submitting()) {
+              {{ mode === 'create' ? 'Adding…' : 'Saving…' }}
+            } @else {
+              {{ mode === 'create' ? 'Add task' : 'Save changes' }}
+            }
+          </button>
+        </div>
+      </form>
+    }
+  }
+</div>

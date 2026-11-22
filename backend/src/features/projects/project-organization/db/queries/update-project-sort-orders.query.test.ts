@@ -43,6 +43,10 @@ describe('updateProjectSortOrders', () => {
     expect(mocks.transaction).toHaveBeenCalledOnce();
     expect(transaction.project.updateMany).toHaveBeenCalledTimes(3);
     expect(transaction.project.updateMany).toHaveBeenNthCalledWith(1, {
+      where: { id: 1, userId: 'user-123', deletedAt: null, isInbox: false },
+      data: expect.objectContaining({ sortOrder: 2 }),
+    });
+    expect(transaction.project.updateMany).toHaveBeenNthCalledWith(2, {
       where: { id: 2, userId: 'user-123', deletedAt: null, isInbox: false },
       data: expect.objectContaining({ sortOrder: 0 }),
     });

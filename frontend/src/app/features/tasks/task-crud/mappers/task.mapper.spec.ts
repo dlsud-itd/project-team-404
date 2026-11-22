@@ -1,0 +1,158 @@
+import type { ApiTask } from '../../shared/types/task.types';
+import { toCreateTaskBody, toTask, toUpdateTaskBody } from './task.mapper';
+
+const API_TASK: ApiTask = {
+  id: 1,
+  projectId: 10,
+  title: 'Study ILT Module 4',
+  description: 'Read all lessons',
+  priority: 'medium',
+  scheduledDate: null,
+  dueDate: '2026-10-02',
+  deadline: '2026-10-05T15:59:59.999Z',
+  recurrence: 'weekly',
+  recurrenceDays: [],
+  recurrenceEndDate: null,
+  isDone: false,
+  doneAt: null,
+  createdAt: '2026-09-01T00:00:00.000Z',
+  updatedAt: '2026-09-02T00:00:00.000Z',
+  labels: [{ id: 3, name: 'Study', color: '#2563EB' }],
+};
+
+describe('toTask', () => {
+  it('turns an API task into the shape the app uses', () => {
+    expect(toTask(API_TASK)).toEqual({
+      taskId: 1,
+      projectId: 10,
+      priorityId: 2,
+      title: 'Study ILT Module 4',
+      description: 'Read all lessons',
+      scheduledDate: null,
+      dueDate: '2026-10-02',
+      deadline: '2026-10-05T15:59:59.999Z',
+      recurrence: 'weekly',
+      recurrenceDays: [],
+      recurrenceEndDate: null,
+      completedAt: null,
+      sortOrder: 0,
+      isRecurring: true,
+      isArchived: false,
+      labels: [{ labelId: 3, name: 'Study', color: '#2563EB' }],
+    });
+  });
+
+  it.each([
+    ['high', 1],
+    ['medium', 2],
+    ['low', 3],
+  ] as const)('gives %s priority the id %i', (priority, priorityId) => {
+    expect(toTask({ ...API_TASK, priority }).priorityId).toBe(priorityId);
+  });
+
+  it.each(['none', null] as const)('treats a recurrence of %s as not repeating', (recurrence) => {
+    expect(toTask({ ...API_TASK, recurrence })).toMatchObject({
+      recurrence: 'none',
+      recurrenceDays: [],
+      recurrenceEndDate: null,
+      isRecurring: false,
+    });
+  });
+
+  it('uses doneAt as the completion time', () => {
+    const doneAt = '2026-10-01T10:00:00.000Z';
+
+    expect(toTask({ ...API_TASK, isDone: true, doneAt }).completedAt).toBe(doneAt);
+  });
+
+  it('keeps a done task completed when it has no doneAt', () => {
+    expect(toTask({ ...API_TASK, isDone: true }).completedAt).toBe(API_TASK.updatedAt);
+  });
+});
+
+describe('toCreateTaskBody', () => {
+  it('sends the priority by name and only fields the API accepts', () => {
+    expect(
+      toCreateTaskBody({
+        projectId: 10,
+        priorityId: 1,
+        title: 'Gym',
+        description: null,
+        scheduledDate: null,
+        dueDate: '2026-10-02',
+        deadline: '2026-10-03T15:59:59.999Z',
+        recurrence: 'daily',
+        recurrenceDays: [],
+        recurrenceEndDate: null,
+      }),
+    ).toEqual({
+      projectId: 10,
+      priority: 'high',
+      title: 'Gym',
+      description: null,
+      scheduledDate: null,
+      dueDate: '2026-10-02',
+      deadline: '2026-10-03T15:59:59.999Z',
+      recurrence: 'daily',
+      recurrenceDays: [],
+      recurrenceEndDate: null,
+    });
+  });
+});
+
+describe('toUpdateTaskBody', () => {
+  it('sends a changed priority by name', () => {
+    expect(toUpdateTaskBody({ title: 'Gym', priorityId: 3 })).toEqual({
+      title: 'Gym',
+      priority: 'low',
+    });
+  });
+
+  it('leaves out the priority when it did not change', () => {
+    expect(toUpdateTaskBody({ description: null })).toEqual({ description: null });
+  });
+
+  it('maps completion and reopening to the backend fields', () => {
+    const completedAt = '2026-10-01T10:00:00.000Z';
+
+    expect(toUpdateTaskBody({ completedAt })).toEqual({
+      isDone: true,
+      doneAt: completedAt,
+    });
+    expect(toUpdateTaskBody({ completedAt: null })).toEqual({
+      isDone: false,
+      doneAt: null,
+    });
+  });
+});
+
+describe('per-user priority levels (Sprint 5)', () => {
+  const byId = () => undefined;
+
+  it('reads the level id from a priority object', () => {
+    const task = toTask({
+      ...API_TASK,
+      priority: { id: 42, name: 'Urgent', color: '#C44536', sortOrder: 0 },
+    });
+    expect(task.priorityId).toBe(42);
+  });
+
+  it('sends a level by id once the user’s own levels are in use', () => {
+    const body = toCreateTaskBody(
+      {
+        priorityId: 42,
+        title: 'Plan sprint',
+        description: null,
+        dueDate: null,
+        deadline: null,
+        recurrence: 'none',
+        recurrenceDays: [],
+        recurrenceEndDate: null,
+      },
+      byId,
+    );
+    expect(body).toMatchObject({ priorityId: 42 });
+    expect(body).not.toHaveProperty('priority');
+    expect(toUpdateTaskBody({ priorityId: 42 }, byId)).toEqual({ priorityId: 42 });
+  });
+});

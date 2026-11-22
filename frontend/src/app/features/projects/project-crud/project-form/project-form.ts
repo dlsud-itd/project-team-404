@@ -4,6 +4,8 @@ import {
   DestroyRef,
   computed,
   inject,
+  input,
+  output,
   signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -18,6 +20,7 @@ import {
   type ProjectField,
   type UpdateProjectRequest,
 } from '../../shared/types/project.types';
+import { ProjectsStore } from '../../shared/state/projects.store';
 import { mapProjectError } from '../mappers/project-error.mapper';
 import { ProjectService } from '../services/project.service';
 import { isReadOnlyProject } from '../utils/project-permissions.util';
@@ -47,15 +50,24 @@ type LoadState = 'loading' | 'ready' | 'not-found' | 'error';
   imports: [ReactiveFormsModule, RouterLink],
   templateUrl: './project-form.html',
   styleUrl: './project-form.scss',
+  host: {
+    '[class.in-dialog]': 'dialog()',
+    '(document:keydown.escape)': 'dialog() && cancel()',
+  },
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ProjectForm {
   private readonly projects = inject(ProjectService);
+  private readonly projectsStore = inject(ProjectsStore);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
   private readonly route = inject(ActivatedRoute).snapshot;
 
-  /** Set by the route: `projects/new` creates, `projects/:projectId/edit` edits. */
+  /** True inside the new-project popup, which creates; `closed` then replaces navigating away. */
+  readonly dialog = input(false);
+  readonly closed = output<void>();
+
+  /** The `projects/:projectId/edit` route edits; without its data, the form creates. */
   protected readonly mode: ProjectFormMode = this.route.data['mode'] === 'edit' ? 'edit' : 'create';
   private readonly projectId = Number(this.route.paramMap.get('projectId'));
 
@@ -138,7 +150,9 @@ export class ProjectForm {
   }
 
   protected cancel(): void {
-    if (!this.submitting()) void this.router.navigateByUrl('/projects');
+    if (this.submitting()) return;
+    if (this.dialog()) this.closed.emit();
+    else void this.router.navigateByUrl('/projects');
   }
 
   protected clearServerError(field: ProjectField): void {
@@ -195,7 +209,7 @@ export class ProjectForm {
         takeUntilDestroyed(this.destroyRef),
       )
       .subscribe({
-        next: () => void this.router.navigateByUrl('/projects'),
+        next: () => this.closed.emit(),
         error: (error: unknown) => this.showError(error),
       });
   }
@@ -213,8 +227,7 @@ export class ProjectForm {
         takeUntilDestroyed(this.destroyRef),
       )
       .subscribe({
-        next: () => {
-          const updated = { ...project, ...changes };
+        next: (updated) => {
           this.project.set(updated);
           this.form.reset({
             name: updated.name,
@@ -231,9 +244,9 @@ export class ProjectForm {
   private showError(error: unknown): void {
     const { message, field, notFound } = mapProjectError(error);
     if (notFound) {
-      this.formError.set(message);
-      // The list is out of date; reload it so the missing project disappears.
-      this.projects.refresh().subscribe({ error: () => {} });
+      // The projects list may render after a tab redirect, so preserve the notice in its store.
+      this.projectsStore.setNavigationError(message);
+      void this.router.navigateByUrl('/projects', { state: { error: message } });
       return;
     }
     if (field) this.serverErrors.set({ [field]: message });

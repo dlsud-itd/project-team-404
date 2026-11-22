@@ -1,5 +1,14 @@
 <section class="panel" aria-labelledby="all-tasks-heading">
-  <h2 id="all-tasks-heading" class="heading">All Tasks</h2>
+  <header class="heading-row">
+    <h2 id="all-tasks-heading" class="heading">{{ heading() }}</h2>
+    <button type="button" class="new" [disabled]="store.loading()" (click)="composing.set(true)">
+      + New task
+    </button>
+  </header>
+
+  @if (actionError(); as message) {
+    <p class="error" role="alert">{{ message }}</p>
+  }
 
   @if (composing()) {
     <form class="composer" [formGroup]="form" (ngSubmit)="create()" novalidate>
@@ -16,48 +25,131 @@
           <option [value]="project.id">{{ project.name }}</option>
         }
       </select>
-      <select formControlName="priority" aria-label="Priority">
-        @for (p of priorities; track p.value) {
-          <option [value]="p.value">{{ p.label }}</option>
+      <select formControlName="priorityId" aria-label="Priority">
+        @for (level of priorities.levels(); track level.id) {
+          <option [ngValue]="level.id">{{ level.name }}</option>
         }
       </select>
       <input type="date" formControlName="due" aria-label="Due date" />
-      <button type="submit" class="save">Add task</button>
-      <button type="button" class="cancel" (click)="composing.set(false)">Cancel</button>
+      <button type="submit" class="save" [disabled]="submitting()">
+        {{ submitting() ? 'Adding…' : 'Add task' }}
+      </button>
+      <button type="button" class="cancel" [disabled]="submitting()" (click)="composing.set(false)">
+        Cancel
+      </button>
     </form>
   }
 
-  <ul class="list">
-    @for (task of store.filteredTasks(); track task.id) {
-      <li class="task" [class.done]="task.done">
-        <label class="check">
-          <input type="checkbox" [checked]="task.done" (change)="store.toggleTask(task.id)" />
+  <ul class="list" tabindex="0" aria-label="Tasks">
+    @for (task of visibleTasks(); track task.id) {
+      <li class="task" [class.done]="task.done" (contextmenu)="showContextMenu($event, task.id)">
+        <label class="check" [attr.title]="notDueLabel(task)">
+          <input
+            type="checkbox"
+            [checked]="task.done"
+            [disabled]="isBusy(task) || notDueLabel(task) !== null"
+            [attr.aria-describedby]="notDueLabel(task) ? 'not-due-' + task.id : null"
+            (change)="toggleTask(task)"
+          />
           <span class="title">{{ task.title }}</span>
+          @if (notDueLabel(task); as label) {
+            <span class="not-due" [id]="'not-due-' + task.id">{{ label }}</span>
+          }
         </label>
+        @if (task.isRecurring && task.recurrence) {
+          <app-streak-badge
+            class="streak"
+            [task]="{
+              taskId: task.id,
+              projectId: task.projectId ?? 0,
+              recurrence: task.recurrence,
+              title: task.title,
+            }"
+          />
+        }
         @if (store.projectById(task.projectId); as project) {
           <span class="project">
             <span class="swatch" [style.background]="project.color"></span>{{ project.name }}
           </span>
         }
-        <span class="priority" [class]="'priority priority--' + task.priority">{{
-          task.priority
+        <span class="priority" [style.background]="priorities.colorOf(task.priorityId)">{{
+          priorities.nameOf(task.priorityId)
         }}</span>
         <span class="due" [class.overdue]="store.statusOf(task) === 'overdue'">
           {{ shortDate(task.due) }}
         </span>
-        <button
-          type="button"
-          class="delete"
-          [attr.aria-label]="'Delete ' + task.title"
-          (click)="store.deleteTask(task.id)"
-        >
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6" />
-          </svg>
-        </button>
+        <div class="task-actions">
+          <button
+            type="button"
+            class="task-actions-trigger"
+            [disabled]="isBusy(task)"
+            [attr.aria-label]="'Actions for ' + task.title"
+            aria-haspopup="menu"
+            [attr.aria-expanded]="openTaskMenuId() === task.id"
+            (click)="toggleTaskMenu(task.id, $event)"
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="5" cy="12" r="1" />
+              <circle cx="12" cy="12" r="1" />
+              <circle cx="19" cy="12" r="1" />
+            </svg>
+          </button>
+          @if (openTaskMenuId() === task.id) {
+            <div class="task-menu" role="menu" [attr.aria-label]="'Actions for ' + task.title">
+              <button
+                type="button"
+                class="task-menu-item"
+                role="menuitem"
+                (click)="editTask(task, $event)"
+              >
+                Edit
+              </button>
+              <app-archive-action
+                kind="task"
+                variant="menuitem"
+                [itemId]="task.id"
+                [name]="task.title"
+                [hooks]="archiveHooks"
+              />
+              <button
+                type="button"
+                class="task-menu-item delete"
+                role="menuitem"
+                (click)="askDelete(task, $event)"
+              >
+                Delete
+              </button>
+            </div>
+          }
+        </div>
       </li>
     } @empty {
       <li class="empty">No tasks match. Add one with “+ New Task”.</li>
     }
   </ul>
+  <app-view-all-link
+    [total]="store.filteredTasks().length"
+    [shown]="visibleTasks().length"
+    link="/home"
+    [queryParams]="{ tab: 'tasks' }"
+    noun="tasks"
+  />
 </section>
+
+@if (pendingDelete(); as task) {
+  <app-confirm-delete-task-dialog
+    [task]="task"
+    [busy]="isBusy(task)"
+    [error]="deleteError()"
+    (confirmed)="confirmDelete()"
+    (cancelled)="cancelDelete()"
+  />
+}
+
+@if (editingTaskId(); as taskId) {
+  <app-new-task-dialog
+    [taskId]="taskId"
+    (updated)="store.upsertTask($event)"
+    (closed)="editingTaskId.set(null)"
+  />
+}

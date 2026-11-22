@@ -1,0 +1,229 @@
+@use '../../../../task-organization/components/filter-chips' as chips;
+
+:host {
+  display: block;
+}
+
+/* The title link stretches over the whole card, so clicking anywhere opens the task. */
+.card {
+  position: relative;
+  padding: 0.75rem 0.75rem 0.8125rem;
+  border: 1px solid #ecdcd4;
+  border-radius: 0.625rem;
+  background: #fff;
+  transition: border-color 120ms ease;
+
+  &:hover {
+    border-color: var(--orange-light);
+  }
+
+  &:has(.open:focus-visible) {
+    outline: 2px solid #7b23a8;
+    outline-offset: 2px;
+  }
+}
+
+.top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  min-height: 1.5rem;
+  margin-bottom: 0.375rem;
+}
+
+.priority {
+  padding: 0.0625rem 0.5rem;
+  border: 1px solid var(--priority-color, #6b7280);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--priority-color, #6b7280) 14%, #fff);
+  color: color-mix(in srgb, var(--priority-color, #6b7280) 70%, #000);
+  font-size: 0.6875rem;
+  font-weight: 700;
+}
+
+.move {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  margin: -0.25rem -0.25rem -0.25rem auto;
+  border: 0;
+  border-radius: 0.375rem;
+  background: none;
+  color: var(--ink-muted);
+  cursor: pointer;
+
+  svg {
+    width: 1rem;
+    height: 1rem;
+    fill: currentColor;
+  }
+
+  &:hover,
+  &[aria-expanded='true'] {
+    background: var(--cream);
+    color: var(--ink);
+  }
+
+  &:focus-visible {
+    outline: 2px solid #7b23a8;
+    outline-offset: 1px;
+  }
+
+  @media (pointer: coarse) {
+    width: 2.5rem;
+    height: 2.5rem;
+  }
+}
+
+.title {
+  margin: 0;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.open {
+  color: inherit;
+  text-decoration: none;
+  outline: none;
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+  }
+
+  &:hover {
+    text-decoration: underline;
+    text-underline-offset: 0.15em;
+  }
+}
+
+.done .open {
+  color: var(--ink-muted);
+  text-decoration: line-through;
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.375rem 0.75rem;
+  margin: 0.5rem 0 0;
+  color: var(--ink-muted);
+  font-size: 0.75rem;
+}
+
+.due {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+
+  svg {
+    @include chips.caret;
+  }
+
+  &.overdue {
+    color: var(--error);
+    font-weight: 600;
+  }
+}
+
+/* The badge has its own tooltip, so it sits above the stretched link. */
+.streak {
+  position: relative;
+  z-index: 1;
+}
+
+.labels {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin: 0.5rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0 0.5rem;
+  border: 1px solid #e6dcd7;
+  border-radius: 999px;
+  font-size: 0.6875rem;
+
+  &::before {
+    content: '';
+    width: 0.4375rem;
+    height: 0.4375rem;
+    border-radius: 50%;
+    background: var(--label-color, #c9bcb6);
+  }
+
+  &.more::before {
+    content: none;
+  }
+
+  &.archived {
+    border-style: dashed;
+    color: var(--ink-muted);
+    opacity: 0.6;
+  }
+}
+
+.menu {
+  @include chips.panel;
+
+  min-width: 12rem;
+  margin-top: 0.25rem;
+}
+
+.item {
+  @include chips.option;
+
+  width: 100%;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 0.875rem;
+  text-align: left;
+
+  &:focus-visible,
+  &.cdk-keyboard-focused {
+    outline: 2px solid var(--ink);
+    outline-offset: -2px;
+  }
+
+  &:focus {
+    background: var(--cream);
+  }
+
+  &[aria-disabled='true'] {
+    color: var(--ink-muted);
+    cursor: default;
+    opacity: 0.6;
+
+    &:hover {
+      background: none;
+    }
+  }
+}
+
+.separator {
+  height: 1px;
+  margin: 0.25rem 0.375rem;
+  background: #ecdcd4;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card {
+    transition: none;
+  }
+}

@@ -13,7 +13,7 @@ export type ProjectOrganizationDependencies = {
     projectId: number,
     userId: string,
     isArchived: boolean
-  ): Promise<{ count: number }>;
+  ): Promise<ProjectRecord | null>;
   setProjectSortOrder(
     projectId: number,
     userId: string,
@@ -56,15 +56,16 @@ export class ProjectOrganizationService {
     if (project.isInbox && isArchived) {
       throw new InboxCannotBeArchivedError();
     }
-    const result = await this.dependencies.setProjectArchived(
+    const updated = await this.dependencies.setProjectArchived(
       project.id,
       userId,
       isArchived
     );
-    if (result.count !== 1) throw new ProjectNotFoundError();
+    if (!updated) throw new ProjectNotFoundError();
     return {
       projectId: project.id,
-      isArchived,
+      isArchived: updated.isArchived,
+      archivedAt: updated.archivedAt,
       message: isArchived
         ? 'Project archived successfully'
         : 'Project restored from archive',

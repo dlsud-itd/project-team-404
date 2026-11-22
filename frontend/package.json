@@ -18,7 +18,7 @@
     "test:run": "ng test --watch=false",
     "test:watch": "ng test",
     "pretest:regression": "npm run set-env",
-    "test:regression": "ng test --watch=false --coverage=false --include \"src/testing/regression/**/*.spec.ts\"",
+    "test:regression": "ng test --watch=false --coverage=false --include \"src/app/features/auth/testing/regression/**/*.spec.ts\"",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "clean": "rimraf dist .angular/cache"
@@ -26,6 +26,7 @@
   "private": true,
   "packageManager": "npm@11.19.0",
   "dependencies": {
+    "@angular/cdk": "^22.2.5",
     "@angular/common": "^22.1.0",
     "@angular/compiler": "^22.1.0",
     "@angular/core": "^22.1.0",
@@ -40,6 +41,7 @@
     "@angular/cli": "^22.1.8",
     "@angular/compiler-cli": "^22.1.0",
     "@eslint/js": "^9.39.1",
+    "@vitest/browser-playwright": "^4.1.12",
     "@vitest/coverage-v8": "^4.1.11",
     "eslint": "^9.39.1",
     "globals": "^17.6.0",

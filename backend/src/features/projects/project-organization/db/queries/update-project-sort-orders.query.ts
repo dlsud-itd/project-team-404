@@ -27,7 +27,9 @@ export async function updateProjectSortOrders(
     ];
     const sortOrders = reorderProjects(orderedIds);
 
-    for (const { projectId, sortOrder } of sortOrders) {
+    for (const { projectId, sortOrder } of [...sortOrders].sort(
+      (left, right) => left.projectId - right.projectId
+    )) {
       const result = await transaction.project.updateMany({
         where: { id: projectId, userId, deletedAt: null, isInbox: false },
         data: { sortOrder, updatedAt: new Date() },

@@ -1,0 +1,25 @@
+import { describe, expect, it } from 'vitest';
+import { taskOrderValidator } from './task-order.validator';
+
+describe('taskOrderValidator', () => {
+  it('defaults the direction and validates explicit ordering', () => {
+    expect(taskOrderValidator.parse({})).toEqual({ orderDirection: 'asc' });
+    expect(taskOrderValidator.parse({ orderBy: 'position' })).toEqual({
+      orderBy: 'position',
+      orderDirection: 'asc',
+    });
+    expect(
+      taskOrderValidator.parse({
+        orderBy: 'scheduledDate',
+        orderDirection: 'desc',
+      })
+    ).toEqual({ orderBy: 'scheduledDate', orderDirection: 'desc' });
+  });
+
+  it('rejects unsupported ordering values', () => {
+    expect(() => taskOrderValidator.parse({ orderBy: 'random' })).toThrow();
+    expect(() =>
+      taskOrderValidator.parse({ orderDirection: 'sideways' })
+    ).toThrow();
+  });
+});

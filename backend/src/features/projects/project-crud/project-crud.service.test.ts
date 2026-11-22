@@ -15,6 +15,7 @@ const project: ProjectRecord = {
   isInbox: false,
   isFavorite: false,
   isArchived: false,
+  archivedAt: null,
   sortOrder: 0,
   createdAt: new Date('2026-10-20T00:00:00.000Z'),
   updatedAt: new Date('2026-10-20T00:00:00.000Z'),
@@ -26,7 +27,7 @@ function dependencies() {
     createProject: vi.fn().mockResolvedValue(project),
     findOwnedProjects: vi.fn().mockResolvedValue([project]),
     updateOwnedProject: vi.fn().mockResolvedValue(project),
-    softDeleteOwnedProject: vi.fn().mockResolvedValue(true),
+    softDeleteOwnedProject: vi.fn().mockResolvedValue(0),
   };
 }
 
@@ -51,8 +52,29 @@ describe('ProjectCrudService', () => {
     expect(deps.findOwnedProjects).toHaveBeenCalledWith('user-123', {
       isArchived: false,
     });
+    if (!Array.isArray(result)) {
+      throw new Error(
+        'Expected the unpaginated project response to be an array'
+      );
+    }
     expect(result[0]).not.toHaveProperty('userId');
     expect(result[0]).not.toHaveProperty('deletedAt');
+  });
+
+  it('preserves the matching count for limited project results', async () => {
+    const deps = dependencies();
+    vi.mocked(deps.findOwnedProjects).mockResolvedValue({
+      projects: [project],
+      total: 4,
+    });
+    const service = new ProjectCrudService(deps);
+
+    await expect(service.list('user-123', { limit: 1 })).resolves.toEqual({
+      projects: [
+        expect.not.objectContaining({ userId: 'user-123', deletedAt: null }),
+      ],
+      total: 4,
+    });
   });
 
   it('updates a regular project', async () => {
@@ -82,7 +104,7 @@ describe('ProjectCrudService', () => {
     const deps = dependencies();
     const service = new ProjectCrudService(deps);
 
-    await service.delete(project, 'user-123');
+    await expect(service.delete(project, 'user-123')).resolves.toBe(0);
 
     expect(deps.softDeleteOwnedProject).toHaveBeenCalledWith(7, 'user-123');
   });
@@ -95,7 +117,7 @@ describe('ProjectCrudService', () => {
       service.delete({ ...project, isInbox: true }, 'user-123')
     ).rejects.toBeInstanceOf(InboxProjectMutationError);
 
-    vi.mocked(deps.softDeleteOwnedProject).mockResolvedValue(false);
+    vi.mocked(deps.softDeleteOwnedProject).mockResolvedValue(null);
     await expect(service.delete(project, 'user-123')).rejects.toBeInstanceOf(
       ProjectNotFoundError
     );

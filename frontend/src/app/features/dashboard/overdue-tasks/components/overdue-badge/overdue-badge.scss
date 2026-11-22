@@ -1,0 +1,10 @@
+:host {
+  display: block;
+}
+
+.badge {
+  color: var(--error);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  white-space: nowrap;
+}

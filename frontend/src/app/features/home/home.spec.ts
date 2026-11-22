@@ -1,0 +1,354 @@
+import { provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { Component } from '@angular/core';
+import { TestBed } from '@angular/core/testing';
+import { Router, provideRouter } from '@angular/router';
+import { RouterTestingHarness } from '@angular/router/testing';
+import { environment } from '../../../environments/environment';
+import { PROJECTS_ROUTES } from '../projects/projects.routes';
+import { Home } from './home';
+
+const PROJECTS_URL = `${environment.apiBaseUrl}/api/projects`;
+const TASKS_URL = `${environment.apiBaseUrl}/api/tasks`;
+const LABELS_URL = `${environment.apiBaseUrl}/api/labels`;
+const ALL_TASKS_URL = `${TASKS_URL}?status=all&pageSize=100&page=1`;
+const INBOX = {
+  id: 1,
+  name: 'Inbox',
+  description: null,
+  color: null,
+  isInbox: true,
+  isFavorite: false,
+  isArchived: false,
+  sortOrder: 0,
+};
+
+@Component({ template: '' })
+class Blank {}
+
+describe('Home tabs', () => {
+  let harness: RouterTestingHarness;
+  let http: HttpTestingController;
+  let router: Router;
+
+  const page = () => harness.routeNativeElement as HTMLElement;
+  const el = <T extends HTMLElement>(selector: string) =>
+    page().querySelector(selector) as T | null;
+  const tab = (id: string) => el<HTMLButtonElement>(`#tab-${id}`)!;
+  const panelId = () => el('[role="tabpanel"]')?.id;
+
+  function flushProjects(projects: unknown[] = []): void {
+    http.expectOne(`${PROJECTS_URL}?isArchived=false`).flush(projects);
+    http.expectOne(`${PROJECTS_URL}?isArchived=true`).flush([]);
+  }
+
+  async function settle(): Promise<void> {
+    await harness.fixture.whenStable();
+    harness.detectChanges();
+  }
+
+  function loadTasksTab(): void {
+    flushProjects([INBOX]);
+    http.expectOne(ALL_TASKS_URL).flush([]);
+    // The filter bar's label choices.
+    http.expectOne(LABELS_URL).flush([]);
+    harness.detectChanges();
+  }
+
+  function loadDashboardTab(): void {
+    flushProjects([INBOX]);
+    http.expectOne(ALL_TASKS_URL).flush([]);
+    harness.detectChanges();
+  }
+
+  beforeEach(async () => {
+    TestBed.configureTestingModule({
+      providers: [
+        provideRouter([
+          { path: 'home', component: Home },
+          { path: 'projects/:projectId/tasks', component: Blank },
+          { path: 'settings/profile', component: Blank },
+          { path: 'projects', children: PROJECTS_ROUTES },
+        ]),
+        provideHttpClient(),
+        provideHttpClientTesting(),
+      ],
+    });
+    http = TestBed.inject(HttpTestingController);
+    router = TestBed.inject(Router);
+    harness = await RouterTestingHarness.create();
+  });
+
+  afterEach(() => http.verify());
+
+  it('opens on the dashboard with its tab selected', async () => {
+    await harness.navigateByUrl('/home');
+    loadDashboardTab();
+
+    expect(panelId()).toBe('panel-dashboard');
+    expect(tab('dashboard').getAttribute('aria-selected')).toBe('true');
+    expect(tab('tasks').getAttribute('aria-selected')).toBe('false');
+    expect(tab('dashboard').tabIndex).toBe(0);
+    expect(tab('projects').tabIndex).toBe(-1);
+    // Nothing slides on first load.
+    expect(el('[role="tabpanel"]')?.hasAttribute('data-slide')).toBe(false);
+  });
+
+  it('swaps the content in place and keeps the tab in the URL', async () => {
+    await harness.navigateByUrl('/home');
+    loadDashboardTab();
+    const home = harness.routeDebugElement?.componentInstance;
+
+    tab('tasks').click();
+    await settle();
+    loadTasksTab();
+
+    expect(router.url).toBe('/home?tab=tasks');
+    expect(panelId()).toBe('panel-tasks');
+    expect(el('#panel-tasks app-tasks-page')).toBeTruthy();
+    expect(el('[role="tabpanel"]')?.getAttribute('data-slide')).toBe('right');
+    // Same component instance: the page was not reloaded.
+    expect(harness.routeDebugElement?.componentInstance).toBe(home);
+  });
+
+  it('slides in from the left when going back to an earlier tab', async () => {
+    await harness.navigateByUrl('/home?tab=tasks');
+    loadTasksTab();
+
+    tab('dashboard').click();
+    await settle();
+    loadDashboardTab();
+
+    expect(router.url).toBe('/home');
+    expect(panelId()).toBe('panel-dashboard');
+    expect(el('[role="tabpanel"]')?.getAttribute('data-slide')).toBe('left');
+  });
+
+  it('shows the projects list in the Projects tab', async () => {
+    await harness.navigateByUrl('/home');
+    loadDashboardTab();
+
+    tab('projects').click();
+    await settle();
+
+    expect(panelId()).toBe('panel-projects');
+    flushProjects();
+    harness.detectChanges();
+    expect(el('#panel-projects h1')?.textContent).toContain('Projects');
+  });
+
+  it('moves the pill with the selected tab', async () => {
+    await harness.navigateByUrl('/home?tab=projects');
+    flushProjects();
+
+    expect(el('[role="tablist"]')?.style.getPropertyValue('--tab-index')).toBe('2');
+  });
+
+  it('moves between tabs with the arrow keys', async () => {
+    await harness.navigateByUrl('/home');
+    loadDashboardTab();
+
+    el('[role="tablist"]')!.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true }),
+    );
+    await settle();
+
+    expect(router.url).toBe('/home?tab=projects');
+    flushProjects();
+
+    el('[role="tablist"]')!.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'Home', bubbles: true }),
+    );
+    await settle();
+    loadDashboardTab();
+    expect(router.url).toBe('/home');
+  });
+
+  describe('All Tasks creation action', () => {
+    it('opens the inline composer within the dashboard', async () => {
+      await harness.navigateByUrl('/home');
+      loadDashboardTab();
+
+      el<HTMLButtonElement>('#all-tasks button.new')!.click();
+      await settle();
+
+      expect(router.url).toBe('/home');
+      expect(el('header.topbar')).toBeTruthy();
+      expect(el('#all-tasks form.composer')).toBeTruthy();
+      expect(el('[role="dialog"]')).toBeNull();
+    });
+  });
+
+  describe('Tasks tab creation action', () => {
+    it('opens the New Task dialog with Inbox selected', async () => {
+      await harness.navigateByUrl('/home?tab=tasks');
+      loadTasksTab();
+
+      el<HTMLButtonElement>('#panel-tasks button.new')!.click();
+      await settle();
+      http.expectOne(LABELS_URL).flush([]);
+
+      expect(router.url).toBe('/home?tab=tasks');
+      expect(el('[role="dialog"] app-recurrence-picker')).toBeTruthy();
+      expect(el<HTMLSelectElement>('#task-project')!.selectedOptions[0].textContent).toContain(
+        'Inbox',
+      );
+    });
+
+    it('saves a task without leaving the Tasks tab', async () => {
+      await harness.navigateByUrl('/home?tab=tasks');
+      loadTasksTab();
+
+      el<HTMLButtonElement>('#panel-tasks button.new')!.click();
+      await settle();
+      http.expectOne(LABELS_URL).flush([]);
+      const title = el<HTMLInputElement>('#task-title')!;
+      title.value = 'Stay on this tab';
+      title.dispatchEvent(new Event('input'));
+      el('[role="dialog"] form')!.dispatchEvent(new Event('submit'));
+
+      http.expectOne(TASKS_URL).flush({
+        id: 11,
+        projectId: 1,
+        title: 'Stay on this tab',
+        description: null,
+        priority: 'low',
+        scheduledDate: null,
+        dueDate: null,
+        deadline: null,
+        recurrence: 'none',
+        recurrenceDays: [],
+        recurrenceEndDate: null,
+        isDone: false,
+        doneAt: null,
+        createdAt: '2026-09-01T00:00:00.000Z',
+        updatedAt: '2026-09-01T00:00:00.000Z',
+        labels: [],
+      });
+      await settle();
+
+      expect(router.url).toBe('/home?tab=tasks');
+      expect(el('#panel-tasks .task .title')?.textContent).toContain('Stay on this tab');
+    });
+  });
+
+  it('sends the old /projects address to the Projects tab', async () => {
+    await harness.navigateByUrl('/projects');
+    flushProjects();
+
+    expect(router.url).toBe('/home?tab=projects');
+    expect(panelId()).toBe('panel-projects');
+  });
+
+  describe('new project popup', () => {
+    const newProject = () => el<HTMLButtonElement>('.title-row button.new')!;
+
+    it('opens over the Projects tab, keeping the top bar and the URL', async () => {
+      await harness.navigateByUrl('/home?tab=projects');
+      flushProjects();
+      harness.detectChanges();
+
+      newProject().click();
+      await settle();
+
+      expect(router.url).toBe('/home?tab=projects');
+      expect(el('header.topbar')).toBeTruthy();
+      expect(el('[role="dialog"]')).toBeTruthy();
+      expect(el('#panel-projects app-projects-page')).toBeTruthy();
+    });
+
+    it('opens from the Organize view too, and stays there', async () => {
+      await harness.navigateByUrl('/home?tab=projects&view=organize');
+      flushProjects();
+      harness.detectChanges();
+
+      newProject().click();
+      await settle();
+
+      expect(router.url).toBe('/home?tab=projects&view=organize');
+      expect(el('[role="dialog"]')).toBeTruthy();
+    });
+
+    it('sends the old /projects/new address to the Projects tab', async () => {
+      await harness.navigateByUrl('/projects/new');
+      flushProjects();
+
+      expect(router.url).toBe('/home?tab=projects');
+      expect(panelId()).toBe('panel-projects');
+    });
+  });
+
+  describe('organize view', () => {
+    const viewLink = (label: string) =>
+      [...page().querySelectorAll<HTMLAnchorElement>('nav[aria-label="Project views"] a')].find(
+        (a) => a.textContent?.trim() === label,
+      )!;
+
+    async function open(url = '/home?tab=projects&view=organize'): Promise<void> {
+      await harness.navigateByUrl(url);
+      flushProjects();
+      harness.detectChanges();
+    }
+
+    it('keeps the top bar when Organize is clicked', async () => {
+      await open('/home?tab=projects');
+      const home = harness.routeDebugElement?.componentInstance;
+
+      viewLink('Organize').click();
+      await settle();
+      flushProjects();
+      harness.detectChanges();
+
+      expect(router.url).toBe('/home?tab=projects&view=organize');
+      expect(el('header.topbar')).toBeTruthy();
+      expect(el('#panel-projects app-project-switcher')).toBeTruthy();
+      expect(el('#panel-projects app-projects-page')).toBeNull();
+      expect(tab('projects').getAttribute('aria-selected')).toBe('true');
+      expect(harness.routeDebugElement?.componentInstance).toBe(home);
+    });
+
+    it('marks only Organize as the current view', async () => {
+      await open();
+
+      expect(viewLink('Organize').getAttribute('aria-current')).toBe('page');
+      expect(viewLink('All projects').hasAttribute('aria-current')).toBe(false);
+    });
+
+    it('goes back to the list with All projects', async () => {
+      await open();
+
+      viewLink('All projects').click();
+      await settle();
+      flushProjects();
+      harness.detectChanges();
+
+      expect(router.url).toBe('/home?tab=projects');
+      expect(el('#panel-projects app-projects-page')).toBeTruthy();
+      expect(viewLink('All projects').getAttribute('aria-current')).toBe('page');
+    });
+
+    it('sends the old /projects/organize address to the same view', async () => {
+      await open('/projects/organize');
+
+      expect(router.url).toBe('/home?tab=projects&view=organize');
+      expect(el('#panel-projects app-project-switcher')).toBeTruthy();
+    });
+
+    it('forgets the view on leaving the Projects tab', async () => {
+      await open();
+
+      tab('tasks').click();
+      await settle();
+      loadTasksTab();
+
+      expect(router.url).toBe('/home?tab=tasks');
+    });
+  });
+
+  it('falls back to the dashboard for an unknown tab', async () => {
+    await harness.navigateByUrl('/home?tab=nope');
+    loadDashboardTab();
+
+    expect(panelId()).toBe('panel-dashboard');
+  });
+});

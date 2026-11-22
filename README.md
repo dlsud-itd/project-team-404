@@ -61,6 +61,29 @@ Use the VS Code tasks to install dependencies, create and configure local
 environment files, and start development. See the [setup guide](documents/setup.md)
 for prerequisites, environment variable details, and the complete workflow.
 
+### Seeded accounts
+
+Running the Supabase seed data creates these test accounts. Their shared password
+is `password123`.
+
+| Username | Email |
+| --- | --- |
+| `james` | `james@example.com` |
+| `harvey` | `harvey@example.com` |
+| `alex` | `alex@example.com` |
+| `olivia` | `olivia@example.com` |
+| `ethan` | `ethan@example.com` |
+| `mia` | `mia@example.com` |
+| `rafael` | `rafael@example.com` |
+| `grace` | `grace@example.com` |
+| `felix` | `felix@example.com` |
+| `amina` | `amina@example.com` |
+| `priya` | `priya@example.com` |
+| `kenji` | `kenji@example.com` |
+| `sofia` | `sofia@example.com` |
+| `ava` | `ava@example.com` |
+| `noah` | `noah@example.com` |
+
 ## VS Code tasks
 
 Open the Command Palette (`Ctrl+Shift+P`) and choose **Tasks: Run Task**, then
@@ -99,6 +122,23 @@ The current API includes:
 | `POST` | `/api/auth/forgot-password` | Request a password recovery email |
 | `GET` | `/api/auth/validate-reset-token` | Validate a valid password reset token |
 | `POST` | `/api/auth/reset-password` | Reset a password with a valid token |
+
+### Task organization and labels
+
+Tasks accept `low`, `medium`, or `high` priority. Task-list requests can filter
+by `priority` and `labelId`, and order by `dueDate`, `createdAt`, `priority`,
+or `title` with `orderDirection=asc|desc`. Labels belong to the authenticated
+user; task-label operations reject labels owned by another user.
+
+| Method | Endpoint | Purpose |
+| --- | --- | --- |
+| `PUT` | `/api/tasks/:taskId/priority` | Set a task priority with `{ "priority": "high" }` |
+| `GET` | `/api/tasks?priority=high&labelId=12` | Filter tasks by priority, label, or both |
+| `GET` | `/api/tasks?orderBy=priority&orderDirection=desc` | Order tasks with stable ID tie-breaking |
+| `GET` / `POST` | `/api/labels` | List the current user's labels or create one with `{ "name": "Work", "color": "#f59e0b" }` |
+| `GET` / `PUT` / `DELETE` | `/api/labels/:labelId` | Read, update, or delete an owned label |
+| `GET` / `POST` | `/api/tasks/:taskId/labels` | List task labels or attach labels with `{ "labelIds": [2, 5] }` |
+| `DELETE` | `/api/tasks/:taskId/labels/:labelId` | Detach an owned label from a task; repeated detaches are safe |
 
 ### Project organization
 
@@ -139,20 +179,19 @@ of truth; do not use Prisma migrations for deployment.
 ### Setup and planning
 
 - [Local setup guide](documents/setup.md)
-- [Project proposal](<documents/main/Team-404 - Project Proposal.pdf>)
-- [Project team constitution](<documents/main/Team-404 - Project Team Constitution.pdf>)
-- [Development timeline (PERT)](<documents/main/Team-404 - Timeline Development - PERT.pdf>)
-- [Development timeline (Notion)](<documents/main/Team-404 - Timeline Development - Notion.pdf>)
-- [Work breakdown structure (document)](<documents/main/Team-404 - WBS - Document.pdf>)
-- [Work breakdown structure (diagram)](<documents/main/Team-404 - WBS - Diagram.png>)
+- [Project proposal](documents/main/Project_Proposal.pdf)
+- [Project team constitution](documents/main/Project_Team_Constitution.pdf)
+- [Development timeline (PERT)](documents/main/Timeline_Development_PERT.pdf)
+- [Development timeline (Notion)](documents/main/Timeline_Development_Notion.pdf)
+- [Work breakdown structure (document)](documents/main/WBS_Document.md)
+- [Work breakdown structure (diagram)](documents/main/WBS_Diagram.md)
 
 ### Requirements and design
 
-- [User stories](<documents/main/Team-404 - User Story.pdf>)
-- [Use case diagram](<documents/main/Team-404 - Use Case Diagram.pdf>)
-- [UI/UX mockup](<documents/main/Team-404 - UI UX Mockup.pdf>)
-- [Database schema (PDF)](<documents/main/Team-404 - Database Schema.pdf>)
-- [Database schema (image)](<documents/main/Team-404 - Database Schema.png>)
+- [User stories](documents/main/User_Story.pdf)
+- [Use case diagram](documents/main/Use_Case_Diagram.pdf)
+- [UI/UX mockup](documents/main/UI_UX_Mockup.pdf)
+- [Database schema](documents/main/Database_Schema.md)
 
 ### API specifications
 
@@ -161,6 +200,8 @@ of truth; do not use Prisma migrations for deployment.
 - [Task scheduling](<documents/main/api-spec/Team-404 - API Specification - Tasks - Scheduling.pdf>)
 - [Task organization](<documents/main/api-spec/Team-404 - API Specification - Tasks - Organization.pdf>)
 - [Dashboard](<documents/main/api-spec/Team-404 - API Specification - Dashboard.pdf>)
+- [Filtering, Archive, Labels & Priorities, Settings & Search](<documents/sprints/sprint-5/Team-404 - API Specification - Filtering, Archive, Labels & Priorities, Settings & Search.md>)
+- [Sprint 6: Streaks, Reordering & Views](<documents/main/api-spec/Team-404 - API Specification - Streaks, Reordering & Views.pdf>)
 
 ### Sprint 1
 

@@ -1,0 +1,34 @@
+<section class="section" aria-labelledby="current-upcoming-heading">
+  <header class="header">
+    <h2 id="current-upcoming-heading">Current &amp; Upcoming</h2>
+    @if (loadState() === 'ready') {
+      <span class="summary">{{ total() }} {{ total() === 1 ? 'task' : 'tasks' }}</span>
+    }
+  </header>
+
+  @switch (loadState()) {
+    @case ('loading') {
+      <p class="status" role="status">Loading your tasks…</p>
+    }
+    @case ('error') {
+      <div class="error" role="alert">
+        <p>{{ error() }}</p>
+        <button type="button" class="retry" (click)="load()">Try again</button>
+      </div>
+    }
+    @default {
+      <div class="groups" tabindex="0" aria-label="Current and upcoming tasks">
+        @for (group of groups(); track group.key) {
+          <app-task-group [group]="group" />
+        }
+      </div>
+      <app-view-all-link
+        [total]="total()"
+        [shown]="shown()"
+        link="/home"
+        [queryParams]="{ tab: 'tasks' }"
+        noun="current and upcoming tasks"
+      />
+    }
+  }
+</section>

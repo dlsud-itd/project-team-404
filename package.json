@@ -13,6 +13,7 @@
     "clean": "npm --prefix frontend run clean && npm --prefix backend run clean",
     "install:all": "npm install && npm --prefix frontend install && npm --prefix backend install && npm --prefix backend run prisma:generate",
     "test": "npm --prefix frontend run test:run && npm --prefix backend test",
+    "test:e2e": "node tests/e2e/run.mjs",
     "test:regression": "node scripts/regression.mjs",
     "test:report": "npm --prefix backend run test:report && npm --prefix frontend run test -- --coverage && node scripts/collect-reports.mjs",
     "lint": "npm --prefix frontend run lint && npm --prefix backend run lint",
@@ -24,12 +25,20 @@
     "supabase:push": "supabase db push",
     "supabase:pull": "supabase db pull",
     "supabase:status": "supabase migration list",
-    "supabase:reset": "supabase db reset",
-    "supabase:reset:remote": "node scripts/supabase-seed.mjs --reset",
+    "supabase:local:start": "supabase start",
+    "supabase:local:status": "supabase status",
+    "supabase:local:stop": "supabase stop",
+    "supabase:local:reset": "supabase db reset --local --no-seed",
+    "supabase:local:seed": "node scripts/supabase-seed.mjs --local",
+    "supabase:remote:reset": "supabase db reset --linked --no-seed",
     "supabase:repair": "supabase migration repair",
-    "supabase:seed:remote": "node scripts/supabase-seed.mjs"
+    "supabase:remote:seed": "node scripts/supabase-seed.mjs --linked",
+    "postman:task-crud:export": "node scripts/generate-task-postman.mjs",
+    "postman:sprint6:validate": "node scripts/validate-sprint6-postman.mjs"
   },
   "devDependencies": {
+    "@playwright/test": "^1.64.1",
+    "@types/node": "^22.20.5",
     "concurrently": "^9.2.3",
     "prettier": "^3.8.1",
     "supabase": "^2.48.3"

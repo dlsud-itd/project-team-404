@@ -16,19 +16,43 @@ export const routes: Routes = [
     loadComponent: () => import('./features/home/home').then((m) => m.Home),
   },
   {
-    path: 'projects',
+    // Signed-in pages outside the home page, which adds the top bar itself. Pages that match
+    // none of these fall through to the routes below.
+    path: '',
     canActivate: [authGuard],
-    loadChildren: () =>
-      import('./features/projects/projects.routes').then((m) => m.PROJECTS_ROUTES),
-  },
-  {
-    path: 'settings/profile',
-    title: 'Profile · HabitTracker',
-    canActivate: [authGuard],
-    loadComponent: () =>
-      import('./features/auth/profile/profile-settings/profile-settings').then(
-        (m) => m.ProfileSettings,
-      ),
+    loadComponent: () => import('./shared/components/app-shell/app-shell').then((m) => m.AppShell),
+    children: [
+      {
+        path: 'streak',
+        loadChildren: () =>
+          import('./features/dashboard/dashboard.routes').then((m) => m.DASHBOARD_ROUTES),
+      },
+      { path: 'dashboard', pathMatch: 'full', redirectTo: 'streak' },
+      {
+        // Before 'projects' so the projects routes don't claim these URLs.
+        path: 'projects/:projectId/tasks',
+        loadChildren: () => import('./features/tasks/tasks.routes').then((m) => m.TASKS_ROUTES),
+      },
+      {
+        path: 'projects',
+        loadChildren: () =>
+          import('./features/projects/projects.routes').then((m) => m.PROJECTS_ROUTES),
+      },
+      {
+        path: 'archive',
+        loadChildren: () => import('./features/archive/archive.routes').then((m) => m.ARCHIVE_ROUTES),
+      },
+      {
+        path: 'search',
+        loadChildren: () => import('./features/search/search.routes').then((m) => m.SEARCH_ROUTES),
+      },
+      {
+        // Profile, Preferences, Config, Labels and Priorities tabs; /settings/profile is unchanged.
+        path: 'settings',
+        loadChildren: () =>
+          import('./features/settings/settings.routes').then((m) => m.SETTINGS_ROUTES),
+      },
+    ],
   },
   {
     path: 'forgot-password',

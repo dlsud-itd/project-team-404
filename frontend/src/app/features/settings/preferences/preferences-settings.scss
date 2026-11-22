@@ -1,0 +1,193 @@
+:host {
+  display: block;
+}
+
+h2 {
+  margin: 0 0 0.25rem;
+  font-size: 1.5rem;
+  font-weight: 800;
+}
+
+.intro {
+  margin: 0 0 1.25rem;
+  color: var(--ink-muted);
+}
+
+.card {
+  display: grid;
+  gap: 1.25rem;
+  max-width: 36rem;
+  padding: 1.25rem;
+  border: 1px solid #e7ded9;
+  border-radius: 0.75rem;
+  background: #fff;
+}
+
+.field {
+  display: grid;
+  gap: 0.5rem;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+
+  legend,
+  label {
+    padding: 0;
+    font-weight: 700;
+  }
+
+  legend {
+    margin-bottom: 0.5rem;
+  }
+}
+
+.segmented {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  border: 1px solid var(--field-border);
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+.segment {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: 2.5rem;
+  padding: 0.375rem 0.5rem;
+  border-left: 1px solid var(--field-border);
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-align: center;
+  cursor: pointer;
+
+  &:first-child {
+    border-left: 0;
+  }
+
+  &:hover {
+    background: var(--cream);
+  }
+
+  &.selected {
+    background: var(--ink);
+    color: #fff;
+  }
+
+  // The radio stays in the page for keyboard and screen readers, but out of sight.
+  input {
+    position: absolute;
+    inset: 0;
+    margin: 0;
+    opacity: 0;
+    cursor: pointer;
+  }
+
+  &:has(input:focus-visible) {
+    outline: 2px solid #7b23a8;
+    outline-offset: -3px;
+  }
+}
+
+select {
+  width: 100%;
+  max-width: 20rem;
+  padding: 0.5rem 0.625rem;
+  border: 1px solid var(--field-border);
+  border-radius: 0.5rem;
+  background: #fff;
+  font: inherit;
+}
+
+.preview {
+  margin: 0;
+  padding: 1rem;
+  border: 1px dashed var(--orange-light);
+  border-radius: 0.5rem;
+  background: #fffaf7;
+
+  figcaption {
+    margin-bottom: 0.5rem;
+    color: var(--ink-muted);
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+}
+
+.preview-text {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.alert {
+  margin: 0 0 1rem;
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  background: #fdecec;
+  color: var(--error);
+
+  button {
+    margin-left: 0.5rem;
+  }
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.unsaved {
+  color: var(--ink-muted);
+  font-size: 0.875rem;
+}
+
+.primary,
+.secondary {
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--ink);
+  border-radius: 0.5rem;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.primary {
+  background: var(--ink);
+  color: #fff;
+}
+
+.secondary {
+  background: #fff;
+  color: var(--ink);
+}
+
+button:focus-visible,
+select:focus-visible {
+  outline: 2px solid #7b23a8;
+  outline-offset: 2px;
+}
+
+@media (max-width: 30rem) {
+  .segmented {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .segment:nth-child(3) {
+    border-left: 0;
+  }
+
+  .segment:nth-child(n + 3) {
+    border-top: 1px solid var(--field-border);
+  }
+}

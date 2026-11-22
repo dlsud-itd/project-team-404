@@ -1,0 +1,74 @@
+<h2>Preferences</h2>
+<p class="intro">Changes show across the app straight away. Save to keep them.</p>
+
+@if (store.error() && !store.loaded()) {
+  <div class="alert" role="alert">
+    {{ store.error() }}
+    <button type="button" class="secondary" [disabled]="store.loading()" (click)="store.load()">
+      {{ store.loading() ? 'Retrying…' : 'Try again' }}
+    </button>
+  </div>
+}
+
+@if (saved(); as message) {
+  <p class="form-notice" role="status">{{ message }}</p>
+}
+@if (saveError(); as message) {
+  <p class="alert" role="alert">{{ message }}</p>
+}
+
+<form class="card" (submit)="$event.preventDefault(); save()" novalidate>
+  <fieldset class="field">
+    <legend>Font size</legend>
+    <div class="segmented">
+      @for (size of sizes; track size.value) {
+        <label class="segment" [class.selected]="fontSize() === size.value">
+          <input
+            type="radio"
+            name="font-size"
+            [value]="size.value"
+            [checked]="fontSize() === size.value"
+            (change)="pickSize(size.value)"
+          />
+          <span>{{ size.label }}</span>
+        </label>
+      }
+    </div>
+  </fieldset>
+
+  <div class="field">
+    <label for="font-family">Font</label>
+    <select
+      #familySelect
+      id="font-family"
+      [value]="fontFamily()"
+      (change)="pickFamily(familySelect.value)"
+    >
+      @for (family of families; track family.value) {
+        <option [value]="family.value" [selected]="fontFamily() === family.value">
+          {{ family.label }}
+        </option>
+      }
+    </select>
+  </div>
+
+  <figure class="preview" aria-labelledby="font-preview-caption">
+    <figcaption id="font-preview-caption">Preview · {{ previewSize() }}</figcaption>
+    <p class="preview-text" [style.font-family]="previewFamily()">
+      The quick brown fox finishes today’s three tasks before noon, then plans tomorrow’s deadlines:
+      0123456789.
+    </p>
+  </figure>
+
+  <div class="actions">
+    <button type="submit" class="primary" [disabled]="!changed() || saving() || !store.loaded()">
+      {{ saving() ? 'Saving…' : 'Save' }}
+    </button>
+    <button type="button" class="secondary" [disabled]="!changed() || saving()" (click)="cancel()">
+      Cancel
+    </button>
+    @if (changed()) {
+      <span class="unsaved" role="status">Unsaved changes</span>
+    }
+  </div>
+</form>

@@ -1,0 +1,135 @@
+import type { RequestHandler } from 'express';
+import { LabelNotFoundError } from '../../labels/label-crud/errors/label-not-found.error';
+import { LabelArchivedError } from '../../labels/shared/errors/label-archived.error';
+import { TaskArchivedError } from '../shared/errors/task-archived.error';
+import {
+  InvalidTaskPriorityError,
+  TaskNotFoundError,
+} from '../task-crud/errors/task-crud.errors';
+import type { TaskRecord } from '../shared/models/task.model';
+import type { TaskOrganizationService } from './task-organization.service';
+import type {
+  AttachTaskLabelsInput,
+  ReorderTasksInput,
+  SetTaskPriorityInput,
+} from './types/task-organization.types';
+import { TaskReorderConflictError } from './errors/task-reorder-conflict.error';
+
+export function createTaskOrganizationController(
+  service: TaskOrganizationService
+): {
+  setPriority: RequestHandler;
+  listLabels: RequestHandler;
+  attachLabels: RequestHandler;
+  detachLabel: RequestHandler;
+  archive: RequestHandler;
+  reorder: RequestHandler;
+} {
+  const respondToError = (
+    error: unknown,
+    res: Parameters<RequestHandler>[1],
+    next: Parameters<RequestHandler>[2]
+  ) => {
+    if (
+      error instanceof TaskNotFoundError ||
+      error instanceof LabelNotFoundError
+    ) {
+      res.status(404).json({ error: error.message });
+      return;
+    }
+    if (error instanceof InvalidTaskPriorityError) {
+      res.status(400).json({
+        code: 'invalid-priority',
+        error: error.message,
+      });
+      return;
+    }
+    if (
+      error instanceof TaskArchivedError ||
+      error instanceof LabelArchivedError ||
+      error instanceof TaskReorderConflictError
+    ) {
+      res.status(409).json({ error: error.message });
+      return;
+    }
+    next(error);
+  };
+
+  return {
+    setPriority: async (req, res, next) => {
+      try {
+        const { priority, priorityId } = res.locals
+          .validated as SetTaskPriorityInput;
+        const result = await service.setPriority(
+          res.locals.ownedTask as TaskRecord,
+          req.auth!.userId,
+          priority,
+          priorityId
+        );
+        res.status(200).json(result);
+      } catch (error) {
+        respondToError(error, res, next);
+      }
+    },
+    listLabels: async (req, res, next) => {
+      try {
+        const labels = await service.listLabels(
+          res.locals.ownedTask as TaskRecord,
+          req.auth!.userId
+        );
+        res.status(200).json(labels);
+      } catch (error) {
+        next(error);
+      }
+    },
+    attachLabels: async (req, res, next) => {
+      try {
+        const { labelIds } = res.locals.validated as AttachTaskLabelsInput;
+        const labels = await service.attachLabels(
+          res.locals.ownedTask as TaskRecord,
+          req.auth!.userId,
+          labelIds
+        );
+        res.status(200).json({ labels });
+      } catch (error) {
+        respondToError(error, res, next);
+      }
+    },
+    detachLabel: async (req, res, next) => {
+      try {
+        const labelId = res.locals.validatedLabelId as number;
+        const labels = await service.detachLabel(
+          res.locals.ownedTask as TaskRecord,
+          req.auth!.userId,
+          labelId
+        );
+        res.status(200).json({ labels });
+      } catch (error) {
+        respondToError(error, res, next);
+      }
+    },
+    archive: async (req, res, next) => {
+      try {
+        const { isArchived } = res.locals.validated as { isArchived: boolean };
+        const result = await service.setArchived(
+          res.locals.ownedTask as TaskRecord,
+          req.auth!.userId,
+          isArchived
+        );
+        res.status(200).json(result);
+      } catch (error) {
+        respondToError(error, res, next);
+      }
+    },
+    reorder: async (req, res, next) => {
+      try {
+        const { projectId, taskIds } = res.locals
+          .validated as ReorderTasksInput;
+        await service.reorder(projectId, taskIds, req.auth!.userId);
+        res.status(200).json({ projectId, taskIds });
+      } catch (error) {
+        respondToError(error, res, next);
+      }
+    },
+  };
+}

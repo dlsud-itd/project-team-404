@@ -57,6 +57,14 @@ describe('ProjectCard', () => {
     expect(el('a.edit')?.getAttribute('aria-label')).toBe('Edit Capstone');
   });
 
+  it("links the name to the project's tasks, Inbox included", () => {
+    render(CAPSTONE);
+    expect(el('a.tasks-link')?.getAttribute('href')).toBe('/projects/10/tasks');
+
+    render(INBOX);
+    expect(el('a.tasks-link')?.getAttribute('href')).toBe('/projects/1/tasks');
+  });
+
   it('asks to delete the project when Delete is clicked', () => {
     render(CAPSTONE);
     const requested: Project[] = [];

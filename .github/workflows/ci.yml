@@ -39,18 +39,69 @@ jobs:
           cache: npm
           cache-dependency-path: backend/package-lock.json
       - run: npm ci
+      - run: npm ci --prefix ..
+      - name: Select an available local Supabase database port
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import re
+          import socket
+          from pathlib import Path
+
+          with socket.socket() as sock:
+              sock.bind(("0.0.0.0", 0))
+              db_port = sock.getsockname()[1]
+
+          config_path = Path("../supabase/config.toml")
+          lines = config_path.read_text().splitlines(keepends=True)
+          in_db_section = False
+          updated = 0
+
+          for index, line in enumerate(lines):
+              section = line.strip()
+              if section.startswith("["):
+                  in_db_section = section == "[db]"
+              if in_db_section and re.match(r"^\s*port\s*=", line):
+                  lines[index] = re.sub(
+                      r"^(\s*port\s*=\s*)\d+",
+                      rf"\g<1>{db_port}",
+                      line,
+                  )
+                  updated += 1
+
+          if updated != 1:
+              raise SystemExit(f"Expected one [db] port setting, found {updated}")
+
+          config_path.write_text("".join(lines))
+          print(f"Using local Supabase database port {db_port}")
+          PY
+      - name: Start local Supabase
+        run: npm --prefix .. run supabase:local:start
+      - name: Reset local database without demo data
+        run: npm --prefix .. run supabase:local:reset
+      - name: Configure local integration test values
+        shell: bash
+        run: |
+          status="$(../node_modules/.bin/supabase status -o env)"
+          api_url="$(printf '%s\n' "$status" | sed -n 's/^API_URL=//p' | tr -d '"')"
+          db_url="$(printf '%s\n' "$status" | sed -n 's/^DB_URL=//p' | tr -d '"')"
+          service_role_key="$(printf '%s\n' "$status" | sed -n 's/^SERVICE_ROLE_KEY=//p' | tr -d '"')"
+          : "${api_url:?Supabase status did not provide API_URL}"
+          : "${db_url:?Supabase status did not provide DB_URL}"
+          : "${service_role_key:?Supabase status did not provide SERVICE_ROLE_KEY}"
+          echo "::add-mask::$service_role_key"
+          {
+            printf 'SUPABASE_TEST_URL=%s\n' "$api_url"
+            printf 'SUPABASE_TEST_SERVICE_ROLE_KEY=%s\n' "$service_role_key"
+            printf 'SUPABASE_TEST_DATABASE_URL=%s\n' "$db_url"
+            printf 'SUPABASE_TEST_DIRECT_URL=%s\n' "$db_url"
+          } >> "$GITHUB_ENV"
       - run: npm test
         env:
           NODE_ENV: test
           CORS_ALLOWED_ORIGINS: http://localhost:4200
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/postgres
           DIRECT_URL: postgresql://postgres:postgres@localhost:5432/postgres
-          # Isolated Supabase test project for src/testing/integration. Without these the
-          # integration suites skip.
-          SUPABASE_TEST_URL: ${{ secrets.SUPABASE_TEST_URL }}
-          SUPABASE_TEST_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_TEST_SERVICE_ROLE_KEY }}
-          SUPABASE_TEST_DATABASE_URL: ${{ secrets.SUPABASE_TEST_DATABASE_URL }}
-          SUPABASE_TEST_DIRECT_URL: ${{ secrets.SUPABASE_TEST_DIRECT_URL }}
 
   lint-frontend:
     name: Frontend Lint

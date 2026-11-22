@@ -1,10 +1,11 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { Router, provideRouter } from '@angular/router';
 import { environment } from '../../../../../environments/environment';
 import type { Project } from '../../shared/types/project.types';
 import { ProjectList, deletedNotice } from './project-list';
+import { apiProject } from '../../testing/helpers/api-project';
 
 const URL = `${environment.apiBaseUrl}/api/projects`;
 const base: Project = {
@@ -48,7 +49,12 @@ describe('ProjectList', () => {
   const render = () => fixture.detectChanges();
 
   function loadWith(projects: Project[]): void {
-    http.expectOne(URL).flush(projects);
+    http
+      .expectOne(`${URL}?isArchived=false`)
+      .flush(projects.filter((project) => !project.isArchived).map(apiProject));
+    http
+      .expectOne(`${URL}?isArchived=true`)
+      .flush(projects.filter((project) => project.isArchived).map(apiProject));
     render();
   }
 
@@ -86,21 +92,32 @@ describe('ProjectList', () => {
     expect(page.textContent).not.toContain('Old class');
   });
 
-  it('links to the new-project page', () => {
+  it('opens the new-project popup from the header', () => {
     loadWith([INBOX, CAPSTONE]);
+    expect(el('app-new-project-dialog')).toBeNull();
 
-    expect(el('.title-row a.new')?.getAttribute('href')).toBe('/projects/new');
+    el<HTMLButtonElement>('.title-row button.new')!.click();
+    render();
+
+    expect(el('app-new-project-dialog [role="dialog"]')).toBeTruthy();
   });
 
   it('invites the user to create a project when only the Inbox exists', () => {
     loadWith([INBOX]);
 
     expect(text('.empty-title')).toBe('You only have your Inbox so far.');
-    expect(el('.empty a')?.getAttribute('href')).toBe('/projects/new');
+
+    el<HTMLButtonElement>('.empty button.new')!.click();
+    render();
+
+    expect(el('app-new-project-dialog [role="dialog"]')).toBeTruthy();
   });
 
   it('shows an error with a retry action when the list fails', () => {
-    http.expectOne(URL).flush(null, { status: 500, statusText: 'Server Error' });
+    http
+      .expectOne(`${URL}?isArchived=false`)
+      .flush(null, { status: 500, statusText: 'Server Error' });
+    expect(http.expectOne(`${URL}?isArchived=true`).cancelled).toBe(true);
     render();
 
     expect(text('.load-error p')).toContain('Something went wrong. Please try again.');
@@ -110,6 +127,69 @@ describe('ProjectList', () => {
 
     expect(el('.load-error')).toBeNull();
     expect(cardNames()).toEqual(['Inbox', 'Capstone']);
+  });
+
+  describe('filtering and sorting', () => {
+    const BLUE: Project = { ...CAPSTONE, projectId: 13, name: 'Blue notes', color: '#2563EB' };
+
+    async function goTo(url: string): Promise<void> {
+      await TestBed.inject(Router).navigateByUrl(url);
+      await fixture.whenStable();
+      render();
+    }
+
+    const chip = (name: string) =>
+      [...page.querySelectorAll<HTMLButtonElement>('app-project-filter-bar .chip')].find((c) =>
+        c.textContent?.trim().startsWith(name),
+      )!;
+
+    it('shows only favorites when the chip is pressed and puts it in the URL', async () => {
+      loadWith([CAPSTONE, OLD, GYM, INBOX]);
+
+      chip('Favorites').click();
+      await fixture.whenStable();
+      render();
+
+      expect(TestBed.inject(Router).url).toBe('/?favorites=true');
+      expect(chip('Favorites').getAttribute('aria-pressed')).toBe('true');
+      expect(cardNames()).toEqual(['Gym']);
+      expect(text('#results-heading')).toBe('Projects · 1');
+    });
+
+    it('shows archived projects and filters by color from the URL', async () => {
+      loadWith([CAPSTONE, OLD, GYM, BLUE, INBOX]);
+
+      await goTo('/?archived=true');
+      expect(cardNames()).toEqual(['Old class']);
+      expect(text('#results-heading')).toBe('Archived projects · 1');
+
+      await goTo('/?color=%232563eb');
+      expect(cardNames()).toEqual(['Blue notes']);
+    });
+
+    it('sorts by name, keeping the Inbox on top while nothing is filtered', async () => {
+      loadWith([CAPSTONE, GYM, BLUE, INBOX]);
+
+      await goTo('/?sort=name&dir=desc');
+
+      expect(cardNames()).toEqual(['Inbox', 'Gym', 'Capstone', 'Blue notes']);
+      expect(el('#favorites-heading')).toBeNull();
+      expect(text('app-sort-menu .trigger')).toContain('Name');
+    });
+
+    it('offers to clear the filters when no project matches', async () => {
+      loadWith([CAPSTONE, GYM, INBOX]);
+      await goTo('/?favorites=true&color=%232563EB');
+
+      expect(text('.empty-title')).toBe('No projects match these filters.');
+
+      el<HTMLButtonElement>('.empty button.new')!.click();
+      await fixture.whenStable();
+      render();
+
+      expect(TestBed.inject(Router).url).toBe('/');
+      expect(cardNames()).toEqual(['Inbox', 'Gym', 'Capstone']);
+    });
   });
 
   describe('deleting', () => {
@@ -126,7 +206,7 @@ describe('ProjectList', () => {
       http.expectNone(`${URL}/10`);
     });
 
-    it('deletes once, removes the project and shows how many tasks moved', () => {
+    it('deletes once on 204 No Content, removes the project and shows a notice', () => {
       askToDelete('Capstone');
       el<HTMLButtonElement>('button.confirm')!.click();
       render();
@@ -136,11 +216,11 @@ describe('ProjectList', () => {
 
       const req = http.expectOne(`${URL}/10`);
       expect(req.request.method).toBe('DELETE');
-      req.flush({ message: 'Project deleted successfully', movedTaskCount: 4 });
+      req.flush(null, { status: 204, statusText: 'No Content' });
       render();
 
       expect(el('app-confirm-delete-dialog')).toBeNull();
-      expect(text('.form-notice')).toBe('“Capstone” was deleted. 4 tasks moved to your Inbox.');
+      expect(text('.form-notice')).toBe('“Capstone” was deleted.');
       expect(cardNames()).toEqual(['Inbox']);
     });
 

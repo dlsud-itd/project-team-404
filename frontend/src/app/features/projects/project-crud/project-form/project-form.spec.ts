@@ -7,9 +7,23 @@ import { RouterTestingHarness } from '@angular/router/testing';
 import { environment } from '../../../../../environments/environment';
 import type { Project } from '../../shared/types/project.types';
 import { ProjectForm } from './project-form';
+import { apiProject } from '../../testing/helpers/api-project';
 
 @Component({ template: '' })
 class Blank {}
+
+let timesClosed = 0;
+
+/** Create mode only runs inside the popup, so this hosts the form the way the popup does. */
+@Component({
+  imports: [ProjectForm],
+  template: `<app-project-form [dialog]="true" (closed)="onClosed()" />`,
+})
+class CreateHost {
+  protected onClosed(): void {
+    timesClosed++;
+  }
+}
 
 const URL = `${environment.apiBaseUrl}/api/projects`;
 const CAPSTONE: Project = {
@@ -62,7 +76,7 @@ describe('ProjectForm', () => {
       providers: [
         provideRouter([
           { path: 'projects', component: Blank },
-          { path: 'projects/new', component: ProjectForm, data: { mode: 'create' } },
+          { path: 'create-host', component: CreateHost },
           { path: 'projects/:projectId/edit', component: ProjectForm, data: { mode: 'edit' } },
         ]),
         provideHttpClient(),
@@ -78,11 +92,12 @@ describe('ProjectForm', () => {
 
   describe('create mode', () => {
     beforeEach(async () => {
-      await harness.navigateByUrl('/projects/new');
+      timesClosed = 0;
+      await harness.navigateByUrl('/create-host');
     });
 
     it('shows labelled name and description fields, a color picker and a submit button', () => {
-      expect(text('h1')).toBe('New project');
+      expect(text('h2')).toBe('New project');
       for (const id of ['project-name', 'project-description']) {
         expect(el(`#${id}`)).toBeTruthy();
         expect(el(`label[for="${id}"]`)).toBeTruthy();
@@ -119,7 +134,7 @@ describe('ProjectForm', () => {
       const req = http.expectOne(URL);
       expect(req.request.method).toBe('POST');
       expect(req.request.body).toEqual({ name: 'Capstone', description: null, color: null });
-      req.flush(CAPSTONE);
+      req.flush(apiProject(CAPSTONE));
     });
 
     it('sends the chosen description and color', () => {
@@ -142,16 +157,17 @@ describe('ProjectForm', () => {
 
       expect(saveButton().disabled).toBe(true);
       expect(saveButton().textContent).toContain('Creating…');
-      http.expectOne(URL).flush(CAPSTONE);
+      http.expectOne(URL).flush(apiProject(CAPSTONE));
     });
 
-    it('goes back to the project list after creating', async () => {
+    it('reports that it closed after creating, without leaving the page', async () => {
       type('project-name', 'Capstone');
       submit();
-      http.expectOne(URL).flush(CAPSTONE);
+      http.expectOne(URL).flush(apiProject(CAPSTONE));
       await harness.fixture.whenStable();
 
-      expect(router.url).toBe('/projects');
+      expect(timesClosed).toBe(1);
+      expect(router.url).toBe('/create-host');
     });
 
     it('shows a 400 on the field it names and keeps the input', () => {
@@ -176,15 +192,16 @@ describe('ProjectForm', () => {
       expect(el<HTMLInputElement>('#project-name').value).toBe('Capstone');
 
       submit();
-      http.expectOne(URL).flush(CAPSTONE);
+      http.expectOne(URL).flush(apiProject(CAPSTONE));
     });
 
-    it('closes with Escape without saving', async () => {
+    it('closes with Escape without saving, and only once', async () => {
       type('project-name', 'Capstone');
-      el('form').dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+      el('form').dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
       await harness.fixture.whenStable();
 
-      expect(router.url).toBe('/projects');
+      expect(timesClosed).toBe(1);
+      expect(router.url).toBe('/create-host');
       http.expectNone(URL);
     });
   });
@@ -193,7 +210,7 @@ describe('ProjectForm', () => {
     async function open(project: Project = CAPSTONE): Promise<void> {
       await harness.navigateByUrl(`/projects/${project.projectId}/edit`);
       expect(text('[role="status"]')).toBe('Loading project…');
-      http.expectOne(`${URL}/${project.projectId}`).flush(project);
+      http.expectOne(`${URL}/${project.projectId}`).flush(apiProject(project));
       harness.detectChanges();
     }
 
@@ -223,9 +240,9 @@ describe('ProjectForm', () => {
       submit();
 
       const req = http.expectOne(`${URL}/10`);
-      expect(req.request.method).toBe('PUT');
+      expect(req.request.method).toBe('PATCH');
       expect(req.request.body).toEqual({ name: 'Capstone 2' });
-      req.flush({ projectId: 10, message: 'Project updated successfully' });
+      req.flush(apiProject({ ...CAPSTONE, name: 'Capstone 2' }));
       harness.detectChanges();
 
       expect(text('.form-notice')).toBe('Changes saved.');
@@ -251,14 +268,15 @@ describe('ProjectForm', () => {
       expect(el<HTMLTextAreaElement>('#project-description').value).toBe('New text');
     });
 
-    it('shows "Project not found" and refreshes the list when the save returns 404', async () => {
+    it('goes back to the project list when the save returns 404', async () => {
       await open();
       type('project-name', 'Capstone 2');
       submit();
-      fail(`${URL}/10`, 404, 'Invalid updating project.');
+      fail(`${URL}/10`, 404, 'Project not found');
+      await harness.fixture.whenStable();
 
-      expect(text('.form-error')).toBe('Project not found.');
-      http.expectOne(URL).flush([]);
+      // The list page reloads itself and shows "Project not found." (integration spec).
+      expect(router.url).toBe('/projects');
     });
 
     it('shows "Project not found" when the project cannot be loaded', async () => {
@@ -280,7 +298,7 @@ describe('ProjectForm', () => {
       fail(`${URL}/10`, 500);
 
       el<HTMLButtonElement>('.message button').click();
-      http.expectOne(`${URL}/10`).flush(CAPSTONE);
+      http.expectOne(`${URL}/10`).flush(apiProject(CAPSTONE));
       harness.detectChanges();
 
       expect(el<HTMLInputElement>('#project-name').value).toBe('Capstone');

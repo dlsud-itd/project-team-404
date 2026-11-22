@@ -1,4 +1,4 @@
-/** A project as returned by /api/projects (API spec v1.1, section II). */
+/** A project as the app uses it. ProjectService converts the API's `id` to `projectId`. */
 export interface Project {
   projectId: number;
   name: string;
@@ -10,6 +10,17 @@ export interface Project {
   isFavorite: boolean;
   isArchived: boolean;
   sortOrder: number;
+  /** ISO timestamps, used for sorting; older responses may leave them out. */
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+/**
+ * A project exactly as the backend sends it: the id is called `id`, and timestamps are
+ * included. ProjectService turns it into a Project before anything else sees it.
+ */
+export interface ApiProject extends Omit<Project, 'projectId'> {
+  id: number;
 }
 
 /** Body of POST /api/projects. Optional fields are sent as null, never as empty strings. */
@@ -19,16 +30,11 @@ export interface CreateProjectRequest {
   color: string | null;
 }
 
-/** Body of PUT /api/projects/{projectId}: only the fields that changed. */
+/** Body of PATCH /api/projects/{projectId}: only the fields that changed. */
 export type UpdateProjectRequest = Partial<CreateProjectRequest>;
 
-export interface UpdateProjectResponse {
-  projectId: number;
-  message: string;
-}
-
 export interface DeleteProjectResponse {
-  message: string;
+  /** Tasks moved to the Inbox. The API answers 204 with no body today, so this is 0 then. */
   movedTaskCount: number;
 }
 

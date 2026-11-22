@@ -1,0 +1,112 @@
+<article class="card" [class.done]="card().isDone">
+  <div class="top">
+    @if (priority(); as name) {
+      <span class="priority" [style.--priority-color]="priorityColor()">{{ name }}</span>
+    }
+    <button
+      type="button"
+      class="move"
+      [id]="menuButtonId()"
+      [attr.aria-label]="'Move ' + card().title"
+      title="Move"
+      [cdkMenuTriggerFor]="menu"
+    >
+      <svg viewBox="0 0 16 16" aria-hidden="true">
+        <circle cx="3.5" cy="8" r="1.25" />
+        <circle cx="8" cy="8" r="1.25" />
+        <circle cx="12.5" cy="8" r="1.25" />
+      </svg>
+    </button>
+  </div>
+
+  <h3 class="title">
+    <a
+      class="open"
+      draggable="false"
+      [routerLink]="['/projects', projectId(), 'tasks', card().taskId, 'edit']"
+      >{{ card().title }}</a
+    >
+  </h3>
+
+  @if (due() || task()?.isRecurring) {
+    <p class="meta">
+      @if (due(); as due) {
+        <span class="due" [class.overdue]="overdue()">
+          <svg viewBox="0 0 16 16" aria-hidden="true">
+            <rect x="2.5" y="3.5" width="11" height="10" rx="1.5" />
+            <path d="M2.5 6.5h11M5.5 2v3M10.5 2v3" />
+          </svg>
+          {{ overdue() ? 'Overdue · ' : 'Due ' }}{{ due }}
+        </span>
+      }
+      @if (task(); as task) {
+        @if (task.isRecurring) {
+          <app-streak-badge class="streak" [task]="task" />
+        }
+      }
+    </p>
+  }
+
+  @if (labels().length) {
+    <ul class="labels" aria-label="Labels">
+      @for (label of labels(); track label.labelId) {
+        <li
+          class="label"
+          [class.archived]="label.isArchived"
+          [style.--label-color]="label.color"
+          [attr.title]="label.isArchived ? label.name + ' (archived)' : null"
+        >
+          {{ label.name }}
+        </li>
+      }
+      @if (hiddenLabels(); as more) {
+        <li class="label more" [attr.aria-label]="more + ' more labels'">+{{ more }}</li>
+      }
+    </ul>
+  }
+</article>
+
+<ng-template #menu>
+  <div class="menu" cdkMenu [attr.aria-label]="'Move ' + card().title">
+    @for (target of columns; track target) {
+      <button
+        type="button"
+        class="item"
+        cdkMenuItem
+        [cdkMenuItemDisabled]="disabled() || target === column()"
+        (cdkMenuItemTriggered)="moveTo.emit(target)"
+      >
+        Move to {{ columnNames[target] }}
+      </button>
+    }
+    <div class="separator" role="separator"></div>
+    <button
+      type="button"
+      class="item"
+      cdkMenuItem
+      [cdkMenuItemDisabled]="disabled() || !canMoveUp()"
+      (cdkMenuItemTriggered)="moveBy.emit(-1)"
+    >
+      Move up
+    </button>
+    <button
+      type="button"
+      class="item"
+      cdkMenuItem
+      [cdkMenuItemDisabled]="disabled() || !canMoveDown()"
+      (cdkMenuItemTriggered)="moveBy.emit(1)"
+    >
+      Move down
+    </button>
+    <div class="separator" role="separator"></div>
+    <button
+      type="button"
+      class="item"
+      cdkMenuItem
+      [cdkMenuItemDisabled]="disabled()"
+      (cdkMenuItemTriggered)="archive.emit()"
+    >
+      Archive
+    </button>
+  </div>
+</ng-template>

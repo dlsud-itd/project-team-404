@@ -1,0 +1,196 @@
+<main class="page" [class.wide]="view() === 'board'">
+  <header class="head">
+    <a class="back" routerLink="/projects">← Projects</a>
+    <div class="title-row">
+      <h1>{{ project()?.name ?? 'Tasks' }}</h1>
+      <a routerLink="/settings/labels">Manage labels</a>
+      @if (!projectMissing()) {
+        <button type="button" class="new" (click)="newTask()">+ New task</button>
+      }
+    </div>
+    @if (project()?.description; as description) {
+      <p class="subtitle">{{ description }}</p>
+    }
+  </header>
+
+  @if (projectMissing()) {
+    <div class="message" role="alert">
+      <p>Project not found.</p>
+      <a routerLink="/projects">Back to your projects</a>
+    </div>
+  } @else {
+    @if (notice(); as message) {
+      <p class="form-notice" role="status">{{ message }}</p>
+    }
+    @if (actionError(); as message) {
+      <p class="banner-error" role="alert">{{ message }}</p>
+    }
+    @if (labelsError(); as message) {
+      <p class="banner-error" role="alert">{{ message }}</p>
+    }
+
+    <app-view-switcher class="views" [view]="view()" />
+
+    <section class="toolbar" aria-label="Filter and sort tasks">
+      <app-task-filter-bar
+        [query]="query.query()"
+        [levels]="priorities.levels()"
+        [labels]="labels()"
+        (changed)="changeQuery($event)"
+        (cleared)="clearFilters()"
+      />
+      <!-- The board keeps its own order, so sorting only applies to the list. -->
+      @if (view() === 'list') {
+        <app-sort-menu
+          class="sort"
+          label="Sort tasks"
+          [options]="sortOptions"
+          [value]="query.query().orderBy ?? ''"
+          [direction]="query.query().orderDirection"
+          (changed)="setSort($event)"
+        />
+      }
+    </section>
+
+    @if (filterError(); as message) {
+      <p class="banner-error filter-error" role="alert">{{ message }}</p>
+    }
+
+    @if (view() === 'board') {
+      @if (boardFilter(); as filter) {
+        <app-board-view
+          [projectId]="projectId()"
+          [filter]="filter"
+          [filtersActive]="query.count() > 0"
+          (loadFailed)="dropRejectedFilters($event)"
+          (clearFilters)="clearFilters()"
+          (newTask)="newTask()"
+        />
+      }
+    } @else {
+      @if (store.error(); as message) {
+        <div class="load-error" role="alert">
+          <p>Couldn't load your tasks. {{ message }}</p>
+          <button type="button" class="retry" [disabled]="store.loading()" (click)="load()">
+            {{ store.loading() ? 'Retrying…' : 'Try again' }}
+          </button>
+        </div>
+      }
+
+      @if (firstLoad()) {
+        <p class="status" role="status">Loading tasks…</p>
+      } @else if (store.loaded()) {
+        @if (store.tasks().length) {
+          <section class="group" aria-labelledby="open-heading">
+            <h2 id="open-heading">To do · {{ store.open().length }}</h2>
+            @if (reorderBlocked() && store.open().length > 1) {
+              <p id="reorder-hint" class="reorder-hint">{{ reorderBlocked() }}</p>
+            }
+            @if (store.open().length) {
+              <ul
+                class="list reorderable"
+                cdkDropList
+                cdkDropListLockAxis="y"
+                [cdkDropListDisabled]="!canReorder()"
+                (cdkDropListDropped)="dropped($event)"
+              >
+                @for (task of store.open(); track task.taskId; let i = $index, count = $count) {
+                  <li class="item" cdkDrag [cdkDragData]="task">
+                    @if (canReorder()) {
+                      <span class="handle" cdkDragHandle aria-hidden="true" title="Drag to reorder">
+                        <svg viewBox="0 0 24 24">
+                          <circle cx="9" cy="6" r="1.5" />
+                          <circle cx="15" cy="6" r="1.5" />
+                          <circle cx="9" cy="12" r="1.5" />
+                          <circle cx="15" cy="12" r="1.5" />
+                          <circle cx="9" cy="18" r="1.5" />
+                          <circle cx="15" cy="18" r="1.5" />
+                        </svg>
+                      </span>
+                    }
+                    <app-task-item
+                      class="item-body"
+                      [task]="task"
+                      (deleteRequested)="askDelete($event)"
+                    />
+                    @if (count > 1) {
+                      <div class="move">
+                        <button
+                          type="button"
+                          class="icon"
+                          [id]="'task-' + task.taskId + '-up'"
+                          [attr.aria-label]="'Move ' + task.title + ' up'"
+                          [attr.aria-describedby]="reorderBlocked() ? 'reorder-hint' : null"
+                          [disabled]="!canReorder() || i === 0"
+                          (click)="moveTask(i, i - 1, 'up')"
+                        >
+                          <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="m6 15 6-6 6 6" />
+                          </svg>
+                        </button>
+                        <button
+                          type="button"
+                          class="icon"
+                          [id]="'task-' + task.taskId + '-down'"
+                          [attr.aria-label]="'Move ' + task.title + ' down'"
+                          [attr.aria-describedby]="reorderBlocked() ? 'reorder-hint' : null"
+                          [disabled]="!canReorder() || i === count - 1"
+                          (click)="moveTask(i, i + 1, 'down')"
+                        >
+                          <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="m6 9 6 6 6-6" />
+                          </svg>
+                        </button>
+                      </div>
+                    }
+                    <div class="placeholder" *cdkDragPlaceholder></div>
+                  </li>
+                }
+              </ul>
+              <p class="visually-hidden" aria-live="polite" aria-atomic="true">
+                {{ announcement() }}
+              </p>
+            } @else {
+              <p class="status">Everything here is done.</p>
+            }
+          </section>
+
+          @if (store.completed().length) {
+            <section class="group" aria-labelledby="completed-heading">
+              <h2 id="completed-heading">Completed · {{ store.completed().length }}</h2>
+              <ul class="list">
+                @for (task of store.completed(); track task.taskId) {
+                  <li>
+                    <app-task-item [task]="task" (deleteRequested)="askDelete($event)" />
+                  </li>
+                }
+              </ul>
+            </section>
+          }
+        } @else if (query.count() > 0) {
+          <div class="empty">
+            <p class="empty-title">No tasks match these filters.</p>
+            <p>Try removing a filter, or clear them all to see every task in this project.</p>
+            <button type="button" class="new" (click)="clearFilters()">Clear filters</button>
+          </div>
+        } @else {
+          <div class="empty">
+            <p class="empty-title">No tasks here yet.</p>
+            <p>Add the first thing you need to get done in this project.</p>
+            <button type="button" class="new" (click)="newTask()">Add a task</button>
+          </div>
+        }
+      }
+    }
+  }
+</main>
+
+@if (pendingDelete(); as task) {
+  <app-confirm-delete-task-dialog
+    [task]="task"
+    [busy]="deleting()"
+    [error]="deleteError()"
+    (confirmed)="confirmDelete()"
+    (cancelled)="cancelDelete()"
+  />
+}

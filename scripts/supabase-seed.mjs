@@ -1,5 +1,6 @@
 import { spawn } from 'node:child_process';
 import { existsSync } from 'node:fs';
+import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 
@@ -16,10 +17,20 @@ const seedFiles = [
   'supabase/seeds/002_inbox_projects.sql',
   'supabase/seeds/003_password_reset_tokens.sql',
   'supabase/seeds/004_projects.sql',
+  'supabase/seeds/005_tasks.sql',
+  'supabase/seeds/006_filtering.sql',
+  'supabase/seeds/007_priority_labels.sql',
+  'supabase/seeds/008_user_settings.sql',
+  'supabase/seeds/009_archiving.sql',
+  'supabase/seeds/010_search.sql',
+  'supabase/seeds/011_task_positions.sql',
+  'supabase/seeds/012_streaks.sql',
+  'supabase/seeds/013_timeline.sql',
+  'supabase/seeds/014_board_status.sql',
 ];
 const verificationFile = 'supabase/verify_seeds.sql';
 
-function runSupabase(args, { inherit = false } = {}) {
+function runSupabase(args) {
   return new Promise((resolve) => {
     const child = spawn(process.execPath, [supabaseCliPath, ...args], {
       cwd: repositoryRoot,
@@ -27,16 +38,8 @@ function runSupabase(args, { inherit = false } = {}) {
         ...process.env,
         SUPABASE_DISABLE_UPDATE_CHECK: '1',
       },
-      stdio: inherit ? 'inherit' : ['inherit', 'pipe', 'pipe'],
+      stdio: ['inherit', 'pipe', 'pipe'],
     });
-
-    if (inherit) {
-      child.once('error', (error) =>
-        resolve({ code: 1, error: error.message })
-      );
-      child.once('close', (code) => resolve({ code: code ?? 1 }));
-      return;
-    }
 
     let stdout = '';
     let stderr = '';
@@ -55,68 +58,94 @@ function runSupabase(args, { inherit = false } = {}) {
   });
 }
 
-function readVerificationRows(output) {
-  try {
-    const result = JSON.parse(output);
-    const rows = Array.isArray(result) ? result : result.rows;
-    if (Array.isArray(rows)) {
-      return new Map(
-        rows
-          .filter(
-            (row) =>
-              typeof row?.seed_file === 'string' &&
-              (row.status === 'PASS' || row.status === 'FAIL')
-          )
-          .map((row) => [row.seed_file, row.status === 'PASS'])
-      );
-    }
-  } catch {
-    // Fall through to the CLI's text-table output format.
-  }
-
-  const rows = new Map();
-  for (const line of output.split(/\r?\n/)) {
-    const cells = line
-      .split(/[│|]/)
-      .map((cell) => cell.trim())
-      .filter(Boolean);
-    if (
-      cells.length >= 2 &&
-      seedFiles.some((file) => file.endsWith(cells[0])) &&
-      (cells[1] === 'PASS' || cells[1] === 'FAIL')
-    ) {
-      rows.set(cells[0], cells[1] === 'PASS');
-    }
-  }
-  return rows;
-}
-
 function oneLine(value) {
   return value.replace(/\s+/g, ' ').trim();
 }
 
-async function verifySeeds() {
-  const result = await runSupabase([
-    '--output-format',
-    'json',
-    'db',
-    'query',
-    '--linked',
-    '--file',
-    verificationFile,
-  ]);
-  if (result.code !== 0) {
-    return {
-      error: result.error ?? oneLine(`${result.stdout}\n${result.stderr}`),
-    };
+function splitStatements(sql) {
+  const statements = [];
+  let start = 0;
+  let state = 'normal';
+  let blockDepth = 0;
+  let dollarTag = '';
+
+  for (let index = 0; index < sql.length; index += 1) {
+    const character = sql[index];
+    const next = sql[index + 1];
+
+    if (state === 'single') {
+      if (character === "'" && next === "'") {
+        index += 1;
+      } else if (character === "'") {
+        state = 'normal';
+      }
+      continue;
+    }
+
+    if (state === 'double') {
+      if (character === '"' && next === '"') {
+        index += 1;
+      } else if (character === '"') {
+        state = 'normal';
+      }
+      continue;
+    }
+
+    if (state === 'line-comment') {
+      if (character === '\n') state = 'normal';
+      continue;
+    }
+
+    if (state === 'block-comment') {
+      if (character === '/' && next === '*') {
+        blockDepth += 1;
+        index += 1;
+      } else if (character === '*' && next === '/') {
+        blockDepth -= 1;
+        index += 1;
+        if (blockDepth === 0) state = 'normal';
+      }
+      continue;
+    }
+
+    if (state === 'dollar') {
+      if (sql.startsWith(dollarTag, index)) {
+        index += dollarTag.length - 1;
+        state = 'normal';
+      }
+      continue;
+    }
+
+    if (character === "'") {
+      state = 'single';
+    } else if (character === '"') {
+      state = 'double';
+    } else if (character === '-' && next === '-') {
+      state = 'line-comment';
+      index += 1;
+    } else if (character === '/' && next === '*') {
+      state = 'block-comment';
+      blockDepth = 1;
+      index += 1;
+    } else if (character === '$') {
+      const tag = sql
+        .slice(index)
+        .match(/^\$[A-Za-z_][A-Za-z\d_]*\$|^\$\$/)?.[0];
+      if (tag) {
+        dollarTag = tag;
+        state = 'dollar';
+        index += tag.length - 1;
+      }
+    } else if (character === ';') {
+      const statement = sql.slice(start, index).trim();
+      if (statement) statements.push(statement);
+      start = index + 1;
+    }
   }
-  const rows = readVerificationRows(result.stdout);
-  if (seedFiles.some((file) => !rows.has(path.basename(file)))) {
-    return {
-      error: `Could not read verification results: ${oneLine(result.stdout)}`,
-    };
-  }
-  return { rows };
+
+  const finalStatement = sql.slice(start).trim();
+  if (finalStatement) statements.push(finalStatement);
+  return statements;
 }
 
 async function main() {
@@ -128,68 +157,76 @@ async function main() {
     return;
   }
 
-  if (process.argv.includes('--reset')) {
-    const reset = await runSupabase(['db', 'reset', '--linked', '--no-seed'], {
-      inherit: true,
-    });
-    if (reset.code !== 0) {
-      process.exitCode = reset.code;
-      return;
-    }
-  }
-
-  const before = await verifySeeds();
-  if (before.error) {
-    for (const file of seedFiles) {
-      console.log(
-        `${path.basename(file)}: ERROR - Could not check whether it was already seeded: ${before.error}`
-      );
-    }
-    process.exitCode = 1;
-    return;
-  }
-
-  const execution = new Map();
+  const target = process.argv.includes('--local') ? '--local' : '--linked';
+  let hasErrors = false;
   for (const file of seedFiles) {
-    if (before.rows.get(path.basename(file))) {
-      execution.set(file, { skipped: true, succeeded: true });
-      continue;
+    const sql = await readFile(path.join(repositoryRoot, file), 'utf8');
+    const statements = splitStatements(sql);
+    let fileError;
+    for (const statement of statements) {
+      const result = await runSupabase([
+        '--output-format',
+        'json',
+        'db',
+        'query',
+        target,
+        statement,
+      ]);
+      if (result.code !== 0) {
+        fileError =
+          result.error ||
+          oneLine(`${result.stdout}\n${result.stderr}`) ||
+          `Supabase CLI exited with code ${result.code}`;
+        break;
+      }
     }
 
-    const result = await runSupabase([
-      '--output-format',
-      'json',
-      'db',
-      'query',
-      '--linked',
-      '--file',
-      file,
-    ]);
-    execution.set(file, {
-      skipped: false,
-      succeeded: result.code === 0,
-      error: result.error ?? oneLine(`${result.stdout}\n${result.stderr}`),
-    });
-  }
-
-  const after = await verifySeeds();
-  let hasErrors = Boolean(after.error);
-  for (const file of seedFiles) {
-    const name = path.basename(file);
-    const result = execution.get(file);
-    const verified = after.rows?.get(name) === true;
-    if (!after.error && verified && result.skipped) {
-      console.log(`${name}: SKIPPED (already seeded)`);
-    } else if (!after.error && verified && result.succeeded) {
-      console.log(`${name}: SUCCEEDED`);
+    if (!fileError) {
+      console.log(`${path.basename(file)}: SUCCEEDED`);
     } else {
-      const detail =
-        result.error ||
-        after.error ||
-        `Post-seed verification failed${result.skipped ? '' : ' after execution'}`;
-      console.log(`${name}: ERROR - ${oneLine(detail)}`);
+      console.log(`${path.basename(file)}: ERROR - ${oneLine(fileError)}`);
+      hasErrors = true;
+      console.error(
+        `Stopping before dependent seed files after ${path.basename(file)} failed.`
+      );
+      break;
+    }
+  }
+
+  if (!hasErrors) {
+    const sql = await readFile(
+      path.join(repositoryRoot, verificationFile),
+      'utf8'
+    );
+    let fileError;
+    for (const statement of splitStatements(sql)) {
+      const result = await runSupabase([
+        '--output-format',
+        'json',
+        'db',
+        'query',
+        target,
+        statement,
+      ]);
+      if (result.code !== 0) {
+        fileError =
+          result.error ||
+          oneLine(`${result.stdout}\n${result.stderr}`) ||
+          `Supabase CLI exited with code ${result.code}`;
+        break;
+      }
+    }
+
+    if (!fileError) {
+      console.log(`${path.basename(verificationFile)}: PASS`);
+    } else {
+      console.log(
+        `${path.basename(verificationFile)}: FAIL - ${oneLine(fileError)}`
+      );
       hasErrors = true;
     }
+  } else {
+    console.log(`${path.basename(verificationFile)}: SKIPPED - seed failed`);
   }
 
   if (hasErrors) {

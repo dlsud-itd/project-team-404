@@ -20,7 +20,7 @@ export default defineConfig([
     },
   },
   {
-    files: ['src/testing/**/*.ts'],
+    files: ['tests/integration/helpers/**/*.ts', 'src/app/features/auth/testing/helpers/**/*.ts'],
     rules: {
       '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/no-unused-vars': ['error', { varsIgnorePattern: '^T$' }],

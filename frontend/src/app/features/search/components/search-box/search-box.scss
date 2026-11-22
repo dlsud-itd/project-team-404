@@ -1,0 +1,134 @@
+:host {
+  display: block;
+  flex: 1 1 16rem;
+  max-width: 24rem;
+  min-width: 0;
+}
+
+.search {
+  position: relative;
+}
+
+.field {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  height: 2rem;
+  padding: 0 0.625rem;
+  border: 1px solid var(--orange-light);
+  border-radius: 999px;
+  background: var(--cream);
+  color: var(--ink-muted);
+  cursor: text;
+  transition:
+    background 150ms ease,
+    border-color 150ms ease;
+
+  &:hover {
+    border-color: var(--orange);
+  }
+
+  &:focus-within {
+    border-color: #7b23a8;
+    background: #fff;
+    box-shadow: 0 0 0 3px rgb(123 35 168 / 0.15);
+  }
+}
+
+.icon {
+  flex: none;
+  width: 0.9375rem;
+  height: 0.9375rem;
+}
+
+input {
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  outline: none;
+  background: none;
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.8125rem;
+
+  &::placeholder {
+    color: var(--ink-muted);
+    opacity: 0.85;
+  }
+}
+
+.shortcut {
+  flex: none;
+  padding: 0.0625rem 0.375rem;
+  border: 1px solid #e3cfc6;
+  border-radius: 0.3125rem;
+  background: #fff;
+  color: var(--ink-muted);
+  font-family: inherit;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.field:focus-within .shortcut {
+  visibility: hidden;
+}
+
+.spinner {
+  flex: none;
+  width: 0.875rem;
+  height: 0.875rem;
+  border: 2px solid #e6d6cf;
+  border-top-color: var(--orange);
+  border-radius: 50%;
+  animation: spin 700ms linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(1turn);
+  }
+}
+
+.panel {
+  position: absolute;
+  top: calc(100% + 0.375rem);
+  left: 0;
+  right: 0;
+  z-index: 30;
+  min-width: min(26rem, calc(100vw - 2rem));
+  max-height: min(28rem, 70dvh);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border: 1px solid var(--orange-light);
+  border-radius: 0.75rem;
+  background: #fff;
+  box-shadow: 0 8px 24px rgb(0 0 0 / 0.08);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .field {
+    transition: none;
+  }
+
+  .spinner {
+    animation-duration: 2s;
+  }
+}
+
+@media (max-width: 760px) {
+  :host {
+    flex-basis: 100%;
+    max-width: none;
+    order: 4;
+  }
+
+  .panel {
+    min-width: 0;
+  }
+
+  .shortcut {
+    display: none;
+  }
+}

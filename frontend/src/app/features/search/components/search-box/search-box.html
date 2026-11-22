@@ -1,0 +1,58 @@
+<div class="search" role="search" [class.expanded]="expanded()">
+  <label class="field">
+    <svg class="icon" viewBox="0 0 20 20" aria-hidden="true">
+      <circle cx="8.5" cy="8.5" r="5.5" fill="none" stroke="currentColor" stroke-width="2" />
+      <path d="m13 13 4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+    </svg>
+    <span class="visually-hidden">Search tasks and projects</span>
+    <input
+      #input
+      type="text"
+      role="combobox"
+      autocomplete="off"
+      spellcheck="false"
+      enterkeyhint="search"
+      placeholder="Search tasks and projects"
+      aria-autocomplete="list"
+      [attr.aria-expanded]="expanded()"
+      [attr.aria-controls]="expanded() ? id + '-listbox' : null"
+      [attr.aria-activedescendant]="activeId()"
+      [attr.aria-keyshortcuts]="'Control+K Meta+K /'"
+      [attr.aria-busy]="state() === 'loading'"
+      [maxLength]="maxLength"
+      [value]="query()"
+      (input)="onInput($any($event.target).value)"
+      (keydown)="onKey($event)"
+      (focus)="onFocus()"
+    />
+    @if (!query()) {
+      <kbd class="shortcut" aria-hidden="true">{{ shortcut }}</kbd>
+    } @else if (state() === 'loading') {
+      <span class="spinner" aria-hidden="true"></span>
+    }
+  </label>
+
+  @if (expanded()) {
+    <div class="panel">
+      <app-search-results
+        mode="dropdown"
+        [idPrefix]="id"
+        [tasks]="rows().tasks"
+        [projects]="rows().projects"
+        [counts]="counts()"
+        [query]="results()?.query ?? query()"
+        [state]="state()"
+        [activeId]="activeId()"
+        [includeArchived]="includeArchived()"
+        (activated)="setActive($event)"
+        (opened)="openResult($event)"
+        (includeArchivedChange)="setIncludeArchived($event)"
+        (retry)="retry()"
+        (seeAll)="openPage()"
+      />
+    </div>
+  }
+
+  <!-- A bare live region, not role="status", so it never stands in for a page's own status. -->
+  <p class="visually-hidden" aria-live="polite" aria-atomic="true">{{ announcement() }}</p>
+</div>

@@ -1,24 +1,27 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
-import { DashboardStore, PRIORITIES, type Priority } from '../dashboard.store';
+import { PrioritiesStore } from '../../settings/state/priorities.store';
+import { DashboardStore } from '../dashboard.store';
 
+/** The home sidebar's priority levels, in the user's order and colors, as task filters. */
 @Component({
   selector: 'app-priority-list',
   template: `
     <section class="card" aria-labelledby="priorities-heading">
       <h2 id="priorities-heading">Priorities</h2>
       <ul class="list">
-        @for (p of priorities; track p.value) {
+        @for (level of priorities.levels(); track level.id) {
           <li>
             <button
               type="button"
               class="row"
-              [class.active]="store.filter().priority === p.value"
-              [attr.aria-pressed]="store.filter().priority === p.value"
-              (click)="toggle(p.value)"
+              [class.active]="store.filter().priorityId === level.id"
+              [attr.aria-pressed]="store.filter().priorityId === level.id"
+              (click)="toggle(level.id)"
             >
-              <span class="badge" [class]="'badge badge--' + p.value">{{ p.label }}</span>
-              <span class="hint">{{ p.hint }}</span>
-              <span class="count">{{ store.priorityCounts()[p.value] }}</span>
+              <span class="badge" [style.background-color]="level.color ?? noColor">{{
+                level.name
+              }}</span>
+              <span class="count">{{ store.priorityCounts().get(level.id) ?? 0 }}</span>
             </button>
           </li>
         }
@@ -45,6 +48,7 @@ import { DashboardStore, PRIORITIES, type Priority } from '../dashboard.store';
       display: flex;
       width: 100%;
       align-items: center;
+      justify-content: space-between;
       gap: 0.5rem;
       padding: 0.125rem;
       border: 0;
@@ -66,27 +70,16 @@ import { DashboardStore, PRIORITIES, type Priority } from '../dashboard.store';
       }
     }
     .badge {
-      padding: 0.375rem 0.375rem;
-      border-radius: 0.375rem;
-      font-size: 0.625rem;
-    }
-    .badge--high {
-      background: var(--ink);
-      color: #fff;
-    }
-    .badge--medium {
       min-width: 3rem;
-      padding-inline: 0.75rem 1.5rem;
-      background: #7b23a8;
+      max-width: 75%;
+      overflow: hidden;
+      padding: 0.375rem 0.75rem 0.375rem 0.375rem;
+      border-radius: 0.375rem;
       color: #fff;
-    }
-    .badge--low {
-      background: #ebb49c;
-      color: #fff;
-    }
-    .hint {
-      flex: 1;
       font-size: 0.625rem;
+      text-overflow: ellipsis;
+      text-shadow: 0 0 2px rgb(0 0 0 / 0.35);
+      white-space: nowrap;
     }
     .count {
       margin-right: 0.75rem;
@@ -97,9 +90,10 @@ import { DashboardStore, PRIORITIES, type Priority } from '../dashboard.store';
 })
 export class PriorityList {
   protected readonly store = inject(DashboardStore);
-  protected readonly priorities = PRIORITIES;
+  protected readonly priorities = inject(PrioritiesStore);
+  protected readonly noColor = '#A8A29E';
 
-  protected toggle(priority: Priority): void {
-    this.store.filter.update((f) => (f.priority === priority ? {} : { priority }));
+  protected toggle(priorityId: number): void {
+    this.store.filter.update((f) => (f.priorityId === priorityId ? {} : { priorityId }));
   }
 }

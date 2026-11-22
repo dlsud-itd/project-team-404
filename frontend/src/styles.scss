@@ -1,4 +1,19 @@
 /* You can add global styles to this file, and also import other style files */
+
+/* Atkinson Hyperlegible, self-hosted (SIL OFL 1.1; see public/fonts/atkinson-hyperlegible). */
+@each $weight in 400, 700 {
+  @each $style in normal, italic {
+    @font-face {
+      font-family: 'Atkinson Hyperlegible';
+      font-style: $style;
+      font-weight: $weight;
+      font-display: swap;
+      src: url('/fonts/atkinson-hyperlegible/atkinson-hyperlegible-latin-#{$weight}-#{$style}.woff2')
+        format('woff2');
+    }
+  }
+}
+
 :root {
   --orange: #d9531e;
   --orange-light: #f0a07c;
@@ -11,6 +26,18 @@
   --error: #b42318;
   --success: #1f7a3d;
   --field-border: #3a2f2a;
+
+  /*
+   * Set on <html> by SettingsStore from the user's Preferences. Every size in the app is in rem,
+   * so changing the root size scales all text.
+   */
+  --app-font-size: 100%;
+  --app-font-family: 'Archivo', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
+
+html {
+  font-size: var(--app-font-size);
+  font-family: var(--app-font-family);
 }
 
 *,
@@ -21,14 +48,17 @@
 
 body {
   margin: 0;
-  font-family:
-    'Archivo',
-    system-ui,
-    -apple-system,
-    'Segoe UI',
-    Roboto,
-    sans-serif;
+  font-size: 1rem;
+  font-family: inherit;
   color: var(--ink);
+}
+
+/* Form controls don't inherit the page font by default. */
+button,
+input,
+select,
+textarea {
+  font-family: inherit;
 }
 
 .visually-hidden {

@@ -1,34 +1,18 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { ViewAllLink } from '../../../shared/components/view-all-link/view-all-link';
+import { SettingsStore } from '../../settings/state/settings.store';
 import { DashboardStore } from '../dashboard.store';
 
 @Component({
   selector: 'app-project-list',
+  imports: [ViewAllLink],
   template: `
     <section class="card" aria-labelledby="projects-heading">
       <header class="head">
         <h2 id="projects-heading">Projects</h2>
-        <button
-          type="button"
-          class="add"
-          aria-label="Add project"
-          [attr.aria-expanded]="adding()"
-          (click)="adding.set(!adding())"
-        >
-          +
-        </button>
       </header>
 
-      @if (adding()) {
-        <form
-          class="name-form"
-          (submit)="$event.preventDefault(); create(newName.value); newName.value = ''"
-        >
-          <input #newName aria-label="New project name" placeholder="Project name" maxlength="40" />
-          <button type="submit">Add</button>
-        </form>
-      }
-
-      <ul class="list">
+      <ul class="list" tabindex="0" aria-label="Projects">
         <li>
           <button
             type="button"
@@ -45,58 +29,32 @@ import { DashboardStore } from '../dashboard.store';
           </button>
         </li>
 
-        @for (project of store.projects(); track project.id) {
+        @for (project of visibleProjects(); track project.id) {
           <li class="project">
-            @if (editingId() === project.id) {
-              <form
-                class="name-form"
-                (submit)="$event.preventDefault(); rename(project.id, editName.value)"
-              >
-                <input
-                  #editName
-                  [value]="project.name"
-                  aria-label="Project name"
-                  maxlength="40"
-                  (keydown.escape)="editingId.set(null)"
-                />
-                <button type="submit">Save</button>
-              </form>
-            } @else {
-              <button
-                type="button"
-                class="row"
-                [class.active]="store.filter().projectId === project.id"
-                [attr.aria-pressed]="store.filter().projectId === project.id"
-                (click)="store.filter.set({ projectId: project.id })"
-              >
-                <span class="swatch" [style.background]="project.color"></span>
-                <span class="name">{{ project.name }}</span>
-                <span class="count">{{ store.projectCounts().get(project.id) ?? 0 }}</span>
-              </button>
-              <button
-                type="button"
-                class="icon"
-                [attr.aria-label]="'Rename ' + project.name"
-                (click)="editingId.set(project.id)"
-              >
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                  <path d="M4 20h4L19 9l-4-4L4 16v4ZM14 6l4 4" />
-                </svg>
-              </button>
-              <button
-                type="button"
-                class="icon"
-                [attr.aria-label]="'Delete ' + project.name"
-                (click)="store.deleteProject(project.id)"
-              >
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                  <path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6" />
-                </svg>
-              </button>
-            }
+            <button
+              type="button"
+              class="row"
+              [class.active]="store.filter().projectId === project.id"
+              [attr.aria-pressed]="store.filter().projectId === project.id"
+              (click)="toggle(project.id)"
+            >
+              <span class="swatch" [style.background]="project.color ?? '#bbb'"></span>
+              <span class="name">{{ project.name }}</span>
+              <span class="count">{{ store.projectCounts().get(project.id) ?? 0 }}</span>
+            </button>
           </li>
+        } @empty {
+          <li class="empty">No active projects</li>
         }
       </ul>
+      <app-view-all-link
+        [total]="store.projects().length"
+        [shown]="visibleProjects().length"
+        link="/home"
+        [queryParams]="{ tab: 'projects' }"
+        noun="projects"
+      />
+      <p class="manage-note">Create and manage projects in the Projects tab.</p>
     </section>
   `,
   styles: `
@@ -114,36 +72,27 @@ import { DashboardStore } from '../dashboard.store';
       font-size: 0.75rem;
       font-weight: 600;
     }
-    .add {
-      width: 1.5rem;
-      height: 1.5rem;
-      border: 0;
-      border-radius: 0.25rem;
-      background: #e9b0f0;
-      color: var(--orange);
-      font: inherit;
-      font-weight: 800;
-      cursor: pointer;
-    }
+    /* A fixed maximum height: a long list scrolls inside the card. */
     .list {
       display: grid;
       gap: 0.375rem;
+      max-height: 16rem;
       margin: 0;
       padding: 0;
+      overflow-y: auto;
+      overscroll-behavior: contain;
       list-style: none;
+      &:focus-visible {
+        outline: 2px solid #7b23a8;
+        outline-offset: 2px;
+      }
     }
     .project {
-      display: flex;
-      align-items: center;
-      gap: 0.25rem;
       min-width: 0;
-    }
-    .icon {
-      flex-shrink: 0;
     }
     .row {
       display: flex;
-      flex: 1;
+      width: 100%;
       align-items: center;
       gap: 0.5rem;
       min-width: 0;
@@ -187,56 +136,13 @@ import { DashboardStore } from '../dashboard.store';
     .count {
       font-weight: 700;
     }
-    .icon {
-      display: grid;
-      place-items: center;
-      width: 1.5rem;
-      height: 1.5rem;
-      padding: 0;
-      border: 0;
-      border-radius: 0.25rem;
-      background: none;
-      cursor: pointer;
-      &:hover {
-        background: #fdeee6;
-      }
-      svg {
-        width: 0.875rem;
-        height: 0.875rem;
-        fill: none;
-        stroke: var(--ink);
-        stroke-width: 2;
-        stroke-linecap: round;
-        stroke-linejoin: round;
-      }
+    .empty,
+    .manage-note {
+      margin: 0.5rem 0 0;
+      color: var(--ink-muted);
+      font-size: 0.625rem;
     }
-    .name-form {
-      display: flex;
-      flex: 1;
-      gap: 0.25rem;
-      margin-bottom: 0.375rem;
-      input {
-        flex: 1;
-        min-width: 0;
-        padding: 0.25rem 0.5rem;
-        border: 1px solid var(--orange-light);
-        border-radius: 0.375rem;
-        font: inherit;
-        font-size: 0.75rem;
-      }
-      button {
-        padding: 0.25rem 0.5rem;
-        border: 0;
-        border-radius: 0.375rem;
-        background: var(--ink);
-        color: #fff;
-        font: inherit;
-        font-size: 0.6875rem;
-        cursor: pointer;
-      }
-    }
-    button:focus-visible,
-    input:focus-visible {
+    button:focus-visible {
       outline: 2px solid #7b23a8;
       outline-offset: 1px;
     }
@@ -245,17 +151,13 @@ import { DashboardStore } from '../dashboard.store';
 })
 export class ProjectList {
   protected readonly store = inject(DashboardStore);
-  protected readonly adding = signal(false);
-  protected readonly editingId = signal<number | null>(null);
+  private readonly settings = inject(SettingsStore);
+  /** Active projects, capped at the user's "projects in the dashboard list" setting. */
+  protected readonly visibleProjects = computed(() =>
+    this.store.projects().slice(0, this.settings.projectLimit()),
+  );
 
-  protected create(name: string): void {
-    if (!name.trim()) return;
-    this.store.addProject(name.trim());
-    this.adding.set(false);
-  }
-
-  protected rename(id: number, name: string): void {
-    if (name.trim()) this.store.renameProject(id, name.trim());
-    this.editingId.set(null);
+  protected toggle(projectId: number): void {
+    this.store.filter.update((filter) => (filter.projectId === projectId ? {} : { projectId }));
   }
 }

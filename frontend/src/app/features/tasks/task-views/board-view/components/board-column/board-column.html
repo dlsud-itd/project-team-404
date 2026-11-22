@@ -1,0 +1,68 @@
+<section class="column" [attr.data-column]="key()" [attr.aria-labelledby]="headingId()">
+  <header class="head">
+    <h2 class="name" [id]="headingId()">
+      <span class="dot" aria-hidden="true"></span>
+      {{ name() }}
+      <span class="count">{{ count() }}</span>
+    </h2>
+    @if (collapsible()) {
+      <button
+        type="button"
+        class="toggle"
+        [attr.aria-expanded]="!collapsed()"
+        [attr.aria-controls]="listId()"
+        [attr.aria-label]="(collapsed() ? 'Show ' : 'Hide ') + name() + ' tasks'"
+        (click)="toggled.emit()"
+      >
+        <svg viewBox="0 0 12 12" aria-hidden="true" [class.flipped]="collapsed()">
+          <path d="M3 7.5 6 4.5 9 7.5" />
+        </svg>
+      </button>
+    }
+  </header>
+
+  <ul
+    class="list"
+    [id]="listId()"
+    [class.collapsed]="collapsed()"
+    [attr.aria-labelledby]="headingId()"
+    cdkDropList
+    [cdkDropListData]="key()"
+    [cdkDropListDisabled]="busy()"
+    (cdkDropListDropped)="drop($event)"
+  >
+    @if (collapsed()) {
+      <li class="hint">Drop a task here to mark it done</li>
+    } @else {
+      @for (card of cards(); track card.taskId; let i = $index, first = $first, last = $last) {
+        <li
+          class="slot"
+          cdkDrag
+          [cdkDragData]="card.taskId"
+          [cdkDragStartDelay]="dragDelay"
+          [attr.data-task-id]="card.taskId"
+        >
+          <app-board-card
+            [card]="card"
+            [projectId]="projectId()"
+            [column]="key()"
+            [canMoveUp]="!first"
+            [canMoveDown]="!last"
+            [disabled]="busy()"
+            (moveTo)="moveTo(card, $event)"
+            (moveBy)="moveBy(card, i, $event)"
+            (archive)="archived.emit(card)"
+          />
+        </li>
+      } @empty {
+        <li class="hint">
+          {{ key() === 'done' ? 'Finished tasks land here.' : 'No tasks here.' }}
+        </li>
+      }
+    }
+  </ul>
+
+  @if (truncated() && !collapsed()) {
+    <p class="note">Showing the {{ cards().length }} most recently completed.</p>
+  }
+</section>
