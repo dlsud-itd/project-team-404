@@ -7,7 +7,7 @@ import {
 } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { provideRouter } from '@angular/router';
+import { Router, provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { routes } from '../../../../src/app/app.routes';
 import { provideSessionRestore } from '../../../../src/app/features/auth/session/auth.guards';
@@ -20,10 +20,13 @@ import { environment } from '../../../../src/environments/environment';
  * Drag & Drop Reordering frontend integration tests (Sprint 6: FE-DND-01 to FE-DND-04).
  *
  * The app runs through its real /projects/:projectId/tasks route behind authGuard: the task list
- * with its CDK drop list and Move up/down buttons, TaskService, TasksStore and authInterceptor.
- * Drags go through the drop list's real `dropped` handler, as a finished CDK drag does. Only the
- * network is faked, with the bodies and status codes of PUT /api/tasks/reorder in
- * backend/src/features/tasks/task-organization.
+ * with its CDK drop list, Move up/down buttons and Alt+Arrow keys, TaskService, TasksStore and
+ * authInterceptor; and through /projects/organize for the project switcher's drop list and
+ * ProjectOrganizationService. Drags go through the drop lists' real `dropped` handlers, as a
+ * finished CDK drag does. Only the network is faked, with the bodies and status codes of
+ * PUT /api/tasks/reorder (task-organization.controller.ts: `{ projectId, taskIds }`, the
+ * validate-request 400 and the reorder-conflict 409), PUT /api/projects/reorder
+ * (project-organization.controller.ts), require-auth's 401 and the error handler's 500.
  */
 
 const AUTH_API = `${environment.apiBaseUrl}/api/auth`;
@@ -83,6 +86,16 @@ const DRAFT = apiTask(6, 'Draft');
 const REVIEW = apiTask(7, 'Review');
 const PROPOSAL = apiTask(8, 'Proposal', { isDone: true, doneAt: '2026-11-10T00:00:00.000Z' });
 const TASKS = [OUTLINE, DRAFT, REVIEW, PROPOSAL];
+
+// Error bodies from validate-request.middleware.ts, task-reorder-conflict.error.ts,
+// require-auth.middleware.ts and error-handler.middleware.ts.
+const INVALID_ORDER = {
+  error: 'Invalid task order',
+  details: [{ field: 'taskIds', message: 'Task IDs must be unique' }],
+};
+const ORDER_CONFLICT = { error: 'Task list changed; reload before reordering' };
+const SERVER_ERROR = { error: 'Internal server error' };
+const TOKEN_REJECTED = { error: 'Token invalid or expired' };
 
 const status = (code: number, statusText = 'Error') => ({ status: code, statusText });
 
@@ -237,31 +250,96 @@ describe('Task reorder integration (Drag & Drop Reordering + API)', () => {
     expect(document.activeElement).toBe(moveButton('Outline', 'up'));
   });
 
+  // FE-DND-02
+  it('moves a task with Alt+Up and Alt+Down from anywhere in its row, sending the same request', async () => {
+    await startSignedIn();
+    await openList();
+    const row = (title: string) =>
+      all('[aria-labelledby="open-heading"] li.item').find((item) =>
+        item.querySelector('.title')?.textContent?.includes(title),
+      )!;
+    const press = async (title: string, key: 'ArrowUp' | 'ArrowDown') => {
+      // From the row's Edit link, as a keyboard user would be.
+      const edit = row(title).querySelector<HTMLElement>('a.edit')!;
+      edit.focus();
+      const event = new KeyboardEvent('keydown', {
+        key,
+        altKey: true,
+        bubbles: true,
+        cancelable: true,
+      });
+      edit.dispatchEvent(event);
+      await settle();
+      return event;
+    };
+    expect(row('Draft').getAttribute('aria-keyshortcuts')).toBe('Alt+ArrowUp Alt+ArrowDown');
+
+    const up = await press('Review', 'ArrowUp');
+    expect(up.defaultPrevented).toBe(true);
+    expect(openTitles()).toEqual(['Outline', 'Review', 'Draft']);
+    expectReorder([5, 7, 6]).flush({ projectId: CAPSTONE.id, taskIds: [5, 7, 6] });
+    await settle();
+    expect(document.activeElement).toBe(moveButton('Review', 'up'));
+
+    await press('Outline', 'ArrowDown');
+    expectReorder([7, 5, 6]).flush({ projectId: CAPSTONE.id, taskIds: [7, 5, 6] });
+    await settle();
+    expect(openTitles()).toEqual(['Review', 'Outline', 'Draft']);
+
+    // Nothing happens at the ends, or without Alt.
+    const top = await press('Review', 'ArrowUp');
+    expect(top.defaultPrevented).toBe(false);
+    row('Draft')
+      .querySelector<HTMLElement>('a.edit')!
+      .dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp', bubbles: true }));
+    await settle();
+    http.expectNone(REORDER_API);
+    expect(openTitles()).toEqual(['Review', 'Outline', 'Draft']);
+  });
+
+  it('clears the session and opens /login on a 401', async () => {
+    await startSignedIn();
+    await openList();
+
+    await drop(2, 0);
+    expectReorder([7, 5, 6]).flush(TOKEN_REJECTED, status(401, 'Unauthorized'));
+    await settle();
+
+    expect(TestBed.inject(Router).url).toBe('/login');
+    expect(localStorage.getItem(TOKEN_STORAGE_KEY)).toBeNull();
+  });
+
   // FE-DND-03
   describe('a failed reorder', () => {
     it.each([
-      [400, 'Invalid task order'],
-      [500, 'Something went wrong'],
-    ])('puts the old order back with a message after a %i', async (code, error) => {
-      await startSignedIn();
-      await openList();
+      [400, INVALID_ORDER, "Your new order wasn't saved. Invalid task order"],
+      [500, SERVER_ERROR, "Your new order wasn't saved. Something went wrong. Please try again."],
+    ] as const)(
+      'puts the old order back with a message after a %i',
+      async (code, body, message) => {
+        await startSignedIn();
+        await openList();
 
-      await drop(2, 0);
-      expectReorder([7, 5, 6]).flush({ error }, status(code));
-      await settle();
+        await drop(2, 0);
+        expect(openTitles()).toEqual(['Review', 'Outline', 'Draft']);
+        expectReorder([7, 5, 6]).flush(body, status(code));
+        await settle();
 
-      expect(openTitles()).toEqual(['Outline', 'Draft', 'Review']);
-      expect(text('.banner-error')).toContain("Your new order wasn't saved.");
-      // Only a 409 reloads the list.
-      http.expectNone((r) => r.method === 'GET' && r.url === TASKS_API);
-    });
+        expect(openTitles()).toEqual(['Outline', 'Draft', 'Review']);
+        // A banner, not a toast: it stays until the next change, and screen readers hear it.
+        expect(text('.banner-error')).toBe(message);
+        expect(el('.banner-error').getAttribute('role')).toBe('alert');
+        // Only a 409 reloads the list.
+        http.expectNone((r) => r.method === 'GET' && r.url === TASKS_API);
+      },
+    );
 
     it('reloads the list from the server after a 409', async () => {
       await startSignedIn();
       await openList();
 
       await drop(2, 0);
-      expectReorder([7, 5, 6]).flush({ error: 'Task order changed' }, status(409, 'Conflict'));
+      expectReorder([7, 5, 6]).flush(ORDER_CONFLICT, status(409, 'Conflict'));
       await settle();
 
       expect(openTitles()).toEqual(['Outline', 'Draft', 'Review']);
@@ -286,6 +364,12 @@ describe('Task reorder integration (Drag & Drop Reordering + API)', () => {
       expect(buttons[0].getAttribute('aria-describedby')).toBe('reorder-hint');
 
       await drop(1, 0);
+      const row = all('[aria-labelledby="open-heading"] li.item')[1];
+      expect(row.getAttribute('aria-keyshortcuts')).toBeNull();
+      row.dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'ArrowUp', altKey: true, bubbles: true }),
+      );
+      await settle();
       http.expectNone(REORDER_API);
     }
 
@@ -311,5 +395,56 @@ describe('Task reorder integration (Drag & Drop Reordering + API)', () => {
 
       await expectBlocked('This project has too many open tasks to reorder here.');
     });
+  });
+
+  // Projects use the Sprint 2 reorder request.
+  it('drags a project in the switcher and sends PUT /projects/reorder with every id', async () => {
+    const project = (id: number, name: string, overrides: object = {}) => ({
+      ...CAPSTONE,
+      id,
+      name,
+      sortOrder: id,
+      ...overrides,
+    });
+    const INBOX = project(1, 'Inbox', { isInbox: true, sortOrder: 0 });
+    const GYM = project(12, 'Gym', { isFavorite: true, sortOrder: 0 });
+    const THESIS = project(11, 'Thesis', { sortOrder: 2 });
+    const OLD = project(13, 'Old class', { isArchived: true, sortOrder: 3 });
+
+    await startSignedIn();
+    await harness.navigateByUrl('/projects/organize');
+    await settle();
+    http.expectOne(`${PROJECTS_API}?isArchived=false`).flush([INBOX, GYM, CAPSTONE, THESIS]);
+    http.expectOne(`${PROJECTS_API}?isArchived=true`).flush([OLD]);
+    await settle();
+    const active = () =>
+      all('section[aria-labelledby="switcher-projects-heading"] .item .name').map((n) =>
+        n.textContent?.trim(),
+      );
+    expect(active()).toEqual(['Capstone', 'Thesis']);
+
+    const lists = harness.routeDebugElement!.queryAll(By.directive(CdkDropList));
+    lists[1].injector
+      .get(CdkDropList)
+      .dropped.emit({ previousIndex: 1, currentIndex: 0 } as CdkDragDrop<unknown>);
+    await settle();
+
+    expect(active()).toEqual(['Thesis', 'Capstone']);
+    const req = http.expectOne(`${PROJECTS_API}/reorder`);
+    expect(req.request.method).toBe('PUT');
+    expect(req.request.headers.get('Authorization')).toBe(`Bearer ${TOKEN}`);
+    // Favorites, then my projects, then archived; never the Inbox.
+    expect(req.request.body).toEqual({ projectIds: [12, 11, 10, 13] });
+    req.flush({
+      projects: [
+        { projectId: 12, sortOrder: 0 },
+        { projectId: 11, sortOrder: 1 },
+        { projectId: 10, sortOrder: 2 },
+        { projectId: 13, sortOrder: 3 },
+      ],
+      message: 'Project order updated successfully',
+    });
+    await settle();
+    expect(active()).toEqual(['Thesis', 'Capstone']);
   });
 });

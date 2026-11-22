@@ -71,7 +71,8 @@ export function mapTaskError(error: unknown): TaskError {
           notFound: false,
         };
       }
-      return { message: GENERIC, notFound: false };
+      // Other conflicts say what went wrong, e.g. "Archived tasks are read-only".
+      return { message: serverMessage(error) ?? GENERIC, notFound: false };
     }
     case 404:
       // A 404 naming a project means the target project is gone, not the task.

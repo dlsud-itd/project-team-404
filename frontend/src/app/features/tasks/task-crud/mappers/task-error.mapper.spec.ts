@@ -67,6 +67,16 @@ describe('mapTaskError', () => {
     );
   });
 
+  it("keeps the server's wording for a 409, and falls back when there is none", () => {
+    expect(
+      mapTaskError(httpError(409, { error: 'Archived labels cannot be attached to a task' })),
+    ).toEqual({ message: 'Archived labels cannot be attached to a task', notFound: false });
+    expect(mapTaskError(httpError(409, null))).toEqual({
+      message: 'Something went wrong. Please try again.',
+      notFound: false,
+    });
+  });
+
   it('maps server errors, network errors and unknown values to a retryable message', () => {
     for (const error of [httpError(500), httpError(0), new Error('boom'), undefined]) {
       expect(mapTaskError(error)).toEqual({

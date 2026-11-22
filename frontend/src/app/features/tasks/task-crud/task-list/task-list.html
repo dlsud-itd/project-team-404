@@ -95,7 +95,14 @@
                 (cdkDropListDropped)="dropped($event)"
               >
                 @for (task of store.open(); track task.taskId; let i = $index, count = $count) {
-                  <li class="item" cdkDrag [cdkDragData]="task">
+                  <li
+                    class="item"
+                    cdkDrag
+                    [cdkDragData]="task"
+                    [attr.aria-keyshortcuts]="canReorder() ? 'Alt+ArrowUp Alt+ArrowDown' : null"
+                    (keydown.alt.arrowup)="moveByKey($event, i, i - 1, 'up')"
+                    (keydown.alt.arrowdown)="moveByKey($event, i, i + 1, 'down')"
+                  >
                     @if (canReorder()) {
                       <span class="handle" cdkDragHandle aria-hidden="true" title="Drag to reorder">
                         <svg viewBox="0 0 24 24">

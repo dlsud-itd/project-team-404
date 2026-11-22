@@ -126,7 +126,8 @@ The shared Playwright runner exercises registration, login/session handling,
 password recovery, profile management, and Projects (create, edit, delete,
 favorite, archive, reorder, and switch), Tasks, and the Dashboard against the
 local frontend and API. Specs live in `tests/e2e/auth/`, `tests/e2e/projects/`,
-`tests/e2e/tasks/`, and `tests/e2e/dashboard/`.
+`tests/e2e/tasks/`, `tests/e2e/dashboard/`, `tests/e2e/organization/`,
+`tests/e2e/settings/`, `tests/e2e/archive/` and `tests/e2e/search/`.
 By default, it starts local Supabase and uses its seeded database. It forces the
 backend console mailer and does not read or connect to a linked/remote project.
 
@@ -142,13 +143,17 @@ Prerequisites:
 - Regenerate the backend Prisma client after pulling schema changes. The runner
   starts the backend directly, so it does not do this for you, and an old client
   makes task requests fail with 500 ("reading 'findMany'"). `prisma:generate`
-  needs `DATABASE_URL`; with local Supabase, from PowerShell:
+  needs `DATABASE_URL` and `DIRECT_URL`; with local Supabase, from PowerShell:
 
   ```powershell
   $env:DATABASE_URL = 'postgresql://postgres:postgres@127.0.0.1:55432/postgres'
+  $env:DIRECT_URL = $env:DATABASE_URL
   npm --prefix backend run prisma:generate
-  Remove-Item Env:DATABASE_URL
+  Remove-Item Env:DATABASE_URL, Env:DIRECT_URL
   ```
+
+- Apply any migrations the local database is missing, without resetting it,
+  with `npx supabase migration up --local`, then seed again.
 
 Run `npm run test:e2e` from the repository root, or choose
 **`🧪 E2E: Tests (run once)`** in VS Code. The runner starts the frontend at
@@ -182,6 +187,38 @@ Each spec stops with a clear message if the seed is missing or more than one
 day old. Tasks completed during a test, and any next occurrences created for
 recurring tasks, are put back after each test. Freshly created accounts are
 deleted.
+
+The five Sprint 5 specs sign in as `harvey`, and use `alex` or `james` as the
+other user:
+
+- `organization/sort-filter.e2e.spec.ts` filters Harvey's `Filtering - Client Work`
+  project (seed `006_filtering.sql`) by two priorities and a label, sorts by
+  deadline, reloads, and clears; the shown tasks are checked against a
+  service-role query. It also filters `/projects` to favorites sorted by name.
+- `settings/labels-priorities.e2e.spec.ts` creates, reorders, defaults and
+  deletes an "Urgent" level, and creates, renames, reorders and deletes a label.
+- `settings/settings.e2e.spec.ts` saves dashboard limits of 3 tasks and 4
+  projects and checks every widget at desktop and mobile widths, then saves
+  Large and Serif and checks them after a reload and a fresh sign-in.
+- `archive/archive.e2e.spec.ts` archives a task (with Undo), the Review label
+  and the Weekly Notes project, checks them on `/archive` and in their usual
+  places, opens the archived task read-only, and restores each one. It also
+  checks that James's archived items never appear (seed `009_archiving.sql`).
+- `search/search.e2e.spec.ts` uses Ctrl/Cmd+K to search Harvey's fixtures
+  (seed `010_search.sql`) by title, description and project name, opens results
+  from the keyboard, and checks ranking, Include archived, the empty state and
+  that James's tasks never appear.
+
+Everything these specs change (priority levels, label order, settings,
+archived tasks, labels and projects, created tasks and labels) is written back
+after each test, and the test fails if
+Harvey's seeded rows differ afterwards. They do not depend on the day the seed
+ran, but they need the archive and search seeds (`009` and `010`), so seed the
+local database first. Run all five, headless, twice in a row with:
+
+```powershell
+npm run test:e2e -- organization/ settings/ archive/ search/ --repeat-each=2
+```
 
 Pass extra Playwright arguments after `--`:
 

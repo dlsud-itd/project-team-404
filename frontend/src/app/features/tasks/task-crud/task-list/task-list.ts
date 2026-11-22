@@ -243,6 +243,16 @@ export class TaskList {
   }
 
   /**
+   * Alt+Up / Alt+Down while anything in a task's row has focus: the same move as its Move buttons.
+   * Ignored at either end of the list and while reordering is off.
+   */
+  protected moveByKey(event: Event, from: number, to: number, button: 'up' | 'down'): void {
+    if (!this.canReorder() || to < 0 || to >= this.store.open().length) return;
+    event.preventDefault();
+    this.moveTask(from, to, button);
+  }
+
+  /**
    * Moves an open task and saves the whole new order. The list changes at once; a failure puts
    * it back with a message, and a 409 (the list changed elsewhere) reloads it. A keyboard move
    * keeps focus on the same button of the moved task.
