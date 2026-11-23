@@ -13,7 +13,14 @@ interface Showcase {
 
 @Component({
   selector: 'app-landing',
-  imports: [RouterLink, LandingFeatures, LandingSteps, LandingClosing, LandingFooter, ThemeSwitcher],
+  imports: [
+    RouterLink,
+    LandingFeatures,
+    LandingSteps,
+    LandingClosing,
+    LandingFooter,
+    ThemeSwitcher,
+  ],
   templateUrl: './landing.html',
   styleUrl: './landing.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
