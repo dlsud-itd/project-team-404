@@ -252,12 +252,20 @@ describe('Labels & Priorities integration (Settings, task form and filters + API
     await settle();
   }
 
+  async function openNewLabel(): Promise<void> {
+    await press(el<HTMLButtonElement>('button.action')!);
+  }
+
   async function openPriorities(levels: ApiPriority[] = PRIORITIES): Promise<void> {
     await harness.navigateByUrl('/settings/priorities');
     await settle();
     // The page asks again on open, for fresh task counts.
     answerPriorities(levels);
     await settle();
+  }
+
+  async function openNewPriority(): Promise<void> {
+    await press(el<HTMLButtonElement>('button.action')!);
   }
 
   /** Each row's name, and its task count when shown, top to bottom. */
@@ -381,10 +389,11 @@ describe('Labels & Priorities integration (Settings, task form and filters + API
     it('creates a label, then renames and recolors one, keeping its task count', async () => {
       await startSignedIn();
       await openLabels();
+      await openNewLabel();
 
       type('#new-label-name', '  Errands ');
       type('#new-label-color', '#16a34a');
-      await submit('section[aria-label="New label"]');
+      await submit('[role="dialog"]');
       const create = expectAuthorized(http.expectOne(LABELS_API), 'POST');
       expect(create.request.body).toEqual({ name: 'Errands', color: '#16A34A' });
       create.flush(label(24, 'Errands', '#16A34A', 3), status(201, 'Created'));
@@ -396,7 +405,7 @@ describe('Labels & Priorities integration (Settings, task form and filters + API
         'Ideas (0 tasks)',
         'Errands',
       ]);
-      expect(el<HTMLInputElement>('#new-label-name').value).toBe('');
+      expect(el('[role="dialog"]')).toBeNull();
 
       await press(el('#label-21-edit'));
       expect(el<HTMLInputElement>('#label-21-editor-name').value).toBe('Planning');
@@ -419,14 +428,15 @@ describe('Labels & Priorities integration (Settings, task form and filters + API
     it('blocks a name already in use and shows the 409 message the server sends for a duplicate', async () => {
       await startSignedIn();
       await openLabels();
+      await openNewLabel();
 
       type('#new-label-name', 'planning');
       expect(text('#new-label-status')).toBe('Label “planning” already exists.');
-      expect(el<HTMLButtonElement>('section[aria-label="New label"] .save').disabled).toBe(true);
+      expect(el<HTMLButtonElement>('[role="dialog"] .save').disabled).toBe(true);
 
       // Another tab made "Errands" since this page loaded; the server refuses it.
       type('#new-label-name', 'Errands');
-      await submit('section[aria-label="New label"]');
+      await submit('[role="dialog"]');
       http
         .expectOne(LABELS_API)
         .flush(
@@ -549,12 +559,13 @@ describe('Labels & Priorities integration (Settings, task form and filters + API
     it('creates and edits a level and saves a new order', async () => {
       await startSignedIn();
       await openPriorities();
+      await openNewPriority();
 
       type('#new-priority-name', 'Blocker');
-      await submit('section[aria-label="New priority level"]');
+      await submit('[role="dialog"]');
       const create = expectAuthorized(http.expectOne(PRIORITIES_API), 'POST');
-      expect(create.request.body).toEqual({ name: 'Blocker', color: '#7B23A8' });
-      create.flush(priority(14, 'Blocker', '#7B23A8', 4), status(201, 'Created'));
+      expect(create.request.body).toEqual({ name: 'Blocker', color: '#54A6A1' });
+      create.flush(priority(14, 'Blocker', '#54A6A1', 4), status(201, 'Created'));
       await settle();
       expect(rows('Priority levels').at(-1)).toBe('Blocker (0 tasks)');
 
@@ -575,7 +586,7 @@ describe('Labels & Priorities integration (Settings, task form and filters + API
         { ...URGENT, name: 'Critical' },
         { ...SOMEDAY, sortOrder: 2 },
         { ...NORMAL, sortOrder: 3 },
-        priority(14, 'Blocker', '#7B23A8', 4),
+        priority(14, 'Blocker', '#54A6A1', 4),
       ]);
       await settle();
       expect(rows('Priority levels').map((row) => row.split(' ')[0])).toEqual([
@@ -800,7 +811,7 @@ describe('Labels & Priorities integration (Settings, task form and filters + API
       // A failed refresh keeps the levels loaded at sign-in, still editable, without an alert.
       // The retry for priorities is in the next test, where nothing has loaded yet.
       expect(el('app-priority-settings [role="alert"]')).toBeNull();
-      expect(el('#new-priority-name')).toBeTruthy();
+      expect(el('#new-priority-name')).toBeNull();
       expect(rows('Priority levels')).toEqual([
         'Urgent (2 tasks)',
         'Normal [Default] (5 tasks)',

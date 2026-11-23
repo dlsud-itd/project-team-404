@@ -11,7 +11,10 @@
   }
 
   @if (composing()) {
-    <app-new-task-dialog (created)="store.upsertTask($event)" (closed)="composing.set(false)" />
+    <app-new-task-dialog
+      (created)="store.upsertTask($event); composing.set(false)"
+      (closed)="composing.set(false)"
+    />
   }
 
   <ul class="list" tabindex="0" aria-label="Tasks">

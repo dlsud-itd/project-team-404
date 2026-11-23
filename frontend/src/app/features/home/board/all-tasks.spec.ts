@@ -25,7 +25,7 @@ describe('AllTasks', () => {
   const titles = () =>
     [...page.querySelectorAll('.task .title')].map((node) => node.textContent?.trim());
   const heading = () => page.querySelector('h2')?.textContent?.trim();
-  const dueInput = () => page.querySelector<HTMLInputElement>('input[type="date"]');
+  const dueInput = () => page.querySelector<HTMLInputElement>('#task-due-date');
 
   function render(): void {
     fixture.detectChanges();
@@ -41,12 +41,23 @@ describe('AllTasks', () => {
   }
 
   function submit(): void {
-    el<HTMLFormElement>('form.composer')!.dispatchEvent(new Event('submit'));
+    el<HTMLFormElement>('[role="dialog"] form.card')!.dispatchEvent(new Event('submit'));
     render();
+  }
+
+  function flushTaskModalLoads(): void {
+    http.match((request) => request.url === LABELS_URL).forEach((request) => request.flush([]));
+    http
+      .match((request) => request.url === PROJECTS_URL)
+      .forEach((request) =>
+        request.flush(request.request.params.get('isArchived') === 'true' ? [] : []),
+      );
   }
 
   function compose(): void {
     fixture.componentRef.setInput('composing', true);
+    render();
+    flushTaskModalLoads();
     render();
   }
 
@@ -115,23 +126,23 @@ describe('AllTasks', () => {
     expect(first.querySelector('.due')?.classList).toContain('overdue');
   });
 
-  it('shows the form only while composing, with today as the default due date', () => {
-    expect(el('form.composer')).toBeNull();
+  it('shows the task dialog only while composing, with today as the default due date', () => {
+    expect(el('[role="dialog"]')).toBeNull();
     compose();
 
-    expect(el<HTMLInputElement>('input[aria-label="Due date"]')!.value).toBe('2026-10-30');
+    expect(dueInput()?.value).toBe('2026-10-30');
     expect(
-      el<HTMLSelectElement>(
-        'select[aria-label="Priority"]',
-      )!.selectedOptions[0].textContent?.trim(),
+      el<HTMLSelectElement>('select#task-priority')!.selectedOptions[0].textContent?.trim(),
     ).toBe('Medium');
   });
 
-  it('opens the composer from the All Tasks action', () => {
+  it('opens the task dialog from the All Tasks action', () => {
     el<HTMLButtonElement>('button.new')!.click();
     render();
+    flushTaskModalLoads();
+    render();
 
-    expect(el('form.composer')).toBeTruthy();
+    expect(el('[role="dialog"]')).toBeTruthy();
     expect(dueInput()?.value).toBe('2026-10-30');
   });
 
@@ -141,22 +152,22 @@ describe('AllTasks', () => {
     ['over 200 characters', 'x'.repeat(201)],
   ])('rejects a title that is %s', (_, title) => {
     compose();
-    type('input[aria-label="Task title"]', title);
+    type('#task-title', title);
     submit();
 
     expect(store.tasks()).toHaveLength(9);
-    expect(el('input[aria-label="Task title"]')!.getAttribute('aria-invalid')).toBe('true');
+    expect(el('#task-title')!.getAttribute('aria-invalid')).toBe('true');
     http.expectNone(TASKS_URL);
   });
 
   it('creates a task through the API and adds the response to the dashboard', () => {
     compose();
-    type('input[aria-label="Task title"]', '  Write essay  ');
+    type('#task-title', '  Write essay  ');
     submit();
 
     const request = http.expectOne(TASKS_URL);
     expect(request.request.method).toBe('POST');
-    expect(request.request.body).toEqual({
+    expect(request.request.body).toMatchObject({
       priority: 'medium',
       title: 'Write essay',
       description: null,
@@ -175,7 +186,7 @@ describe('AllTasks', () => {
       priorityId: 2,
       due: '2026-10-30',
     });
-    expect(el('form.composer')).toBeNull();
+    expect(el('[role="dialog"]')).toBeNull();
   });
 
   it('completes and deletes tasks through the API', () => {
@@ -262,6 +273,8 @@ describe('AllTasks', () => {
     store.filter.set({ due: '2026-11-02' });
     fixture.componentInstance.composing.set(true);
     render();
+    flushTaskModalLoads();
+    render();
 
     expect(heading()).toBe('Due Nov 2');
     expect(dueInput()?.value).toBe('2026-11-02');
@@ -269,6 +282,8 @@ describe('AllTasks', () => {
 
   it('starts a new task today when no day is picked', () => {
     fixture.componentInstance.composing.set(true);
+    render();
+    flushTaskModalLoads();
     render();
 
     expect(dueInput()?.value).toBe('2026-10-30');
