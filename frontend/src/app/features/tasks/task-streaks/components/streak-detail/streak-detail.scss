@@ -6,7 +6,7 @@
   padding: 1rem;
   border: 1px solid var(--orange-light);
   border-radius: 0.75rem;
-  background: #fff;
+  background: var(--theme-surface);
 }
 
 .head {
@@ -88,7 +88,7 @@ dd {
   }
   &[data-state='open'] {
     border: 2px dashed var(--orange);
-    background: #fff;
+    background: var(--theme-surface);
   }
   &[data-state='unknown'] {
     background: #f1ece9;
@@ -134,7 +134,7 @@ dd {
   padding: 0.25rem 0.75rem;
   border: 1px solid var(--error);
   border-radius: 999px;
-  background: #fff;
+  background: var(--theme-surface);
   color: var(--error);
   font: inherit;
   font-weight: 600;

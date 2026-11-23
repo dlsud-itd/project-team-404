@@ -6,7 +6,7 @@
   padding: 1rem;
   border: 1px solid var(--orange-light);
   border-radius: 0.75rem;
-  background: #fff;
+  background: var(--theme-surface);
 }
 
 .heading {
@@ -73,7 +73,7 @@ a.title {
     text-decoration: underline;
   }
   &:focus-visible {
-    outline: 2px solid #7b23a8;
+    outline: 2px solid var(--theme-primary);
     outline-offset: 2px;
   }
 }

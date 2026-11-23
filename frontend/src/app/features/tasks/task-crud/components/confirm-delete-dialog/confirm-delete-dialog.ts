@@ -104,7 +104,7 @@ export type DeleteTaskPrompt = Pick<Task, 'title'> & { isRecurring?: boolean };
         opacity: 0.7;
       }
       &:focus-visible {
-        outline: 2px solid #7b23a8;
+        outline: 2px solid var(--theme-primary);
         outline-offset: 2px;
       }
     }

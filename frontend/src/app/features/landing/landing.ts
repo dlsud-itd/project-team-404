@@ -4,6 +4,7 @@ import { LandingClosing } from './closing/landing-closing';
 import { LandingFeatures } from './features/landing-features';
 import { LandingFooter } from './footer/landing-footer';
 import { LandingSteps } from './steps/landing-steps';
+import { ThemeSwitcher } from '../../shared/components/theme-switcher/theme-switcher';
 
 interface Showcase {
   label: string;
@@ -12,7 +13,14 @@ interface Showcase {
 
 @Component({
   selector: 'app-landing',
-  imports: [RouterLink, LandingFeatures, LandingSteps, LandingClosing, LandingFooter],
+  imports: [
+    RouterLink,
+    LandingFeatures,
+    LandingSteps,
+    LandingClosing,
+    LandingFooter,
+    ThemeSwitcher,
+  ],
   templateUrl: './landing.html',
   styleUrl: './landing.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

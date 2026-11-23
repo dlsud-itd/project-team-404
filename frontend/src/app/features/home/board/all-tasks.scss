@@ -8,7 +8,7 @@
   padding: 1rem;
   border: 1px solid var(--orange-light);
   border-radius: 0.75rem;
-  background: #fff;
+  background: var(--theme-surface);
 }
 
 .heading-row {
@@ -31,7 +31,7 @@
   border: 1px solid var(--orange);
   border-radius: 0.375rem;
   background: var(--orange);
-  color: #fff;
+  color: var(--theme-surface);
   font: inherit;
   font-size: 0.75rem;
   font-weight: 600;
@@ -50,14 +50,14 @@
   margin-bottom: 1rem;
   padding: 0.75rem;
   border-radius: 0.5rem;
-  background: #fdeee6;
+  background: color-mix(in srgb, var(--theme-primary) 10%, var(--theme-surface));
 
   input,
   select {
     padding: 0.375rem 0.5rem;
     border: 1px solid var(--orange-light);
     border-radius: 0.375rem;
-    background: #fff;
+    background: var(--theme-surface);
     font: inherit;
     font-size: 0.8125rem;
 
@@ -101,7 +101,7 @@
   list-style: none;
 
   &:focus-visible {
-    outline: 2px solid #7b23a8;
+    outline: 2px solid var(--theme-primary);
     outline-offset: 2px;
   }
 }
@@ -149,7 +149,7 @@
   input {
     width: 1rem;
     height: 1rem;
-    accent-color: #7b23a8;
+    accent-color: var(--theme-primary);
   }
 }
 
@@ -232,7 +232,7 @@
 .task-menu {
   --archive-action-font-size: 0.75rem;
   --archive-action-padding: 0.5rem 0.625rem;
-  --archive-action-hover: #fdeee6;
+  --archive-action-hover: color-mix(in srgb, var(--theme-primary) 10%, var(--theme-surface));
 
   position: absolute;
   top: calc(100% + 0.25rem);
@@ -242,7 +242,7 @@
   padding: 0.25rem;
   border: 1px solid var(--orange-light);
   border-radius: 0.375rem;
-  background: #fff;
+  background: var(--theme-surface);
   box-shadow: 0 6px 16px rgb(29 23 20 / 0.12);
 }
 
@@ -271,7 +271,7 @@
 button:focus-visible,
 input:focus-visible,
 select:focus-visible {
-  outline: 2px solid #7b23a8;
+  outline: 2px solid var(--theme-primary);
   outline-offset: 1px;
 }
 

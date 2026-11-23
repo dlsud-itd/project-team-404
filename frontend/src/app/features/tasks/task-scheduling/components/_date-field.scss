@@ -26,7 +26,7 @@ label {
   border: 0;
   border-radius: 0.25rem;
   background: none;
-  color: #7b23a8;
+  color: var(--theme-primary);
   font: inherit;
   font-size: 0.8125rem;
   font-weight: 600;
@@ -37,7 +37,7 @@ label {
   }
 
   &:focus-visible {
-    outline: 2px solid #7b23a8;
+    outline: 2px solid var(--theme-primary);
     outline-offset: 1px;
   }
 }

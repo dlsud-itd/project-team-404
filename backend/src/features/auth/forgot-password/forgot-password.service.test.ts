@@ -36,7 +36,7 @@ describe('ForgotPasswordService', () => {
     expect(mailer.send).toHaveBeenCalledWith(
       expect.objectContaining({
         to: 'james@example.com',
-        subject: 'Reset your HabitTracker password',
+        subject: 'Reset your HabitFlow password',
         text: expect.stringContaining(
           'https://habitflow.example/reset-password?token='
         ),

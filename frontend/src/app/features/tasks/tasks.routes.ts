@@ -7,14 +7,14 @@ import type { Routes } from '@angular/router';
 export const TASKS_ROUTES: Routes = [
   {
     path: '',
-    title: 'Tasks · HabitTracker',
+    title: 'Tasks · HabitFlow',
     loadComponent: () => import('./task-crud/task-list/task-list').then((m) => m.TaskList),
   },
   // New tasks are made in a popup on the list.
   { path: 'new', pathMatch: 'full', redirectTo: '' },
   {
     path: ':taskId/edit',
-    title: 'Edit task · HabitTracker',
+    title: 'Edit task · HabitFlow',
     data: { mode: 'edit' },
     loadComponent: () => import('./task-crud/task-form/task-form').then((m) => m.TaskForm),
   },

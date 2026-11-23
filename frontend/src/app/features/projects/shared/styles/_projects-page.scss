@@ -20,7 +20,7 @@
   margin: 0 0 1.25rem;
   padding: 0.75rem 1rem;
   border-left: 3px solid var(--error);
-  background: #fff;
+  background: var(--theme-surface);
   color: var(--error);
   font-size: 0.875rem;
 }
@@ -41,7 +41,7 @@
   padding: 0.375rem 1rem;
   border: 1px solid var(--error);
   border-radius: 999px;
-  background: #fff;
+  background: var(--theme-surface);
   color: var(--error);
   font: inherit;
   font-weight: 600;

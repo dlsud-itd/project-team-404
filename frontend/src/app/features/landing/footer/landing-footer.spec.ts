@@ -15,7 +15,7 @@ describe('LandingFooter', () => {
   it('shows the brand, tagline and description in a footer landmark', () => {
     const footer = page.querySelector('footer');
     expect(footer).toBeTruthy();
-    expect(footer?.querySelector('.brand')?.textContent?.trim()).toBe('HabitTracker');
+    expect(footer?.querySelector('.brand')?.textContent?.trim()).toBe('HabitFlow');
     // The <br /> separates the two lines; "Get it done" keeps its space.
     expect(footer?.querySelector('.tagline')?.textContent?.trim()).toMatch(
       /^Plan\. Prioritize\s*Get it done$/,

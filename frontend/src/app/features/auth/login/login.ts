@@ -6,6 +6,7 @@ import { finalize } from 'rxjs';
 import { mapLoginError } from './mappers/login-error.mapper';
 import { POST_LOGIN_REDIRECT } from '../session/auth.guards';
 import { SessionService } from '../session/session.service';
+import { ThemeSwitcher } from '../../../shared/components/theme-switcher/theme-switcher';
 
 export { POST_LOGIN_REDIRECT };
 
@@ -13,7 +14,7 @@ type FieldName = 'identifier' | 'password';
 
 @Component({
   selector: 'app-login',
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, RouterLink, ThemeSwitcher],
   templateUrl: './login.html',
   styleUrl: './login.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

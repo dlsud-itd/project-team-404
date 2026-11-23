@@ -15,17 +15,30 @@
 }
 
 :root {
-  --orange: #d9531e;
-  --orange-light: #f0a07c;
-  --purple: #d98cf0;
-  --purple-strong: #c46fe0;
-  --cream: #fdece4;
-  --ink: #1d1714;
-  --ink-muted: #6b5b54;
-  --brown: #6a2a10;
-  --error: #b42318;
-  --success: #1f7a3d;
-  --field-border: #3a2f2a;
+  --theme-primary: #d9531e;
+  --theme-secondary: #d98cf0;
+  --theme-background: #fffaf7;
+  --theme-surface: #fff;
+  --theme-text: #1d1714;
+  --theme-muted: #6b5b54;
+  --theme-border: #3a2f2a;
+  --theme-success: #1f7a3d;
+  --theme-warning: #9a5b00;
+  --theme-error: #b42318;
+  --theme-info: #176b87;
+  --orange: var(--theme-primary);
+  --orange-light: color-mix(in srgb, var(--theme-primary) 48%, var(--theme-surface));
+  --purple: var(--theme-secondary);
+  --purple-strong: var(--theme-secondary);
+  --cream: var(--theme-background);
+  --ink: var(--theme-text);
+  --ink-muted: var(--theme-muted);
+  --brown: var(--theme-primary);
+  --error: var(--theme-error);
+  --success: var(--theme-success);
+  --warning: var(--theme-warning);
+  --info: var(--theme-info);
+  --field-border: var(--theme-border);
 
   /*
    * Set on <html> by SettingsStore from the user's Preferences. Every size in the app is in rem,
@@ -51,6 +64,37 @@ body {
   font-size: 1rem;
   font-family: inherit;
   color: var(--ink);
+  background: var(--theme-background);
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --theme-primary: #ff9468;
+  --theme-secondary: #bca3ff;
+  --theme-background: #17191e;
+  --theme-surface: #22252c;
+  --theme-text: #f1f2f4;
+  --theme-muted: #b1b5bf;
+  --theme-border: #515761;
+  --theme-success: #6bc58a;
+  --theme-warning: #f2bd61;
+  --theme-error: #ff8178;
+  --theme-info: #75c6e2;
+}
+
+:root[data-theme='light'] {
+  color-scheme: light;
+  --theme-primary: #d9531e;
+  --theme-secondary: #d98cf0;
+  --theme-background: #fffaf7;
+  --theme-surface: #fff;
+  --theme-text: #1d1714;
+  --theme-muted: #6b5b54;
+  --theme-border: #3a2f2a;
+  --theme-success: #1f7a3d;
+  --theme-warning: #9a5b00;
+  --theme-error: #b42318;
+  --theme-info: #176b87;
 }
 
 /* Form controls don't inherit the page font by default. */
@@ -59,6 +103,41 @@ input,
 select,
 textarea {
   font-family: inherit;
+}
+
+.success,
+.is-success {
+  color: var(--theme-success);
+}
+
+.warning,
+.is-warning {
+  color: var(--theme-warning);
+}
+
+.error,
+.is-error {
+  color: var(--theme-error);
+}
+
+.info,
+.is-info {
+  color: var(--theme-info);
+}
+
+input[aria-invalid='true'],
+select[aria-invalid='true'],
+textarea[aria-invalid='true'] {
+  border-color: var(--theme-error) !important;
+}
+
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  border-color: var(--theme-primary) !important;
+  outline: 2px solid var(--theme-primary);
+  outline-offset: 1px;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--theme-primary) 18%, transparent);
 }
 
 .visually-hidden {
@@ -75,7 +154,145 @@ textarea {
   margin: 0 0 1.25rem;
   padding: 0.75rem 1rem;
   border-left: 3px solid var(--success);
-  background: #fff;
+  background: var(--theme-surface);
   color: var(--success);
   font-size: 0.875rem;
+}
+
+.field-label {
+  font-weight: 700;
+}
+
+.preset-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  gap: 0.625rem;
+}
+
+.preset-option {
+  display: grid;
+  gap: 0.5rem;
+  min-width: 0;
+  padding: 0.5rem;
+  border: 1px solid var(--field-border);
+  border-radius: 0.375rem;
+  background: var(--theme-surface);
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+
+  &:hover {
+    border-color: var(--theme-primary);
+  }
+
+  &.selected {
+    border: 2px solid var(--theme-primary);
+    padding: calc(0.5rem - 1px);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--theme-info);
+    outline-offset: 2px;
+  }
+}
+
+.preset-preview {
+  display: grid;
+  gap: 0.75rem;
+  min-height: 5.25rem;
+  padding: 0.625rem;
+  border: 1px solid;
+  border-radius: 0.25rem;
+  font-size: 0.75rem;
+}
+
+.preset-preview-heading,
+.preset-preview-status {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.preset-semantic-colors {
+  display: flex;
+  gap: 0.25rem;
+
+  span {
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 50%;
+  }
+}
+
+.preset-dot,
+.preset-preview-status span {
+  width: 0.5rem;
+  height: 0.5rem;
+  flex: 0 0 auto;
+  border-radius: 50%;
+}
+
+.preset-chip {
+  margin-left: auto;
+  padding: 0.125rem 0.375rem;
+  border-radius: 999px;
+  font-size: 0.625rem;
+}
+
+.preset-track {
+  display: block;
+  height: 0.25rem;
+  overflow: hidden;
+  border-radius: 999px;
+
+  span {
+    display: block;
+    width: 68%;
+    height: 100%;
+  }
+}
+
+.preset-name {
+  padding: 0 0.125rem;
+  font-size: 0.8125rem;
+  font-weight: 700;
+}
+
+.color-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr));
+  gap: 0.625rem;
+}
+
+.color-field {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 0.3rem 0.5rem;
+  min-width: 0;
+  padding: 0.625rem;
+  border: 1px solid var(--field-border);
+  border-radius: 0.375rem;
+  background: var(--theme-background);
+  font-size: 0.8125rem;
+  font-weight: 600;
+
+  input {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    width: 2.5rem;
+    height: 2rem;
+    padding: 0.125rem;
+    border: 1px solid var(--field-border);
+    border-radius: 0.25rem;
+    background: var(--theme-surface);
+    cursor: pointer;
+  }
+
+  code {
+    color: var(--ink-muted);
+    font-size: 0.75rem;
+    font-weight: 400;
+  }
 }

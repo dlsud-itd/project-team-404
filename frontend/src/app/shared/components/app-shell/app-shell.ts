@@ -14,7 +14,7 @@ import { TopBar } from '../top-bar/top-bar';
     :host {
       display: block;
       min-height: 100dvh;
-      background: #fcebe3;
+      background: var(--theme-background);
     }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,

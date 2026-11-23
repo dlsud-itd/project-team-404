@@ -5,13 +5,13 @@ export const routes: Routes = [
   {
     path: '',
     pathMatch: 'full',
-    title: 'HabitTracker',
+    title: 'HabitFlow',
     canActivate: [guestGuard],
     loadComponent: () => import('./features/landing/landing').then((m) => m.Landing),
   },
   {
     path: 'home',
-    title: 'Home · HabitTracker',
+    title: 'Home · HabitFlow',
     canActivate: [authGuard],
     loadComponent: () => import('./features/home/home').then((m) => m.Home),
   },
@@ -56,25 +56,25 @@ export const routes: Routes = [
   },
   {
     path: 'forgot-password',
-    title: 'Forgot password · HabitTracker',
+    title: 'Forgot password · HabitFlow',
     loadComponent: () =>
       import('./features/auth/forgot-password/forgot-password').then((m) => m.ForgotPassword),
   },
   {
     path: 'reset-password',
-    title: 'Reset password · HabitTracker',
+    title: 'Reset password · HabitFlow',
     loadComponent: () =>
       import('./features/auth/reset-password/reset-password').then((m) => m.ResetPassword),
   },
   {
     path: 'login',
-    title: 'Log in · HabitTracker',
+    title: 'Log in · HabitFlow',
     canActivate: [guestGuard],
     loadComponent: () => import('./features/auth/login/login').then((m) => m.Login),
   },
   {
     path: 'register',
-    title: 'Sign up · HabitTracker',
+    title: 'Sign up · HabitFlow',
     canActivate: [guestGuard],
     loadComponent: () => import('./features/auth/register/register').then((m) => m.Register),
   },

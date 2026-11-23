@@ -13,6 +13,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, type ValidatorFn, Validators } from '@angular/forms';
 import { finalize } from 'rxjs';
 import { ConfirmDeleteTaskDialog } from '../../tasks/task-crud/components/confirm-delete-dialog/confirm-delete-dialog';
+import { TasksStore } from '../../tasks/shared/state/tasks.store';
 import { NewTaskDialog } from '../../tasks/task-crud/components/new-task-dialog/new-task-dialog';
 import { ViewAllLink } from '../../../shared/components/view-all-link/view-all-link';
 import { PrioritiesStore } from '../../settings/state/priorities.store';
@@ -66,6 +67,7 @@ export class AllTasks {
   protected readonly deleteError = signal<string | null>(null);
   protected readonly editingTaskId = signal<number | null>(null);
   private readonly tasksApi = inject(TaskService);
+  private readonly taskPopups = inject(TasksStore);
   private readonly destroyRef = inject(DestroyRef);
 
   /** Whether the new-task form is open; the page's "+ New Task" button also sets it. */
@@ -96,8 +98,15 @@ export class AllTasks {
     });
     effect(() => {
       const due = this.dueFilter();
-      if (!this.composing()) return;
-      untracked(() => this.form.controls.due.setValue(due ?? this.store.today()));
+      if (!this.composing()) {
+        this.taskPopups.creating.set(null);
+        return;
+      }
+      untracked(() => {
+        const dueDate = due ?? this.store.today();
+        this.form.controls.due.setValue(dueDate);
+        this.taskPopups.creating.set({ projectId: null, dueDate });
+      });
     });
   }
 

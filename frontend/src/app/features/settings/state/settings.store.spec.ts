@@ -10,6 +10,7 @@ import {
   FONT_FAMILY_PROPERTY,
   FONT_SIZE_PROPERTY,
   SETTINGS_CACHE_KEY,
+  THEME_MODE_ATTRIBUTE,
   SettingsStore,
   provideUserSettings,
 } from './settings.store';
@@ -17,6 +18,7 @@ import {
 const URL = `${environment.apiBaseUrl}/api/settings`;
 
 const SAVED: UserSettings = {
+  ...DEFAULT_SETTINGS,
   dashboardTaskLimit: 8,
   dashboardProjectLimit: 3,
   fontSize: 'large',
@@ -40,6 +42,21 @@ function resetPage(): void {
   sessionStorage.clear();
   document.documentElement.style.removeProperty(FONT_SIZE_PROPERTY);
   document.documentElement.style.removeProperty(FONT_FAMILY_PROPERTY);
+  document.documentElement.removeAttribute(THEME_MODE_ATTRIBUTE);
+  for (const property of [
+    '--theme-primary',
+    '--theme-secondary',
+    '--theme-background',
+    '--theme-surface',
+    '--theme-text',
+    '--theme-muted',
+    '--theme-border',
+    '--theme-success',
+    '--theme-warning',
+    '--theme-error',
+    '--theme-info',
+  ])
+    document.documentElement.style.removeProperty(property);
 }
 
 describe('SettingsStore', () => {
@@ -139,7 +156,7 @@ describe('SettingsStore', () => {
 
   it('previews a font on the page without saving, and cancels back to the saved one', () => {
     const store = createStore();
-    store.previewAppearance({ fontSize: 'x-large', fontFamily: 'monospace' });
+    store.previewAppearance({ ...DEFAULT_SETTINGS, fontSize: 'x-large', fontFamily: 'monospace' });
     TestBed.tick();
 
     expect(rootStyle(FONT_SIZE_PROPERTY)).toBe('125%');
@@ -155,7 +172,7 @@ describe('SettingsStore', () => {
 
   it('replaces the preview with what was saved', () => {
     const store = createStore();
-    store.previewAppearance({ fontSize: 'small', fontFamily: 'serif' });
+    store.previewAppearance({ ...DEFAULT_SETTINGS, fontSize: 'small', fontFamily: 'serif' });
     store.save({ fontSize: 'small', fontFamily: 'serif' }).subscribe();
     http.expectOne(URL).flush({ ...DEFAULT_SETTINGS, fontSize: 'small', fontFamily: 'serif' });
 

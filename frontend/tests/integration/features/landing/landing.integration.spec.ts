@@ -91,11 +91,11 @@ describe('Landing integration (landing page, guestGuard, session)', () => {
   afterEach(() => http.verify());
 
   // Case 1
-  it('shows a guest the landing page, titled HabitTracker, without any request', async () => {
+  it('shows a guest the landing page, titled HabitFlow, without any request', async () => {
     await openAsGuest();
 
     expect(router.url).toBe('/');
-    expect(TestBed.inject(Title).getTitle()).toBe('HabitTracker');
+    expect(TestBed.inject(Title).getTitle()).toBe('HabitFlow');
     expect(text('h1')).toMatch(/^Build habits that last,\s*forever$/);
     expect(all('app-landing-features h3').map((h) => h.textContent?.trim())).toEqual([
       'Task Management',

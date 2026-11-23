@@ -9,8 +9,8 @@
   padding: 0 0.5rem 0 0.375rem;
   border: 1px solid transparent;
   border-radius: 999px;
-  background: #fdece4;
-  color: var(--brown);
+  background: color-mix(in srgb, var(--theme-primary) 12%, var(--theme-surface));
+  color: var(--theme-primary);
   font-size: 0.75rem;
   font-weight: 700;
   line-height: 1.5;
@@ -18,7 +18,7 @@
   cursor: default;
 
   &:focus-visible {
-    outline: 2px solid #7b23a8;
+    outline: 2px solid var(--theme-primary);
     outline-offset: 2px;
   }
 }
@@ -31,7 +31,7 @@
 
 // No streak running: grey, so it doesn't compete with live streaks.
 .cold {
-  background: #f1ece9;
+  background: color-mix(in srgb, var(--theme-muted) 10%, var(--theme-surface));
   color: var(--ink-muted);
 
   .flame {
@@ -42,7 +42,7 @@
 // Today's occurrence is open: the streak ends unless it is done today.
 .at-risk {
   border-color: var(--error);
-  background: #fff4ed;
+  background: color-mix(in srgb, var(--theme-error) 10%, var(--theme-surface));
   color: var(--error);
 
   .flame {

@@ -1,5 +1,5 @@
 import { prisma } from '../../../../shared/db/prisma.client';
-import type { UpdateSettingsInput } from '../../types';
+import { DEFAULT_THEME_SETTINGS, type UpdateSettingsInput } from '../../types';
 
 export async function updateSettings(
   userId: string,
@@ -13,6 +13,7 @@ export async function updateSettings(
       dashboardProjectLimit: input.dashboardProjectLimit ?? 5,
       fontSize: input.fontSize ?? 'medium',
       fontFamily: input.fontFamily ?? 'system',
+      theme: input.theme ?? DEFAULT_THEME_SETTINGS,
     },
     update: {
       ...(input.dashboardTaskLimit !== undefined
@@ -25,6 +26,7 @@ export async function updateSettings(
       ...(input.fontFamily !== undefined
         ? { fontFamily: input.fontFamily }
         : {}),
+      ...(input.theme !== undefined ? { theme: input.theme } : {}),
     },
   });
 }

@@ -49,7 +49,8 @@ import { DashboardStore, type Task, type TaskStatus } from '../dashboard.store';
       padding: 1.75rem 0.75rem 0.75rem;
       border: 1px solid var(--orange-light);
       border-radius: 0.75rem;
-      background: #fff;
+      background: var(--theme-surface);
+      color: var(--theme-text);
     }
     .pill {
       position: absolute;
@@ -59,19 +60,19 @@ import { DashboardStore, type Task, type TaskStatus } from '../dashboard.store';
       margin: 0;
       padding: 0.25rem 0.625rem;
       border-radius: 0.375rem;
-      color: #fff;
+      color: var(--theme-surface);
       font-size: 0.75rem;
       font-weight: 600;
       white-space: nowrap;
     }
     .pill--current {
-      background: #7b23a8;
+      background: var(--theme-primary);
     }
     .pill--upcoming {
-      background: #f0957a;
+      background: var(--theme-warning);
     }
     .pill--overdue {
-      background: var(--ink);
+      background: var(--theme-error);
     }
     /* A fixed maximum height: long columns scroll inside the card. */
     .list {
@@ -84,7 +85,7 @@ import { DashboardStore, type Task, type TaskStatus } from '../dashboard.store';
       overscroll-behavior: contain;
       list-style: none;
       &:focus-visible {
-        outline: 2px solid #7b23a8;
+        outline: 2px solid var(--theme-info);
         outline-offset: 2px;
       }
     }

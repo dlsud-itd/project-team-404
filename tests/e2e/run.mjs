@@ -16,7 +16,7 @@ import { fileURLToPath } from 'node:url';
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const frontend = join(root, 'frontend');
 const backend = join(root, 'backend');
-const tempDir = mkdtempSync(join(tmpdir(), 'habittracker-e2e-'));
+const tempDir = mkdtempSync(join(tmpdir(), 'habitflow-e2e-'));
 const backendLog = join(tempDir, 'backend.log');
 const stateFile = join(tempDir, 'state.json');
 const testResultsDir = join(root, 'tests', 'e2e', 'test-results');

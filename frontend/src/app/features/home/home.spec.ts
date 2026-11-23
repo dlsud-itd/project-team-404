@@ -165,17 +165,19 @@ describe('Home tabs', () => {
   });
 
   describe('All Tasks creation action', () => {
-    it('opens the inline composer within the dashboard', async () => {
+    it('opens the task dialog within the dashboard', async () => {
       await harness.navigateByUrl('/home');
       loadDashboardTab();
 
       el<HTMLButtonElement>('#all-tasks button.new')!.click();
       await settle();
+      http.match(LABELS_URL).forEach((request) => request.flush([]));
+      await settle();
 
       expect(router.url).toBe('/home');
       expect(el('header.topbar')).toBeTruthy();
-      expect(el('#all-tasks form.composer')).toBeTruthy();
-      expect(el('[role="dialog"]')).toBeNull();
+      expect(el('#all-tasks [role="dialog"]')).toBeTruthy();
+      expect(el('#all-tasks #task-title')).toBeTruthy();
     });
   });
 

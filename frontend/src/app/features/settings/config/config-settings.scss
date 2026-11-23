@@ -20,7 +20,7 @@ h2 {
   padding: 1.25rem;
   border: 1px solid #e7ded9;
   border-radius: 0.75rem;
-  background: #fff;
+  background: var(--theme-surface);
 }
 
 .field {
@@ -140,7 +140,7 @@ h2 {
 }
 
 .secondary {
-  background: #fff;
+  background: var(--theme-surface);
   color: var(--ink);
 }
 

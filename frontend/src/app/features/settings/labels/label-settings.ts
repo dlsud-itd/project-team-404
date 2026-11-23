@@ -44,6 +44,7 @@ export class LabelSettings {
   protected readonly loading = signal(true);
   protected readonly loadError = signal<string | null>(null);
 
+  protected readonly createOpen = signal(false);
   protected readonly creating = signal(false);
   protected readonly createError = signal<string | null>(null);
   protected readonly editingId = signal<number | null>(null);
@@ -106,6 +107,7 @@ export class LabelSettings {
         next: (label) => {
           this.labels.update((labels) => [...labels, label]);
           this.createEditor()?.reset();
+          this.createOpen.set(false);
           this.announcement.set(`Label “${label.name}” created.`);
         },
         error: (error: unknown) => this.createError.set(saveError(error, input.name)),

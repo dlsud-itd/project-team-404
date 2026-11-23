@@ -50,7 +50,7 @@
 
 .description {
   margin: 0;
-  color: #a08e86;
+  color: var(--theme-muted);
   font-size: 0.875rem;
   font-weight: 500;
   line-height: 1.4;
@@ -75,7 +75,7 @@
   padding: 0.75rem;
   border: 1px solid var(--landing-orange);
   border-radius: 0.5rem;
-  background: #fff;
+  background: var(--theme-surface);
   font-size: 0.875rem;
   font-weight: 600;
   line-height: 1.25;

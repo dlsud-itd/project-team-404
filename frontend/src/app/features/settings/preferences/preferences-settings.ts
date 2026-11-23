@@ -17,14 +17,19 @@ import {
   FONT_SIZES,
   isFontFamily,
   isFontSize,
-  type Appearance,
+  isThemeMode,
+  THEME_COLOR_OPTIONS,
+  THEME_PRESETS,
   type FontFamily,
   type FontSize,
+  type ThemeColors,
+  type ThemeMode,
+  type ThemePresetId,
 } from '../types/user-settings.types';
 
 /**
- * /settings/preferences: text size and font. A choice applies to the whole app at once as a
- * preview; Save keeps it, Cancel (or leaving the page) goes back to the saved look.
+ * /settings/preferences: appearance choices preview across the app; Save keeps them and Cancel
+ * (or leaving the page) restores the saved appearance.
  */
 @Component({
   selector: 'app-preferences-settings',
@@ -38,10 +43,20 @@ export class PreferencesSettings {
 
   protected readonly sizes = FONT_SIZES;
   protected readonly families = FONT_FAMILIES;
+  protected readonly themeColors = THEME_COLOR_OPTIONS;
+  protected readonly themeModes: readonly { value: ThemeMode; label: string }[] = [
+    { value: 'light', label: 'Light' },
+    { value: 'dark', label: 'Dark' },
+  ];
 
   protected readonly fontSize = signal<FontSize>(this.store.settings().fontSize);
   protected readonly fontFamily = signal<FontFamily>(this.store.settings().fontFamily);
-  /** Set once the user picks something, so later server data doesn't overwrite the choice. */
+  protected readonly themeMode = signal<ThemeMode>(this.store.settings().theme.mode);
+  protected readonly themePreset = signal<ThemePresetId>(this.store.settings().theme.preset);
+  protected readonly colors = signal<ThemeColors>(this.store.settings().theme.colors);
+  protected readonly presets = computed(() =>
+    THEME_PRESETS.filter((preset) => preset.mode === this.themeMode()),
+  );
   private readonly touched = signal(false);
 
   protected readonly saving = signal(false);
@@ -50,7 +65,13 @@ export class PreferencesSettings {
 
   protected readonly changed = computed(() => {
     const saved = this.store.settings();
-    return this.fontSize() !== saved.fontSize || this.fontFamily() !== saved.fontFamily;
+    return (
+      this.fontSize() !== saved.fontSize ||
+      this.fontFamily() !== saved.fontFamily ||
+      this.themeMode() !== saved.theme.mode ||
+      this.themePreset() !== saved.theme.preset ||
+      THEME_COLOR_OPTIONS.some(({ key }) => this.colors()[key] !== saved.theme.colors[key])
+    );
   });
   protected readonly previewFamily = computed(
     () => FONT_FAMILIES.find((family) => family.value === this.fontFamily())!.css,
@@ -62,23 +83,52 @@ export class PreferencesSettings {
   constructor() {
     this.store.load();
     effect(() => {
-      const { fontSize, fontFamily } = this.store.settings();
+      const { fontSize, fontFamily, theme } = this.store.settings();
       untracked(() => {
         if (this.touched()) return;
         this.fontSize.set(fontSize);
         this.fontFamily.set(fontFamily);
+        this.themeMode.set(theme.mode);
+        this.themePreset.set(theme.preset);
+        this.colors.set(theme.colors);
       });
     });
-    // Leaving without saving drops the preview.
     this.destroyRef.onDestroy(() => this.store.cancelPreview());
   }
 
   protected pickSize(value: string): void {
-    if (isFontSize(value)) this.apply({ fontSize: value, fontFamily: this.fontFamily() });
+    if (!isFontSize(value)) return;
+    this.fontSize.set(value);
+    this.applyCurrentAppearance();
   }
 
   protected pickFamily(value: string): void {
-    if (isFontFamily(value)) this.apply({ fontSize: this.fontSize(), fontFamily: value });
+    if (!isFontFamily(value)) return;
+    this.fontFamily.set(value);
+    this.applyCurrentAppearance();
+  }
+
+  protected pickThemeMode(value: string): void {
+    if (!isThemeMode(value)) return;
+    const preset = THEME_PRESETS.find((item) => item.mode === value)!;
+    this.themeMode.set(value);
+    this.themePreset.set(preset.id);
+    this.colors.set(preset.colors);
+    this.applyCurrentAppearance();
+  }
+
+  protected pickThemePreset(value: string): void {
+    const preset = this.presets().find((item) => item.id === value);
+    if (!preset) return;
+    this.themePreset.set(preset.id);
+    this.colors.set(preset.colors);
+    this.applyCurrentAppearance();
+  }
+
+  protected pickColor(key: keyof ThemeColors, value: string): void {
+    if (!/^#[\da-f]{6}$/i.test(value)) return;
+    this.colors.update((colors) => ({ ...colors, [key]: value }));
+    this.applyCurrentAppearance();
   }
 
   protected save(): void {
@@ -87,7 +137,11 @@ export class PreferencesSettings {
     this.saved.set(null);
     this.saveError.set(null);
     this.store
-      .save({ fontSize: this.fontSize(), fontFamily: this.fontFamily() })
+      .save({
+        fontSize: this.fontSize(),
+        fontFamily: this.fontFamily(),
+        theme: { mode: this.themeMode(), preset: this.themePreset(), colors: this.colors() },
+      })
       .pipe(
         finalize(() => this.saving.set(false)),
         takeUntilDestroyed(this.destroyRef),
@@ -105,20 +159,25 @@ export class PreferencesSettings {
   }
 
   protected cancel(): void {
-    const { fontSize, fontFamily } = this.store.settings();
+    const { fontSize, fontFamily, theme } = this.store.settings();
     this.fontSize.set(fontSize);
     this.fontFamily.set(fontFamily);
+    this.themeMode.set(theme.mode);
+    this.themePreset.set(theme.preset);
+    this.colors.set(theme.colors);
     this.touched.set(false);
     this.saved.set(null);
     this.saveError.set(null);
     this.store.cancelPreview();
   }
 
-  private apply(appearance: Appearance): void {
+  private applyCurrentAppearance(): void {
     this.touched.set(true);
     this.saved.set(null);
-    this.fontSize.set(appearance.fontSize);
-    this.fontFamily.set(appearance.fontFamily);
-    this.store.previewAppearance(appearance);
+    this.store.previewAppearance({
+      fontSize: this.fontSize(),
+      fontFamily: this.fontFamily(),
+      theme: { mode: this.themeMode(), preset: this.themePreset(), colors: this.colors() },
+    });
   }
 }

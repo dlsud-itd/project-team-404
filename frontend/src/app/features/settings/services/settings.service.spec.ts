@@ -2,12 +2,13 @@ import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { environment } from '../../../../environments/environment';
-import type { UserSettings } from '../types/user-settings.types';
+import { DEFAULT_SETTINGS, type UserSettings } from '../types/user-settings.types';
 import { SettingsService } from './settings.service';
 
 const URL = `${environment.apiBaseUrl}/api/settings`;
 
 const SETTINGS: UserSettings = {
+  ...DEFAULT_SETTINGS,
   dashboardTaskLimit: 8,
   dashboardProjectLimit: 5,
   fontSize: 'large',

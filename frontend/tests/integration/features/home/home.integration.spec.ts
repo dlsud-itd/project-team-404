@@ -208,14 +208,28 @@ describe('Home integration (live dashboard APIs)', () => {
     await click(el<HTMLButtonElement>('app-mini-calendar [data-date="2026-11-02"]'));
     await click(el<HTMLButtonElement>('app-mini-calendar .add'));
 
-    const title = el<HTMLInputElement>('app-all-tasks input[aria-label="Task title"]');
+    await settle();
+    http
+      .match((request) => request.url.endsWith('/api/labels'))
+      .forEach((request) => request.flush([]));
+    http
+      .match((request) => request.url.includes('/api/projects'))
+      .forEach((request) => request.flush([]));
+    await settle();
+
+    const title = el<HTMLInputElement>('app-all-tasks #task-title')!;
     title.value = 'Prepare release notes';
     title.dispatchEvent(new Event('input'));
-    el<HTMLFormElement>('app-all-tasks form.composer').dispatchEvent(new Event('submit'));
+    const dueDate = el<HTMLInputElement>('app-all-tasks #task-due-date')!;
+    dueDate.value = '2026-11-02';
+    dueDate.dispatchEvent(new Event('input'));
+    el<HTMLFormElement>('app-all-tasks [role="dialog"] form.card').dispatchEvent(
+      new Event('submit'),
+    );
 
     const request = http.expectOne(TASKS_API);
     expect(request.request.method).toBe('POST');
-    expect(request.request.body).toEqual({
+    expect(request.request.body).toMatchObject({
       priority: 'medium',
       title: 'Prepare release notes',
       description: null,

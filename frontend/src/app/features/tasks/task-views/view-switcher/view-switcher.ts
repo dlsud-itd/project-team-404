@@ -34,7 +34,7 @@ export type TaskView = 'list' | 'board';
       gap: 0.25rem;
       padding: 0.25rem;
       border-radius: 999px;
-      background: #f6e6de;
+      background: color-mix(in srgb, var(--theme-primary) 10%, var(--theme-surface));
     }
     .view {
       padding: 0.375rem 1rem;
@@ -47,7 +47,7 @@ export type TaskView = 'list' | 'board';
         color: var(--ink);
       }
       &[aria-current='page'] {
-        background: #fff;
+        background: var(--theme-surface);
         color: var(--ink);
         box-shadow: 0 1px 2px rgb(29 23 20 / 0.08);
       }

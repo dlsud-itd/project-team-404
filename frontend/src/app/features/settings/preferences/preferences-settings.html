@@ -19,6 +19,100 @@
 
 <form class="card" (submit)="$event.preventDefault(); save()" novalidate>
   <fieldset class="field">
+    <legend>Color mode</legend>
+    <div class="segmented mode-control">
+      @for (mode of themeModes; track mode.value) {
+        <label class="segment" [class.selected]="themeMode() === mode.value">
+          <input
+            type="radio"
+            name="theme-mode"
+            [value]="mode.value"
+            [checked]="themeMode() === mode.value"
+            (change)="pickThemeMode(mode.value)"
+          />
+          <span>{{ mode.label }}</span>
+        </label>
+      }
+    </div>
+  </fieldset>
+
+  <div class="field">
+    <span class="field-label" id="theme-preset-label">Theme preset</span>
+    <div class="preset-grid" role="group" aria-labelledby="theme-preset-label">
+      @for (preset of presets(); track preset.id) {
+        <button
+          type="button"
+          class="preset-option"
+          [class.selected]="themePreset() === preset.id"
+          [attr.aria-label]="'Choose ' + preset.label + ' theme'"
+          [attr.aria-pressed]="themePreset() === preset.id"
+          (click)="pickThemePreset(preset.id)"
+        >
+          <span
+            class="preset-preview"
+            [style.background-color]="preset.colors.background"
+            [style.border-color]="preset.colors.border"
+            [style.color]="preset.colors.text"
+          >
+            <span class="preset-preview-heading">
+              <span class="preset-dot" [style.background-color]="preset.colors.primary"></span>
+              <strong>HabitFlow</strong>
+              <span
+                class="preset-chip"
+                [style.background-color]="preset.colors.surface"
+                [style.color]="preset.colors.muted"
+                >Today</span
+              >
+            </span>
+            <span class="preset-track" [style.background-color]="preset.colors.border"
+              ><span [style.background-color]="preset.colors.secondary"></span
+            ></span>
+            <span class="preset-preview-status" [style.color]="preset.colors.success">
+              <span [style.background-color]="preset.colors.success"></span> On track
+            </span>
+            <span class="preset-semantic-colors" aria-hidden="true">
+              <span [style.background-color]="preset.colors.success"></span>
+              <span [style.background-color]="preset.colors.warning"></span>
+              <span [style.background-color]="preset.colors.error"></span>
+              <span [style.background-color]="preset.colors.info"></span>
+            </span>
+          </span>
+          <span class="preset-name">{{ preset.label }}</span>
+        </button>
+      }
+    </div>
+  </div>
+
+  <fieldset class="field">
+    <legend>Color palette</legend>
+    <div class="color-grid">
+      @for (color of themeColors; track color.key) {
+        <label class="color-field" [for]="'color-' + color.key">
+          <span>{{ color.label }}</span>
+          <input
+            [id]="'color-' + color.key"
+            type="color"
+            [value]="colors()[color.key]"
+            (input)="pickColor(color.key, $any($event.target).value)"
+          />
+          <code>{{ colors()[color.key] }}</code>
+        </label>
+      }
+    </div>
+  </fieldset>
+
+  <section class="theme-preview" aria-label="Theme preview">
+    <div class="preview-heading">
+      <span class="preview-mark" aria-hidden="true"></span>
+      <strong>HabitFlow</strong>
+      <span class="preview-tag">Today</span>
+    </div>
+    <p>Small steps add up.</p>
+    <div class="preview-bar"><span></span></div>
+    <div class="preview-status"><span class="preview-mark"></span> On track</div>
+  </section>
+
+  <fieldset class="field">
     <legend>Font size</legend>
     <div class="segmented">
       @for (size of sizes; track size.value) {

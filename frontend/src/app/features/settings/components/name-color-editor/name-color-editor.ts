@@ -80,7 +80,7 @@ import { SETTING_NAME_MAX_LENGTH, type NameAndColor } from '../../types/settings
       padding: 0.125rem;
       border: 1px solid var(--field-border);
       border-radius: 0.375rem;
-      background: #fff;
+      background: var(--theme-surface);
       cursor: pointer;
     }
     button {
@@ -100,12 +100,12 @@ import { SETTING_NAME_MAX_LENGTH, type NameAndColor } from '../../types/settings
       color: #fff;
     }
     .cancel {
-      background: #fff;
+      background: var(--theme-surface);
       color: var(--ink);
     }
     input:focus-visible,
     button:focus-visible {
-      outline: 2px solid #7b23a8;
+      outline: 2px solid var(--theme-primary);
       outline-offset: 2px;
     }
     .status {

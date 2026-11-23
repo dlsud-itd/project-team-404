@@ -19,7 +19,7 @@
   }
 
   &:focus-visible {
-    outline: 2px solid #7b23a8;
+    outline: 2px solid var(--theme-primary);
     outline-offset: 2px;
   }
 }
@@ -46,7 +46,7 @@ h1 {
   padding: 1.5rem;
   border: 1px solid var(--orange-light);
   border-radius: 1rem;
-  background: #fff;
+  background: var(--theme-surface);
 }
 
 .message p {
@@ -57,7 +57,7 @@ h1 {
   margin: 0 0 1.25rem;
   padding: 0.75rem 1rem;
   border-left: 3px solid var(--error);
-  background: #fff;
+  background: var(--theme-surface);
   color: var(--error);
   font-size: 0.875rem;
 }
@@ -95,13 +95,13 @@ select {
   padding: 0.625rem 0.75rem;
   border: 1px solid var(--field-border);
   border-radius: 0.5rem;
-  background: #fff;
+  background: var(--theme-surface);
   color: var(--ink);
   font: inherit;
   font-size: 0.9375rem;
 
   &:focus-visible {
-    outline: 2px solid #7b23a8;
+    outline: 2px solid var(--theme-primary);
     outline-offset: 1px;
   }
 
@@ -111,9 +111,9 @@ select {
 }
 
 input[readonly] {
-  border-color: var(--orange-light);
-  background: #fdf6f2;
-  color: var(--ink-muted);
+  border-color: var(--theme-border);
+  background: color-mix(in srgb, var(--theme-muted) 8%, var(--theme-surface));
+  color: var(--theme-muted);
 }
 
 .hint {
@@ -158,13 +158,13 @@ input[readonly] {
 
 .primary {
   border: 0;
-  background: #7b23a8;
-  color: #fff;
+  background: var(--theme-primary);
+  color: var(--theme-surface);
 }
 
 .secondary {
   border: 1px solid var(--field-border);
-  background: #fff;
+  background: var(--theme-surface);
   color: var(--ink);
 }
 

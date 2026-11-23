@@ -7,17 +7,17 @@
 
 /* Each column's accent follows the dashboard's status pills. */
 .column {
-  --accent: #f0957a;
+  --accent: var(--theme-primary);
 
   display: flex;
   flex-direction: column;
   height: 100%;
   padding: 0.75rem;
   border-radius: 0.875rem;
-  background: #fbf3ef;
+  background: color-mix(in srgb, var(--theme-primary) 8%, var(--theme-surface));
 
   &[data-column='inProgress'] {
-    --accent: #7b23a8;
+    --accent: var(--theme-primary);
   }
 
   &[data-column='done'] {
@@ -57,7 +57,7 @@
   min-width: 1.5rem;
   padding: 0.0625rem 0.4375rem;
   border-radius: 999px;
-  background: #fff;
+  background: var(--theme-surface);
   color: var(--ink-muted);
   font-size: 0.75rem;
   font-variant-numeric: tabular-nums;
@@ -87,7 +87,7 @@
   }
 
   &:hover {
-    background: #fff;
+    background: var(--theme-surface);
     color: var(--ink);
   }
 
@@ -126,7 +126,7 @@
   flex: 1;
   place-items: center;
   padding: 1rem 0.75rem;
-  border: 1px dashed #e2cfc6;
+  border: 1px dashed var(--theme-border);
   border-radius: 0.625rem;
   color: var(--ink-muted);
   font-size: 0.8125rem;

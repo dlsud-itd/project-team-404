@@ -102,8 +102,10 @@ describe('PrioritySettings', () => {
     expect(names()).toEqual(['Low', 'Medium', 'High']);
   });
 
-  it('creates a level, checking duplicate names live', () => {
+  it('creates a level in the modal, checking duplicate names live', () => {
     open();
+    el<HTMLButtonElement>('button.action')!.click();
+    render();
     type('#new-priority-name', 'high');
     expect(text('#new-priority-status')).toBe('Priority “high” already exists.');
 
@@ -111,15 +113,15 @@ describe('PrioritySettings', () => {
     submit('#new-priority-name');
     const req = http.expectOne(URL);
     expect(req.request.method).toBe('POST');
-    expect(req.request.body).toEqual({ name: 'Urgent', color: '#7B23A8' });
+    expect(req.request.body).toEqual({ name: 'Urgent', color: '#54A6A1' });
     req.flush(
-      { id: 14, name: 'Urgent', color: '#7B23A8', sortOrder: 3, isDefault: false, taskCount: 0 },
+      { id: 14, name: 'Urgent', color: '#54A6A1', sortOrder: 3, isDefault: false, taskCount: 0 },
       { status: 201, statusText: 'Created' },
     );
     render();
 
     expect(names()).toEqual(['Low', 'Medium', 'High', 'Urgent']);
-    expect(el<HTMLInputElement>('#new-priority-name')!.value).toBe('');
+    expect(el('[role="dialog"]')).toBeNull();
   });
 
   it('edits a level inline', () => {

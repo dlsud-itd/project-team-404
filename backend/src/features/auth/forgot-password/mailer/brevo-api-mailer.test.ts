@@ -12,7 +12,7 @@ describe('BrevoApiMailer', () => {
     const mailer = new BrevoApiMailer(
       'test-api-key',
       'verified@example.com',
-      'HabitTracker'
+      'HabitFlow'
     );
 
     await mailer.send({
@@ -32,7 +32,7 @@ describe('BrevoApiMailer', () => {
           accept: 'application/json',
         },
         body: JSON.stringify({
-          sender: { name: 'HabitTracker', email: 'verified@example.com' },
+          sender: { name: 'HabitFlow', email: 'verified@example.com' },
           to: [{ email: 'user@example.com' }],
           subject: 'Reset your password',
           textContent: 'Reset link',
@@ -54,7 +54,7 @@ describe('BrevoApiMailer', () => {
     const mailer = new BrevoApiMailer(
       'test-api-key',
       'verified@example.com',
-      'HabitTracker'
+      'HabitFlow'
     );
 
     await expect(

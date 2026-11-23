@@ -9,7 +9,10 @@ import { ToastService } from '../../services/toast.service';
       @for (toast of toasts.toasts(); track toast.id) {
         <div
           class="toast"
+          [class.success]="toast.kind === 'success'"
+          [class.warning]="toast.kind === 'warning'"
           [class.error]="toast.kind === 'error'"
+          [class.info]="toast.kind === 'info'"
           [attr.role]="toast.kind === 'error' ? 'alert' : 'status'"
         >
           <span class="message">{{ toast.message }}</span>
@@ -51,8 +54,20 @@ import { ToastService } from '../../services/toast.service';
       box-shadow: 0 6px 20px rgb(0 0 0 / 0.18);
       pointer-events: auto;
     }
+    .toast.success {
+      background: var(--theme-success);
+    }
+
+    .toast.warning {
+      background: var(--theme-warning);
+    }
+
     .toast.error {
-      background: var(--error);
+      background: var(--theme-error);
+    }
+
+    .toast.info {
+      background: var(--theme-info);
     }
     .message {
       flex: 1;

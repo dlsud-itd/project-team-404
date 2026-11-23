@@ -29,7 +29,7 @@ Open the repository root folder in VS Code. Open the Command Palette with
      `http://localhost:4200` locally and to the deployed frontend origin in
      production. Set `BREVO_API_KEY` to a Brevo API key and
      `BREVO_SENDER_EMAIL` to an email address verified in Brevo. Optionally set
-     `BREVO_SENDER_NAME` (defaults to `HabitTracker`).
+     `BREVO_SENDER_NAME` (defaults to `HabitFlow`).
 
    - The `NG_APP_` values are bundled into the browser application and must not
      contain secrets. The backend service-role key is privileged and must

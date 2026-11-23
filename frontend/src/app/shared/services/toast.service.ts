@@ -9,7 +9,7 @@ export interface ToastAction {
 export interface Toast {
   id: number;
   message: string;
-  kind: 'error' | 'info';
+  kind: 'success' | 'warning' | 'error' | 'info';
   action?: ToastAction;
 }
 
@@ -29,6 +29,14 @@ export class ToastService {
   private nextId = 1;
   private readonly list = signal<readonly Toast[]>([]);
   readonly toasts = this.list.asReadonly();
+
+  success(message: string): number {
+    return this.show(message, { kind: 'success' });
+  }
+
+  warning(message: string): number {
+    return this.show(message, { kind: 'warning' });
+  }
 
   error(message: string): number {
     return this.show(message, { kind: 'error' });

@@ -19,7 +19,10 @@ import {
   SETTINGS_CACHE_KEY,
   provideUserSettings,
 } from '../../../../src/app/features/settings/state/settings.store';
-import { FONT_FAMILIES } from '../../../../src/app/features/settings/types/user-settings.types';
+import {
+  DEFAULT_SETTINGS,
+  FONT_FAMILIES,
+} from '../../../../src/app/features/settings/types/user-settings.types';
 import type { ApiTask } from '../../../../src/app/features/tasks/shared/types/task.types';
 import { environment } from '../../../../src/environments/environment';
 
@@ -67,6 +70,7 @@ type ApiSettings = {
   dashboardProjectLimit: number;
   fontSize: string;
   fontFamily: string;
+  theme: typeof DEFAULT_SETTINGS.theme;
   createdAt: string;
   updatedAt: string;
 };
@@ -79,6 +83,7 @@ function settings(overrides: Partial<ApiSettings> = {}): ApiSettings {
     dashboardProjectLimit: 5,
     fontSize: 'medium',
     fontFamily: 'system',
+    theme: DEFAULT_SETTINGS.theme,
     ...STAMPS,
     ...overrides,
   };
@@ -411,7 +416,11 @@ describe('Settings integration (Config, Preferences and limited dashboard widget
 
       await press(saveButton());
       const req = expectSettingsPatch();
-      expect(req.request.body).toEqual({ fontSize: 'large', fontFamily: 'serif' });
+      expect(req.request.body).toEqual({
+        fontSize: 'large',
+        fontFamily: 'serif',
+        theme: DEFAULT_SETTINGS.theme,
+      });
       req.flush(settings({ fontSize: 'large', fontFamily: 'serif', updatedAt: NOW }));
       await settle();
 

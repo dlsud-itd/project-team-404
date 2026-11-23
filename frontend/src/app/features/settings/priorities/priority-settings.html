@@ -19,21 +19,7 @@
   <p class="status" role="status">Loading priorities…</p>
 } @else {
   @if (store.editable()) {
-    <section class="create" aria-label="New priority level">
-      <app-name-color-editor
-        #createEditor
-        idPrefix="new-priority"
-        kind="Priority"
-        placeholder="New priority name"
-        submitLabel="Add priority"
-        defaultColor="#7B23A8"
-        [showCancel]="false"
-        [takenNames]="takenNames(null)"
-        [busy]="creating()"
-        [serverError]="createError()"
-        (saved)="create($event)"
-      />
-    </section>
+    <button type="button" class="action" (click)="createOpen.set(true)">+ New priority</button>
   }
 
   <ul
@@ -145,6 +131,31 @@
       </li>
     }
   </ul>
+}
+
+@if (createOpen()) {
+  <div class="backdrop" (click)="createOpen.set(false)"></div>
+  <section
+    class="dialog"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="new-priority-title"
+    (keydown.escape)="createOpen.set(false)"
+  >
+    <h3 id="new-priority-title">New priority</h3>
+    <app-name-color-editor
+      #createEditor
+      idPrefix="new-priority"
+      kind="Priority"
+      placeholder="New priority name"
+      submitLabel="Add priority"
+      [takenNames]="takenNames(null)"
+      [busy]="creating()"
+      [serverError]="createError()"
+      (saved)="create($event)"
+      (cancelled)="createOpen.set(false)"
+    />
+  </section>
 }
 
 @if (pendingDelete(); as level) {

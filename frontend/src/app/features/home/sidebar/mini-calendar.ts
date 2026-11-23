@@ -170,7 +170,7 @@ export function taskCount(count: number): string {
       font: inherit;
       cursor: pointer;
       &:focus-visible {
-        outline: 2px solid #7b23a8;
+        outline: 2px solid var(--theme-primary);
         outline-offset: 1px;
       }
     }
@@ -182,15 +182,15 @@ export function taskCount(count: number): string {
       background: none;
       font-size: 1rem;
       &:hover {
-        background: #fdeee6;
+        background: color-mix(in srgb, var(--theme-primary) 10%, var(--theme-surface));
       }
     }
     .nav .today-button {
       margin-right: 0.25rem;
       padding: 0 0.5rem;
-      border: 1px solid #d6a4dc;
+      border: 1px solid var(--theme-secondary);
       border-radius: 999px;
-      color: #7b23a8;
+      color: var(--theme-primary);
       font-size: 0.6875rem;
       font-weight: 600;
     }
@@ -234,26 +234,26 @@ export function taskCount(count: number): string {
       border: 0;
       border-radius: 50%;
       background: none;
-      color: #4a4a4a;
+      color: var(--theme-text);
       font-size: 0.75rem;
       transition:
         background 150ms,
         transform 150ms;
       &:hover {
-        background: #fdeee6;
+        background: color-mix(in srgb, var(--theme-primary) 10%, var(--theme-surface));
         transform: scale(1.08);
       }
     }
     .outside {
-      color: #b9aaa3;
+      color: var(--theme-muted);
     }
     .today {
-      background: #7b23a8;
-      color: #fff;
+      background: var(--theme-primary);
+      color: var(--theme-surface);
       font-weight: 600;
-      outline: 2px solid #d6a4dc;
+      outline: 2px solid var(--theme-secondary);
       &:hover {
-        background: #8f34bd;
+        background: color-mix(in srgb, var(--theme-primary) 88%, var(--theme-text));
       }
     }
     .selected {
@@ -261,7 +261,7 @@ export function taskCount(count: number): string {
       font-weight: 700;
     }
     .selected:not(.today) {
-      background: #fde1d3;
+      background: color-mix(in srgb, var(--theme-primary) 14%, var(--theme-surface));
     }
     .mark {
       position: absolute;
@@ -270,22 +270,22 @@ export function taskCount(count: number): string {
       width: 0.3125rem;
       height: 0.3125rem;
       border-radius: 50%;
-      background: #7b23a8;
+      background: var(--theme-primary);
       transform: translateX(-50%);
       &[data-mark='overdue'] {
         background: var(--error);
       }
       &[data-mark='done'] {
-        background: #b9aaa3;
+        background: var(--theme-success);
       }
     }
     .today .mark {
-      background: #fff;
+      background: var(--theme-surface);
     }
     .summary {
       margin-top: 0.625rem;
       padding-top: 0.5rem;
-      border-top: 1px solid #f3d4c6;
+      border-top: 1px solid var(--theme-border);
       font-size: 0.75rem;
       animation: fade-in 200ms ease;
       p {
@@ -300,7 +300,7 @@ export function taskCount(count: number): string {
       padding: 0;
       border: 0;
       background: none;
-      color: #7b23a8;
+      color: var(--theme-primary);
       font-size: 0.75rem;
       font-weight: 600;
       &:hover {

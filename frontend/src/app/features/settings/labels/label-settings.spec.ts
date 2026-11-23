@@ -111,7 +111,9 @@ describe('LabelSettings', () => {
 
   it('checks for duplicate names as the user types, archived labels included', () => {
     flushLists();
-    const save = () => el<HTMLButtonElement>('section.create button.save')!;
+    el<HTMLButtonElement>('button.action')!.click();
+    render();
+    const save = () => el<HTMLButtonElement>('[role="dialog"] button.save')!;
     expect(save().disabled).toBe(true);
 
     type('#new-label-name', ' planning ');
@@ -127,8 +129,10 @@ describe('LabelSettings', () => {
     expect(save().disabled).toBe(false);
   });
 
-  it('creates a label inline with the chosen color', () => {
+  it('creates a label in the modal with the chosen color', () => {
     flushLists();
+    el<HTMLButtonElement>('button.action')!.click();
+    render();
     type('#new-label-name', '  Groceries ');
     const color = el<HTMLInputElement>('#new-label-color')!;
     color.value = '#c44536';
@@ -142,11 +146,13 @@ describe('LabelSettings', () => {
     render();
 
     expect(activeNames()).toEqual(['Planning', 'Errands', 'Reading', 'Groceries']);
-    expect(el<HTMLInputElement>('#new-label-name')!.value).toBe('');
+    expect(el('[role="dialog"]')).toBeNull();
   });
 
   it('shows the server’s duplicate-name error', () => {
     flushLists();
+    el<HTMLButtonElement>('button.action')!.click();
+    render();
     type('#new-label-name', 'Groceries');
     submit('#new-label-name');
     http

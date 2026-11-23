@@ -4,7 +4,7 @@
 
 .steps {
   padding: 4rem var(--landing-gutter) 6rem;
-  background: #f39a7a;
+  background: color-mix(in srgb, var(--theme-primary) 55%, var(--theme-surface));
 }
 
 .list {
@@ -33,7 +33,7 @@
 
 .description {
   margin: 0;
-  color: #6a3826;
+  color: color-mix(in srgb, var(--theme-primary) 70%, var(--theme-text));
   font-size: 0.75rem;
   font-weight: 500;
   line-height: 1.35;
