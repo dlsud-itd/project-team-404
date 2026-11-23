@@ -54,7 +54,7 @@ h1 {
   padding: 1.5rem;
   border: 1px solid var(--orange-light);
   border-radius: 1rem;
-  background: #fff;
+  background: var(--theme-surface);
 }
 
 .message p {
@@ -62,7 +62,7 @@ h1 {
 }
 
 .message a {
-  color: #7b23a8;
+  color: var(--theme-primary);
   font-weight: 600;
 }
 
@@ -70,7 +70,7 @@ h1 {
   margin: 0 0 1.25rem;
   padding: 0.75rem 1rem;
   border-left: 3px solid var(--error);
-  background: #fff;
+  background: var(--theme-surface);
   color: var(--error);
   font-size: 0.875rem;
 }
@@ -116,6 +116,8 @@ textarea {
   width: 100%;
   padding: 0.625rem 0.75rem;
   border: 1px solid var(--field-border);
+  background: var(--theme-surface);
+  color: var(--theme-text);
   border-radius: 0.5rem;
   font: inherit;
   font-size: 0.9375rem;
@@ -168,7 +170,7 @@ textarea {
 }
 
 .swatch input:focus-visible + .chip {
-  outline: 2px solid #7b23a8;
+  outline: 2px solid var(--theme-primary);
   outline-offset: 3px;
 }
 
@@ -201,12 +203,12 @@ textarea {
 
 .primary {
   border: 0;
-  background: #7b23a8;
+  background: var(--theme-primary);
   color: #fff;
 }
 
 .secondary {
   border: 1px solid var(--field-border);
-  background: #fff;
+  background: var(--theme-surface);
   color: var(--ink);
 }

@@ -34,6 +34,7 @@ export class PrioritySettings {
   private readonly injector = inject(Injector);
   private readonly createEditor = viewChild<NameColorEditor>('createEditor');
 
+  protected readonly createOpen = signal(false);
   protected readonly creating = signal(false);
   protected readonly createError = signal<string | null>(null);
   protected readonly editingId = signal<number | null>(null);
@@ -73,6 +74,7 @@ export class PrioritySettings {
       .subscribe({
         next: (level) => {
           this.createEditor()?.reset();
+          this.createOpen.set(false);
           this.announcement.set(`Priority “${level.name}” created.`);
         },
         error: (error: unknown) => this.createError.set(saveError(error, input.name)),

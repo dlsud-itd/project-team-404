@@ -16,20 +16,7 @@
 @if (loading()) {
   <p class="status" role="status">Loading labels…</p>
 } @else if (!loadError()) {
-  <section class="create" aria-label="New label">
-    <app-name-color-editor
-      #createEditor
-      idPrefix="new-label"
-      kind="Label"
-      placeholder="New label name"
-      submitLabel="Add label"
-      [showCancel]="false"
-      [takenNames]="takenNames(null)"
-      [busy]="creating()"
-      [serverError]="createError()"
-      (saved)="create($event)"
-    />
-  </section>
+  <button type="button" class="action" (click)="createOpen.set(true)">+ New label</button>
 
   <ul
     class="list"
@@ -165,6 +152,31 @@
       }
     </ul>
   }
+}
+
+@if (createOpen()) {
+  <div class="backdrop" (click)="createOpen.set(false)"></div>
+  <section
+    class="dialog"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="new-label-title"
+    (keydown.escape)="createOpen.set(false)"
+  >
+    <h3 id="new-label-title">New label</h3>
+    <app-name-color-editor
+      #createEditor
+      idPrefix="new-label"
+      kind="Label"
+      placeholder="New label name"
+      submitLabel="Add label"
+      [takenNames]="takenNames(null)"
+      [busy]="creating()"
+      [serverError]="createError()"
+      (saved)="create($event)"
+      (cancelled)="createOpen.set(false)"
+    />
+  </section>
 }
 
 @if (pendingDelete(); as label) {

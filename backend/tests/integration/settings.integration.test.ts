@@ -17,6 +17,11 @@ type SettingsResponse = {
   dashboardProjectLimit: number;
   fontSize: string;
   fontFamily: string;
+  theme: {
+    mode: string;
+    preset: string;
+    colors: Record<string, string>;
+  };
   updatedAt: string;
 };
 
@@ -70,6 +75,9 @@ integrationDescribe('settings integration', () => {
       typeof body.fontSize !== 'string' ||
       !('fontFamily' in body) ||
       typeof body.fontFamily !== 'string' ||
+      !('theme' in body) ||
+      typeof body.theme !== 'object' ||
+      body.theme === null ||
       !('updatedAt' in body) ||
       typeof body.updatedAt !== 'string'
     ) {
@@ -80,6 +88,7 @@ integrationDescribe('settings integration', () => {
       dashboardProjectLimit: body.dashboardProjectLimit,
       fontSize: body.fontSize,
       fontFamily: body.fontFamily,
+      theme: body.theme as SettingsResponse['theme'],
       updatedAt: body.updatedAt,
     };
   }
@@ -101,6 +110,7 @@ integrationDescribe('settings integration', () => {
       dashboardProjectLimit: 5,
       fontSize: 'medium',
       fontFamily: 'system',
+      theme: { mode: 'light', preset: 'terracotta' },
     });
     expect(
       await prisma.userSetting.findUnique({ where: { userId: account.id } })
@@ -109,6 +119,7 @@ integrationDescribe('settings integration', () => {
       dashboardProjectLimit: 5,
       fontSize: 'medium',
       fontFamily: 'system',
+      theme: { mode: 'light', preset: 'terracotta' },
     });
   });
 
@@ -130,6 +141,29 @@ integrationDescribe('settings integration', () => {
       },
       { body: { fontSize: 'large' }, key: 'fontSize', value: 'large' },
       { body: { fontFamily: 'serif' }, key: 'fontFamily', value: 'serif' },
+      {
+        body: {
+          theme: {
+            mode: 'dark',
+            preset: 'midnight',
+            colors: {
+              primary: '#ff9468',
+              secondary: '#bca3ff',
+              background: '#17191e',
+              surface: '#22252c',
+              text: '#f1f2f4',
+              muted: '#b1b5bf',
+              border: '#515761',
+              success: '#6bc58a',
+              warning: '#f2bd61',
+              error: '#ff8178',
+              info: '#75c6e2',
+            },
+          },
+        },
+        key: 'theme',
+        value: { mode: 'dark', preset: 'midnight' },
+      },
     ] as const;
     for (const update of updates) {
       const before = await prisma.userSetting.findUniqueOrThrow({
@@ -158,6 +192,23 @@ integrationDescribe('settings integration', () => {
       dashboardProjectLimit: 19,
       fontSize: 'x-large',
       fontFamily: 'atkinson-hyperlegible',
+      theme: {
+        mode: 'light',
+        preset: 'meadow',
+        colors: {
+          primary: '#39724f',
+          secondary: '#b4553d',
+          background: '#f4f8f2',
+          surface: '#ffffff',
+          text: '#17251c',
+          muted: '#52685a',
+          border: '#879b8b',
+          success: '#267447',
+          warning: '#945b0b',
+          error: '#b42332',
+          info: '#246b9a',
+        },
+      },
     });
     expect(allFields.status).toBe(200);
     expect(settingsBody(allFields.body)).toMatchObject({
@@ -165,6 +216,7 @@ integrationDescribe('settings integration', () => {
       dashboardProjectLimit: 19,
       fontSize: 'x-large',
       fontFamily: 'atkinson-hyperlegible',
+      theme: { mode: 'light', preset: 'meadow' },
     });
     expect(
       new Date(settingsBody(allFields.body).updatedAt).getTime()
@@ -212,6 +264,10 @@ integrationDescribe('settings integration', () => {
       { dashboardProjectLimit: 51 },
       { fontSize: 'huge' },
       { fontFamily: 'comic-sans' },
+      { theme: { mode: 'light', preset: 'midnight', colors: {} } },
+      {
+        theme: { mode: 'light', preset: 'meadow', colors: { primary: 'red' } },
+      },
       { unexpected: true },
       {},
     ];

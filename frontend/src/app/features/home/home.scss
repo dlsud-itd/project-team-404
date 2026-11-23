@@ -4,7 +4,7 @@
 
 .dashboard {
   min-height: 100dvh;
-  background: #fcebe3;
+  background: var(--theme-background);
 }
 
 /* Tab panels: the new one slides in from the side of the tab that was picked. */
@@ -58,7 +58,7 @@
     padding: 0.75rem 0.625rem;
     border: 1px solid var(--orange-light);
     border-radius: 0.75rem;
-    background: #fff;
+    background: var(--theme-surface);
   }
 
   app-project-list {
@@ -73,7 +73,7 @@
   padding: 0.625rem 0.75rem;
   border: 1px solid var(--orange-light);
   border-radius: 0.75rem;
-  background: #fff;
+  background: var(--theme-surface);
   color: var(--ink);
   font-size: 0.875rem;
   font-weight: 600;
@@ -90,11 +90,11 @@
   }
 
   &:hover {
-    background: #fdeee6;
+    background: color-mix(in srgb, var(--theme-primary) 12%, var(--theme-surface));
   }
 
   &:focus-visible {
-    outline: 2px solid #7b23a8;
+    outline: 2px solid var(--theme-primary);
     outline-offset: 2px;
   }
 }
@@ -110,7 +110,7 @@
   padding: 1rem;
   border: 1px solid var(--orange-light);
   border-radius: 0.75rem;
-  background: #fff;
+  background: var(--theme-surface);
 }
 
 .dashboard-error {
@@ -121,7 +121,7 @@
   padding: 0.45rem 0.8rem;
   border: 1px solid var(--field-border);
   border-radius: 999px;
-  background: #fff;
+  background: var(--theme-surface);
   color: var(--ink);
   font: inherit;
   font-weight: 600;
@@ -161,7 +161,7 @@
   padding: 0.375rem 0.625rem;
   border: 1px solid var(--orange-light);
   border-radius: 0.75rem;
-  background: #fff;
+  background: var(--theme-surface);
 
   dd {
     margin: 0;

@@ -71,7 +71,7 @@ describe('DashboardPage', () => {
     );
     expect(el.querySelector('app-dashboard-streaks h2')?.textContent).toContain('Streaks');
     expect(el.querySelector('app-overdue-tasks h2')?.textContent).toContain('Overdue');
-    expect(document.title).toBe('Streak · HabitTracker');
+    expect(document.title).toBe('Streak · HabitFlow');
   });
 
   it('sends signed-out visitors to the login page', async () => {

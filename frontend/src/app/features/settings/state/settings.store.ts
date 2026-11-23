@@ -21,6 +21,9 @@ import {
   FONT_SIZES,
   isFontFamily,
   isFontSize,
+  isThemeMode,
+  isThemePresetId,
+  THEME_PRESETS,
   type Appearance,
   type SettingsChanges,
   type UserSettings,
@@ -32,6 +35,7 @@ export const SETTINGS_CACHE_KEY = 'habittracker.settings';
 /** The CSS custom properties on <html> that styles.scss reads. */
 export const FONT_SIZE_PROPERTY = '--app-font-size';
 export const FONT_FAMILY_PROPERTY = '--app-font-family';
+export const THEME_MODE_ATTRIBUTE = 'data-theme';
 
 /**
  * The signed-in user's settings: dashboard limits and the app's font. It applies the font to the
@@ -45,7 +49,7 @@ export class SettingsStore {
   private readonly injector = inject(Injector);
 
   private readonly current = signal<UserSettings>(readCache() ?? DEFAULT_SETTINGS);
-  /** An unsaved font choice shown while Preferences is open; null shows the saved one. */
+  /** Unsaved appearance changes shown while Preferences is open. */
   private readonly preview = signal<Appearance | null>(null);
 
   readonly settings = this.current.asReadonly();
@@ -58,8 +62,8 @@ export class SettingsStore {
   readonly projectLimit = computed(() => this.current().dashboardProjectLimit);
   /** What the page shows right now: the preview, else the saved settings. */
   readonly appearance = computed<Appearance>(() => {
-    const { fontSize, fontFamily } = this.current();
-    return this.preview() ?? { fontSize, fontFamily };
+    const { fontSize, fontFamily, theme } = this.current();
+    return this.preview() ?? { fontSize, fontFamily, theme };
   });
 
   constructor() {
@@ -115,7 +119,17 @@ export class SettingsStore {
   /** Forgets the user's settings, for sign-out. */
   clear(): void {
     removeCache();
-    this.current.set(DEFAULT_SETTINGS);
+    const darkDefault =
+      typeof window !== 'undefined' &&
+      typeof window.matchMedia === 'function' &&
+      window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const theme = darkDefault
+      ? THEME_PRESETS.find((item) => item.id === 'midnight')!
+      : THEME_PRESETS.find((item) => item.id === 'terracotta')!;
+    this.current.set({
+      ...DEFAULT_SETTINGS,
+      theme: { mode: theme.mode, preset: theme.id, colors: theme.colors },
+    });
     this.preview.set(null);
     this.loaded.set(false);
     this.loading.set(false);
@@ -157,12 +171,28 @@ export function provideUserSettings() {
 }
 
 /** Sets the font custom properties on <html>. */
-export function applyAppearance(document: Document, { fontSize, fontFamily }: Appearance): void {
+export function applyAppearance(
+  document: Document,
+  { fontSize, fontFamily, theme }: Appearance,
+): void {
   const root = document.documentElement;
   const size = FONT_SIZES.find((option) => option.value === fontSize) ?? FONT_SIZES[1];
   const family = FONT_FAMILIES.find((option) => option.value === fontFamily) ?? FONT_FAMILIES[0];
   root.style.setProperty(FONT_SIZE_PROPERTY, size.css);
   root.style.setProperty(FONT_FAMILY_PROPERTY, family.css);
+  root.setAttribute(THEME_MODE_ATTRIBUTE, theme.mode);
+  const { colors } = theme;
+  root.style.setProperty('--theme-primary', colors.primary);
+  root.style.setProperty('--theme-secondary', colors.secondary);
+  root.style.setProperty('--theme-background', colors.background);
+  root.style.setProperty('--theme-surface', colors.surface);
+  root.style.setProperty('--theme-text', colors.text);
+  root.style.setProperty('--theme-muted', colors.muted);
+  root.style.setProperty('--theme-border', colors.border);
+  root.style.setProperty('--theme-success', colors.success);
+  root.style.setProperty('--theme-warning', colors.warning);
+  root.style.setProperty('--theme-error', colors.error);
+  root.style.setProperty('--theme-info', colors.info);
 }
 
 /** Keeps only known values, so a bad cache or reply can't break the page. */
@@ -174,6 +204,23 @@ function sanitize(value: Partial<UserSettings>): UserSettings {
     raw <= DASHBOARD_LIMIT_MAX
       ? raw
       : fallback;
+  const rawTheme = value.theme as Partial<UserSettings['theme']> | undefined;
+  const preset = THEME_PRESETS.find((item) => item.id === rawTheme?.preset);
+  const mode = isThemeMode(rawTheme?.mode) ? rawTheme.mode : DEFAULT_SETTINGS.theme.mode;
+  const validPreset =
+    preset?.mode === mode ? preset : THEME_PRESETS.find((item) => item.mode === mode)!;
+  const colors = rawTheme?.colors;
+  const theme = {
+    mode,
+    preset:
+      isThemePresetId(rawTheme?.preset) && preset?.mode === mode ? rawTheme.preset : validPreset.id,
+    colors: Object.fromEntries(
+      Object.entries(validPreset.colors).map(([key, fallback]) => {
+        const color = colors?.[key as keyof typeof colors];
+        return [key, typeof color === 'string' && /^#[\da-f]{6}$/i.test(color) ? color : fallback];
+      }),
+    ) as UserSettings['theme']['colors'],
+  };
   return {
     dashboardTaskLimit: limit(value.dashboardTaskLimit, DEFAULT_SETTINGS.dashboardTaskLimit),
     dashboardProjectLimit: limit(
@@ -182,6 +229,7 @@ function sanitize(value: Partial<UserSettings>): UserSettings {
     ),
     fontSize: isFontSize(value.fontSize) ? value.fontSize : DEFAULT_SETTINGS.fontSize,
     fontFamily: isFontFamily(value.fontFamily) ? value.fontFamily : DEFAULT_SETTINGS.fontFamily,
+    theme,
     updatedAt: typeof value.updatedAt === 'string' ? value.updatedAt : null,
   };
 }

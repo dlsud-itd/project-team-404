@@ -19,6 +19,7 @@ import { RouterLink } from '@angular/router';
 import { Observable, catchError, finalize, map, of, switchMap, timer } from 'rxjs';
 import { usernameFormatValidator } from '../../../shared/validators/username-format.validator';
 import { AuthService, AvailabilityResponse } from '../auth.service';
+import { ThemeSwitcher } from '../../../shared/components/theme-switcher/theme-switcher';
 
 export const DEFAULT_TIMEZONE = 'Asia/Manila';
 export const AVAILABILITY_DEBOUNCE_MS = 400;
@@ -45,7 +46,7 @@ function apiErrorMessage(error: HttpErrorResponse): string | undefined {
 
 @Component({
   selector: 'app-register',
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, RouterLink, ThemeSwitcher],
   templateUrl: './register.html',
   styleUrl: './register.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

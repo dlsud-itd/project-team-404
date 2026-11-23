@@ -68,7 +68,7 @@ h1 {
     background: rgb(255 255 255 / 0.6);
   }
   &.active {
-    background: #fff;
+    background: var(--theme-surface);
     color: var(--brown);
     box-shadow: 0 1px 4px rgb(0 0 0 / 0.08);
   }
@@ -94,7 +94,7 @@ h1 {
 
 .panel {
   border-radius: 1rem;
-  background: #fff;
+  background: var(--theme-surface);
   box-shadow: 0 1px 3px rgb(0 0 0 / 0.06);
 }
 
@@ -198,7 +198,7 @@ button {
   padding: 0.4375rem 0.875rem;
   border: 1px solid var(--field-border);
   border-radius: 999px;
-  background: #fff;
+  background: var(--theme-surface);
   color: var(--ink);
   font: inherit;
   font-size: 0.875rem;

@@ -11,33 +11,7 @@
   }
 
   @if (composing()) {
-    <form class="composer" [formGroup]="form" (ngSubmit)="create()" novalidate>
-      <input
-        class="title-input"
-        formControlName="title"
-        aria-label="Task title"
-        placeholder="What needs doing?"
-        [attr.aria-invalid]="form.controls.title.touched && form.controls.title.invalid"
-      />
-      <select formControlName="projectId" aria-label="Project">
-        <option value="">No project</option>
-        @for (project of store.projects(); track project.id) {
-          <option [value]="project.id">{{ project.name }}</option>
-        }
-      </select>
-      <select formControlName="priorityId" aria-label="Priority">
-        @for (level of priorities.levels(); track level.id) {
-          <option [ngValue]="level.id">{{ level.name }}</option>
-        }
-      </select>
-      <input type="date" formControlName="due" aria-label="Due date" />
-      <button type="submit" class="save" [disabled]="submitting()">
-        {{ submitting() ? 'Adding…' : 'Add task' }}
-      </button>
-      <button type="button" class="cancel" [disabled]="submitting()" (click)="composing.set(false)">
-        Cancel
-      </button>
-    </form>
+    <app-new-task-dialog (created)="store.upsertTask($event)" (closed)="composing.set(false)" />
   }
 
   <ul class="list" tabindex="0" aria-label="Tasks">

@@ -62,11 +62,12 @@ import { projectPermissions } from '../../utils/project-permissions.util';
       padding: 0.875rem 1rem;
       border: 1px solid var(--orange-light);
       border-radius: 0.75rem;
-      background: #fff;
+      background: var(--theme-surface);
+      color: var(--theme-text);
     }
     .inbox {
       border-style: dashed;
-      background: #fff8f4;
+      background: color-mix(in srgb, var(--theme-primary) 8%, var(--theme-surface));
     }
     .swatch {
       flex-shrink: 0;
@@ -75,7 +76,7 @@ import { projectPermissions } from '../../utils/project-permissions.util';
       margin-top: 0.1875rem;
       border: 1px solid rgb(0 0 0 / 0.15);
       border-radius: 3px;
-      background: #e6dcd7;
+      background: var(--theme-border);
     }
     .body {
       flex: 1;
@@ -98,15 +99,15 @@ import { projectPermissions } from '../../utils/project-permissions.util';
         text-decoration: underline;
       }
       &:focus-visible {
-        outline: 2px solid #7b23a8;
+        outline: 2px solid var(--theme-info);
         outline-offset: 2px;
       }
     }
     .badge {
       padding: 0.0625rem 0.5rem;
       border-radius: 999px;
-      background: #f3e2f7;
-      color: #7b23a8;
+      background: color-mix(in srgb, var(--theme-secondary) 18%, var(--theme-surface));
+      color: var(--theme-secondary);
       font-size: 0.6875rem;
       font-weight: 600;
     }
@@ -128,7 +129,7 @@ import { projectPermissions } from '../../utils/project-permissions.util';
       padding: 0.25rem 0.75rem;
       border: 1px solid var(--field-border);
       border-radius: 999px;
-      background: #fff;
+      background: var(--theme-surface);
       color: var(--ink);
       font: inherit;
       font-size: 0.75rem;
@@ -136,10 +137,10 @@ import { projectPermissions } from '../../utils/project-permissions.util';
       text-decoration: none;
       cursor: pointer;
       &:hover {
-        background: #fdeee6;
+        background: color-mix(in srgb, var(--theme-primary) 12%, var(--theme-surface));
       }
       &:focus-visible {
-        outline: 2px solid #7b23a8;
+        outline: 2px solid var(--theme-info);
         outline-offset: 2px;
       }
     }

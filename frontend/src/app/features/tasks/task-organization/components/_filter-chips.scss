@@ -3,7 +3,7 @@
  * menu. Pill buttons and the purple accent follow the list pages' "+ New" button.
  */
 
-$accent: #7b23a8;
+$accent: var(--theme-primary);
 $accent-tint: #f5eafa;
 $line: #d9cbc4;
 
@@ -23,7 +23,7 @@ $line: #d9cbc4;
   padding: 0 0.875rem;
   border: 1px solid $line;
   border-radius: 999px;
-  background: #fff;
+  background: var(--theme-surface);
   color: var(--ink);
   font: inherit;
   font-size: 0.875rem;
@@ -72,7 +72,7 @@ $line: #d9cbc4;
   overflow-y: auto;
   border: 1px solid $line;
   border-radius: 0.75rem;
-  background: #fff;
+  background: var(--theme-surface);
   box-shadow: 0 6px 20px rgb(29 23 20 / 0.12);
 }
 

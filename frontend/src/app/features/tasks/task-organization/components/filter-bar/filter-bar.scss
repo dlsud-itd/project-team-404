@@ -125,7 +125,7 @@
     padding: 0 0.625rem;
     border: 1px solid chips.$line;
     border-radius: 0.5rem;
-    background: #fff;
+    background: var(--theme-surface);
     color: var(--ink);
     font: inherit;
     font-size: 0.875rem;

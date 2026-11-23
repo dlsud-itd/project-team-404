@@ -72,7 +72,7 @@ import { ProjectsStore } from '../../state/projects.store';
       padding: 0.5rem 1.125rem;
       border: 0;
       border-radius: 999px;
-      background: #7b23a8;
+      background: var(--theme-primary);
       color: #fff;
       font: inherit;
       font-size: 0.875rem;
@@ -107,12 +107,12 @@ import { ProjectsStore } from '../../state/projects.store';
         color: var(--ink);
       }
       &:focus-visible {
-        outline: 2px solid #7b23a8;
+        outline: 2px solid var(--theme-primary);
         outline-offset: 2px;
       }
     }
     .active {
-      border-bottom-color: #7b23a8;
+      border-bottom-color: var(--theme-primary);
       color: var(--ink);
     }
   `,

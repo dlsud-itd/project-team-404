@@ -4,6 +4,7 @@ model UserSetting {
   dashboardProjectLimit Int     @default(5) @db.SmallInt @map("dashboard_project_limit")
   fontSize             String   @default("medium") @db.VarChar(10) @map("font_size")
   fontFamily           String   @default("system") @db.VarChar(30) @map("font_family")
+  theme                Json     @default("{}") @db.JsonB
   createdAt            DateTime @default(now()) @db.Timestamptz(6) @map("created_at")
   updatedAt            DateTime @default(now()) @db.Timestamptz(6) @map("updated_at")
   user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)

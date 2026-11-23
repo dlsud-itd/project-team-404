@@ -35,7 +35,7 @@ h2 {
   overscroll-behavior: contain;
 
   &:focus-visible {
-    outline: 2px solid #7b23a8;
+    outline: 2px solid var(--theme-primary);
     outline-offset: 2px;
   }
 }
@@ -57,7 +57,7 @@ h2 {
   padding: 0.25rem 0.75rem;
   border: 1px solid var(--error);
   border-radius: 999px;
-  background: #fff;
+  background: var(--theme-surface);
   color: var(--error);
   font: inherit;
   font-weight: 600;

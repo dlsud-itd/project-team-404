@@ -115,9 +115,7 @@ describe('SETTINGS_ROUTES', () => {
       'priorities',
     ]);
     expect(children[0].redirectTo).toBe('profile');
-    expect(children.find((route) => route.path === 'profile')?.title).toBe(
-      'Profile · HabitTracker',
-    );
+    expect(children.find((route) => route.path === 'profile')?.title).toBe('Profile · HabitFlow');
   });
 
   it('loads the existing profile page for the Profile tab', async () => {

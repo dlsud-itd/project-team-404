@@ -10,7 +10,7 @@ export const SETTINGS_ROUTES: Routes = [
       { path: '', pathMatch: 'full', redirectTo: 'profile' },
       {
         path: 'profile',
-        title: 'Profile · HabitTracker',
+        title: 'Profile · HabitFlow',
         loadComponent: () =>
           import('../auth/profile/profile-settings/profile-settings').then(
             (m) => m.ProfileSettings,
@@ -18,23 +18,23 @@ export const SETTINGS_ROUTES: Routes = [
       },
       {
         path: 'preferences',
-        title: 'Preferences · HabitTracker',
+        title: 'Preferences · HabitFlow',
         loadComponent: () =>
           import('./preferences/preferences-settings').then((m) => m.PreferencesSettings),
       },
       {
         path: 'config',
-        title: 'Config · HabitTracker',
+        title: 'Config · HabitFlow',
         loadComponent: () => import('./config/config-settings').then((m) => m.ConfigSettings),
       },
       {
         path: 'labels',
-        title: 'Labels · HabitTracker',
+        title: 'Labels · HabitFlow',
         loadComponent: () => import('./labels/label-settings').then((m) => m.LabelSettings),
       },
       {
         path: 'priorities',
-        title: 'Priorities · HabitTracker',
+        title: 'Priorities · HabitFlow',
         loadComponent: () =>
           import('./priorities/priority-settings').then((m) => m.PrioritySettings),
       },

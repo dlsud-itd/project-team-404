@@ -1,6 +1,6 @@
 <div class="landing">
   <header class="topbar">
-    <a class="brand" routerLink="/">HabitTracker</a>
+    <a class="brand" routerLink="/">HabitFlow</a>
 
     <nav class="nav" aria-label="Main">
       @for (link of navLinks; track link.fragment) {
@@ -9,6 +9,7 @@
     </nav>
 
     <div class="actions">
+      <app-theme-switcher />
       <a class="login" routerLink="/login">Log in</a>
       <a class="cta cta--small" routerLink="/register">Get Started</a>
     </div>
@@ -54,7 +55,7 @@
               </li>
             }
           </ul>
-          <ul class="showcase-tags" aria-label="What HabitTracker helps with">
+          <ul class="showcase-tags" aria-label="What HabitFlow helps with">
             @for (item of showcases; track item.label) {
               <li class="tag" [class.tag--peach]="item.tone === 'peach'">{{ item.label }}</li>
             }

@@ -2,9 +2,18 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { environment } from '../../../../environments/environment';
-import { FONT_FAMILY_PROPERTY, FONT_SIZE_PROPERTY, SettingsStore } from '../state/settings.store';
+import {
+  FONT_FAMILY_PROPERTY,
+  FONT_SIZE_PROPERTY,
+  SettingsStore,
+  THEME_MODE_ATTRIBUTE,
+} from '../state/settings.store';
 import { clearSettingsCache } from '../testing/settings-cache';
-import { DEFAULT_SETTINGS, type UserSettings } from '../types/user-settings.types';
+import {
+  DEFAULT_SETTINGS,
+  THEME_COLOR_OPTIONS,
+  type UserSettings,
+} from '../types/user-settings.types';
 import { PreferencesSettings } from './preferences-settings';
 
 const URL = `${environment.apiBaseUrl}/api/settings`;
@@ -65,20 +74,21 @@ describe('PreferencesSettings', () => {
     clearSettingsCache();
     document.documentElement.style.removeProperty(FONT_SIZE_PROPERTY);
     document.documentElement.style.removeProperty(FONT_FAMILY_PROPERTY);
+    for (const { key } of THEME_COLOR_OPTIONS) {
+      document.documentElement.style.removeProperty(`--theme-${key}`);
+    }
+    document.documentElement.removeAttribute(THEME_MODE_ATTRIBUTE);
   });
 
   it('offers font size as a four-way segmented control with the saved size picked', () => {
     open({ ...SAVED, fontSize: 'large' });
 
-    expect(text('legend')).toBe('Font size');
-    expect([...page.querySelectorAll('.segment span')].map((s) => s.textContent)).toEqual([
-      'Small',
-      'Medium',
-      'Large',
-      'Extra large',
-    ]);
+    expect(text('fieldset:has(input[name="font-size"]) legend')).toBe('Font size');
+    expect(
+      radios().map((input) => input.closest('.segment')?.querySelector('span')?.textContent),
+    ).toEqual(['Small', 'Medium', 'Large', 'Extra large']);
     expect(radios().map((r) => r.checked)).toEqual([false, false, true, false]);
-    expect(el('.segment.selected')?.textContent?.trim()).toBe('Large');
+    expect(radio('large').closest('.segment')?.textContent?.trim()).toBe('Large');
   });
 
   it('offers the five fonts in a labelled select with the saved one picked', () => {
@@ -93,6 +103,36 @@ describe('PreferencesSettings', () => {
       'Atkinson Hyperlegible',
     ]);
     expect(select().value).toBe('serif');
+  });
+
+  it('switches modes, previews available presets and applies their colors', () => {
+    open();
+    const darkMode = page.querySelector<HTMLInputElement>(
+      'input[name="theme-mode"][value="dark"]',
+    )!;
+    darkMode.click();
+    render();
+
+    const presets = [...page.querySelectorAll<HTMLButtonElement>('.preset-option')];
+    expect(
+      presets.map((preset) => preset.querySelector('.preset-name')?.textContent?.trim()),
+    ).toEqual(['Midnight', 'Forest', 'Violet']);
+    expect(presets[0].querySelector('.preset-preview')?.getAttribute('style')).toContain(
+      'background-color: rgb(23, 25, 30)',
+    );
+    expect(document.documentElement.getAttribute(THEME_MODE_ATTRIBUTE)).toBe('dark');
+
+    presets[1].click();
+    render();
+    expect(presets[1].getAttribute('aria-pressed')).toBe('true');
+    expect(rootStyle('--theme-primary')).toBe('#8ed0a4');
+
+    const primary = el<HTMLInputElement>('#color-primary')!;
+    primary.value = '#226688';
+    primary.dispatchEvent(new Event('input'));
+    render();
+    expect(document.documentElement.style.getPropertyValue('--theme-primary')).toBe('#226688');
+    expect(text('.unsaved')).toBe('Unsaved changes');
   });
 
   it('applies a change to the whole app at once and in the preview', () => {
@@ -119,7 +159,11 @@ describe('PreferencesSettings', () => {
 
     const req = http.expectOne(URL);
     expect(req.request.method).toBe('PATCH');
-    expect(req.request.body).toEqual({ fontSize: 'small', fontFamily: 'monospace' });
+    expect(req.request.body).toEqual({
+      fontSize: 'small',
+      fontFamily: 'monospace',
+      theme: DEFAULT_SETTINGS.theme,
+    });
     req.flush({ ...SAVED, fontSize: 'small', fontFamily: 'monospace' });
     render();
 

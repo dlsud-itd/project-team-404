@@ -60,7 +60,8 @@ import { TaskForm } from '../../task-form/task-form';
       padding: 1.5rem;
       overflow-y: auto;
       border-radius: 1rem;
-      background: #fff;
+      background: var(--theme-surface);
+      color: var(--theme-text);
       box-shadow: 0 20px 48px rgb(0 0 0 / 0.2);
     }
   `,

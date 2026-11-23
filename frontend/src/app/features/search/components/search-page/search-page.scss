@@ -68,7 +68,7 @@ h1 {
   }
 
   &.active {
-    background: #fff;
+    background: var(--theme-surface);
     color: var(--brown);
     box-shadow: 0 1px 4px rgb(0 0 0 / 0.08);
   }
@@ -96,7 +96,7 @@ h1 {
 .panel {
   overflow: hidden;
   border-radius: 1rem;
-  background: #fff;
+  background: var(--theme-surface);
   box-shadow: 0 1px 3px rgb(0 0 0 / 0.06);
 }
 
@@ -116,13 +116,13 @@ h1 {
   padding: 0 1rem;
   border: 1px solid var(--field-border);
   border-radius: 999px;
-  background: #fff;
+  background: var(--theme-surface);
   color: var(--ink-muted);
   cursor: text;
 
   &:focus-within {
-    border-color: #7b23a8;
-    box-shadow: 0 0 0 3px rgb(123 35 168 / 0.15);
+    border-color: var(--theme-primary);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--theme-primary) 18%, transparent);
   }
 
   input {
@@ -179,7 +179,7 @@ h1 {
       width: 0.875rem;
       height: 0.875rem;
       border-radius: 50%;
-      background: #fff;
+      background: var(--theme-surface);
       transition: transform 150ms ease;
     }
   }

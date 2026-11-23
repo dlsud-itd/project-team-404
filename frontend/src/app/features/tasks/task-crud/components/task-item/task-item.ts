@@ -158,7 +158,7 @@ import { TasksStore } from '../../../shared/state/tasks.store';
       padding: 0 0.5rem;
       border-radius: 999px;
       background: #f3e2f7;
-      color: #7b23a8;
+      color: var(--theme-primary);
       font-weight: 600;
     }
     .complete {
@@ -206,10 +206,10 @@ import { TasksStore } from '../../../shared/state/tasks.store';
       text-decoration: none;
       cursor: pointer;
       &:hover {
-        background: #fdeee6;
+        background: color-mix(in srgb, var(--theme-primary) 10%, var(--theme-surface));
       }
       &:focus-visible {
-        outline: 2px solid #7b23a8;
+        outline: 2px solid var(--theme-primary);
         outline-offset: 2px;
       }
     }

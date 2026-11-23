@@ -6,7 +6,7 @@
   padding: 1.25rem 1rem 1rem;
   border: 1px solid var(--orange-light);
   border-radius: 0.75rem;
-  background: #fff;
+  background: var(--theme-surface);
 }
 
 .heading-row {
@@ -45,7 +45,7 @@
     padding: 0 2rem 0 0.75rem;
     border: 1px solid #d9cbc4;
     border-radius: 999px;
-    background: #fff;
+    background: var(--theme-surface);
     color: var(--ink);
     font: inherit;
     font-weight: 600;
@@ -63,7 +63,7 @@
   padding: 0.45rem 0.8rem;
   border: 1px solid var(--field-border);
   border-radius: 999px;
-  background: #fff;
+  background: var(--theme-surface);
   color: var(--ink);
   font: inherit;
   font-size: 0.8rem;
@@ -209,7 +209,7 @@ button:disabled {
   }
 
   &:hover {
-    background: #fdf0ee;
+    background: color-mix(in srgb, var(--theme-primary) 10%, var(--theme-surface));
     color: var(--error);
   }
 }

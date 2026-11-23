@@ -21,8 +21,8 @@
   margin: 0 auto;
   padding: 2.5rem clamp(1.5rem, 5vw, 2.5rem);
   border-radius: 1.5rem;
-  background: #a963c2;
-  color: #fff;
+  background: var(--theme-secondary);
+  color: var(--theme-surface);
 }
 
 .heading {
@@ -37,7 +37,7 @@
 .text {
   max-width: 20rem;
   margin: 0.375rem 0 0;
-  color: #e7cdf0;
+  color: color-mix(in srgb, var(--theme-secondary) 20%, var(--theme-surface));
   font-size: 0.8125rem;
   font-weight: 500;
 }
@@ -77,7 +77,7 @@
 }
 
 .pill--light {
-  background: #fff;
+  background: var(--theme-surface);
   color: var(--ink);
 
   &:hover {

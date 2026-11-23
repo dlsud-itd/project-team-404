@@ -9,7 +9,7 @@ export const PROJECTS_ROUTES: Routes = [
   { path: 'new', pathMatch: 'full', redirectTo: '/home?tab=projects' },
   {
     path: ':projectId/edit',
-    title: 'Edit project · HabitTracker',
+    title: 'Edit project · HabitFlow',
     data: { mode: 'edit' },
     loadComponent: () =>
       import('./project-crud/project-form/project-form').then((m) => m.ProjectForm),

@@ -83,7 +83,7 @@ import { DashboardStore } from '../dashboard.store';
       overscroll-behavior: contain;
       list-style: none;
       &:focus-visible {
-        outline: 2px solid #7b23a8;
+        outline: 2px solid var(--theme-primary);
         outline-offset: 2px;
       }
     }
@@ -107,17 +107,18 @@ import { DashboardStore } from '../dashboard.store';
       text-align: left;
       cursor: pointer;
       &:hover {
-        background: #fdeee6;
+        background: color-mix(in srgb, var(--theme-primary) 10%, var(--theme-surface));
       }
       &.active {
-        background: #fbc4a6;
+        background: var(--theme-primary);
+        color: #fff;
       }
     }
     .all svg {
       width: 1rem;
       height: 1rem;
       fill: none;
-      stroke: #7b23a8;
+      stroke: var(--theme-primary);
       stroke-width: 2;
       stroke-linejoin: round;
     }
@@ -143,7 +144,7 @@ import { DashboardStore } from '../dashboard.store';
       font-size: 0.625rem;
     }
     button:focus-visible {
-      outline: 2px solid #7b23a8;
+      outline: 2px solid var(--theme-primary);
       outline-offset: 1px;
     }
   `,

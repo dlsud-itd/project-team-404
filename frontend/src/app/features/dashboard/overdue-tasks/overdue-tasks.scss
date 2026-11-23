@@ -9,7 +9,7 @@
   padding: 1.75rem 0.75rem 0.75rem;
   border: 1px solid var(--orange-light);
   border-radius: 0.75rem;
-  background: #fff;
+  background: var(--theme-surface);
 }
 
 .pill {
@@ -129,7 +129,7 @@ a.title {
   padding: 0.25rem 0.75rem;
   border: 1px solid var(--error);
   border-radius: 999px;
-  background: #fff;
+  background: var(--theme-surface);
   color: var(--error);
   font: inherit;
   font-weight: 600;

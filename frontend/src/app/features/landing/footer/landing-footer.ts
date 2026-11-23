@@ -4,7 +4,7 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
   selector: 'app-landing-footer',
   template: `
     <footer class="footer">
-      <p class="brand">HabitTracker</p>
+      <p class="brand">HabitFlow</p>
       <p class="tagline">
         Plan. Prioritize<br />
         <!-- The space sits inside the span: Angular drops whitespace-only text between tags. -->
@@ -14,7 +14,7 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
         Tasks, projects, deadlines, priorities and labels, all on one dashboard that shows what's
         current, upcoming and overdue.
       </p>
-      <p class="wordmark" aria-hidden="true">Habit Tracker</p>
+      <p class="wordmark" aria-hidden="true">HabitFlow</p>
     </footer>
   `,
   styles: `
@@ -25,7 +25,7 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
     .footer {
       overflow: hidden;
       padding: 4rem var(--landing-gutter) 2rem;
-      background: linear-gradient(180deg, #c8673c 0%, #a2496f 50%, #7a24a8 100%);
+      background: linear-gradient(180deg, var(--theme-primary) 0%, var(--theme-secondary) 100%);
       color: #fff;
     }
 

@@ -1,4 +1,5 @@
 import { prisma } from '../../../../shared/db/prisma.client';
+import { DEFAULT_THEME_SETTINGS } from '../../types';
 
 export async function getOrCreateSettings(userId: string) {
   return prisma.userSetting.upsert({
@@ -9,6 +10,7 @@ export async function getOrCreateSettings(userId: string) {
       dashboardProjectLimit: 5,
       fontSize: 'medium',
       fontFamily: 'system',
+      theme: DEFAULT_THEME_SETTINGS,
     },
     update: {},
   });

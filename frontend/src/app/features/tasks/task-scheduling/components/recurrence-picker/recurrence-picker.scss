@@ -45,7 +45,7 @@ legend {
   span {
     display: block;
     padding: 0.625rem 0.5rem;
-    background: #fff;
+    background: var(--theme-surface);
     font-size: 0.875rem;
     font-weight: 600;
     text-align: center;
@@ -56,7 +56,7 @@ legend {
   }
 
   input:checked + span {
-    background: #7b23a8;
+    background: var(--theme-primary);
     color: #fff;
   }
 
@@ -109,7 +109,7 @@ legend {
     padding: 0.5rem 0;
     border: 1px solid var(--field-border);
     border-radius: 0.5rem;
-    background: #fff;
+    background: var(--theme-surface);
     font-size: 0.8125rem;
     font-weight: 600;
     text-align: center;
@@ -120,8 +120,8 @@ legend {
   }
 
   input:checked + span {
-    border-color: #7b23a8;
-    background: #7b23a8;
+    border-color: var(--theme-primary);
+    background: var(--theme-primary);
     color: #fff;
   }
 
@@ -152,7 +152,7 @@ legend {
 
   input {
     margin: 0;
-    accent-color: #7b23a8;
+    accent-color: var(--theme-primary);
   }
 }
 

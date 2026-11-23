@@ -399,6 +399,18 @@
       }
     },
     {
+      "label": "📤 Supabase: Push Local Migrations",
+      "type": "npm",
+      "script": "supabase:local:push",
+      "path": ".",
+      "detail": "Applies pending repository migrations to the running local database without resetting it or targeting the linked remote project.",
+      "presentation": {
+        "group": "supabase",
+        "panel": "shared",
+        "reveal": "always"
+      }
+    },
+    {
       "label": "⏹️ Supabase: Stop Local DB",
       "type": "npm",
       "script": "supabase:local:stop",

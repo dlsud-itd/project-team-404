@@ -394,15 +394,15 @@ Tests: `tests/e2e/projects/project-organization.e2e.spec.ts`. Each test creates 
 
 ### 6.1 Landing Page Frontend Integration Tests
 
-| ID        | Test Case                                                        | Expected Result                                                                                                 | Status  |
-| --------- | ---------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- | ------- |
-| FE-LND-01 | Open `/` as a guest                                              | Hero heading, four feature groups, four steps, closing card and footer are shown; page title is `HabitTracker`. | Passing |
-| FE-LND-02 | Click Get Started, or Create free account in the hero or closing | User is taken to `/register`.                                                                                   | Passing |
-| FE-LND-03 | Click Log in, or I already have an account                       | User is taken to `/login`.                                                                                      | Passing |
-| FE-LND-04 | Click Features, How it works or About in the header              | Page scrolls to `#features`, `#how-it-works` or `#about`.                                                       | Passing |
-| FE-LND-05 | Open `/` with a stored token that `GET /api/auth/me` accepts     | `guestGuard` redirects the user to `/home`.                                                                     | Passing |
-| FE-LND-06 | Open `/` with a stored token that `GET /api/auth/me` rejects     | Landing page is shown.                                                                                          | Passing |
-| FE-LND-07 | Check images and headings                                        | Every image has alt text or is `aria-hidden`; one `h1`, and heading levels never skip on the way down.          | Passing |
+| ID        | Test Case                                                        | Expected Result                                                                                              | Status  |
+| --------- | ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ | ------- |
+| FE-LND-01 | Open `/` as a guest                                              | Hero heading, four feature groups, four steps, closing card and footer are shown; page title is `HabitFlow`. | Passing |
+| FE-LND-02 | Click Get Started, or Create free account in the hero or closing | User is taken to `/register`.                                                                                | Passing |
+| FE-LND-03 | Click Log in, or I already have an account                       | User is taken to `/login`.                                                                                   | Passing |
+| FE-LND-04 | Click Features, How it works or About in the header              | Page scrolls to `#features`, `#how-it-works` or `#about`.                                                    | Passing |
+| FE-LND-05 | Open `/` with a stored token that `GET /api/auth/me` accepts     | `guestGuard` redirects the user to `/home`.                                                                  | Passing |
+| FE-LND-06 | Open `/` with a stored token that `GET /api/auth/me` rejects     | Landing page is shown.                                                                                       | Passing |
+| FE-LND-07 | Check images and headings                                        | Every image has alt text or is `aria-hidden`; one `h1`, and heading levels never skip on the way down.       | Passing |
 
 Tests: `frontend/tests/integration/features/landing/landing.integration.spec.ts`. The app runs with its real `appConfig` (the `''` route behind `guestGuard`, `SessionService`, the restore-session initializer and the router's anchor scrolling); only the network is faked.
 

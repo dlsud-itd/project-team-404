@@ -27,6 +27,7 @@
     "supabase:status": "supabase migration list",
     "supabase:local:start": "supabase start",
     "supabase:local:status": "supabase status",
+    "supabase:local:push": "supabase db push --local",
     "supabase:local:stop": "supabase stop",
     "supabase:local:reset": "supabase db reset --local --no-seed",
     "supabase:local:seed": "node scripts/supabase-seed.mjs --local",
