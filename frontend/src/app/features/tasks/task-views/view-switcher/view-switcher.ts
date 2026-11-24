@@ -2,11 +2,16 @@ import { ChangeDetectionStrategy, Component, computed, input } from '@angular/co
 import { RouterLink } from '@angular/router';
 
 /** How a page shows its tasks. */
-export type TaskView = 'list' | 'board';
+export type TaskView = 'list' | 'board' | 'timeline';
+
+/** The view a query parameter names; anything else, or nothing, is the list. */
+export function toTaskView(value: string | null): TaskView {
+  return value === 'board' || value === 'timeline' ? value : 'list';
+}
 
 /**
- * The List / Board switch. Each option is a link that sets one query parameter, so the view
- * survives reloads and Back, and the page's other parameters (filters, tab) are kept.
+ * The List / Board / Timeline switch. Each option is a link that sets one query parameter, so
+ * the view survives reloads and Back, and the page's other parameters (filters, tab) are kept.
  */
 @Component({
   selector: 'app-view-switcher',
@@ -70,9 +75,11 @@ export class ViewSwitcher {
   protected readonly options: { view: TaskView; label: string }[] = [
     { view: 'list', label: 'List' },
     { view: 'board', label: 'Board' },
+    { view: 'timeline', label: 'Timeline' },
   ];
   protected readonly params = computed(() => ({
     list: { [this.param()]: null },
     board: { [this.param()]: 'board' },
+    timeline: { [this.param()]: 'timeline' },
   }));
 }

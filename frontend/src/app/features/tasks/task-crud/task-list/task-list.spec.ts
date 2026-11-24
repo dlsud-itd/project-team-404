@@ -484,6 +484,7 @@ describe('TaskList', () => {
       expect(views().map((v) => [v.textContent?.trim(), v.getAttribute('aria-current')])).toEqual([
         ['List', 'page'],
         ['Board', null],
+        ['Timeline', null],
       ]);
       expect(el('app-sort-menu')).not.toBeNull();
 
@@ -531,6 +532,51 @@ describe('TaskList', () => {
 
       expect(el('.page')!.classList).toContain('wide');
       expect(text('app-board-column .open')).toBe('Write chapter 1');
+      expect(el('app-task-item')).toBeNull();
+    });
+  });
+
+  describe('timeline view', () => {
+    it("opens on the project's timeline from a link, with its filters and no sort", async () => {
+      await open('/projects/10/tasks?view=timeline&recurring=true');
+      http.expectOne(`${PROJECTS_URL}/10`).flush(asApi(CAPSTONE));
+      const request = http.expectOne((r) => r.url === `${TASKS_URL}/timeline`);
+      const params = request.request.params;
+      expect(params.get('projectId')).toBe('10');
+      expect(params.get('recurring')).toBe('true');
+      expect(params.get('from')).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+      request.flush({
+        from: params.get('from'),
+        to: params.get('to'),
+        projects: [
+          {
+            projectId: 10,
+            projectName: 'Capstone',
+            projectColor: null,
+            bars: [
+              {
+                id: 1,
+                title: 'Write chapter 1',
+                projectId: 10,
+                projectName: 'Capstone',
+                projectColor: null,
+                start: params.get('from'),
+                end: params.get('from'),
+                isDone: false,
+                isOverdue: false,
+                priority: 'medium',
+              },
+            ],
+          },
+        ],
+        undatedCount: 0,
+      });
+      harness.detectChanges();
+
+      expect(el('.page')!.classList).toContain('wide');
+      expect(el('app-sort-menu')).toBeNull();
+      expect(el('app-timeline-bar .title')?.textContent?.trim()).toBe('Write chapter 1');
+      expect(el('app-timeline-bar .check')?.getAttribute('role')).toBe('checkbox');
       expect(el('app-task-item')).toBeNull();
     });
   });

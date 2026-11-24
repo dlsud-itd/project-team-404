@@ -43,7 +43,12 @@ import { StreakBadge } from '../../tasks/task-streaks/components/streak-badge/st
 import { BoardView } from '../../tasks/task-views/board-view/board-view';
 import { toBoardFilter } from '../../tasks/task-views/board-view/services/task-board.service';
 import type { BoardFilter } from '../../tasks/task-views/board-view/types/task-board.types';
-import { ViewSwitcher, type TaskView } from '../../tasks/task-views/view-switcher/view-switcher';
+import { TimelineView } from '../../tasks/task-views/timeline-view/timeline-view';
+import {
+  ViewSwitcher,
+  toTaskView,
+  type TaskView,
+} from '../../tasks/task-views/view-switcher/view-switcher';
 
 /**
  * The query parameters for the Tasks tab's view and board project. Home already uses `view`
@@ -61,6 +66,7 @@ export const BOARD_PROJECT_PARAM = 'boardProject';
     SortMenu,
     StreakBadge,
     BoardView,
+    TimelineView,
     ViewSwitcher,
     ArchiveAction,
   ],
@@ -112,7 +118,7 @@ export class TasksPage {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   protected readonly viewParam = TASK_VIEW_PARAM;
-  /** List of every task, or one project's board; the URL keeps it. */
+  /** List of every task, one project's board, or every project's timeline; the URL keeps it. */
   protected readonly view = signal<TaskView>('list');
   /** The project named in the URL, if any. */
   private readonly requestedProject = signal<number | null>(null);
@@ -126,12 +132,12 @@ export class TasksPage {
     if (requested !== null && projects.some((p) => p.projectId === requested)) return requested;
     return (projects.find((p) => !p.isInbox) ?? projects[0])?.projectId ?? null;
   });
-  /** The board's filters; a new object reloads the board. */
+  /** The board's or timeline's filters; a new object reloads it. */
   protected readonly boardFilter = signal<BoardFilter>({});
 
   constructor() {
     this.route.queryParamMap.pipe(takeUntilDestroyed()).subscribe((params) => {
-      const view: TaskView = params.get(TASK_VIEW_PARAM) === 'board' ? 'board' : 'list';
+      const view: TaskView = toTaskView(params.get(TASK_VIEW_PARAM));
       const project = Number(params.get(BOARD_PROJECT_PARAM));
       this.requestedProject.set(Number.isInteger(project) && project > 0 ? project : null);
       if (view === this.view()) return;
@@ -194,7 +200,7 @@ export class TasksPage {
 
   /** Reloads whichever view is on screen with the current filters. */
   private reloadView(): void {
-    if (this.view() === 'board') this.boardFilter.set(toBoardFilter(this.filter()));
+    if (this.view() !== 'list') this.boardFilter.set(toBoardFilter(this.filter()));
     else this.reloads.next();
   }
 
@@ -283,7 +289,7 @@ export class TasksPage {
   }
 
   protected addCreatedTask(task: Task): void {
-    if (this.view() === 'board') this.reloadView();
+    if (this.view() !== 'list') this.reloadView();
     this.taskList.update((tasks) =>
       tasks.some((item) => item.taskId === task.taskId) ? tasks : [...tasks, task],
     );

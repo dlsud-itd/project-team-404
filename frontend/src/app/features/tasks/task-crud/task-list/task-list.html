@@ -1,4 +1,4 @@
-<main class="page" [class.wide]="view() === 'board'">
+<main class="page" [class.wide]="view() !== 'list'">
   <header class="head">
     <a class="back" routerLink="/projects">← Projects</a>
     <div class="title-row">
@@ -39,7 +39,7 @@
         (changed)="changeQuery($event)"
         (cleared)="clearFilters()"
       />
-      <!-- The board keeps its own order, so sorting only applies to the list. -->
+      <!-- The board keeps its own order and the timeline goes by date, so sorting is list-only. -->
       @if (view() === 'list') {
         <app-sort-menu
           class="sort"
@@ -65,6 +65,16 @@
           (loadFailed)="dropRejectedFilters($event)"
           (clearFilters)="clearFilters()"
           (newTask)="newTask()"
+        />
+      }
+    } @else if (view() === 'timeline') {
+      @if (boardFilter(); as filter) {
+        <app-timeline-view
+          [projectId]="projectId()"
+          [filter]="filter"
+          [filtersActive]="query.count() > 0"
+          (loadFailed)="dropRejectedFilters($event)"
+          (clearFilters)="clearFilters()"
         />
       }
     } @else {

@@ -223,6 +223,9 @@ export class TaskForm implements OnInit {
     this.listUrl = `/projects/${this.route.paramMap.get('projectId')}/tasks`;
     this.form.controls.projectId.setValue(this.projectId);
     if (this.popup?.dueDate) this.form.controls.dueDate.setValue(this.popup.dueDate);
+    if (this.popup?.scheduledDate) {
+      this.form.controls.scheduledDate.setValue(this.popup.scheduledDate);
+    }
     this.loadState.set(this.mode === 'edit' ? 'loading' : 'ready');
 
     if (!this.dialog && !this.validId(this.projectId)) {

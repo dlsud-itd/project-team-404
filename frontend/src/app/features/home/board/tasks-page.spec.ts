@@ -314,15 +314,34 @@ describe('TasksPage board view', () => {
 
   afterEach(() => http.verify());
 
-  it('offers a List and Board switch that keeps the tab', async () => {
+  it('offers a List, Board and Timeline switch that keeps the tab', async () => {
     await open('/?tab=tasks');
 
     expect(views().map((v) => [v.textContent?.trim(), v.getAttribute('aria-current')])).toEqual([
       ['List', 'page'],
       ['Board', null],
+      ['Timeline', null],
     ]);
     expect(views()[1].getAttribute('href')).toBe('/?tab=tasks&taskView=board');
+    expect(views()[2].getAttribute('href')).toBe('/?tab=tasks&taskView=timeline');
     expect(el('app-board-view')).toBeNull();
+  });
+
+  it("shows every project's timeline and hides the sort", async () => {
+    await open('/?tab=tasks&taskView=timeline');
+    const request = http.expectOne((r) => r.url === `${TASKS_URL}/timeline`);
+    expect(request.request.params.has('projectId')).toBe(false);
+    const from = request.request.params.get('from');
+    request.flush({ from, to: request.request.params.get('to'), projects: [], undatedCount: 2 });
+    fixture.detectChanges();
+
+    expect(el('app-sort-menu')).toBeNull();
+    expect(el('#board-project')).toBeNull();
+    expect(el('app-timeline-view .empty-title')?.textContent?.trim()).toBe(
+      'Nothing scheduled this week.',
+    );
+    // The link back to the list clears this tab's own view parameter.
+    expect(el('app-timeline-view .undated a')?.getAttribute('href')).toBe('/?tab=tasks');
   });
 
   it('shows the first real project’s board and hides the sort', async () => {

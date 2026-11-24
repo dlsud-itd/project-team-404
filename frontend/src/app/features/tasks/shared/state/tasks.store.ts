@@ -21,7 +21,12 @@ export class TasksStore {
   /** True once a list request for projectId has succeeded. */
   readonly loaded = signal(false);
   /** Set while the new-task popup is open; a null project means the Inbox. */
-  readonly creating = signal<{ projectId: number | null; dueDate?: string } | null>(null);
+  readonly creating = signal<{
+    projectId: number | null;
+    dueDate?: string;
+    /** The day the task starts, e.g. the day clicked on the timeline. */
+    scheduledDate?: string;
+  } | null>(null);
 
   /** Active tasks of the current project. Tasks moved to another project drop out. */
   readonly tasks = computed(() =>
