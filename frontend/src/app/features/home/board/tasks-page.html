@@ -15,7 +15,7 @@
       (changed)="query.set($event)"
       (cleared)="query.clear()"
     />
-    <!-- The board keeps its own order, so sorting only applies to the list. -->
+    <!-- The board keeps its own order and the timeline goes by date, so sorting is list-only. -->
     @if (view() === 'list') {
       <app-sort-menu
         class="sort"
@@ -64,6 +64,14 @@
     } @else {
       <p class="empty">Create a project to see its tasks on a board.</p>
     }
+  } @else if (view() === 'timeline') {
+    <!-- Every project's dated tasks, grouped by project. -->
+    <app-timeline-view
+      [filter]="boardFilter()"
+      [filtersActive]="query.count() > 0"
+      [viewParam]="viewParam"
+      (clearFilters)="query.clear()"
+    />
   } @else if (loadError(); as message) {
     <div class="load-error" role="alert">
       <p>Couldn't load your projects and tasks. {{ message }}</p>

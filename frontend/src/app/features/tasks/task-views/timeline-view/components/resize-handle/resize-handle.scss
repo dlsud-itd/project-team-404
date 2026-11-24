@@ -1,0 +1,57 @@
+/*
+ * A thin hit area on its column's right edge; the parent must be positioned. The visible line
+ * only appears on hover, focus or while dragging, so the chart stays quiet otherwise.
+ */
+:host {
+  position: absolute;
+  top: 0;
+  right: -6px;
+  bottom: 0;
+  z-index: 3;
+  width: 12px;
+  cursor: col-resize;
+  touch-action: none;
+  user-select: none;
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 5px;
+    width: 2px;
+    border-radius: 1px;
+    background: transparent;
+    transition: background-color 120ms ease;
+  }
+
+  &:hover::after,
+  &.dragging::after {
+    background: var(--theme-primary);
+  }
+
+  &:focus-visible {
+    outline: none;
+
+    &::after {
+      left: 4px;
+      width: 4px;
+      background: var(--ink);
+    }
+  }
+
+  @media (pointer: coarse) {
+    right: -10px;
+    width: 20px;
+
+    &::after {
+      left: 9px;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    &::after {
+      transition: none;
+    }
+  }
+}

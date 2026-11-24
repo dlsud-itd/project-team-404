@@ -1,0 +1,43 @@
+<div
+  class="bar"
+  [class.done]="bar().isDone"
+  [class.overdue]="bar().isOverdue"
+  [class.cut-start]="geometry()?.clippedStart"
+  [class.cut-end]="geometry()?.clippedEnd"
+  [style.--project-color]="bar().projectColor"
+  [cdkContextMenuTriggerFor]="menu"
+  (click)="open.emit()"
+>
+  @if (geometry()?.clippedStart) {
+    <span class="cut" aria-hidden="true">‹</span>
+  }
+  <button
+    type="button"
+    class="check"
+    role="checkbox"
+    [attr.aria-checked]="bar().isDone"
+    [attr.aria-label]="checkLabel()"
+    [attr.aria-busy]="busy() || null"
+    [disabled]="busy()"
+    (click)="check($event)"
+  >
+    <svg viewBox="0 0 16 16" aria-hidden="true"><path d="m4.5 8.25 2.25 2.25 4.75-5" /></svg>
+  </button>
+  <button type="button" class="title" [attr.aria-label]="label()" [title]="tooltip()">
+    {{ bar().title }}
+  </button>
+  @if (geometry()?.clippedEnd) {
+    <span class="cut" aria-hidden="true">›</span>
+  }
+</div>
+
+<ng-template #menu>
+  <div class="menu" cdkMenu [attr.aria-label]="'Actions for ' + bar().title">
+    <button type="button" class="item" cdkMenuItem (cdkMenuItemTriggered)="open.emit()">
+      Edit
+    </button>
+    <button type="button" class="item" cdkMenuItem (cdkMenuItemTriggered)="archive.emit()">
+      Archive
+    </button>
+  </div>
+</ng-template>

@@ -1,0 +1,142 @@
+<p class="visually-hidden" aria-live="polite">{{ announcement() }}</p>
+
+<app-timeline-header
+  [zoom]="zoom()"
+  [window]="window()"
+  [includeCompleted]="includeCompleted()"
+  [showsToday]="showsToday()"
+  (navigate)="step($event)"
+  (zoomChange)="setZoom($event)"
+  (includeCompletedChange)="includeCompleted.set($event)"
+/>
+
+@if (error(); as message) {
+  <div class="load-error" role="alert">
+    <p>Couldn't load the timeline. {{ message }}</p>
+    <button type="button" class="retry" [disabled]="loading()" (click)="reload()">
+      {{ loading() ? 'Retrying…' : 'Try again' }}
+    </button>
+  </div>
+}
+
+@if (data(); as data) {
+  @if (data.projects.length === 0) {
+    <div class="empty">
+      @if (filtersActive()) {
+        <p class="empty-title">No dated tasks match these filters.</p>
+        <p>Try removing a filter, or clear them all.</p>
+        <button type="button" class="action" (click)="clearFilters.emit()">Clear filters</button>
+      } @else {
+        <p class="empty-title">Nothing scheduled this {{ zoom() }}.</p>
+        <p>Give a task a scheduled or due date to see it here, or move to another {{ zoom() }}.</p>
+      }
+    </div>
+  } @else {
+    <div class="scroller" [attr.aria-busy]="loading()">
+      <div
+        class="chart"
+        [class.resizing]="resizing()"
+        [attr.data-zoom]="zoom()"
+        [attr.data-fixed]="trackWidth() === null ? null : ''"
+        [style.--track-min.px]="minTrackWidth()"
+        [style.--track-w.px]="trackWidth()"
+        [style.--day-w.%]="dayShare()"
+      >
+        <!-- The header's text is hidden from screen readers; its resize handle is not. -->
+        <div #dayStrip class="days">
+          @for (day of days(); track day.date; let index = $index) {
+            <span class="day" [class.weekend]="day.isWeekend" [class.today]="day.date === today()">
+              <span aria-hidden="true">{{ zoom() === 'week' ? day.weekday : day.weekday[0] }}</span>
+              <span class="num" aria-hidden="true"
+                >{{ zoom() === 'week' && day.monthLabel ? day.monthLabel + ' ' : ''
+                }}{{ day.dayOfMonth }}</span
+              >
+              <!-- Any day's edge resizes every day; the first one is the keyboard stop. -->
+              <app-resize-handle
+                label="Resize day columns"
+                emptyText="Fit to screen"
+                [focusable]="index === 0"
+                [value]="dayWidth()"
+                [min]="dayLimits().min"
+                [max]="dayLimits().max"
+                (resizeStart)="startDayResize()"
+                (resizeBy)="resizeDays($event, index)"
+                (resizeEnd)="endResize()"
+                (resizeStep)="stepDays($event)"
+                (reset)="resetDays()"
+              />
+            </span>
+          }
+        </div>
+
+        <div class="body">
+          <div class="backdrop" aria-hidden="true">
+            @for (x of weekends(); track x) {
+              <span class="weekend" [style.left.%]="x"></span>
+            }
+            @if (todayX(); as x) {
+              <span class="today-line" [style.left.%]="x"></span>
+            }
+          </div>
+
+          <!-- Clicking an empty part of a row adds a task to that row's project on that day. -->
+          @for (group of data.projects; track groupKey(group)) {
+            <section class="group" [attr.aria-label]="groupName(group)">
+              <div class="row group-row" (click)="addAt($event, group)">
+                <h4 class="group-label">
+                  <span class="swatch" [style.background]="group.projectColor"></span>
+                  <span class="group-name">{{ groupName(group) }}</span>
+                  <span class="count">
+                    {{ group.bars.length }}
+                    <span class="visually-hidden">{{
+                      group.bars.length === 1 ? 'task' : 'tasks'
+                    }}</span>
+                  </span>
+                </h4>
+              </div>
+              <ul class="bars">
+                @for (bar of group.bars; track bar.id) {
+                  <li class="row" (click)="addAt($event, group)">
+                    <app-timeline-bar
+                      [bar]="bar"
+                      [window]="window()"
+                      [busy]="busyIds().has(bar.id)"
+                      (open)="edit(bar)"
+                      (toggleDone)="toggleDone(bar)"
+                      (archive)="archive(bar)"
+                    />
+                  </li>
+                }
+              </ul>
+            </section>
+          }
+        </div>
+      </div>
+    </div>
+    <p class="hint">Click an empty day to add a task. Right-click a task for more options.</p>
+  }
+
+  @if (data.undatedCount > 0) {
+    <p class="undated">
+      {{ data.undatedCount }} undated {{ data.undatedCount === 1 ? 'task' : 'tasks' }} not shown.
+      <a [routerLink]="[]" [queryParams]="listLinkParams()" queryParamsHandling="merge"
+        >See them in the List view</a
+      >
+    </p>
+  }
+} @else if (loading()) {
+  <div class="skeleton" role="status" aria-label="Loading timeline">
+    @for (row of [1, 2, 3, 4]; track row) {
+      <span
+        class="ghost-bar"
+        aria-hidden="true"
+        [style.margin-left.%]="row * 9"
+        [style.width.%]="22 + row * 6"
+      ></span>
+    }
+  </div>
+}
+
+@if (editingTaskId(); as taskId) {
+  <app-new-task-dialog [taskId]="taskId" (updated)="edited()" (closed)="editingTaskId.set(null)" />
+}

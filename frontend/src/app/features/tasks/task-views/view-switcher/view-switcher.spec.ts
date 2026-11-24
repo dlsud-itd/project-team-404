@@ -24,8 +24,9 @@ describe('ViewSwitcher', () => {
     expect(links().map((a) => [a.textContent?.trim(), a.getAttribute('href')])).toEqual([
       ['List', '/?tab=tasks&status=active'],
       ['Board', '/?tab=tasks&status=active&view=board'],
+      ['Timeline', '/?tab=tasks&status=active&view=timeline'],
     ]);
-    expect(links().map((a) => a.getAttribute('aria-current'))).toEqual([null, 'page']);
+    expect(links().map((a) => a.getAttribute('aria-current'))).toEqual([null, 'page', null]);
   });
 
   it('can use another parameter name', () => {

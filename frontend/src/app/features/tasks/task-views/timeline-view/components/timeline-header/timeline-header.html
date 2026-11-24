@@ -1,0 +1,43 @@
+<div class="nav">
+  <button
+    type="button"
+    class="step"
+    [attr.aria-label]="'Previous ' + unit()"
+    title="Previous"
+    (click)="navigate.emit('prev')"
+  >
+    <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3.5 5.5 8l4.5 4.5" /></svg>
+  </button>
+  <button type="button" class="today" [disabled]="showsToday()" (click)="navigate.emit('today')">
+    Today
+  </button>
+  <button
+    type="button"
+    class="step"
+    [attr.aria-label]="'Next ' + unit()"
+    title="Next"
+    (click)="navigate.emit('next')"
+  >
+    <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3.5 10.5 8 6 12.5" /></svg>
+  </button>
+  <h3 class="range" aria-live="polite">{{ label() }}</h3>
+</div>
+
+<div class="options">
+  <label class="completed">
+    <input type="checkbox" [checked]="includeCompleted()" (change)="toggleCompleted($event)" />
+    Show completed
+  </label>
+  <div class="zoom" role="group" aria-label="Zoom">
+    @for (option of zooms; track option.value) {
+      <button
+        type="button"
+        class="zoom-option"
+        [attr.aria-pressed]="zoom() === option.value"
+        (click)="pickZoom(option.value)"
+      >
+        {{ option.label }}
+      </button>
+    }
+  </div>
+</div>

@@ -161,6 +161,19 @@ describe('TaskForm', () => {
     http.verify();
   });
 
+  describe('create mode from a day on the timeline', () => {
+    beforeEach(async () => {
+      TestBed.inject(TasksStore).creating.set({ projectId: 10, scheduledDate: '2026-11-25' });
+      await harness.navigateByUrl('/projects/10/tasks/new');
+      flushProjects();
+    });
+
+    it('starts on the day that was clicked', () => {
+      expect(el<HTMLInputElement>('#task-scheduled-date').value).toBe('2026-11-25');
+      expect(el<HTMLInputElement>('#task-due-date').value).toBe('');
+    });
+  });
+
   describe('create mode', () => {
     let closed: number;
     let created: Task[];

@@ -55,7 +55,12 @@ import { instantToDate, userTimeZone } from '../../task-scheduling/utils/date-fo
 import { BoardView } from '../../task-views/board-view/board-view';
 import { toBoardFilter } from '../../task-views/board-view/services/task-board.service';
 import type { BoardFilter } from '../../task-views/board-view/types/task-board.types';
-import { ViewSwitcher, type TaskView } from '../../task-views/view-switcher/view-switcher';
+import { TimelineView } from '../../task-views/timeline-view/timeline-view';
+import {
+  ViewSwitcher,
+  toTaskView,
+  type TaskView,
+} from '../../task-views/view-switcher/view-switcher';
 
 /** The tasks of one project, at /projects/:projectId/tasks. */
 @Component({
@@ -67,6 +72,7 @@ import { ViewSwitcher, type TaskView } from '../../task-views/view-switcher/view
     TaskFilterBar,
     SortMenu,
     BoardView,
+    TimelineView,
     ViewSwitcher,
     CdkDropList,
     CdkDrag,
@@ -98,9 +104,11 @@ export class TaskList {
   private readonly reloads = new Subject<void>();
 
   protected readonly projectId = signal(0);
-  /** List or board; the URL keeps it, so links and reloads open the same view. */
+  /** List, board or timeline; the URL keeps it, so links and reloads open the same view. */
   protected readonly view = signal<TaskView>('list');
-  /** The board's filters; a new object reloads the board. Null until the board first opens. */
+  /**
+   * The board's or timeline's filters; a new object reloads it. Null until either first opens.
+   */
   protected readonly boardFilter = signal<BoardFilter | null>(null);
   protected readonly project = computed(() => this.projectsStore.byId(this.projectId()) ?? null);
   /** The project does not exist or belongs to someone else. */
@@ -131,7 +139,7 @@ export class TaskList {
     // Read first, so the project's first load below already knows which view to fill.
     this.route.queryParamMap
       .pipe(
-        map((params): TaskView => (params.get('view') === 'board' ? 'board' : 'list')),
+        map((params): TaskView => toTaskView(params.get('view'))),
         distinctUntilChanged(),
         takeUntilDestroyed(),
       )
@@ -140,11 +148,11 @@ export class TaskList {
         this.view.set(view);
         if (changed && this.projectId() && !this.projectMissing()) this.load();
       });
-    // The new-task popup adds to the list's store; the board has its own copy, so reload it.
+    // The new-task popup adds to the list's store; the board and timeline load their own copy.
     let wasCreating = false;
     effect(() => {
       const creating = this.store.creating() !== null;
-      if (wasCreating && !creating) untracked(() => this.view() === 'board' && this.load());
+      if (wasCreating && !creating) untracked(() => this.view() !== 'list' && this.load());
       wasCreating = creating;
     });
     this.reloads
@@ -193,7 +201,7 @@ export class TaskList {
   }
 
   protected load(): void {
-    if (this.view() === 'board') {
+    if (this.view() !== 'list') {
       this.boardFilter.set(toBoardFilter(toTaskListFilter(this.query.query(), this.today())));
     } else {
       this.reloads.next();
