@@ -1,6 +1,8 @@
 # Sprint 2 Test Matrix
 
-Last Updated: November 7, 2026
+**Version:** 1.0.0  
+**Created:** 2026-09-24  
+**Last Updated:** 2026-11-25
 
 ## Overview
 
@@ -99,7 +101,7 @@ Tests: `tests/e2e/projects/project-crud.e2e.spec.ts`.
 
 - FE-LST-15: the dashboard sidebar lists Inbox first; the Inbox card on the Projects tab opens `/projects/{inboxId}/tasks` with the heading "Inbox".
 - FE-LST-16 also opens the Inbox's edit URL directly and checks that the read-only message shows instead of a form.
-- Run on November 7, 2026 against local Supabase (Docker) with the seed data: the full `npm run test:e2e` suite (14 auth and 9 Projects tests) passed twice in a row. Afterwards harvey's and james's projects matched the seed (favorite, archive and sort order) and no `E2E …` projects were left in `tbl_project`.
+- Run on November 7, 2026 against local Supabase (Docker) with the seed data: the full `npm run test:e2e` suite (14 auth and 9 Projects tests) passed twice in a row. Afterwards harvey's and james's projects matched the seed (favorite, archive and sort order) and no `E2E â€¦` projects were left in `tbl_project`.
 - Before running E2E, regenerate the backend Prisma client (`npm --prefix backend run prisma:generate`). The runner starts the backend directly, so a client generated before the Tasks schema made `GET /api/tasks` and project delete return 500 ("Cannot read properties of undefined (reading 'findMany')"). `prisma:generate` needs `DATABASE_URL` set; the local value is `postgresql://postgres:postgres@127.0.0.1:55432/postgres`.
 
 ## 2. Project Creation
@@ -332,7 +334,7 @@ Tests: the `Project Organization (switcher)` block in `frontend/tests/integratio
 
 Tests: `tests/e2e/projects/project-organization.e2e.spec.ts`. Each test creates two projects through the API and removes them afterwards.
 
-- FE-ORG-11: favorite shows the project under Favorites in both the organize view and All projects; archive moves it to the Archived list (and `GET /api/projects?isArchived=true`); restore brings it back. Reorder is done once by dragging the handle and once with the "Move … down" button from the keyboard; `sort_order` is checked in the database and the order after a reload.
+- FE-ORG-11: favorite shows the project under Favorites in both the organize view and All projects; archive moves it to the Archived list (and `GET /api/projects?isArchived=true`); restore brings it back. Reorder is done once by dragging the handle and once with the "Move â€¦ down" button from the keyboard; `sort_order` is checked in the database and the order after a reload.
 - FE-ORG-14 blocks the route with Playwright for one request only.
 - Harvey's seeded projects get their favorite, archive and sort order put back through the API after each test; the test fails if they differ from the seed.
 
@@ -377,7 +379,7 @@ Tests: `tests/e2e/projects/project-organization.e2e.spec.ts`. Each test creates 
 | FE-DEL-07 | Confirm deletion           | Calls `DELETE /api/projects/{projectId}` once with the token. | Passing |
 | FE-DEL-08 | Handle a successful delete | `movedTaskCount` from the response is shown in the notice.    | Failing |
 
-- FE-DEL-03 is Blocked by Tasks: the backend answers `204 No Content` with no `movedTaskCount`, so the notice reads “Capstone” was deleted. without a count. Loading state and removal are tested and pass. Before this fix the null 204 body made the app report a failed delete after a successful one.
+- FE-DEL-03 is Blocked by Tasks: the backend answers `204 No Content` with no `movedTaskCount`, so the notice reads â€œCapstoneâ€ was deleted. without a count. Loading state and removal are tested and pass. Before this fix the null 204 body made the app report a failed delete after a successful one.
 - FE-DEL-06 is checked for 404 (dialog closes, list reloads), 500 and network errors (dialog stays with the error, project kept). The delete API never returns 400.
 
 ### 5.5 Deletion End-to-End
@@ -440,14 +442,14 @@ Tests: `frontend/tests/integration/features/home/home.integration.spec.ts`. They
 - The spec does not say whether the Inbox can be renamed, recolored, favorited, or reordered. Only archive and delete are explicitly blocked. Cases for those will be added once the team decides.
 - The spec does not say whether project names must be unique per user. No duplicate-name case is included.
 
-## Regression Gate Results — November 5, 2026
+## Regression Gate Results â€” November 5, 2026
 
-| Matrix area                      | Validation                                                                                                          | Result  |
-| -------------------------------- | ------------------------------------------------------------------------------------------------------------------- | ------- |
-| Backend — Project CRUD           | Project API regression and existing integration cases; includes signup Inbox creation, CRUD, and ownership checks.  | Passing |
-| Backend — Project Organization   | Favorite/unfavorite, archive/restore, reorder, Inbox rules, and cross-user isolation through the API.               | Passing |
-| Frontend — Sprint 1 and 2 suites | Frontend unit/integration and regression suites completed with no failures.                                         | Passing |
-| Full Sprint 1 + 2 gate           | Reset-and-seeded database run and E2E remain blocked; see [Sprint2_Regression_Log.md](./Sprint2_Regression_Log.md). | Blocked |
+| Matrix area                        | Validation                                                                                                          | Result  |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------- | ------- |
+| Backend â€” Project CRUD           | Project API regression and existing integration cases; includes signup Inbox creation, CRUD, and ownership checks.  | Passing |
+| Backend â€” Project Organization   | Favorite/unfavorite, archive/restore, reorder, Inbox rules, and cross-user isolation through the API.               | Passing |
+| Frontend â€” Sprint 1 and 2 suites | Frontend unit/integration and regression suites completed with no failures.                                         | Passing |
+| Full Sprint 1 + 2 gate             | Reset-and-seeded database run and E2E remain blocked; see [Sprint2_Regression_Log.md](./Sprint2_Regression_Log.md). | Blocked |
 
 ## Summary
 

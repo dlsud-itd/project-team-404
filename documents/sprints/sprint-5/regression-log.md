@@ -1,5 +1,9 @@
 # Sprint 5 Regression Log
 
+**Version:** 1.0.0  
+**Created:** 2026-09-24  
+**Last Updated:** 2026-11-25
+
 ## Entry 1: November 20, 2026 (sign-off blocked)
 
 - **Commit:** `570fd56` (HEAD; regression changes in this worktree are uncommitted).
@@ -50,7 +54,7 @@ The backend API regression failures are:
 - Task completion timestamp and task response-key expectations differ in the
   scheduling regression.
 
-### `✅ CI: Verify All` component checks
+### `âœ… CI: Verify All` component checks
 
 | Check                             | Result | Notes                                       |
 | --------------------------------- | ------ | ------------------------------------------- |

@@ -1,9 +1,8 @@
 # HabitFlow API Specification
 
-Team-404
-Version 1.1
-Last Updated: 2026, Nov. 06
-Prepared by: Team-404 API Review
+**Version:** 1.1.0  
+**Created:** 2026-09-24  
+**Last Updated:** 2026-11-25
 
 Endpoints marked with an Authorization parameter require the header `Authorization: Bearer <token>` from `/api/auth/login`.
 
@@ -25,11 +24,11 @@ Every authenticated request only sees data owned by that user.
 
 ### A. List Projects
 
-| Item        | Value                                                                                                |
-| ----------- | ---------------------------------------------------------------------------------------------------- |
-| Endpoint    | `/api/projects`                                                                                      |
-| Method      | `GET`                                                                                                |
-| Description | Returns the authenticated user’s projects. Filters can be applied with `isArchived=true` or `false`. |
+| Item        | Value                                                                                                  |
+| ----------- | ------------------------------------------------------------------------------------------------------ |
+| Endpoint    | `/api/projects`                                                                                        |
+| Method      | `GET`                                                                                                  |
+| Description | Returns the authenticated userâ€™s projects. Filters can be applied with `isArchived=true` or `false`. |
 
 #### Request Parameters
 
@@ -218,7 +217,7 @@ Every authenticated request only sees data owned by that user.
 
 | Status | Type    | Field | Description |
 | ------ | ------- | ----- | ----------- |
-| `204`  | `empty` | —     | No content. |
+| `204`  | `empty` | â€”   | No content. |
 
 #### Failure Response
 

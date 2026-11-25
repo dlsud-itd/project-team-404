@@ -1,5 +1,9 @@
 # Sprint 4 Test Matrix
 
+**Version:** 1.0.0  
+**Created:** 2026-09-24  
+**Last Updated:** 2026-11-25
+
 ## Overview
 
 This matrix covers the Current & Upcoming tasks view and the Overdue Tasks view across backend integration, frontend integration, and end-to-end tests. These views depend on the task scheduling contract: tasks are grouped by upcoming scheduled or due dates, while overdue items are incomplete tasks whose due date is in the past. The expected results below describe observable behavior; use the scheduling API specification for exact route, field, and response names.
@@ -34,7 +38,7 @@ Status values: `Failing` means the case is planned but not yet passing; `Blocked
 | FE-CUR-05 | Handle task retrieval failure                           | The UI shows a visible error and preserves the last successful task data.                                                                                           | Failing |
 | FE-CUR-06 | Change task scheduling from the task detail or editor   | Any saved schedule update is reflected in the Current & Upcoming view after a successful response.                                                                  | Blocked |
 | FE-CUR-07 | Group tasks by day in the session timezone              | Tasks fall into Today, Tomorrow and Later by due date in the user's timezone from `GET /api/auth/me`, including a task near midnight; Later is ordered by due date. | Passing |
-| FE-CUR-08 | Show a loading state                                    | "Loading your tasks…" shows until the response arrives, then the groups replace it.                                                                                 | Passing |
+| FE-CUR-08 | Show a loading state                                    | "Loading your tasksâ€¦" shows until the response arrives, then the groups replace it.                                                                               | Passing |
 | FE-CUR-09 | The request returns 500, or one dashboard section fails | An error with Try again is shown and the retry loads the groups; a failure in Current & Upcoming does not hide Overdue, and the reverse.                            | Passing |
 | FE-CUR-10 | Visit `/dashboard` while signed out                     | The user is sent to `/login` and no dashboard request is made.                                                                                                      | Passing |
 | FE-CUR-11 | The request returns 401                                 | The session is cleared and the user is redirected to `/login`.                                                                                                      | Passing |

@@ -1,6 +1,8 @@
 # Team 404 (HabitFlow) - Sprint 5 Ceremony
 
-Sprint 5: Filtering, Archive, Labels & Priorities, Settings & Search | November 8-14, 2026 | Last Updated: November 14, 2026 | Version 1.0.0
+**Version:** 1.0.0  
+**Created:** 2026-09-24  
+**Last Updated:** 2026-11-25
 
 ## Completion
 
@@ -29,7 +31,7 @@ Sprint 5: Filtering, Archive, Labels & Priorities, Settings & Search | November 
 | ---------------------------------------------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------- |
 | [Carry-over from Sprint 3] Task E2E tests      | Tests   | - Completed browser E2E coverage for task CRUD, scheduling, and organization; the task tracker records completion on November 14, 2026. |
 | [Carry-over from Sprint 4] Dashboard E2E tests | Tests   | - Completed the Current & Upcoming and Overdue dashboard E2E specs; the task tracker records completion on November 14, 2026.           |
-| [Carry-over from Sprint 4] Regression tests    | Tests   | - Completed the Sprint 1–4 regression pass and sign-off work; the task tracker records completion on November 14, 2026.                 |
+| [Carry-over from Sprint 4] Regression tests    | Tests   | - Completed the Sprint 1â€“4 regression pass and sign-off work; the task tracker records completion on November 14, 2026.               |
 
 > Area attribution note: All Sprint 5 database and backend code tasks are complete. No Sprint 5 backend integration tests are complete; the task tracker marks them Ready. Sprint 5 E2E and Regression tasks are Blocked. Remaining work below does not include database or backend code implementation.
 

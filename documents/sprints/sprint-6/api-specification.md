@@ -1,12 +1,8 @@
 # HabitFlow API Specification
 
-Team-404
-Sprint 6: Streaks, Reordering & Views
-Version 1.0
-Last Updated: 2026, Nov. 16
-Prepared by: Team-404 API Review
-
-**Status: Draft for Tech Lead approval.** The Tech Lead must approve this single Sprint 6 contract before Task Streaks Backend Code starts; the backend Code rows and integration tests must follow this specification. The streak history/recurrence-series data and task position fields described below are new backend requirements; they are not represented in the current task schema yet.
+**Version:** 1.0.0  
+**Created:** 2026-09-24  
+**Last Updated:** 2026-11-25
 
 All endpoints are rooted at `/api`. Every endpoint requires `Authorization: Bearer <token>` from `/api/auth/login`. Requests and all returned resources are scoped to the authenticated user. Another user's, soft-deleted, or archived task is treated as not found unless explicitly stated otherwise.
 

@@ -1,9 +1,8 @@
 # HabitFlow API Specification
 
-Team-404
-Version 1.1
-Last Updated: 2026, Nov. 06
-Prepared by: Team-404 API Review
+**Version:** 1.1.0  
+**Created:** 2026-09-24  
+**Last Updated:** 2026-11-25
 
 ## IV. Dashboard Views (api/dashboard)
 

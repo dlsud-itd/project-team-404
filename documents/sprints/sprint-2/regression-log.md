@@ -1,5 +1,9 @@
 # Sprint 2 Regression Log
 
+**Version:** 1.0.0  
+**Created:** 2026-09-24  
+**Last Updated:** 2026-11-25
+
 Each entry records a Sprint 2 sign-off gate run of `npm run test:regression`,
 including backend and frontend suites, E2E, and the project API regression
 specs.
@@ -26,7 +30,7 @@ specs.
 
 **Follow-up verification after the full run:**
 
-- `npm --prefix backend run test:regression:projects` — 2 passed, 0 failed
+- `npm --prefix backend run test:regression:projects` â€” 2 passed, 0 failed
   after final changes.
 - A targeted backend integration rerun passed all 4 selected Sprint 1 profile
   update cases after shortening the generated integration usernames.
@@ -41,7 +45,7 @@ specs.
   database missing the `recurrence_days` migration. No GitHub Bug issues were
   filed because this session has no issue-creation tool or GitHub CLI.
 
-**`✅ CI: Verify All` checks** (individual equivalent commands):
+**`âœ… CI: Verify All` checks** (individual equivalent commands):
 
 | Check          | Result | Notes                                                                                                     |
 | -------------- | ------ | --------------------------------------------------------------------------------------------------------- |
@@ -59,6 +63,6 @@ Supabase/Docker.
 
 ## Sign-off
 
-| Role            | Name             | Date             | Decision                                                                        |
-| --------------- | ---------------- | ---------------- | ------------------------------------------------------------------------------- |
-| Project Manager | Matthew Sta. Ana | November 5, 2026 | Approved as an exception — reported by the user; technical gate remains blocked |
+| Role            | Name             | Date             | Decision                                                                          |
+| --------------- | ---------------- | ---------------- | --------------------------------------------------------------------------------- |
+| Project Manager | Matthew Sta. Ana | November 5, 2026 | Approved as an exception â€” reported by the user; technical gate remains blocked |

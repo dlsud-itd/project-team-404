@@ -1,8 +1,10 @@
-# Work Breakdown Structure – Deliverable-Based
+# Work Breakdown Structure â€“ Deliverable-Based
+
+**Version:** 2.2.0  
+**Created:** 2026-09-24  
+**Last Updated:** 2026-11-25
 
 [Lucidspark board](https://lucid.app/lucidspark/ddfbe8a8-f1da-4edf-9057-ffbe3cc82e4c/view)
-
-Last Updated: November 7, 2026 | Version 2.2.0
 
 0. Task & Project Mgmt. App (root)
 

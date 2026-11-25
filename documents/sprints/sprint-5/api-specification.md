@@ -1,12 +1,8 @@
 # HabitFlow API Specification
 
-Team-404
-Sprint 5: Filtering, Archive, Labels & Priorities, Settings & Search
-Version 1.0
-Last Updated: 2026, Nov. 10
-Prepared by: Team-404 API Review
-
-**Status: Draft for Tech Lead approval.** This document is the Sprint 5 API contract for backend implementation and integration tests. Tech Lead approval is required before Sorting & Filtering Backend Code starts.
+**Version:** 1.0.0  
+**Created:** 2026-09-24  
+**Last Updated:** 2026-11-25
 
 All endpoints are rooted at `/api`. Every endpoint in this specification requires `Authorization: Bearer <token>` from `/api/auth/login`. Requests are scoped to the authenticated user. Another user's or a soft-deleted resource is treated as not found.
 
