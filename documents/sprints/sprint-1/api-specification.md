@@ -1,9 +1,8 @@
 # HabitFlow API Specification
 
-Team-404
-Version 1.1
-Last Updated: 2026, Nov. 06
-Prepared by: Team-404 API Review
+**Version:** 1.1.0  
+**Created:** 2026-09-24  
+**Last Updated:** 2026-11-25
 
 Endpoints marked with an Authorization parameter require the header `Authorization: Bearer <token>` from `/api/auth/login`.
 
@@ -216,13 +215,13 @@ Every authenticated request only sees data owned by that user.
 
 #### Success Response
 
-| Status | Type   | Field            | Description                             |
-| ------ | ------ | ---------------- | --------------------------------------- |
-| `200`  | `json` | `id`             | User ID.                                |
-| `200`  | `json` | `username`       | Username.                               |
-| `200`  | `json` | `email`          | Email address.                          |
-| `200`  | `json` | `timezone`       | User timezone.                          |
-| `200`  | `json` | `inboxProjectId` | ID of the user’s default Inbox project. |
+| Status | Type   | Field            | Description                               |
+| ------ | ------ | ---------------- | ----------------------------------------- |
+| `200`  | `json` | `id`             | User ID.                                  |
+| `200`  | `json` | `username`       | Username.                                 |
+| `200`  | `json` | `email`          | Email address.                            |
+| `200`  | `json` | `timezone`       | User timezone.                            |
+| `200`  | `json` | `inboxProjectId` | ID of the userâ€™s default Inbox project. |
 
 ```json
 {
@@ -248,11 +247,11 @@ Every authenticated request only sees data owned by that user.
 
 ### F. Update Profile
 
-| Item        | Value                                                  |
-| ----------- | ------------------------------------------------------ |
-| Endpoint    | `/api/auth/me`                                         |
-| Method      | `PUT`                                                  |
-| Description | Updates the authenticated user’s username or timezone. |
+| Item        | Value                                                    |
+| ----------- | -------------------------------------------------------- |
+| Endpoint    | `/api/auth/me`                                           |
+| Method      | `PUT`                                                    |
+| Description | Updates the authenticated userâ€™s username or timezone. |
 
 #### Request Parameters
 

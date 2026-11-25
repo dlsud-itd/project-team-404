@@ -1,6 +1,8 @@
 # Database Schema
 
-Last Updated: November 7, 2026 | Version 1.3.0
+**Version:** 1.3.0  
+**Created:** 2026-09-24  
+**Last Updated:** 2026-11-25
 
 [Lucidchart document](https://lucid.app/lucidchart/f9bc6885-894c-41a6-a764-e8d6f279449a/view)
 
@@ -290,7 +292,7 @@ erDiagram
 **Settings**
 
 - One `tbl_user_setting` row per user, created at sign-up and backfilled for existing users.
-- `dashboard_task_limit` and `dashboard_project_limit`: 1–50, default 5.
+- `dashboard_task_limit` and `dashboard_project_limit`: 1â€“50, default 5.
 - `font_size`: small, medium (default), large or x-large.
 - `font_family`: system (default), sans-serif, serif, monospace or atkinson-hyperlegible.
 

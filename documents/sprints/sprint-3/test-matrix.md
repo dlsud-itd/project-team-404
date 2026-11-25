@@ -1,5 +1,9 @@
 # Sprint 3 Test Matrix
 
+**Version:** 1.0.0  
+**Created:** 2026-09-24  
+**Last Updated:** 2026-11-25
+
 ## Overview
 
 This matrix covers Task CRUD, Task Scheduling, and Task Organization at the backend integration, frontend integration, and end-to-end levels. It is the prerequisite for the Sprint 3 Task CRUD work: implementation and test execution should start after this matrix is reviewed. Backend integration tests use the isolated Supabase test project; frontend integration tests exercise the real app components and services while controlling HTTP responses; end-to-end tests exercise the integrated application against isolated test data.

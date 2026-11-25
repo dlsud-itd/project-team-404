@@ -1,6 +1,8 @@
 # Team 404 (HabitFlow) - Sprint 6 Ceremony
 
-Sprint 6: Streaks, Reordering & Task Views | November 15-21, 2026 | Last Updated: November 20, 2026 | Version 1.0.0
+**Version:** 1.0.0  
+**Created:** 2026-09-24  
+**Last Updated:** 2026-11-25
 
 ## Completion
 

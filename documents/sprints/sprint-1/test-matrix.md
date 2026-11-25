@@ -1,6 +1,8 @@
 # Sprint 1 Test Matrix
 
-Last Updated: October 30, 2026
+**Version:** 1.0.0  
+**Created:** 2026-09-24  
+**Last Updated:** 2026-11-25
 
 ## Overview
 
@@ -96,7 +98,7 @@ Status values: `Failing`, `Passing`, `Blocked`.
 Tests: `frontend/src/testing/integration/registration.integration.spec.ts`.
 
 - FE-REG-20 is Blocked by a contract conflict. API Specification v1.1 lists username, email, password and timezone for signup, but the backend `signupSchema` also requires `confirmPassword` and returns 400 without it. The frontend sends `confirmPassword` so that registration works against the real API, and the test checks the five fields the backend accepts with no extras. The team needs to decide whether the backend drops `confirmPassword` or the spec adds it.
-- FE-REG-22 and FE-REG-23 are no longer Blocked: POST /auth/login and GET /auth/me now exist. They are Failing because after a 201 the page still shows an "Account created" confirmation with a link to /login instead of signing the user in. `registration.regression.spec.ts` checks the current flow (sign up → log in → `/me` returns `inboxProjectId > 0`).
+- FE-REG-22 and FE-REG-23 are no longer Blocked: POST /auth/login and GET /auth/me now exist. They are Failing because after a 201 the page still shows an "Account created" confirmation with a link to /login instead of signing the user in. `registration.regression.spec.ts` checks the current flow (sign up â†’ log in â†’ `/me` returns `inboxProjectId > 0`).
 
 ### 1.7 Registration End-to-End
 
@@ -267,7 +269,7 @@ Tests: `frontend/src/testing/integration/password-recovery.integration.spec.ts`.
 - FE-REC-22: the backend rejects a token with `400 {"error": "Reset token is invalid", "reason": "expired" | "used" | "invalid"}`, not `valid: false`. The page shows the message for that `reason` (from `token-status-message.util.ts`).
 - FE-REC-16: `POST /auth/reset-password` returns `400 {"error": "This reset link is invalid or has expired."}` with no reason, so the page shows the expired message and the "Request a new link" link.
 - FE-REC-15: after a successful reset the user is sent to `/login?reset=success`, where the login page shows the password-updated message.
-- FE-REC-17: while saving, the button is disabled and reads "Updating…"; a second submit sends no second request, and the button comes back after an error.
+- FE-REC-17: while saving, the button is disabled and reads "Updatingâ€¦"; a second submit sends no second request, and the button comes back after an error.
 - Reset page (WBS 4.3.4): a 400 from `POST /auth/reset-password` that has `details` is a rejected password, not a dead link, so the page shows the server's message and keeps the form. A 400 without `details` still shows the expired message (FE-REC-16). Submitting empty fields shows "Enter a new password." and "Confirm your new password." and sends nothing. If the token check fails on the network, the page shows the invalid-link message.
 - FE-REC-01 and FE-REC-06 are verified and passing via manual testing. FE-REC-07 fails as written: the forgot-password page links to `/register`, not `/login`.
 
@@ -354,25 +356,25 @@ Tests: `frontend/src/testing/regression/auth/`. Each spec starts the whole app (
 
 These are not browser E2E tests. The End-to-End rows above are verified and Passing through manual testing and automated E2E test runs.
 
-| ID        | Spec                                   | Flow                                                                                                             | Status  |
-| --------- | -------------------------------------- | ---------------------------------------------------------------------------------------------------------------- | ------- |
-| FE-RGR-01 | `registration.regression.spec.ts`      | Sign up → log in → refresh; `/me` returns the new user's `inboxProjectId > 0`.                                   | Passing |
-| FE-RGR-02 | `registration.regression.spec.ts`      | Taken username is rejected before submit; the corrected username signs up and logs in.                           | Passing |
-| FE-RGR-03 | `registration.regression.spec.ts`      | Email taken between check and submit: 409 shows on the email field; values kept; no token stored.                | Passing |
-| FE-RGR-04 | `login.regression.spec.ts`             | Sign up → log in → refresh keeps the session → log out; old token gets 401 from `/me`; refresh stays signed out. | Passing |
-| FE-RGR-05 | `login.regression.spec.ts`             | Log in with the username instead of the email.                                                                   | Passing |
-| FE-RGR-06 | `login.regression.spec.ts`             | Wrong password shows the generic message and clears the field; the right password then logs in.                  | Passing |
-| FE-RGR-07 | `login.regression.spec.ts`             | Session revoked on the server: the next protected page sends the user to `/login`.                               | Passing |
-| FE-RGR-08 | `password-recovery.regression.spec.ts` | Request reset → read stub email → reset; other sessions get 401; old password fails; new one works.              | Passing |
-| FE-RGR-09 | `password-recovery.regression.spec.ts` | A session stored in this browser is cleared when the reset succeeds.                                             | Passing |
-| FE-RGR-10 | `password-recovery.regression.spec.ts` | Reopening a used reset link shows the error and hides the form.                                                  | Passing |
-| FE-RGR-11 | `password-recovery.regression.spec.ts` | Two resets requested: only the newest link shows the form.                                                       | Passing |
-| FE-RGR-12 | `password-recovery.regression.spec.ts` | Unknown email gets the same confirmation and no email is sent.                                                   | Passing |
-| FE-RGR-13 | `password-recovery.regression.spec.ts` | Sign-up and login still work after a reset, for a new user and the reset user.                                   | Passing |
-| FE-RGR-14 | `profile.regression.spec.ts`           | Log in → PATCH username → dashboard updates without reload → refresh, `/me` shows it → log in with it.           | Passing |
-| FE-RGR-15 | `profile.regression.spec.ts`           | Change only the timezone; a new session sees it.                                                                 | Passing |
-| FE-RGR-16 | `profile.regression.spec.ts`           | Taken username shows "Username already taken."; profile unchanged.                                               | Passing |
-| FE-RGR-17 | `profile.regression.spec.ts`           | Session ends before saving: save gets 401 and the user is sent to `/login`.                                      | Passing |
+| ID        | Spec                                   | Flow                                                                                                                   | Status  |
+| --------- | -------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- | ------- |
+| FE-RGR-01 | `registration.regression.spec.ts`      | Sign up â†’ log in â†’ refresh; `/me` returns the new user's `inboxProjectId > 0`.                                     | Passing |
+| FE-RGR-02 | `registration.regression.spec.ts`      | Taken username is rejected before submit; the corrected username signs up and logs in.                                 | Passing |
+| FE-RGR-03 | `registration.regression.spec.ts`      | Email taken between check and submit: 409 shows on the email field; values kept; no token stored.                      | Passing |
+| FE-RGR-04 | `login.regression.spec.ts`             | Sign up â†’ log in â†’ refresh keeps the session â†’ log out; old token gets 401 from `/me`; refresh stays signed out. | Passing |
+| FE-RGR-05 | `login.regression.spec.ts`             | Log in with the username instead of the email.                                                                         | Passing |
+| FE-RGR-06 | `login.regression.spec.ts`             | Wrong password shows the generic message and clears the field; the right password then logs in.                        | Passing |
+| FE-RGR-07 | `login.regression.spec.ts`             | Session revoked on the server: the next protected page sends the user to `/login`.                                     | Passing |
+| FE-RGR-08 | `password-recovery.regression.spec.ts` | Request reset â†’ read stub email â†’ reset; other sessions get 401; old password fails; new one works.                | Passing |
+| FE-RGR-09 | `password-recovery.regression.spec.ts` | A session stored in this browser is cleared when the reset succeeds.                                                   | Passing |
+| FE-RGR-10 | `password-recovery.regression.spec.ts` | Reopening a used reset link shows the error and hides the form.                                                        | Passing |
+| FE-RGR-11 | `password-recovery.regression.spec.ts` | Two resets requested: only the newest link shows the form.                                                             | Passing |
+| FE-RGR-12 | `password-recovery.regression.spec.ts` | Unknown email gets the same confirmation and no email is sent.                                                         | Passing |
+| FE-RGR-13 | `password-recovery.regression.spec.ts` | Sign-up and login still work after a reset, for a new user and the reset user.                                         | Passing |
+| FE-RGR-14 | `profile.regression.spec.ts`           | Log in â†’ PATCH username â†’ dashboard updates without reload â†’ refresh, `/me` shows it â†’ log in with it.         | Passing |
+| FE-RGR-15 | `profile.regression.spec.ts`           | Change only the timezone; a new session sees it.                                                                       | Passing |
+| FE-RGR-16 | `profile.regression.spec.ts`           | Taken username shows "Username already taken."; profile unchanged.                                                     | Passing |
+| FE-RGR-17 | `profile.regression.spec.ts`           | Session ends before saving: save gets 401 and the user is sent to `/login`.                                            | Passing |
 
 ### 5.1 Regression Runs
 

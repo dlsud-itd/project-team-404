@@ -1,6 +1,10 @@
 # Sprint 1 Regression Log
 
-Each entry records one full run of `npm run test:regression` (VS Code task **`🧪 Regression: Tests (run once)`**). The runner fails a suite that has failed or skipped tests, and reports a suite as Not run when it cannot start. The first entry that passes every suite becomes the Sprint 1 baseline that later sprints compare against.
+**Version:** 1.0.0  
+**Created:** 2026-09-24  
+**Last Updated:** 2026-11-25
+
+Each entry records one full run of `npm run test:regression` (VS Code task **`ðŸ§ª Regression: Tests (run once)`**). The runner fails a suite that has failed or skipped tests, and reports a suite as Not run when it cannot start. The first entry that passes every suite becomes the Sprint 1 baseline that later sprints compare against.
 
 How to run: see the Regression tests section in [`documents/setup.md`](../../setup.md).
 
@@ -18,7 +22,7 @@ How to run: see the Regression tests section in [`documents/setup.md`](../../set
 | E2E                         | `npm run test:e2e`                          | Not run | -      | -      | -       | No E2E specs or `test:e2e` script exist (`testing/e2e`).   |
 | Frontend regression         | `npm --prefix frontend run test:regression` | Pass    | 17     | 0      | 0       | 4 specs in `frontend/src/testing/regression/auth`.         |
 
-**✅ CI: Verify All** checks, run on the same day:
+**âœ… CI: Verify All** checks, run on the same day:
 
 | Check          | Result | Notes                                                                                                         |
 | -------------- | ------ | ------------------------------------------------------------------------------------------------------------- |
