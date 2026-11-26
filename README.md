@@ -93,7 +93,7 @@ select a task by its label.
 | `🧪 Backend: Tests (coverage report)` | Run backend tests and generate coverage |
 | `🧪 E2E: Tests (run once)` | Run the end-to-end test suite |
 | `📊 Test Reports: Generate` | Generate backend and frontend coverage reports and collect them |
-| `🧪 Regression: Tests (run once)` | Run backend, API, frontend, regression, and E2E suites; fail if a suite fails, is skipped, or is missing |
+| `🧪 Regression: Tests (run once)` | Run backend, API, frontend, and regression suites; fail if a suite fails, is skipped, or is missing |
 | `🔍 Frontend: Lint` | Lint the frontend |
 | `🔍 Backend: Lint` | Lint the backend |
 | `🔎 Backend: Typecheck` | Type-check the backend |
