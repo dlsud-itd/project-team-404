@@ -13,26 +13,15 @@ responsibilities and keep track of progress.
 - [Repository layout](#repository-layout)
 - [Getting started](#getting-started)
 - [VS Code tasks](#vs-code-tasks)
-- [API](#api)
+- [App features](#app-features)
 - [Deployment configuration](#deployment-configuration)
 - [Project documents](#project-documents)
 
 ## Product goals
 
-The planned core experience includes:
-
-- Create an account and manage projects and tasks.
-- Organize tasks with dates, optional deadlines, priorities, and labels.
-- Set tasks to repeat daily, weekly, or monthly.
-- View current, upcoming, and overdue tasks on a dashboard.
-
-Search and filtering, notes, project favorites and archive, color customization,
-streaks and statistics, alternate board or timeline views, and reminders are
-potential enhancements rather than core requirements.
-
-The current implementation is in progress. It includes account registration,
-username and email availability checks, Supabase-backed user profiles, and a
-default Inbox project created at sign-up.
+HabitFlow brings project and task management, scheduling, recurring routines,
+and progress tracking together in one workspace. See [App features](#app-features)
+for the current feature set.
 
 ## Technology
 
@@ -51,8 +40,10 @@ the backend and must never be exposed in frontend configuration.
 frontend/    Angular application
 backend/     Express API
 supabase/    Database configuration, migrations, and seed data
-documents/  Setup guide, requirements, API specifications, and sprint plans
-testing/     End-to-end tests
+documents/   Setup guide, feature specifications, and project documents
+tests/       End-to-end, Postman, and regression tests
+scripts/     Development, test, and database utility scripts
+reports/     Generated test reports
 ```
 
 ## Getting started
@@ -91,68 +82,65 @@ select a task by its label.
 
 | Task | Purpose |
 | --- | --- |
-| `📦 Install All Dependencies` | Install root, frontend, and backend dependencies |
-| `🛠️ Setup: Create Environment Files` | Copy the example environment files without overwriting existing ones |
-| `🚀 Dev: Start All` | Start the Angular frontend and Express API |
-| `✅ CI: Verify All` | Run frontend/backend tests, lint, format check, and builds |
+| `💻 Frontend: Dev` | Start the Angular development server |
+| `🖥️ Backend: Dev` | Start the Express API in watch mode |
+| `🚀 Dev: Start All` | Start frontend and backend development tasks in parallel |
 | `🧪 Frontend: Tests (watch)` | Run frontend tests in watch mode |
-| `🧪 Backend: Tests (watch)` | Run backend tests in watch mode |
 | `🧪 Frontend: Tests (run once)` | Run the frontend test suite once |
-| `🧪 Backend: Tests (run once)` | Run the backend test suite once |
-| `🔍 Frontend: Lint` / `🔍 Backend: Lint` | Lint one application |
-| `🎨 Format: Check` | Check formatting across the repository |
-| `🏗️ Frontend: Build` / `🏗️ Backend: Build` | Build one application |
+| `🧪 Frontend: Tests (coverage report)` | Run frontend tests and generate coverage |
+| `🧪 Backend: Tests (watch)` | Run backend tests in watch mode |
+| `🧪 Backend: Tests (run once)` | Run backend tests once with test CORS settings |
+| `🧪 Backend: Tests (coverage report)` | Run backend tests and generate coverage |
+| `🧪 E2E: Tests (run once)` | Run the end-to-end test suite |
+| `📊 Test Reports: Generate` | Generate backend and frontend coverage reports and collect them |
+| `🧪 Regression: Tests (run once)` | Run backend, API, frontend, and regression suites; fail if a suite fails, is skipped, or is missing |
+| `🔍 Frontend: Lint` | Lint the frontend |
+| `🔍 Backend: Lint` | Lint the backend |
+| `🔎 Backend: Typecheck` | Type-check the backend |
+| `🎨 Format: Check` | Check repository formatting |
+| `🎨 Format: Fix` | Format supported source and documentation files |
+| `🔧 Frontend: Lint (fix)` | Apply automatic frontend lint fixes |
+| `🔧 Backend: Lint (fix)` | Apply automatic backend lint fixes |
+| `🏗️ Frontend: Build` | Build the frontend for production |
+| `🏗️ Frontend: Build (watch)` | Rebuild the frontend on changes |
+| `🏗️ Backend: Build` | Build the backend |
+| `✅ CI: Verify All` | Run frontend/backend tests, lint, format check, and builds in parallel |
+| `📦 Install All Dependencies` | Install root, frontend, and backend dependencies and generate the Prisma client |
+| `🛠️ Setup: Create Environment Files` | Create local environment files without overwriting existing ones |
+| `🧹 Clean: Build Artifacts` | Remove frontend and backend build artifacts |
+| `🔐 Supabase: Login` | Authenticate the Supabase CLI |
+| `🔗 Supabase: Link Project` | Link the repository to a Supabase project |
+| `📤 Supabase: Push Migrations` | Apply pending migrations to the linked remote project |
+| `📥 Supabase: Pull Remote State` | Pull the linked project schema into a migration (does not pull data) |
+| `📊 Supabase: Check Migration Status` | List migration status for the linked project |
+| `🔄 Supabase: Reset Local DB` | Destructively reset the local database and apply migrations without seed data |
+| `🌱 Supabase: Seed Local DB` | Seed the running local database without resetting it |
+| `🐳 Supabase: Start Local DB` | Start the local Supabase services |
+| `📊 Supabase: Local Status` | Show local Supabase service status |
+| `📤 Supabase: Push Local Migrations` | Apply pending migrations to the local database without resetting it |
+| `⏹️ Supabase: Stop Local DB` | Stop the local Supabase services |
+| `🩹 Supabase: Repair Migration History` | Mark a migration as applied or reverted in the linked project's history |
+| `🌱 Supabase: Remote Seed` | Seed the linked remote database; use only with a dedicated test project |
+| `⚠️ Supabase: Reset REMOTE DB (destructive)` | Destructively reset the linked remote database; use only with a disposable project |
 
 For the recommended first-time task order and Supabase setup, see
 [documents/setup.md](documents/setup.md).
 
-## API
+## App features
 
-The current API includes:
+Feature API details are documented in the corresponding [feature specifications](documents/features/).
 
-| Method | Endpoint | Purpose |
+| Feature | Capabilities | Specification |
 | --- | --- | --- |
-| `GET` | `/health` | Check API health |
-| `POST` | `/api/auth/signup` | Register an account and create its Inbox |
-| `POST` | `/api/auth/login` | Log in with an email or username and receive a bearer token |
-| `GET` | `/api/auth/me` | Fetch the current authenticated user |
-| `POST` | `/api/auth/logout` | Invalidate the current bearer token |
-| `GET` | `/api/auth/check-username/:username` | Check username availability |
-| `GET` | `/api/auth/check-email/:email` | Check email availability |
-| `POST` | `/api/auth/forgot-password` | Request a password recovery email |
-| `GET` | `/api/auth/validate-reset-token` | Validate a valid password reset token |
-| `POST` | `/api/auth/reset-password` | Reset a password with a valid token |
-
-### Task organization and labels
-
-Tasks accept `low`, `medium`, or `high` priority. Task-list requests can filter
-by `priority` and `labelId`, and order by `dueDate`, `createdAt`, `priority`,
-or `title` with `orderDirection=asc|desc`. Labels belong to the authenticated
-user; task-label operations reject labels owned by another user.
-
-| Method | Endpoint | Purpose |
-| --- | --- | --- |
-| `PUT` | `/api/tasks/:taskId/priority` | Set a task priority with `{ "priority": "high" }` |
-| `GET` | `/api/tasks?priority=high&labelId=12` | Filter tasks by priority, label, or both |
-| `GET` | `/api/tasks?orderBy=priority&orderDirection=desc` | Order tasks with stable ID tie-breaking |
-| `GET` / `POST` | `/api/labels` | List the current user's labels or create one with `{ "name": "Work", "color": "#f59e0b" }` |
-| `GET` / `PUT` / `DELETE` | `/api/labels/:labelId` | Read, update, or delete an owned label |
-| `GET` / `POST` | `/api/tasks/:taskId/labels` | List task labels or attach labels with `{ "labelIds": [2, 5] }` |
-| `DELETE` | `/api/tasks/:taskId/labels/:labelId` | Detach an owned label from a task; repeated detaches are safe |
-
-### Project organization
-
-These authenticated endpoints organize projects in the existing `tbl_project`
-table. Favorite and archive requests accept `isFavorite` and `isArchived`
-boolean fields respectively. Sort-order requests accept a non-negative
-`sortOrder`.
-
-| Method | Endpoint | Purpose |
-| --- | --- | --- |
-| `PUT` | `/api/projects/:projectId/favorite` | Favorite or unfavorite a project |
-| `PUT` | `/api/projects/:projectId/archive` | Archive or restore a project; the Inbox cannot be archived |
-| `PUT` | `/api/projects/:projectId/sort-order` | Set one project's sort order |
-| `PUT` | `/api/projects/reorder` | Reorder owned projects with `{ "projectIds": [12, 4, 9] }`; updates are applied in one transaction |
+| Authentication and profile | Sign-up, availability checks, login, session protection, logout, password recovery, profile management, and password changes | [Authentication](documents/features/auth/api-specification.md) |
+| Landing and home | Landing-page auth actions, home tabs, and task creation from Home | [Landing](documents/features/landing/api-specification.md), [Home](documents/features/home/api-specification.md) |
+| Dashboard | Current and upcoming tasks, overdue tasks, and recurring-task streaks | [Dashboard](documents/features/dashboard/api-specification.md) |
+| Tasks | Create, list, filter, sort, edit, delete, schedule, prioritize, label, reorder, archive, restore, and view tasks as lists, boards, timelines, and streaks | [Tasks](documents/features/tasks/api-specification.md) |
+| Projects | Create, view, filter, sort, edit, delete, select, favorite, reorder, archive, and restore projects | [Projects](documents/features/projects/api-specification.md) |
+| Labels and priorities | Create, view, edit, reorder, archive, restore, and delete labels and priorities; configure defaults and reassign tasks when deleting a priority | [Labels](documents/features/labels/api-specification.md), [Priorities](documents/features/priorities/api-specification.md) |
+| Search | Search tasks and projects | [Search](documents/features/search/api-specification.md) |
+| Settings | Configure appearance preferences and dashboard limits | [Settings](documents/features/settings/api-specification.md) |
+| Archive | Browse archived items, restore them, or permanently delete them | [Archive](documents/features/archive/api-specification.md) |
 
 ## Deployment configuration
 
@@ -176,37 +164,19 @@ of truth; do not use Prisma migrations for deployment.
 
 ## Project documents
 
-### Setup and planning
+### Setup
 
 - [Local setup guide](documents/setup.md)
-- [Project proposal](documents/main/Project_Proposal.pdf)
-- [Project team constitution](documents/main/Project_Team_Constitution.pdf)
-- [Development timeline (PERT)](documents/main/Timeline_Development_PERT.pdf)
+
+### Main project documents
+
+- [Database schema](documents/main/database-schema.md)
+- [Project proposal](documents/main/project-proposal.md)
+- [Project team constitution](documents/main/project-team-constitution.md)
+- [Development timeline (PERT)](documents/main/timeline-development-pert.md)
 - [Development timeline (Notion)](documents/main/Timeline_Development_Notion.pdf)
-- [Work breakdown structure (document)](documents/main/WBS_Document.md)
-- [Work breakdown structure (diagram)](documents/main/WBS_Diagram.md)
-
-### Requirements and design
-
-- [User stories](documents/main/User_Story.pdf)
-- [Use case diagram](documents/main/Use_Case_Diagram.pdf)
 - [UI/UX mockup](documents/main/UI_UX_Mockup.pdf)
-- [Database schema](documents/main/Database_Schema.md)
-
-### API specifications
-
-- [Projects](<documents/main/api-spec/Team-404 - API Specification - Projects.pdf>)
-- [Tasks](<documents/main/api-spec/Team-404 - API Specification - Tasks.pdf>)
-- [Task scheduling](<documents/main/api-spec/Team-404 - API Specification - Tasks - Scheduling.pdf>)
-- [Task organization](<documents/main/api-spec/Team-404 - API Specification - Tasks - Organization.pdf>)
-- [Dashboard](<documents/main/api-spec/Team-404 - API Specification - Dashboard.pdf>)
-- [Filtering, Archive, Labels & Priorities, Settings & Search](<documents/sprints/sprint-5/Team-404 - API Specification - Filtering, Archive, Labels & Priorities, Settings & Search.md>)
-- [Sprint 6: Streaks, Reordering & Views](<documents/main/api-spec/Team-404 - API Specification - Streaks, Reordering & Views.pdf>)
-
-### Sprint 1
-
-- [Sprint 1 work breakdown structure](documents/sprints/sprint-1/Sprint_One_Work_Breakdown_Structure.md)
-- [Sprint 1 timeline](documents/sprints/sprint-1/Sprint_One_PERT_Timeline.md)
-- [Sprint 1 authentication API specification](<documents/sprints/sprint-1/Sprint_One_API_Specification_Authentication.pdf>)
-- [Backend test matrix](documents/sprints/sprint-1/Sprint1_Backend_Test_Matrix.md)
-- [Frontend test matrix](documents/sprints/sprint-1/Sprint1_Frontend_Test_Matrix.md)
+- [Use case diagram](documents/main/use-case-diagram.md)
+- [User stories](documents/main/user-story.md)
+- [Work breakdown structure (diagram)](documents/main/wbs-diagram.md)
+- [Work breakdown structure (document)](documents/main/wbs-document.md)
