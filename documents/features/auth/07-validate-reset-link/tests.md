@@ -1,29 +1,20 @@
 # Reset Link Validation Tests
 
-## Direct Coverage
+**Version:** 1.0.0  
+**Created:** 2026-09-24  
+**Last Updated:** 2026-11-25
 
-### Backend Unit
+## Test Matrix
 
-`backend/src/features/auth/reset-password/services/validate-reset-token.service.test.ts` checks a known token, an unknown token, a token already used, and a token past its expiry.
+| Test ID     | Test type      | Test file (repository-relative)                                                                          | Result | Coverage / notes                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| ----------- | -------------- | -------------------------------------------------------------------------------------------------------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| AUTH-07-T01 | Unit           | `backend/src/features/auth/reset-password/services/validate-reset-token.service.test.ts`                 | Pass   | checks a known token, an unknown token, a token already used, and a token past its expiry                                                                                                                                                                                                                                                                                                                                                                       |
+| AUTH-07-T02 | Integration    | `frontend/tests/integration/features/auth/password-recovery.integration.spec.ts`                         | Pass   | checks encoded-token validation, that the form appears only after { valid: true }, missing/invalid/expired/used token states, network failure behavior, and no validation request when the URL has no token                                                                                                                                                                                                                                                     |
+| AUTH-07-T03 | API collection | `tests/postman/02-password-recovery/Project-Team-404 API - 02-password-recovery.postman_collection.json` | Fail   | validates a seeded valid token and checks missing, unknown, expired, used, invalidated-old, still-valid-new, and freshly issued tokens. It also checks the token after a successful reset cannot be reused. See requests 1–4, 8, 11–14, 17, and 20 in the 24-request order in tests/postman/02-password-recovery/README.md; Not executed: Newman/Postman collections were not run; their documented collection-specific setup and assertions remain unverified. |
+| AUTH-07-T04 | End-to-end     | `tests/e2e/auth/password-recovery.e2e.spec.ts`                                                           | Pass   | shows the expired-link and already-used-link messages and exercises link validation before a successful password reset                                                                                                                                                                                                                                                                                                                                          |
+| AUTH-07-T05 | Regression     | `frontend/src/app/features/auth/testing/regression/password-recovery.regression.spec.ts`                 | Pass   | checks a consumed link, invalidation of the earlier of two links, and that only the newest link opens the reset form                                                                                                                                                                                                                                                                                                                                            |
 
-### Frontend Integration
-
-`frontend/tests/integration/features/auth/password-recovery.integration.spec.ts` checks encoded-token validation, that the form appears only after `{ valid: true }`, missing/invalid/expired/used token states, network failure behavior, and no validation request when the URL has no token.
+## Coverage Notes
 
 There is no separate reset-page component unit spec in the auth unit test inventory.
-
-### Postman
-
-`tests/postman/02-password-recovery/Project-Team-404 API - 02-password-recovery.postman_collection.json` validates a seeded valid token and checks missing, unknown, expired, used, invalidated-old, still-valid-new, and freshly issued tokens. It also checks the token after a successful reset cannot be reused. See requests 1–4, 8, 11–14, 17, and 20 in the 24-request order in `tests/postman/02-password-recovery/README.md`.
-
-### End-to-End
-
-`tests/e2e/auth/password-recovery.e2e.spec.ts` shows the expired-link and already-used-link messages and exercises link validation before a successful password reset.
-
-### Regression
-
-`frontend/src/app/features/auth/testing/regression/password-recovery.regression.spec.ts` checks a consumed link, invalidation of the earlier of two links, and that only the newest link opens the reset form.
-
-## Test Gap
-
 There are no dedicated tests for the Prisma token lookup query or the token-status message utility; their behavior is covered through the service and higher-level integration/E2E flows.

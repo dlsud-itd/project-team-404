@@ -1,22 +1,18 @@
 # Create Priority Tests
 
-## Direct Coverage
+**Version:** 1.0.0  
+**Created:** 2026-09-24  
+**Last Updated:** 2026-11-25
 
-### Frontend Unit and Integration
+## Test Matrix
 
-- `frontend/src/app/features/settings/priorities/priority-settings.spec.ts`: create form, color, duplicate name, and errors.
-- `frontend/src/app/features/settings/services/priorities.service.spec.ts` and `priorities.store.spec.ts`: POST payload, response mapping, and store update.
-- `frontend/tests/integration/features/settings/labels-priorities.integration.spec.ts`: creates custom priorities through the real Settings page/API client with mocked HTTP.
-
-### Backend Unit and Integration
-
-- `backend/src/features/priorities/priority-crud/priority-crud.service.test.ts`: create/list/update/default/delete workflows and duplicate handling.
-- `backend/tests/integration/priorities.integration.test.ts`: creates a custom priority and confirms persisted name/color/order/default.
-
-### Postman
-
-`tests/postman/11-labels-priorities/Project-Team-404 API - 11-labels-priorities.postman_collection.json` creates custom priorities and rejects duplicate names (requests 6, 10–11).
-
-### Regression
-
-`tests/regression/organization/labels-priorities.regression.spec.ts` uses account-specific priorities while testing organization flows.
+| Test ID           | Test type      | Test file (repository-relative)                                                                          | Result | Coverage / notes                                                                                                                                                                                               |
+| ----------------- | -------------- | -------------------------------------------------------------------------------------------------------- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| PRIORITIES-02-T01 | Unit           | `frontend/src/app/features/settings/priorities/priority-settings.spec.ts`                                | Pass   | create form, color, duplicate name, and errors                                                                                                                                                                 |
+| PRIORITIES-02-T02 | Unit           | `frontend/src/app/features/settings/services/priorities.service.spec.ts`                                 | Pass   | POST payload, response mapping, and store update                                                                                                                                                               |
+| PRIORITIES-02-T03 | Unit           | `frontend/src/app/features/settings/state/priorities.store.spec.ts`                                      | Pass   | POST payload, response mapping, and store update                                                                                                                                                               |
+| PRIORITIES-02-T04 | Integration    | `frontend/tests/integration/features/settings/labels-priorities.integration.spec.ts`                     | Pass   | creates custom priorities through the real Settings page/API client with mocked HTTP                                                                                                                           |
+| PRIORITIES-02-T05 | Unit           | `backend/src/features/priorities/priority-crud/priority-crud.service.test.ts`                            | Pass   | create/list/update/default/delete workflows and duplicate handling                                                                                                                                             |
+| PRIORITIES-02-T06 | Integration    | `backend/tests/integration/priorities.integration.test.ts`                                               | Fail   | creates a custom priority and confirms persisted name/color/order/default; Backend integration run: 1 assertion(s) failed in this file.                                                                        |
+| PRIORITIES-02-T07 | API collection | `tests/postman/11-labels-priorities/Project-Team-404 API - 11-labels-priorities.postman_collection.json` | Fail   | creates custom priorities and rejects duplicate names (requests 6, 10–11); Not executed: Newman/Postman collections were not run; their documented collection-specific setup and assertions remain unverified. |
+| PRIORITIES-02-T08 | Regression     | `tests/regression/organization/labels-priorities.regression.spec.ts`                                     | Pass   | uses account-specific priorities while testing organization flows                                                                                                                                              |

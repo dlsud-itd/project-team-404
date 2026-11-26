@@ -1,33 +1,26 @@
 # Edit Project Tests
 
-## Direct Coverage
+**Version:** 1.0.0  
+**Created:** 2026-09-24  
+**Last Updated:** 2026-11-25
 
-### Frontend Unit
+## Test Matrix
 
-- `frontend/src/app/features/projects/project-crud/project-form/project-form.spec.ts`: loads edit data, sends only changed values, validates inputs, and handles missing project/API errors.
-- `frontend/src/app/features/projects/project-crud/services/project.service.spec.ts`: GET/PATCH requests and shared-store upserts.
-- `frontend/src/app/features/projects/project-crud/mappers/project.mapper.spec.ts` and `project-error.mapper.spec.ts`: response mapping and field/not-found errors.
+| Test ID         | Test type      | Test file (repository-relative)                                                                | Result | Coverage / notes                                                                                                                                                                                                                                                                                                                            |
+| --------------- | -------------- | ---------------------------------------------------------------------------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| PROJECTS-03-T01 | Unit           | `frontend/src/app/features/projects/project-crud/project-form/project-form.spec.ts`            | Pass   | loads edit data, sends only changed values, validates inputs, and handles missing project/API errors                                                                                                                                                                                                                                        |
+| PROJECTS-03-T02 | Unit           | `frontend/src/app/features/projects/project-crud/services/project.service.spec.ts`             | Pass   | GET/PATCH requests and shared-store upserts                                                                                                                                                                                                                                                                                                 |
+| PROJECTS-03-T03 | Unit           | `frontend/src/app/features/projects/project-crud/mappers/project.mapper.spec.ts`               | Pass   | response mapping and field/not-found errors                                                                                                                                                                                                                                                                                                 |
+| PROJECTS-03-T04 | Unit           | `frontend/src/app/features/projects/project-crud/mappers/project-error.mapper.spec.ts`         | Pass   | response mapping and field/not-found errors                                                                                                                                                                                                                                                                                                 |
+| PROJECTS-03-T05 | Unit           | `backend/src/features/projects/project-crud/project-crud.service.test.ts`                      | Pass   | update behavior and Inbox read-only protection                                                                                                                                                                                                                                                                                              |
+| PROJECTS-03-T06 | Unit           | `backend/src/features/projects/project-crud/project-crud.controller.test.ts`                   | Pass   | project response mapping                                                                                                                                                                                                                                                                                                                    |
+| PROJECTS-03-T07 | Unit           | `backend/src/features/projects/project-crud/validators/update-project.validator.test.ts`       | Pass   | permitted fields and validation rules                                                                                                                                                                                                                                                                                                       |
+| PROJECTS-03-T08 | Integration    | `backend/tests/integration/features/projects/projects.integration.test.ts`                     | Fail   | owner-scoped reads/updates and persisted project fields; Backend integration run: 2 assertion(s) failed in this file.                                                                                                                                                                                                                       |
+| PROJECTS-03-T09 | Integration    | `frontend/tests/integration/features/projects/projects.integration.spec.ts`                    | Pass   | opens the real edit route, loads project data, submits updates, and checks server validation/error handling through a mocked API                                                                                                                                                                                                            |
+| PROJECTS-03-T10 | API collection | `tests/postman/05-project-crud/Project-Team-404 API - 05-project-crud.postman_collection.json` | Fail   | checks updating own project fields and verifying persistence (requests 16–18), plus rejecting update attempts against another user's project (request 21). See tests/postman/05-project-crud/README.md; Not executed: Newman/Postman collections were not run; their documented collection-specific setup and assertions remain unverified. |
+| PROJECTS-03-T11 | End-to-end     | `tests/e2e/projects/project-crud.e2e.spec.ts`                                                  | Pass   | edits a project and verifies the change survives reload and is saved in the database                                                                                                                                                                                                                                                        |
+| PROJECTS-03-T12 | Regression     | `tests/regression/projects/project-crud.regression.spec.ts`                                    | Pass   | exercises project updates in the CRUD API journey                                                                                                                                                                                                                                                                                           |
 
-### Backend Unit and Integration
-
-- `backend/src/features/projects/project-crud/project-crud.service.test.ts`: update behavior and Inbox read-only protection.
-- `backend/src/features/projects/project-crud/project-crud.controller.test.ts`: project response mapping.
-- `backend/src/features/projects/project-crud/validators/update-project.validator.test.ts`: permitted fields and validation rules.
-- `backend/tests/integration/features/projects/projects.integration.test.ts`: owner-scoped reads/updates and persisted project fields.
-
-### Frontend Integration
-
-`frontend/tests/integration/features/projects/projects.integration.spec.ts` opens the real edit route, loads project data, submits updates, and checks server validation/error handling through a mocked API.
-
-### Postman
-
-`tests/postman/05-project-crud/Project-Team-404 API - 05-project-crud.postman_collection.json` checks updating own project fields and verifying persistence (requests 16–18), plus rejecting update attempts against another user's project (request 21). See `tests/postman/05-project-crud/README.md`.
-
-### End-to-End and Regression
-
-- `tests/e2e/projects/project-crud.e2e.spec.ts`: edits a project and verifies the change survives reload and is saved in the database.
-- `tests/regression/projects/project-crud.regression.spec.ts`: exercises project updates in the CRUD API journey.
-
-## Test Gap
+## Coverage Notes
 
 There is no standalone unit test for `update-owned-project.query.ts`; persistence is covered by backend integration, Postman, and E2E tests.

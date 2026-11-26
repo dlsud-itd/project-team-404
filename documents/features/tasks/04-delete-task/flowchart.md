@@ -1,5 +1,9 @@
 # 04. Delete a Task
 
+**Version:** 1.0.0  
+**Created:** 2026-09-24  
+**Last Updated:** 2026-11-25
+
 ## In simple terms
 
 The person chooses Delete on a task and confirms. HabitFlow removes the task from active lists by recording a soft-delete timestamp. If the task is already gone, the page closes the dialog and reloads the list.

@@ -1,5 +1,9 @@
 # 04. Delete a Project
 
+**Version:** 1.0.0  
+**Created:** 2026-09-24  
+**Last Updated:** 2026-11-25
+
 ## In simple terms
 
 The person chooses Delete and confirms in a dialog. HabitFlow soft-deletes the project rather than erasing it, moves its active tasks into the Inbox, and tells the person how many tasks moved. The Inbox itself cannot be deleted.

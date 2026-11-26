@@ -1,5 +1,9 @@
 # 01. View Labels
 
+**Version:** 1.0.0  
+**Created:** 2026-09-24  
+**Last Updated:** 2026-11-25
+
 ## In simple terms
 
 The Labels settings page loads the person's active labels and archived labels separately. Active labels are available in task filters and forms; archived labels remain visible for restoration, but cannot be newly assigned to tasks.

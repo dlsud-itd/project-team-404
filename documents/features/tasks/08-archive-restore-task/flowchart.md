@@ -1,5 +1,9 @@
 # 08. Archive or Restore a Task
 
+**Version:** 1.0.0  
+**Created:** 2026-09-24  
+**Last Updated:** 2026-11-25
+
 ## In simple terms
 
 Archiving hides a task from active lists without deleting it. The person can undo right away or restore it later from the Archive page. Archived tasks are read-only until restored.

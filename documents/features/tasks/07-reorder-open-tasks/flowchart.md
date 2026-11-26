@@ -1,5 +1,9 @@
 # 07. Reorder Open Tasks
 
+**Version:** 1.0.0  
+**Created:** 2026-09-24  
+**Last Updated:** 2026-11-25
+
 ## In simple terms
 
 The person drags a task or uses the up/down controls to change its place in the open-task list. HabitFlow sends the complete open-task order for that project. If another change made the order stale, the server rejects it and the page reloads the current list.

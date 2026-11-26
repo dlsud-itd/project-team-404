@@ -1,5 +1,9 @@
 # 01. Set Appearance Preferences
 
+**Version:** 1.0.0  
+**Created:** 2026-09-24  
+**Last Updated:** 2026-11-25
+
 ## In simple terms
 
 In Preferences, the person changes the app's font size or font family. The choice previews across the app immediately, but it is not saved until Save is pressed. Cancel or leaving the page removes the preview and restores the saved appearance.

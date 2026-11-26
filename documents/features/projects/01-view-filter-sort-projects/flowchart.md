@@ -1,5 +1,9 @@
 # 01. View, Filter, and Sort Projects
 
+**Version:** 1.0.0  
+**Created:** 2026-09-24  
+**Last Updated:** 2026-11-25
+
 ## In simple terms
 
 The Projects page loads the signed-in person's active projects and archived projects. It shows the Inbox first, then favorites and other projects. The person can filter by favorites, archive status, or color, and can sort the visible list. These filters and sort choices are kept in the URL so they survive reloads and can be shared.

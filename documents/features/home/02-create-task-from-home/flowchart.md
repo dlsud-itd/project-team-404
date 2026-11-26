@@ -1,5 +1,9 @@
 # 02. Create a Task from Home
 
+**Version:** 1.0.0  
+**Created:** 2026-09-24  
+**Last Updated:** 2026-11-25
+
 ## In simple terms
 
 From Home, the person can create a task inline from All Tasks or open a task dialog from the task tab/calendar. The Home dashboard's inline composer starts with today's due date and the user's default priority, then adds the created task to the dashboard without leaving Home.

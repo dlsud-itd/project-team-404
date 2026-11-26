@@ -1,40 +1,25 @@
 # Signup Availability Tests
 
-## Direct Coverage
+**Version:** 1.0.0  
+**Created:** 2026-09-24  
+**Last Updated:** 2026-11-25
 
-### Frontend Unit
+## Test Matrix
 
-`frontend/src/app/features/auth/register/register.spec.ts`
+| Test ID     | Test type      | Test file (repository-relative)                                                                | Result | Coverage / notes                                                                                                                                                                                                                                                                                                      |
+| ----------- | -------------- | ---------------------------------------------------------------------------------------------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| AUTH-02-T01 | Unit           | `frontend/src/app/features/auth/register/register.spec.ts`                                     | Pass   | Shows checking, available, and taken states for usernames and email; Verifies URL encoding, lowercased email checks, and one request after the debounce settles; Shows a validation response from the API and does not block signup when an availability request fails                                                |
+| AUTH-02-T02 | Integration    | `frontend/tests/integration/features/auth/registration.integration.spec.ts`                    | Pass   | Tests availability requests through the app's real registration component, AuthService, and HttpClient with a mocked network; Covers encoded username/email, email case normalization, debounce behavior, and taken value messages                                                                                    |
+| AUTH-02-T03 | Unit           | `backend/src/features/auth/register/register.controller.test.ts`                               | Pass   | cover signup submission and final uniqueness checks, but do not have a dedicated test for the two GET availability routes                                                                                                                                                                                             |
+| AUTH-02-T04 | Unit           | `backend/src/features/auth/register/register.service.test.ts`                                  | Pass   | cover signup submission and final uniqueness checks, but do not have a dedicated test for the two GET availability routes                                                                                                                                                                                             |
+| AUTH-02-T05 | Integration    | `backend/src/features/auth/register/register.integration.test.ts`                              | Pass   | cover signup submission and final uniqueness checks, but do not have a dedicated test for the two GET availability routes                                                                                                                                                                                             |
+| AUTH-02-T06 | Unit           | `backend/src/features/auth/shared/validators/username.validator.test.ts`                       | Pass   | cover the shared input rules used by the availability route validators                                                                                                                                                                                                                                                |
+| AUTH-02-T07 | Unit           | `backend/src/features/auth/shared/validators/email.validator.test.ts`                          | Pass   | cover the shared input rules used by the availability route validators                                                                                                                                                                                                                                                |
+| AUTH-02-T08 | API collection | `tests/postman/01-registration/Project-Team-404 API - 01-registration.postman_collection.json` | Fail   | includes requests 9–14 for available/taken usernames and emails, overlong usernames, and invalid email input. The companion run guide is tests/postman/01-registration/README.md; Not executed: Newman/Postman collections were not run; their documented collection-specific setup and assertions remain unverified. |
+| AUTH-02-T09 | End-to-end     | `tests/e2e/auth/registration.e2e.spec.ts`                                                      | Pass   | checks a taken username followed by a corrected signup, an already registered email, and a successful availability-to-submit path                                                                                                                                                                                     |
+| AUTH-02-T10 | Regression     | `frontend/src/app/features/auth/testing/regression/registration.regression.spec.ts`            | Pass   | checks taken username feedback and an email becoming unavailable after its live check but before signup submission                                                                                                                                                                                                    |
 
-- Shows checking, available, and taken states for usernames and email.
-- Verifies URL encoding, lowercased email checks, and one request after the debounce settles.
-- Shows a validation response from the API and does not block signup when an availability request fails.
+## Coverage Notes
 
-### Frontend Integration
-
-`frontend/tests/integration/features/auth/registration.integration.spec.ts`
-
-- Tests availability requests through the app's real registration component, `AuthService`, and `HttpClient` with a mocked network.
-- Covers encoded username/email, email case normalization, debounce behavior, and taken value messages.
-
-### Backend Unit and Integration
-
-- `backend/src/features/auth/register/register.controller.test.ts`, `register.service.test.ts`, and `register.integration.test.ts` cover signup submission and final uniqueness checks, but do not have a dedicated test for the two GET availability routes.
-- `backend/src/features/auth/shared/validators/username.validator.test.ts` and `email.validator.test.ts` cover the shared input rules used by the availability route validators.
-- There are no dedicated tests for `is-username-available.query.ts` or `is-email-available.query.ts` in the auth unit-test inventory.
-
-### Postman
-
-`tests/postman/01-registration/Project-Team-404 API - 01-registration.postman_collection.json` includes requests 9–14 for available/taken usernames and emails, overlong usernames, and invalid email input. The companion run guide is `tests/postman/01-registration/README.md`.
-
-### End-to-End
-
-`tests/e2e/auth/registration.e2e.spec.ts` checks a taken username followed by a corrected signup, an already registered email, and a successful availability-to-submit path.
-
-### Regression
-
-`frontend/src/app/features/auth/testing/regression/registration.regression.spec.ts` checks taken username feedback and an email becoming unavailable after its live check but before signup submission.
-
-## Related Use
-
+There are no dedicated tests for `is-username-available.query.ts` or `is-email-available.query.ts` in the auth unit-test inventory.
 Availability is exercised as part of signup, not as a separate user action, in the frontend registration component/integration tests and the `01-registration` Postman collection. See [flowchart.md](flowchart.md) for the distinction between the preview check and the authoritative submit-time uniqueness check.

@@ -1,5 +1,9 @@
 # 01. Browse the Archive
 
+**Version:** 1.0.0  
+**Created:** 2026-09-24  
+**Last Updated:** 2026-11-25
+
 ## In simple terms
 
 The Archive page brings archived tasks, projects, and labels together in one place. The person can view all item types or choose a tab, load more older entries, and see counts. Results are ordered newest first and paged with a cursor.

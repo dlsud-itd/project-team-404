@@ -1,5 +1,9 @@
 # 05. User Logout
 
+**Version:** 1.0.0  
+**Created:** 2026-09-24  
+**Last Updated:** 2026-11-25
+
 ## In simple terms
 
 When the person chooses Log out, HabitFlow asks the backend to disable the current session, then removes the token and signed-in user from the browser even if the request fails. The person is sent to the login page. That token can no longer be used to call protected APIs once the server has revoked it.

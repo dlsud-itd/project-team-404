@@ -1,5 +1,9 @@
 # 02. Create a Project
 
+**Version:** 1.0.0  
+**Created:** 2026-09-24  
+**Last Updated:** 2026-11-25
+
 ## In simple terms
 
 The person opens the New project dialog, enters a name, and may add a description and color. The form trims the name and turns empty optional fields into null values. HabitFlow creates the project for the signed-in account, adds the result to the shared project list, and closes the dialog.

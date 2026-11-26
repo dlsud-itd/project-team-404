@@ -1,5 +1,9 @@
 # 04. Set the Default Priority
 
+**Version:** 1.0.0  
+**Created:** 2026-09-24  
+**Last Updated:** 2026-11-25
+
 ## In simple terms
 
 The person selects which priority new tasks should use automatically. HabitFlow marks that level as default and clears the default flag from the person's other active levels. Existing tasks do not change.

@@ -1,5 +1,9 @@
 # 05. Schedule and Repeat a Task
 
+**Version:** 1.0.0  
+**Created:** 2026-09-24  
+**Last Updated:** 2026-11-25
+
 ## In simple terms
 
 The task form lets a person set a scheduled day, due date, deadline, and repeat rule. Dates are normalized using the signed-in person's timezone. A deadline cannot be earlier than the due date, and recurrence requires a due date. Empty date fields clear the saved value.

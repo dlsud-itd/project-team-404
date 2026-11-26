@@ -1,5 +1,9 @@
 # 08. Archive or Restore a Project
 
+**Version:** 1.0.0  
+**Created:** 2026-09-24  
+**Last Updated:** 2026-11-25
+
 ## In simple terms
 
 The person can archive a project they are finished with. The project disappears from active project lists, but it is not deleted. HabitFlow offers an Undo action immediately; later, the person can restore the project from the Archive page. The Inbox cannot be archived.

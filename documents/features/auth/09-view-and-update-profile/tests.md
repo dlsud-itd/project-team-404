@@ -1,34 +1,23 @@
 # View and Update Profile Tests
 
-## Direct Coverage
+**Version:** 1.0.0  
+**Created:** 2026-09-24  
+**Last Updated:** 2026-11-25
 
-### Frontend Unit
+## Test Matrix
 
-- `frontend/src/app/features/auth/profile/profile-settings/profile-settings.spec.ts`: loads profile values, enables save only for valid changes, and handles saved/error states.
-- `frontend/src/app/features/auth/profile/services/profile.service.spec.ts`: verifies profile GET/PATCH behavior and current-user updates.
-- `frontend/src/app/features/auth/profile/utils/diff-profile.util.spec.ts`: returns only changed username/timezone fields.
-- `frontend/src/app/features/auth/profile/mappers/profile-error.mapper.spec.ts`: maps profile conflicts and server errors to field/form messages.
+| Test ID     | Test type      | Test file (repository-relative)                                                      | Result | Coverage / notes                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| ----------- | -------------- | ------------------------------------------------------------------------------------ | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| AUTH-09-T01 | Unit           | `frontend/src/app/features/auth/profile/profile-settings/profile-settings.spec.ts`   | Pass   | loads profile values, enables save only for valid changes, and handles saved/error states                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| AUTH-09-T02 | Unit           | `frontend/src/app/features/auth/profile/services/profile.service.spec.ts`            | Pass   | verifies profile GET/PATCH behavior and current-user updates                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| AUTH-09-T03 | Unit           | `frontend/src/app/features/auth/profile/utils/diff-profile.util.spec.ts`             | Pass   | returns only changed username/timezone fields                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| AUTH-09-T04 | Unit           | `frontend/src/app/features/auth/profile/mappers/profile-error.mapper.spec.ts`        | Pass   | maps profile conflicts and server errors to field/form messages                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| AUTH-09-T05 | Unit           | `backend/src/features/auth/profile/profile.service.test.ts`                          | Pass   | checks profile reads, missing profiles, normalized updates, and duplicate username conflicts. Shared username and timezone validator tests cover the field rules                                                                                                                                                                                                                                                                                                                                           |
+| AUTH-09-T06 | Integration    | `frontend/tests/integration/features/settings/labels-priorities.integration.spec.ts` | Pass   | There is no dedicated frontend integration spec for editing the profile fields. verifies the profile settings page is reachable from signed-in settings navigation, but its assertions focus on other settings                                                                                                                                                                                                                                                                                             |
+| AUTH-09-T07 | API collection | `tests/postman/04-profile/Project-Team-404 API - 04-profile.postman_collection.json` | Fail   | tests profile reads and updates for username/timezone, partial updates, persistence through /me, duplicate/empty/overlong usernames, invalid timezone, attempts to update system fields, and missing/malformed credentials. These are requests 4–20; request 33 restores the seeded profile. The 34-request order is documented in tests/postman/04-profile/README.md; Not executed: Newman/Postman collections were not run; their documented collection-specific setup and assertions remain unverified. |
+| AUTH-09-T08 | End-to-end     | `tests/e2e/auth/profile.e2e.spec.ts`                                                 | Pass   | verifies username/timezone persistence, duplicate username rejection without changing data, and login by the updated username                                                                                                                                                                                                                                                                                                                                                                              |
+| AUTH-09-T09 | Regression     | `frontend/src/app/features/auth/testing/regression/profile.regression.spec.ts`       | Pass   | checks username changes across refresh and login, timezone-only changes, duplicate username rejection, and an expired session during save                                                                                                                                                                                                                                                                                                                                                                  |
 
-### Backend Unit
-
-`backend/src/features/auth/profile/profile.service.test.ts` checks profile reads, missing profiles, normalized updates, and duplicate username conflicts. Shared username and timezone validator tests cover the field rules.
-
-### Frontend Integration
-
-There is no dedicated frontend integration spec for editing the profile fields. `frontend/tests/integration/features/settings/labels-priorities.integration.spec.ts` verifies the profile settings page is reachable from signed-in settings navigation, but its assertions focus on other settings.
-
-### Postman
-
-`tests/postman/04-profile/Project-Team-404 API - 04-profile.postman_collection.json` tests profile reads and updates for username/timezone, partial updates, persistence through `/me`, duplicate/empty/overlong usernames, invalid timezone, attempts to update system fields, and missing/malformed credentials. These are requests 4–20; request 33 restores the seeded profile. The 34-request order is documented in `tests/postman/04-profile/README.md`.
-
-### End-to-End
-
-`tests/e2e/auth/profile.e2e.spec.ts` verifies username/timezone persistence, duplicate username rejection without changing data, and login by the updated username.
-
-### Regression
-
-`frontend/src/app/features/auth/testing/regression/profile.regression.spec.ts` checks username changes across refresh and login, timezone-only changes, duplicate username rejection, and an expired session during save.
-
-## Database Test Notes
+## Coverage Notes
 
 There are no dedicated unit tests for `find-profile.query.ts` or `update-profile.query.ts`. Prisma behavior is exercised through backend service tests and higher-level Postman/E2E flows.

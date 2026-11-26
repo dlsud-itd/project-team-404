@@ -1,5 +1,9 @@
 # 06. Request a Password Reset
 
+**Version:** 1.0.0  
+**Created:** 2026-09-24  
+**Last Updated:** 2026-11-25
+
 ## In simple terms
 
 The person enters an email address on the Forgot password page. If an account exists, HabitFlow creates a short-lived reset link and sends it by email. The response is intentionally the same when no account exists, so someone cannot use this screen to discover which email addresses have accounts.

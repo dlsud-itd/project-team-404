@@ -1,27 +1,22 @@
 # Browse Archive Tests
 
-## Direct Coverage
+**Version:** 1.0.0  
+**Created:** 2026-09-24  
+**Last Updated:** 2026-11-25
 
-### Frontend Unit
+## Test Matrix
 
-- `frontend/src/app/features/archive/components/archive-page/archive-page.spec.ts`: tabs, grouped rows, counts, loading/error/retry, and cursor pagination.
-- `frontend/src/app/features/archive/services/archive.service.spec.ts`: query type/limit/cursor, flattening, sorting, totals, and next cursor.
-- `frontend/src/app/features/archive/utils/archive-labels.util.spec.ts`: item labels and empty states.
+| Test ID        | Test type      | Test file (repository-relative)                                                      | Result | Coverage / notes                                                                                                                                                                                                                                                                               |
+| -------------- | -------------- | ------------------------------------------------------------------------------------ | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ARCHIVE-01-T01 | Unit           | `frontend/src/app/features/archive/components/archive-page/archive-page.spec.ts`     | Pass   | tabs, grouped rows, counts, loading/error/retry, and cursor pagination                                                                                                                                                                                                                         |
+| ARCHIVE-01-T02 | Unit           | `frontend/src/app/features/archive/services/archive.service.spec.ts`                 | Pass   | query type/limit/cursor, flattening, sorting, totals, and next cursor                                                                                                                                                                                                                          |
+| ARCHIVE-01-T03 | Unit           | `frontend/src/app/features/archive/utils/archive-labels.util.spec.ts`                | Pass   | item labels and empty states                                                                                                                                                                                                                                                                   |
+| ARCHIVE-01-T04 | Unit           | `backend/src/features/archive/archive.service.test.ts`                               | Pass   | merges item types, filters by requested type, counts, ordering, and pagination                                                                                                                                                                                                                 |
+| ARCHIVE-01-T05 | Unit           | `backend/src/features/archive/validators/archive-query.validator.test.ts`            | Pass   | type/limit/cursor validation                                                                                                                                                                                                                                                                   |
+| ARCHIVE-01-T06 | Unit           | `backend/src/features/archive/utils/archive-cursor.test.ts`                          | Pass   | cursor encoding/decoding and invalid cursor handling                                                                                                                                                                                                                                           |
+| ARCHIVE-01-T07 | API collection | `tests/postman/15-archive/Project-Team-404 API - 15-archive.postman_collection.json` | Fail   | checks archive listing by type, first/next pages, cursor non-repetition, invalid limit, and auth (requests 14–18). See tests/postman/15-archive/README.md; Not executed: Newman/Postman collections were not run; their documented collection-specific setup and assertions remain unverified. |
+| ARCHIVE-01-T08 | Regression     | `tests/regression/archive/archive.regression.spec.ts`                                | Pass   | covers archived item workflows through the API                                                                                                                                                                                                                                                 |
 
-### Backend Unit
-
-- `backend/src/features/archive/archive.service.test.ts`: merges item types, filters by requested type, counts, ordering, and pagination.
-- `backend/src/features/archive/validators/archive-query.validator.test.ts`: type/limit/cursor validation.
-- `backend/src/features/archive/utils/archive-cursor.test.ts`: cursor encoding/decoding and invalid cursor handling.
-
-### Postman
-
-`tests/postman/15-archive/Project-Team-404 API - 15-archive.postman_collection.json` checks archive listing by type, first/next pages, cursor non-repetition, invalid limit, and auth (requests 14–18). See `tests/postman/15-archive/README.md`.
-
-### Regression
-
-`tests/regression/archive/archive.regression.spec.ts` covers archived item workflows through the API.
-
-## End-to-End Gap
+## Coverage Notes
 
 There is no dedicated `tests/e2e/archive` Playwright suite in the current tree; the Archive page is covered by frontend unit tests and Postman/regression flows.

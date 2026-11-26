@@ -1,5 +1,9 @@
 # 07. Reorder Projects
 
+**Version:** 1.0.0  
+**Created:** 2026-09-24  
+**Last Updated:** 2026-11-25
+
 ## In simple terms
 
 The person drags a project or uses its move buttons to change its place in Favorites or My Projects. HabitFlow calculates a complete project order, updates the list immediately, sends the new IDs to the backend, then saves new sort numbers. If the request fails, the previous order is restored.

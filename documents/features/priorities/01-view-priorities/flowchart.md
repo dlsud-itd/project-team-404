@@ -1,5 +1,9 @@
 # 01. View Priorities
 
+**Version:** 1.0.0  
+**Created:** 2026-09-24  
+**Last Updated:** 2026-11-25
+
 ## In simple terms
 
 The app loads the signed-in person's priority levels and shows them in saved order, with the current default marked. Until the server responds, the task form can use built-in High/Medium/Low levels; after loading, the server-managed levels are authoritative.

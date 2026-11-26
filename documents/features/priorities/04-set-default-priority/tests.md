@@ -1,18 +1,16 @@
 # Set Default Priority Tests
 
-## Direct Coverage
+**Version:** 1.0.0  
+**Created:** 2026-09-24  
+**Last Updated:** 2026-11-25
 
-### Frontend Unit and Integration
+## Test Matrix
 
-- `frontend/src/app/features/settings/priorities/priority-settings.spec.ts`: changing the default and announcing success/failure.
-- `frontend/src/app/features/settings/state/priorities.store.spec.ts`: only the selected ID remains default.
-- `frontend/tests/integration/features/settings/labels-priorities.integration.spec.ts`: default selection updates the priority row and later task form default.
-
-### Backend Unit and Integration
-
-- `backend/src/features/priorities/priority-crud/priority-crud.service.test.ts`: setting the default and missing-level behavior.
-- `backend/tests/integration/priorities.integration.test.ts`: changes the default and confirms exactly one active default remains in the database.
-
-### Postman
-
-`tests/postman/11-labels-priorities/Project-Team-404 API - 11-labels-priorities.postman_collection.json` sets a custom priority as default and later verifies a task without an explicit priority uses the current default (requests 9 and 17).
+| Test ID           | Test type      | Test file (repository-relative)                                                                          | Result | Coverage / notes                                                                                                                                                                                                                                                           |
+| ----------------- | -------------- | -------------------------------------------------------------------------------------------------------- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| PRIORITIES-04-T01 | Unit           | `frontend/src/app/features/settings/priorities/priority-settings.spec.ts`                                | Pass   | changing the default and announcing success/failure                                                                                                                                                                                                                        |
+| PRIORITIES-04-T02 | Unit           | `frontend/src/app/features/settings/state/priorities.store.spec.ts`                                      | Pass   | only the selected ID remains default                                                                                                                                                                                                                                       |
+| PRIORITIES-04-T03 | Integration    | `frontend/tests/integration/features/settings/labels-priorities.integration.spec.ts`                     | Pass   | default selection updates the priority row and later task form default                                                                                                                                                                                                     |
+| PRIORITIES-04-T04 | Unit           | `backend/src/features/priorities/priority-crud/priority-crud.service.test.ts`                            | Pass   | setting the default and missing-level behavior                                                                                                                                                                                                                             |
+| PRIORITIES-04-T05 | Integration    | `backend/tests/integration/priorities.integration.test.ts`                                               | Fail   | changes the default and confirms exactly one active default remains in the database; Backend integration run: 1 assertion(s) failed in this file.                                                                                                                          |
+| PRIORITIES-04-T06 | API collection | `tests/postman/11-labels-priorities/Project-Team-404 API - 11-labels-priorities.postman_collection.json` | Fail   | sets a custom priority as default and later verifies a task without an explicit priority uses the current default (requests 9 and 17); Not executed: Newman/Postman collections were not run; their documented collection-specific setup and assertions remain unverified. |

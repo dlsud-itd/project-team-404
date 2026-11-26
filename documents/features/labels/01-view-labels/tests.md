@@ -1,29 +1,22 @@
 # View Labels Tests
 
-## Direct Coverage
+**Version:** 1.0.0  
+**Created:** 2026-09-24  
+**Last Updated:** 2026-11-25
 
-### Frontend Unit
+## Test Matrix
 
-- `frontend/src/app/features/settings/labels/label-settings.spec.ts`: active/archived lists, loading/error states, and counts.
-- `frontend/src/app/features/settings/services/labels.service.spec.ts`: `isArchived` query parameter and response mapping.
+| Test ID       | Test type      | Test file (repository-relative)                                                                          | Result | Coverage / notes                                                                                                                                                                                                                                                                                          |
+| ------------- | -------------- | -------------------------------------------------------------------------------------------------------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| LABELS-01-T01 | Unit           | `frontend/src/app/features/settings/labels/label-settings.spec.ts`                                       | Pass   | active/archived lists, loading/error states, and counts                                                                                                                                                                                                                                                   |
+| LABELS-01-T02 | Unit           | `frontend/src/app/features/settings/services/labels.service.spec.ts`                                     | Pass   | isArchived query parameter and response mapping                                                                                                                                                                                                                                                           |
+| LABELS-01-T03 | Unit           | `backend/src/features/labels/label-crud/label-crud.service.test.ts`                                      | Pass   | owner-scoped list and response shape                                                                                                                                                                                                                                                                      |
+| LABELS-01-T04 | Unit           | `backend/src/features/labels/label-crud/label-crud.controller.test.ts`                                   | Pass   | owner-scoped list and response shape                                                                                                                                                                                                                                                                      |
+| LABELS-01-T05 | Unit           | `backend/src/features/labels/shared/models/label.model.test.ts`                                          | Pass   | public label model mapping                                                                                                                                                                                                                                                                                |
+| LABELS-01-T06 | Integration    | `frontend/tests/integration/features/settings/labels-priorities.integration.spec.ts`                     | Pass   | exercises the real signed-in settings route, active/archived label loads, and task-form label pickers with mocked HTTP                                                                                                                                                                                    |
+| LABELS-01-T07 | API collection | `tests/postman/11-labels-priorities/Project-Team-404 API - 11-labels-priorities.postman_collection.json` | Fail   | checks active label listing and task count/sort fields (requests 21–22). tests/postman/15-archive verifies labels are listed/restored through the shared Archive API; Not executed: Newman/Postman collections were not run; their documented collection-specific setup and assertions remain unverified. |
+| LABELS-01-T08 | Regression     | `tests/regression/organization/labels-priorities.regression.spec.ts`                                     | Pass   | covers per-user label organization and task associations                                                                                                                                                                                                                                                  |
 
-### Backend Unit
-
-- `backend/src/features/labels/label-crud/label-crud.service.test.ts` and `label-crud.controller.test.ts`: owner-scoped list and response shape.
-- `backend/src/features/labels/shared/models/label.model.test.ts`: public label model mapping.
-
-### Frontend Integration
-
-`frontend/tests/integration/features/settings/labels-priorities.integration.spec.ts` exercises the real signed-in settings route, active/archived label loads, and task-form label pickers with mocked HTTP.
-
-### Postman
-
-`tests/postman/11-labels-priorities/Project-Team-404 API - 11-labels-priorities.postman_collection.json` checks active label listing and task count/sort fields (requests 21–22). `tests/postman/15-archive` verifies labels are listed/restored through the shared Archive API.
-
-### Regression
-
-`tests/regression/organization/labels-priorities.regression.spec.ts` covers per-user label organization and task associations.
-
-## Backend Integration Note
+## Coverage Notes
 
 There is no dedicated backend integration suite under `backend/tests/integration/features/labels`; label list behavior is exercised through Postman and the frontend integration fixture.

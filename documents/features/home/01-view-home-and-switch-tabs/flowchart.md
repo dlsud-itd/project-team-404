@@ -1,5 +1,9 @@
 # 01. View Home and Switch Tabs
 
+**Version:** 1.0.0  
+**Created:** 2026-09-24  
+**Last Updated:** 2026-11-25
+
 ## In simple terms
 
 After signing in, Home opens on the dashboard tab. The person can switch to Tasks or Projects without leaving the Home page. The selected tab is written to the URL, so refresh and browser Back keep the same section. The dashboard tab loads project and task data for its widgets.

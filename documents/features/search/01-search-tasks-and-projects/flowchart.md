@@ -1,5 +1,9 @@
 # 01. Search Tasks and Projects
 
+**Version:** 1.0.0  
+**Created:** 2026-09-24  
+**Last Updated:** 2026-11-25
+
 ## In simple terms
 
 The person searches from the top bar or Search page. HabitFlow waits until the query has at least two characters, then searches the person's tasks and projects. Results are ranked by exact/prefix/contains matches, grouped by type, and archived items are excluded unless the person opts in.

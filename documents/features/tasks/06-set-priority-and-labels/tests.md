@@ -1,28 +1,25 @@
 # Set Task Priority and Labels Tests
 
-## Direct Coverage
+**Version:** 1.0.0  
+**Created:** 2026-09-24  
+**Last Updated:** 2026-11-25
 
-### Frontend Unit
+## Test Matrix
 
-- `frontend/src/app/features/tasks/task-crud/task-form/task-form.spec.ts`: priority selection, label selection, and combined task save.
-- `frontend/src/app/features/tasks/task-organization/services/label.service.spec.ts`: attach/detach label diff and refreshed label list.
-- `frontend/src/app/features/tasks/task-crud/mappers/task.mapper.spec.ts`: priority ID and label response mapping.
+| Test ID      | Test type      | Test file (repository-relative)                                                                          | Result | Coverage / notes                                                                                                                                                                                                                                                                                                 |
+| ------------ | -------------- | -------------------------------------------------------------------------------------------------------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| TASKS-06-T01 | Unit           | `frontend/src/app/features/tasks/task-crud/task-form/task-form.spec.ts`                                  | Pass   | priority selection, label selection, and combined task save                                                                                                                                                                                                                                                      |
+| TASKS-06-T02 | Unit           | `frontend/src/app/features/tasks/task-crud/mappers/task.mapper.spec.ts`                                  | Pass   | priority ID and label response mapping                                                                                                                                                                                                                                                                           |
+| TASKS-06-T03 | Unit           | `backend/src/features/tasks/task-organization/validators/priority.validator.test.ts`                     | Pass   | valid/invalid inputs                                                                                                                                                                                                                                                                                             |
+| TASKS-06-T04 | Unit           | `backend/src/features/tasks/task-organization/validators/task-labels.validator.test.ts`                  | Pass   | valid/invalid inputs                                                                                                                                                                                                                                                                                             |
+| TASKS-06-T05 | Unit           | `backend/src/features/tasks/task-organization/task-organization.service.test.ts`                         | Pass   | owned priority/labels, archived labels, and task state rules                                                                                                                                                                                                                                                     |
+| TASKS-06-T06 | Unit           | `backend/src/features/tasks/task-organization/task-organization.controller.test.ts`                      | Pass   | owned priority/labels, archived labels, and task state rules                                                                                                                                                                                                                                                     |
+| TASKS-06-T07 | Integration    | `frontend/tests/integration/features/tasks/tasks.integration.spec.ts`                                    | Pass   | checks task form priority/label fields and their API calls                                                                                                                                                                                                                                                       |
+| TASKS-06-T08 | API collection | `tests/postman/08-task-organization/Project-Team-404 API - 08-task-organization.postman_collection.json` | Fail   | label create/list/update/delete, priority setting, label attach/detach, duplicate and foreign-owner checks, and task filtering by priority/labels (requests 5–28 and 29–32); Not executed: Newman/Postman collections were not run; their documented collection-specific setup and assertions remain unverified. |
+| TASKS-06-T09 | API collection | `tests/postman/11-labels-priorities/Project-Team-404 API - 11-labels-priorities.postman_collection.json` | Fail   | priority create/update/default/delete/reassign and task priority assignment, plus label CRUD; Not executed: Newman/Postman collections were not run; their documented collection-specific setup and assertions remain unverified.                                                                                |
+| TASKS-06-T10 | End-to-end     | `tests/e2e/tasks/task-organization.e2e.spec.ts`                                                          | Fail   | cover task label/priority organization and ownership boundaries; E2E run: 2 E2E assertions failed.                                                                                                                                                                                                               |
+| TASKS-06-T11 | Regression     | `tests/regression/organization/labels-priorities.regression.spec.ts`                                     | Pass   | cover task label/priority organization and ownership boundaries                                                                                                                                                                                                                                                  |
 
-### Backend Unit and Integration
+## Coverage Notes
 
-- `backend/src/features/tasks/task-organization/validators/priority.validator.test.ts` and `task-labels.validator.test.ts`: valid/invalid inputs.
-- `backend/src/features/tasks/task-organization/task-organization.service.test.ts` and `task-organization.controller.test.ts`: owned priority/labels, archived labels, and task state rules.
-- `backend/src/features/tasks/task-organization/db/queries` contains task-label query tests where implemented; there is no dedicated task priority query test because priority updates share the task update query.
-
-### Frontend Integration
-
-`frontend/tests/integration/features/tasks/tasks.integration.spec.ts` checks task form priority/label fields and their API calls.
-
-### Postman
-
-- `tests/postman/08-task-organization/Project-Team-404 API - 08-task-organization.postman_collection.json`: label create/list/update/delete, priority setting, label attach/detach, duplicate and foreign-owner checks, and task filtering by priority/labels (requests 5–28 and 29–32).
-- `tests/postman/11-labels-priorities/Project-Team-404 API - 11-labels-priorities.postman_collection.json`: priority create/update/default/delete/reassign and task priority assignment, plus label CRUD.
-
-### End-to-End and Regression
-
-`tests/e2e/tasks/task-organization.e2e.spec.ts` and `tests/regression/organization/labels-priorities.regression.spec.ts` cover task label/priority organization and ownership boundaries.
+`backend/src/features/tasks/task-organization/db/queries` contains task-label query tests where implemented; there is no dedicated task priority query test because priority updates share the task update query.

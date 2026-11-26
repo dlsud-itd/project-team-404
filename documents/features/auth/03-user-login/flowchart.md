@@ -1,5 +1,9 @@
 # 03. User Login
 
+**Version:** 1.0.0  
+**Created:** 2026-09-24  
+**Last Updated:** 2026-11-25
+
 ## In simple terms
 
 The person enters an email address or username and their password. If the credentials are correct, HabitFlow creates a server-side session and saves the returned session token in the browser. The “remember” choice controls whether the token lasts only for the current browser session or is kept in local storage. The person is then sent to the home page.

@@ -1,5 +1,9 @@
 # 01. Visit Landing and Choose an Auth Action
 
+**Version:** 1.0.0  
+**Created:** 2026-09-24  
+**Last Updated:** 2026-11-25
+
 ## In simple terms
 
 Signed-out visitors see the Landing page. They can jump to a section, go to Log in, or start registration. Both account links route into the Auth feature; the Landing page itself does not call a backend API.

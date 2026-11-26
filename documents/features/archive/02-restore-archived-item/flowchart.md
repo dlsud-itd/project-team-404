@@ -1,5 +1,9 @@
 # 02. Restore an Archived Item
 
+**Version:** 1.0.0  
+**Created:** 2026-09-24  
+**Last Updated:** 2026-11-25
+
 ## In simple terms
 
 From the Archive page, the person restores a task, project, or label. The item returns to its active view, and the archive row/count is removed immediately. If the request fails, HabitFlow puts the row back.

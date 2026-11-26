@@ -1,5 +1,9 @@
 # 03. View and Complete Recurring Task Streaks
 
+**Version:** 1.0.0  
+**Created:** 2026-09-24  
+**Last Updated:** 2026-11-25
+
 ## In simple terms
 
 The dashboard lists active recurring streaks, putting streaks at risk first. A person can mark the open occurrence done from this section. HabitFlow saves the completion and refreshes the streak list and badges throughout the app.

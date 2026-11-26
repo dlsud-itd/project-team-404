@@ -1,5 +1,9 @@
 # 06. Delete a Priority and Reassign Tasks
 
+**Version:** 1.0.0  
+**Created:** 2026-09-24  
+**Last Updated:** 2026-11-25
+
 ## In simple terms
 
 The person chooses Delete for a priority. If tasks use it, or it is the default, they must choose another priority to receive those tasks and/or the default flag. HabitFlow moves affected tasks, updates the default if needed, and soft-deletes the level in one transaction. The last remaining priority cannot be deleted.

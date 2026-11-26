@@ -1,5 +1,9 @@
 # 02. Create a Task
 
+**Version:** 1.0.0  
+**Created:** 2026-09-24  
+**Last Updated:** 2026-11-25
+
 ## In simple terms
 
 The person opens the New task dialog from a project list, enters a title, and may choose details such as priority, labels, dates, recurrence, or another project. HabitFlow creates the task for that person, defaults it to the Inbox when no project is selected, then attaches selected labels.

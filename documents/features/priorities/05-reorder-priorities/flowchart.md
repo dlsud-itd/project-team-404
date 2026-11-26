@@ -1,5 +1,9 @@
 # 05. Reorder Priorities
 
+**Version:** 1.0.0  
+**Created:** 2026-09-24  
+**Last Updated:** 2026-11-25
+
 ## In simple terms
 
 The person drags a priority or uses move controls in Settings. HabitFlow immediately displays the new order, sends every priority ID in that order, and restores the old order if the save fails.

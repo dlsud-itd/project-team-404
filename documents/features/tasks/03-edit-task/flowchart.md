@@ -1,5 +1,9 @@
 # 03. Edit a Task
 
+**Version:** 1.0.0  
+**Created:** 2026-09-24  
+**Last Updated:** 2026-11-25
+
 ## In simple terms
 
 The person opens Edit from a task row. HabitFlow loads the task, compares the form with the saved task, and sends only changed details. Details, schedule, and label changes are saved through their respective endpoints. Archived tasks are read-only until restored.

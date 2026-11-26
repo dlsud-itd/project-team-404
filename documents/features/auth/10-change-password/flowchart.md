@@ -1,5 +1,9 @@
 # 10. Change Password
 
+**Version:** 1.0.0  
+**Created:** 2026-09-24  
+**Last Updated:** 2026-11-25
+
 ## In simple terms
 
 From Profile settings, a signed-in person enters their current password and a new password twice. HabitFlow verifies the current password before changing it. The current device stays signed in, while sessions on other devices are revoked so they must log in again with the new password.
