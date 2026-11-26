@@ -39,6 +39,11 @@ const steps = [
     name: 'Frontend regression',
     command: 'npm --prefix frontend run test:regression',
   },
+  {
+    name: 'End-to-end',
+    command: 'npm run test:e2e',
+    env: backendEnv,
+  },
 ];
 
 const results = [];
@@ -50,7 +55,10 @@ for (const step of steps) {
     continue;
   }
   const { code, output } = await run(step.command, step.env);
-  const counts = vitestCounts(output);
+  const counts =
+    step.name === 'End-to-end'
+      ? playwrightCounts(output)
+      : vitestCounts(output);
   const problems = [];
   if (code !== 0) problems.push(`exit code ${code}`);
   if (counts?.failed) problems.push(`${counts.failed} failed`);
@@ -180,6 +188,22 @@ function vitestCounts(output) {
     failed: count('failed'),
     skipped: count('skipped'),
   };
+}
+
+/** Reads Playwright's final "passed", "failed", and "skipped" summary lines. */
+function playwrightCounts(output) {
+  const clean = output.replace(/\x1b\[[0-9;]*m/g, '');
+  const passedMatch = clean.match(/^\s*(\d+) passed(?:\s+\([^\r\n]*\))?\s*$/m);
+  const failedMatch = clean.match(/^\s*(\d+) failed\s*$/m);
+  const skippedMatch = clean.match(/^\s*(\d+) skipped\s*$/m);
+  const summaryFound = passedMatch || failedMatch || skippedMatch;
+  return summaryFound
+    ? {
+        passed: Number(passedMatch?.[1] ?? 0),
+        failed: Number(failedMatch?.[1] ?? 0),
+        skipped: Number(skippedMatch?.[1] ?? 0),
+      }
+    : null;
 }
 
 function gitSha() {
