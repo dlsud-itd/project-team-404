@@ -1,5 +1,9 @@
 # 06. Archive or Restore a Label
 
+**Version:** 1.0.0  
+**Created:** 2026-09-24  
+**Last Updated:** 2026-11-25
+
 ## In simple terms
 
 The person archives a label instead of deleting it. It moves to the Archived section and cannot be newly attached to tasks. They can undo immediately or restore it later from the shared Archive page.

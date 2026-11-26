@@ -1,5 +1,9 @@
 # 09. Switch Between List and Board Views
 
+**Version:** 1.0.0  
+**Created:** 2026-09-24  
+**Last Updated:** 2026-11-25
+
 ## In simple terms
 
 The person switches between the regular task list and a three-column board. The chosen view is stored in the URL, so reload and browser Back preserve it. Both views use the same project and task filters.

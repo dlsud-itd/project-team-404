@@ -1,5 +1,9 @@
 # 03. Edit a Label
 
+**Version:** 1.0.0  
+**Created:** 2026-09-24  
+**Last Updated:** 2026-11-25
+
 ## In simple terms
 
 The person edits a label's name or color in Settings. HabitFlow saves the changed values for that person's label. A duplicate name is rejected, and the editor keeps the input so the person can correct it.

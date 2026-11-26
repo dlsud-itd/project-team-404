@@ -1,18 +1,17 @@
 # Edit Priority Tests
 
-## Direct Coverage
+**Version:** 1.0.0  
+**Created:** 2026-09-24  
+**Last Updated:** 2026-11-25
 
-### Frontend Unit and Integration
+## Test Matrix
 
-- `frontend/src/app/features/settings/priorities/priority-settings.spec.ts`: editing names/colors, duplicate-name feedback, and server errors.
-- `frontend/src/app/features/settings/services/priorities.service.spec.ts` and `priorities.store.spec.ts`: PUT payload and store replacement.
-- `frontend/tests/integration/features/settings/labels-priorities.integration.spec.ts`: renames and recolors a custom priority through Settings.
-
-### Backend Unit and Integration
-
-- `backend/src/features/priorities/priority-crud/priority-crud.service.test.ts`: update and duplicate-name behavior.
-- `backend/tests/integration/priorities.integration.test.ts`: reads, renames, recolors, and checks saved values.
-
-### Postman
-
-`tests/postman/11-labels-priorities/Project-Team-404 API - 11-labels-priorities.postman_collection.json` renames/recolors a custom priority, rejects a duplicate name for the same owner, and allows the same name for another owner (requests 7–10).
+| Test ID           | Test type      | Test file (repository-relative)                                                                          | Result | Coverage / notes                                                                                                                                                                                                                                                                 |
+| ----------------- | -------------- | -------------------------------------------------------------------------------------------------------- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| PRIORITIES-03-T01 | Unit           | `frontend/src/app/features/settings/priorities/priority-settings.spec.ts`                                | Pass   | editing names/colors, duplicate-name feedback, and server errors                                                                                                                                                                                                                 |
+| PRIORITIES-03-T02 | Unit           | `frontend/src/app/features/settings/services/priorities.service.spec.ts`                                 | Pass   | PUT payload and store replacement                                                                                                                                                                                                                                                |
+| PRIORITIES-03-T03 | Unit           | `frontend/src/app/features/settings/state/priorities.store.spec.ts`                                      | Pass   | PUT payload and store replacement                                                                                                                                                                                                                                                |
+| PRIORITIES-03-T04 | Integration    | `frontend/tests/integration/features/settings/labels-priorities.integration.spec.ts`                     | Pass   | renames and recolors a custom priority through Settings                                                                                                                                                                                                                          |
+| PRIORITIES-03-T05 | Unit           | `backend/src/features/priorities/priority-crud/priority-crud.service.test.ts`                            | Pass   | update and duplicate-name behavior                                                                                                                                                                                                                                               |
+| PRIORITIES-03-T06 | Integration    | `backend/tests/integration/priorities.integration.test.ts`                                               | Fail   | reads, renames, recolors, and checks saved values; Backend integration run: 1 assertion(s) failed in this file.                                                                                                                                                                  |
+| PRIORITIES-03-T07 | API collection | `tests/postman/11-labels-priorities/Project-Team-404 API - 11-labels-priorities.postman_collection.json` | Fail   | renames/recolors a custom priority, rejects a duplicate name for the same owner, and allows the same name for another owner (requests 7–10); Not executed: Newman/Postman collections were not run; their documented collection-specific setup and assertions remain unverified. |

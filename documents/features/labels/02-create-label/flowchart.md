@@ -1,5 +1,9 @@
 # 02. Create a Label
 
+**Version:** 1.0.0  
+**Created:** 2026-09-24  
+**Last Updated:** 2026-11-25
+
 ## In simple terms
 
 In Settings > Labels, the person enters a label name and optional color. HabitFlow rejects blank or duplicate names, creates the label for the signed-in user, and adds it to the active list.

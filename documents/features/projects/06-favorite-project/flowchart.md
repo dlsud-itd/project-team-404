@@ -1,5 +1,9 @@
 # 06. Favorite or Unfavorite a Project
 
+**Version:** 1.0.0  
+**Created:** 2026-09-24  
+**Last Updated:** 2026-11-25
+
 ## In simple terms
 
 The person presses the star next to a project. HabitFlow updates the star immediately, sends the change to the server, and keeps the new state if the request succeeds. If the request fails, it restores the old star and explains the problem. The Inbox cannot be favorited through the organizer controls.

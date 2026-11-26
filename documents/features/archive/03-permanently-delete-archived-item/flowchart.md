@@ -1,5 +1,9 @@
 # 03. Permanently Delete an Archived Item
 
+**Version:** 1.0.0  
+**Created:** 2026-09-24  
+**Last Updated:** 2026-11-25
+
 ## In simple terms
 
 The person can permanently remove an archived item after confirming. The API delegates deletion to the item's owning feature: tasks and projects are soft-deleted (project tasks move to Inbox), while labels are deleted from the label table. The Archive row is then removed.

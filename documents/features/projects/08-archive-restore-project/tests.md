@@ -1,30 +1,26 @@
 # Archive and Restore Project Tests
 
-## Direct Coverage
+**Version:** 1.0.0  
+**Created:** 2026-09-24  
+**Last Updated:** 2026-11-25
 
-### Frontend Unit
+## Test Matrix
 
-- `frontend/src/app/features/projects/project-organization/project-switcher/project-switcher.spec.ts`: archive action, undo offer, and project state changes.
-- `frontend/src/app/features/projects/project-organization/services/project-organization.service.spec.ts`: optimistic archive/restore and rollback.
-- `frontend/src/app/features/archive/services/archive.service.spec.ts`: restore of a project from the Archive page and synchronization with `ProjectsStore`.
-- `frontend/src/app/features/archive/components/archive-page/archive-page.spec.ts`: archived-item presentation and restore action.
+| Test ID         | Test type      | Test file (repository-relative)                                                                                | Result | Coverage / notes                                                                                                                                                                                                                                                                                                     |
+| --------------- | -------------- | -------------------------------------------------------------------------------------------------------------- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| PROJECTS-08-T01 | Unit           | `frontend/src/app/features/projects/project-organization/project-switcher/project-switcher.spec.ts`            | Pass   | archive action, undo offer, and project state changes                                                                                                                                                                                                                                                                |
+| PROJECTS-08-T02 | Unit           | `frontend/src/app/features/projects/project-organization/services/project-organization.service.spec.ts`        | Pass   | optimistic archive/restore and rollback                                                                                                                                                                                                                                                                              |
+| PROJECTS-08-T03 | Unit           | `frontend/src/app/features/archive/services/archive.service.spec.ts`                                           | Pass   | restore of a project from the Archive page and synchronization with ProjectsStore                                                                                                                                                                                                                                    |
+| PROJECTS-08-T04 | Unit           | `frontend/src/app/features/archive/components/archive-page/archive-page.spec.ts`                               | Pass   | archived-item presentation and restore action                                                                                                                                                                                                                                                                        |
+| PROJECTS-08-T05 | Unit           | `backend/src/features/projects/project-organization/project-organization.service.test.ts`                      | Pass   | archive, restore, Inbox protection, and project-not-found behavior                                                                                                                                                                                                                                                   |
+| PROJECTS-08-T06 | Unit           | `backend/src/features/projects/project-organization/project-organization.controller.test.ts`                   | Pass   | responses and route protections                                                                                                                                                                                                                                                                                      |
+| PROJECTS-08-T07 | Unit           | `backend/src/features/projects/project-organization/project-organization.routes.test.ts`                       | Pass   | responses and route protections                                                                                                                                                                                                                                                                                      |
+| PROJECTS-08-T08 | Unit           | `backend/src/features/projects/project-organization/db/queries/set-project-archived.query.test.ts`             | Pass   | archive state/timestamp persistence and stale state handling                                                                                                                                                                                                                                                         |
+| PROJECTS-08-T09 | Integration    | `backend/tests/integration/features/projects/projects.integration.test.ts`                                     | Fail   | owner-scoped archived/active project lists; Backend integration run: 2 assertion(s) failed in this file.                                                                                                                                                                                                             |
+| PROJECTS-08-T10 | API collection | `tests/postman/06-project-organization/Project-Team-404 API - 06-project-organization.postman_collection.json` | Fail   | archives a project, checks it appears only in the archived list, restores it, and rejects archiving Inbox (requests 11–15). See tests/postman/06-project-organization/README.md; Not executed: Newman/Postman collections were not run; their documented collection-specific setup and assertions remain unverified. |
+| PROJECTS-08-T11 | End-to-end     | `tests/e2e/projects/project-organization.e2e.spec.ts`                                                          | Fail   | archives and restores a project, checking the result survives reload; E2E run: 3 E2E assertions failed.                                                                                                                                                                                                              |
+| PROJECTS-08-T12 | Regression     | `tests/regression/projects/project-organization.regression.spec.ts`                                            | Fail   | covers owned project organization while preserving Inbox and other-user isolation; Backend API regression run: 1 assertion(s) failed in this file.                                                                                                                                                                   |
 
-### Backend Unit and Integration
-
-- `backend/src/features/projects/project-organization/project-organization.service.test.ts`: archive, restore, Inbox protection, and project-not-found behavior.
-- `backend/src/features/projects/project-organization/project-organization.controller.test.ts` and `project-organization.routes.test.ts`: responses and route protections.
-- `backend/src/features/projects/project-organization/db/queries/set-project-archived.query.test.ts`: archive state/timestamp persistence and stale state handling.
-- `backend/tests/integration/features/projects/projects.integration.test.ts`: owner-scoped archived/active project lists.
-
-### Postman
-
-`tests/postman/06-project-organization/Project-Team-404 API - 06-project-organization.postman_collection.json` archives a project, checks it appears only in the archived list, restores it, and rejects archiving Inbox (requests 11–15). See `tests/postman/06-project-organization/README.md`.
-
-### End-to-End and Regression
-
-- `tests/e2e/projects/project-organization.e2e.spec.ts`: archives and restores a project, checking the result survives reload.
-- `tests/regression/projects/project-organization.regression.spec.ts`: covers owned project organization while preserving Inbox and other-user isolation.
-
-## Cross-Feature Note
+## Coverage Notes
 
 Project archive restoration is initiated from the Archive page; the API/state transition is the Projects organization operation documented in [flowchart.md](flowchart.md). The Archive feature guide should cover the shared page behavior for tasks, projects, and labels.

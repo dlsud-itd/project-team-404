@@ -1,5 +1,9 @@
 # 11. View the Task Timeline
 
+**Version:** 1.0.0  
+**Created:** 2026-09-24  
+**Last Updated:** 2026-11-25
+
 ## In simple terms
 
 The authenticated timeline endpoint returns tasks as project-grouped bars between requested dates. It can include completed tasks or filter to a project/task state. The repository currently has no dedicated frontend timeline component, so the timeline is documented as an API capability rather than a visible Angular screen.

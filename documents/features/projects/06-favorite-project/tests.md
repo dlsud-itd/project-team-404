@@ -1,28 +1,25 @@
 # Favorite Project Tests
 
-## Direct Coverage
+**Version:** 1.0.0  
+**Created:** 2026-09-24  
+**Last Updated:** 2026-11-25
 
-### Frontend Unit
+## Test Matrix
 
-- `frontend/src/app/features/projects/project-organization/project-switcher/project-switcher.spec.ts`: favorite control state and user announcements.
-- `frontend/src/app/features/projects/project-organization/services/project-organization.service.spec.ts`: favorite request, optimistic store update, and rollback on failure.
-- `frontend/src/app/features/projects/shared/state/projects.store.spec.ts`: favorite project state and grouping.
+| Test ID         | Test type      | Test file (repository-relative)                                                                                | Result | Coverage / notes                                                                                                                                                                                                                                                                                  |
+| --------------- | -------------- | -------------------------------------------------------------------------------------------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| PROJECTS-06-T01 | Unit           | `frontend/src/app/features/projects/project-organization/project-switcher/project-switcher.spec.ts`            | Pass   | favorite control state and user announcements                                                                                                                                                                                                                                                     |
+| PROJECTS-06-T02 | Unit           | `frontend/src/app/features/projects/project-organization/services/project-organization.service.spec.ts`        | Pass   | favorite request, optimistic store update, and rollback on failure                                                                                                                                                                                                                                |
+| PROJECTS-06-T03 | Unit           | `frontend/src/app/features/projects/shared/state/projects.store.spec.ts`                                       | Pass   | favorite project state and grouping                                                                                                                                                                                                                                                               |
+| PROJECTS-06-T04 | Unit           | `backend/src/features/projects/project-organization/project-organization.service.test.ts`                      | Pass   | set/clear favorite, controller response, protected route behavior                                                                                                                                                                                                                                 |
+| PROJECTS-06-T05 | Unit           | `backend/src/features/projects/project-organization/project-organization.controller.test.ts`                   | Pass   | set/clear favorite, controller response, protected route behavior                                                                                                                                                                                                                                 |
+| PROJECTS-06-T06 | Unit           | `backend/src/features/projects/project-organization/project-organization.routes.test.ts`                       | Pass   | set/clear favorite, controller response, protected route behavior                                                                                                                                                                                                                                 |
+| PROJECTS-06-T07 | Integration    | `backend/tests/integration/features/projects/projects.integration.test.ts`                                     | Fail   | owner-scoped project state and persistence; Backend integration run: 2 assertion(s) failed in this file.                                                                                                                                                                                          |
+| PROJECTS-06-T08 | Integration    | `frontend/tests/integration/features/projects/projects.integration.spec.ts`                                    | Pass   | exercises project organization controls through the real service/store with mocked HTTP                                                                                                                                                                                                           |
+| PROJECTS-06-T09 | API collection | `tests/postman/06-project-organization/Project-Team-404 API - 06-project-organization.postman_collection.json` | Fail   | checks favorite, repeated idempotent favorite, persisted favorite state, and unfavorite (requests 7–10). See tests/postman/06-project-organization/README.md; Not executed: Newman/Postman collections were not run; their documented collection-specific setup and assertions remain unverified. |
+| PROJECTS-06-T10 | End-to-end     | `tests/e2e/projects/project-organization.e2e.spec.ts`                                                          | Fail   | favorites a project and verifies its state after reload as part of the organization journey; E2E run: 3 E2E assertions failed.                                                                                                                                                                    |
+| PROJECTS-06-T11 | Regression     | `tests/regression/projects/project-organization.regression.spec.ts`                                            | Fail   | verifies owned project organization actions while preserving Inbox and cross-user isolation; Backend API regression run: 1 assertion(s) failed in this file.                                                                                                                                      |
 
-### Backend Unit and Integration
+## Coverage Notes
 
-- `backend/src/features/projects/project-organization/project-organization.service.test.ts`, `project-organization.controller.test.ts`, and `project-organization.routes.test.ts`: set/clear favorite, controller response, protected route behavior.
-- `backend/tests/integration/features/projects/projects.integration.test.ts`: owner-scoped project state and persistence.
-- There is no separate unit test for `set-project-favorite.query.ts` in the project query test inventory.
-
-### Frontend Integration
-
-`frontend/tests/integration/features/projects/projects.integration.spec.ts` exercises project organization controls through the real service/store with mocked HTTP.
-
-### Postman
-
-`tests/postman/06-project-organization/Project-Team-404 API - 06-project-organization.postman_collection.json` checks favorite, repeated idempotent favorite, persisted favorite state, and unfavorite (requests 7–10). See `tests/postman/06-project-organization/README.md`.
-
-### End-to-End and Regression
-
-- `tests/e2e/projects/project-organization.e2e.spec.ts`: favorites a project and verifies its state after reload as part of the organization journey.
-- `tests/regression/projects/project-organization.regression.spec.ts`: verifies owned project organization actions while preserving Inbox and cross-user isolation.
+There is no separate unit test for `set-project-favorite.query.ts` in the project query test inventory.

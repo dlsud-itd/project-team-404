@@ -1,23 +1,19 @@
 # Delete Priority and Reassign Tasks Tests
 
-## Direct Coverage
+**Version:** 1.0.0  
+**Created:** 2026-09-24  
+**Last Updated:** 2026-11-25
 
-### Frontend Unit and Integration
+## Test Matrix
 
-- `frontend/src/app/features/settings/priorities/priority-settings.spec.ts`: delete dialog, replacement selection, errors, and success.
-- `frontend/src/app/features/settings/priorities/delete-priority-dialog/delete-priority-dialog.spec.ts`: reassignment choices and dialog validation.
-- `frontend/src/app/features/settings/services/priorities.service.spec.ts` and `priorities.store.spec.ts`: delete query parameters and removal/reassignment updates.
-- `frontend/tests/integration/features/settings/labels-priorities.integration.spec.ts`: used/unused level deletion and task/default reassignment interactions.
-
-### Backend Unit and Integration
-
-- `backend/src/features/priorities/priority-crud/priority-crud.service.test.ts`: missing reassignment, last-level protection, and delete flow.
-- `backend/tests/integration/priorities.integration.test.ts`: deletes unused/used levels, reassigns tasks and default state, and verifies database results.
-
-### Postman
-
-`tests/postman/11-labels-priorities/Project-Team-404 API - 11-labels-priorities.postman_collection.json` deletes an unused level, rejects deleting a used one without reassignment, succeeds with a target, verifies old ID is gone, and checks default behavior after deletion (requests 11–20).
-
-### Regression
-
-`tests/regression/organization/labels-priorities.regression.spec.ts` covers user-scoped priority behavior while tasks continue to use valid levels.
+| Test ID           | Test type      | Test file (repository-relative)                                                                          | Result | Coverage / notes                                                                                                                                                                                                                                                                                                             |
+| ----------------- | -------------- | -------------------------------------------------------------------------------------------------------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| PRIORITIES-06-T01 | Unit           | `frontend/src/app/features/settings/priorities/priority-settings.spec.ts`                                | Pass   | delete dialog, replacement selection, errors, and success                                                                                                                                                                                                                                                                    |
+| PRIORITIES-06-T02 | Unit           | `frontend/src/app/features/settings/priorities/delete-priority-dialog/delete-priority-dialog.spec.ts`    | Pass   | reassignment choices and dialog validation                                                                                                                                                                                                                                                                                   |
+| PRIORITIES-06-T03 | Unit           | `frontend/src/app/features/settings/services/priorities.service.spec.ts`                                 | Pass   | delete query parameters and removal/reassignment updates                                                                                                                                                                                                                                                                     |
+| PRIORITIES-06-T04 | Unit           | `frontend/src/app/features/settings/state/priorities.store.spec.ts`                                      | Pass   | delete query parameters and removal/reassignment updates                                                                                                                                                                                                                                                                     |
+| PRIORITIES-06-T05 | Integration    | `frontend/tests/integration/features/settings/labels-priorities.integration.spec.ts`                     | Pass   | used/unused level deletion and task/default reassignment interactions                                                                                                                                                                                                                                                        |
+| PRIORITIES-06-T06 | Unit           | `backend/src/features/priorities/priority-crud/priority-crud.service.test.ts`                            | Pass   | missing reassignment, last-level protection, and delete flow                                                                                                                                                                                                                                                                 |
+| PRIORITIES-06-T07 | Integration    | `backend/tests/integration/priorities.integration.test.ts`                                               | Fail   | deletes unused/used levels, reassigns tasks and default state, and verifies database results; Backend integration run: 1 assertion(s) failed in this file.                                                                                                                                                                   |
+| PRIORITIES-06-T08 | API collection | `tests/postman/11-labels-priorities/Project-Team-404 API - 11-labels-priorities.postman_collection.json` | Fail   | deletes an unused level, rejects deleting a used one without reassignment, succeeds with a target, verifies old ID is gone, and checks default behavior after deletion (requests 11–20); Not executed: Newman/Postman collections were not run; their documented collection-specific setup and assertions remain unverified. |
+| PRIORITIES-06-T09 | Regression     | `tests/regression/organization/labels-priorities.regression.spec.ts`                                     | Pass   | covers user-scoped priority behavior while tasks continue to use valid levels                                                                                                                                                                                                                                                |

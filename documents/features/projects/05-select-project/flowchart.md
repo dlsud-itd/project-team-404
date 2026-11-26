@@ -1,5 +1,9 @@
 # 05. Select a Project
 
+**Version:** 1.0.0  
+**Created:** 2026-09-24  
+**Last Updated:** 2026-11-25
+
 ## In simple terms
 
 In the project organizer, the person selects Inbox or another project. HabitFlow highlights that row and marks it as the current selection for this page session. This action is local UI state; it does not call the backend or change which project owns existing tasks.

@@ -1,29 +1,26 @@
 # Create Task Tests
 
-## Direct Coverage
+**Version:** 1.0.0  
+**Created:** 2026-09-24  
+**Last Updated:** 2026-11-25
 
-### Frontend Unit
+## Test Matrix
 
-- `frontend/src/app/features/tasks/task-crud/task-form/task-form.spec.ts`: create form validation, defaults, payload, optional fields, and error states.
-- `frontend/src/app/features/tasks/task-crud/components/new-task-dialog/new-task-dialog.spec.ts`: opening/closing the task popup.
-- `frontend/src/app/features/tasks/task-crud/services/task.service.spec.ts` and `task.mapper.spec.ts`: create request mapping and store update.
-- `frontend/src/app/features/tasks/task-crud/validators/task-title.validator.spec.ts`: title rules.
+| Test ID      | Test type      | Test file (repository-relative)                                                                | Result | Coverage / notes                                                                                                                                                                                                                                                                                           |
+| ------------ | -------------- | ---------------------------------------------------------------------------------------------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| TASKS-02-T01 | Unit           | `frontend/src/app/features/tasks/task-crud/task-form/task-form.spec.ts`                        | Pass   | create form validation, defaults, payload, optional fields, and error states                                                                                                                                                                                                                               |
+| TASKS-02-T02 | Unit           | `frontend/src/app/features/tasks/task-crud/components/new-task-dialog/new-task-dialog.spec.ts` | Pass   | opening/closing the task popup                                                                                                                                                                                                                                                                             |
+| TASKS-02-T03 | Unit           | `frontend/src/app/features/tasks/task-crud/services/task.service.spec.ts`                      | Pass   | create request mapping and store update                                                                                                                                                                                                                                                                    |
+| TASKS-02-T04 | Unit           | `frontend/src/app/features/tasks/task-crud/mappers/task.mapper.spec.ts`                        | Pass   | create request mapping and store update                                                                                                                                                                                                                                                                    |
+| TASKS-02-T05 | Unit           | `frontend/src/app/features/tasks/task-crud/validators/task-title.validator.spec.ts`            | Pass   | title rules                                                                                                                                                                                                                                                                                                |
+| TASKS-02-T06 | Unit           | `backend/src/features/tasks/task-crud/validators/create-task.validator.test.ts`                | Pass   | required title and payload validation                                                                                                                                                                                                                                                                      |
+| TASKS-02-T07 | Unit           | `backend/src/features/tasks/task-crud/task-crud.service.test.ts`                               | Pass   | Inbox default, owner/project validation, and response                                                                                                                                                                                                                                                      |
+| TASKS-02-T08 | Unit           | `backend/src/features/tasks/task-crud/task-crud.controller.test.ts`                            | Pass   | Inbox default, owner/project validation, and response                                                                                                                                                                                                                                                      |
+| TASKS-02-T09 | Integration    | `frontend/tests/integration/features/tasks/tasks.integration.spec.ts`                          | Pass   | exercises task creation through the real route, form, stores, and mocked API                                                                                                                                                                                                                               |
+| TASKS-02-T10 | API collection | `tests/postman/07-task-crud/Project-Team-404 API - 07-task-crud.postman_collection.json`       | Fail   | includes task setup/create requests, title/body validation, missing/deleted/foreign project rejection, and no-write checks after rejected assignments (requests 8–20); Not executed: Newman/Postman collections were not run; their documented collection-specific setup and assertions remain unverified. |
+| TASKS-02-T11 | End-to-end     | `tests/e2e/tasks/task-crud.e2e.spec.ts`                                                        | Fail   | creates tasks in a project and verifies saved details; E2E run: 1 E2E assertion failed.                                                                                                                                                                                                                    |
+| TASKS-02-T12 | Regression     | `tests/regression/tasks/task-crud.regression.spec.ts`                                          | Fail   | creates tasks through the API and exercises the CRUD workflow; Backend API regression run: 1 assertion(s) failed in this file.                                                                                                                                                                             |
 
-### Backend Unit and Integration
+## Coverage Notes
 
-- `backend/src/features/tasks/task-crud/validators/create-task.validator.test.ts`: required title and payload validation.
-- `backend/src/features/tasks/task-crud/task-crud.service.test.ts` and `task-crud.controller.test.ts`: Inbox default, owner/project validation, and response.
-- `backend/tests/integration/features/tasks` has no dedicated integration suite; the real database path is covered by E2E and Postman.
-
-### Frontend Integration
-
-`frontend/tests/integration/features/tasks/tasks.integration.spec.ts` exercises task creation through the real route, form, stores, and mocked API.
-
-### Postman
-
-`tests/postman/07-task-crud/Project-Team-404 API - 07-task-crud.postman_collection.json` includes task setup/create requests, title/body validation, missing/deleted/foreign project rejection, and no-write checks after rejected assignments (requests 8–20).
-
-### End-to-End and Regression
-
-- `tests/e2e/tasks/task-crud.e2e.spec.ts`: creates tasks in a project and verifies saved details.
-- `tests/regression/tasks/task-crud.regression.spec.ts`: creates tasks through the API and exercises the CRUD workflow.
+`backend/tests/integration/features/tasks` has no dedicated integration suite; the real database path is covered by E2E and Postman.

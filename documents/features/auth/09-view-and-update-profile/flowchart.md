@@ -1,5 +1,9 @@
 # 09. View and Update Profile
 
+**Version:** 1.0.0  
+**Created:** 2026-09-24  
+**Last Updated:** 2026-11-25
+
 ## In simple terms
 
 In Profile settings, a signed-in person can see their username and timezone, change either value, and save only when something has changed. HabitFlow checks the submitted values, saves them for that account, and updates the current user's information in the app so the new username appears without requiring a reload.

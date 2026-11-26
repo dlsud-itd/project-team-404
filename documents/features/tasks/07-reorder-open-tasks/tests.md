@@ -1,29 +1,23 @@
 # Reorder Open Tasks Tests
 
-## Direct Coverage
+**Version:** 1.0.0  
+**Created:** 2026-09-24  
+**Last Updated:** 2026-11-25
 
-### Frontend Unit
+## Test Matrix
 
-- `frontend/src/app/features/tasks/task-organization/utils/reorder-tasks.util.spec.ts`: task movement and requested ID ordering.
-- `frontend/src/app/features/tasks/task-crud/services/task.service.spec.ts`: optimistic order update and rollback.
-- `frontend/src/app/features/tasks/task-crud/task-list/task-list.spec.ts`: drag/keyboard moves and disabled reorder states.
-
-### Backend Unit
-
-- `backend/src/features/tasks/task-organization/validators/reorder-tasks.validator.test.ts`: valid, incomplete/empty, duplicate, or malformed reorder payloads.
-- `backend/src/features/tasks/task-organization/utils/reorder-tasks.util.test.ts`: assigned positions.
-- `backend/src/features/tasks/task-organization/task-organization.service.test.ts`, `task-organization.controller.test.ts`, and `db/queries/update-task-positions.query.test.ts`: ownership, full-set checks, and transactional positions.
-
-### Frontend Integration
-
-`frontend/tests/integration/features/tasks/task-reorder.integration.spec.ts` verifies the app's reorder request and updated order.
-
-### Postman
-
-- `tests/postman/08-task-organization/Project-Team-404 API - 08-task-organization.postman_collection.json`: ordering through the task organization API.
-- `tests/postman/16-task-reorder/Project-Team-404 API - 16-task-reorder.postman_collection.json`: complete ordering, append behavior, duplicates, empty list, foreign/other-project/deleted IDs, incomplete order conflict, and auth rejection (21 requests).
-
-### End-to-End and Regression
-
-- `tests/e2e/tasks/task-organization.e2e.spec.ts`: reorder by drag and keyboard, then verify after reload.
-- `tests/regression/tasks/task-organization.regression.spec.ts`: order and ownership behavior through the API.
+| Test ID      | Test type      | Test file (repository-relative)                                                                          | Result | Coverage / notes                                                                                                                                                                                                                                                                                |
+| ------------ | -------------- | -------------------------------------------------------------------------------------------------------- | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| TASKS-07-T01 | Unit           | `frontend/src/app/features/tasks/task-organization/utils/reorder-tasks.util.spec.ts`                     | Pass   | task movement and requested ID ordering                                                                                                                                                                                                                                                         |
+| TASKS-07-T02 | Unit           | `frontend/src/app/features/tasks/task-crud/services/task.service.spec.ts`                                | Pass   | optimistic order update and rollback                                                                                                                                                                                                                                                            |
+| TASKS-07-T03 | Unit           | `frontend/src/app/features/tasks/task-crud/task-list/task-list.spec.ts`                                  | Pass   | drag/keyboard moves and disabled reorder states                                                                                                                                                                                                                                                 |
+| TASKS-07-T04 | Unit           | `backend/src/features/tasks/task-organization/validators/reorder-tasks.validator.test.ts`                | Pass   | valid, incomplete/empty, duplicate, or malformed reorder payloads                                                                                                                                                                                                                               |
+| TASKS-07-T05 | Unit           | `backend/src/features/tasks/task-organization/utils/reorder-tasks.util.test.ts`                          | Pass   | assigned positions                                                                                                                                                                                                                                                                              |
+| TASKS-07-T06 | Unit           | `backend/src/features/tasks/task-organization/task-organization.service.test.ts`                         | Pass   | ownership, full-set checks, and transactional positions                                                                                                                                                                                                                                         |
+| TASKS-07-T07 | Unit           | `backend/src/features/tasks/task-organization/task-organization.controller.test.ts`                      | Pass   | ownership, full-set checks, and transactional positions                                                                                                                                                                                                                                         |
+| TASKS-07-T08 | Unit           | `backend/src/features/tasks/task-organization/db/queries/update-task-positions.query.test.ts`            | Pass   | ownership, full-set checks, and transactional positions                                                                                                                                                                                                                                         |
+| TASKS-07-T09 | Integration    | `frontend/tests/integration/features/tasks/task-reorder.integration.spec.ts`                             | Pass   | verifies the app's reorder request and updated order                                                                                                                                                                                                                                            |
+| TASKS-07-T10 | API collection | `tests/postman/08-task-organization/Project-Team-404 API - 08-task-organization.postman_collection.json` | Fail   | ordering through the task organization API; Not executed: Newman/Postman collections were not run; their documented collection-specific setup and assertions remain unverified.                                                                                                                 |
+| TASKS-07-T11 | API collection | `tests/postman/16-task-reorder/Project-Team-404 API - 16-task-reorder.postman_collection.json`           | Fail   | complete ordering, append behavior, duplicates, empty list, foreign/other-project/deleted IDs, incomplete order conflict, and auth rejection (21 requests); Not executed: Newman/Postman collections were not run; their documented collection-specific setup and assertions remain unverified. |
+| TASKS-07-T12 | End-to-end     | `tests/e2e/tasks/task-organization.e2e.spec.ts`                                                          | Fail   | reorder by drag and keyboard, then verify after reload; E2E run: 2 E2E assertions failed.                                                                                                                                                                                                       |
+| TASKS-07-T13 | Regression     | `tests/regression/tasks/task-organization.regression.spec.ts`                                            | Pass   | order and ownership behavior through the API                                                                                                                                                                                                                                                    |

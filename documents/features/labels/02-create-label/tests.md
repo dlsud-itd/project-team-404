@@ -1,25 +1,18 @@
 # Create Label Tests
 
-## Direct Coverage
+**Version:** 1.0.0  
+**Created:** 2026-09-24  
+**Last Updated:** 2026-11-25
 
-### Frontend Unit
+## Test Matrix
 
-- `frontend/src/app/features/settings/labels/label-settings.spec.ts`: create form, color selection, duplicate name feedback, and create error/success states.
-- `frontend/src/app/features/settings/services/labels.service.spec.ts`: POST body and label response mapping.
-
-### Backend Unit
-
-- `backend/src/features/labels/label-crud/validators/create-label.validator.test.ts`: required name, trimming, color format, and limits.
-- `backend/src/features/labels/label-crud/label-crud.service.test.ts` and `label-crud.controller.test.ts`: create response and duplicate-name conflict.
-
-### Frontend Integration
-
-`frontend/tests/integration/features/settings/labels-priorities.integration.spec.ts` creates a label in Settings and checks the updated list through mocked API responses.
-
-### Postman
-
-`tests/postman/11-labels-priorities/Project-Team-404 API - 11-labels-priorities.postman_collection.json` creates labels and rejects duplicate names, blank names, and invalid colors (requests 21 and 9–11). The guide is `tests/postman/11-labels-priorities/README.md`.
-
-### Regression
-
-`tests/regression/organization/labels-priorities.regression.spec.ts` checks labels remain scoped to their owner and can be associated with that user's tasks.
+| Test ID       | Test type      | Test file (repository-relative)                                                                          | Result | Coverage / notes                                                                                                                                                                                                                                                                                   |
+| ------------- | -------------- | -------------------------------------------------------------------------------------------------------- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| LABELS-02-T01 | Unit           | `frontend/src/app/features/settings/labels/label-settings.spec.ts`                                       | Pass   | create form, color selection, duplicate name feedback, and create error/success states                                                                                                                                                                                                             |
+| LABELS-02-T02 | Unit           | `frontend/src/app/features/settings/services/labels.service.spec.ts`                                     | Pass   | POST body and label response mapping                                                                                                                                                                                                                                                               |
+| LABELS-02-T03 | Unit           | `backend/src/features/labels/label-crud/validators/create-label.validator.test.ts`                       | Pass   | required name, trimming, color format, and limits                                                                                                                                                                                                                                                  |
+| LABELS-02-T04 | Unit           | `backend/src/features/labels/label-crud/label-crud.service.test.ts`                                      | Pass   | create response and duplicate-name conflict                                                                                                                                                                                                                                                        |
+| LABELS-02-T05 | Unit           | `backend/src/features/labels/label-crud/label-crud.controller.test.ts`                                   | Pass   | create response and duplicate-name conflict                                                                                                                                                                                                                                                        |
+| LABELS-02-T06 | Integration    | `frontend/tests/integration/features/settings/labels-priorities.integration.spec.ts`                     | Pass   | creates a label in Settings and checks the updated list through mocked API responses                                                                                                                                                                                                               |
+| LABELS-02-T07 | API collection | `tests/postman/11-labels-priorities/Project-Team-404 API - 11-labels-priorities.postman_collection.json` | Fail   | creates labels and rejects duplicate names, blank names, and invalid colors (requests 21 and 9–11). The guide is tests/postman/11-labels-priorities/README.md; Not executed: Newman/Postman collections were not run; their documented collection-specific setup and assertions remain unverified. |
+| LABELS-02-T08 | Regression     | `tests/regression/organization/labels-priorities.regression.spec.ts`                                     | Pass   | checks labels remain scoped to their owner and can be associated with that user's tasks                                                                                                                                                                                                            |

@@ -1,28 +1,23 @@
 # Delete Task Tests
 
-## Direct Coverage
+**Version:** 1.0.0  
+**Created:** 2026-09-24  
+**Last Updated:** 2026-11-25
 
-### Frontend Unit
+## Test Matrix
 
-- `frontend/src/app/features/tasks/task-crud/task-list/task-list.spec.ts`: confirmation/cancel, one delete request, store removal, retry/error behavior, and stale-task reload.
-- `frontend/src/app/features/tasks/task-crud/components/confirm-delete-dialog/confirm-delete-dialog.spec.ts`: confirmation dialog controls.
-- `frontend/src/app/features/tasks/task-crud/services/task.service.spec.ts`: DELETE request and store update.
+| Test ID      | Test type      | Test file (repository-relative)                                                                            | Result | Coverage / notes                                                                                                                                                                                                                                                                               |
+| ------------ | -------------- | ---------------------------------------------------------------------------------------------------------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| TASKS-04-T01 | Unit           | `frontend/src/app/features/tasks/task-crud/task-list/task-list.spec.ts`                                    | Pass   | confirmation/cancel, one delete request, store removal, retry/error behavior, and stale-task reload                                                                                                                                                                                            |
+| TASKS-04-T02 | Unit           | `frontend/src/app/features/tasks/task-crud/components/confirm-delete-dialog/confirm-delete-dialog.spec.ts` | Pass   | confirmation dialog controls                                                                                                                                                                                                                                                                   |
+| TASKS-04-T03 | Unit           | `frontend/src/app/features/tasks/task-crud/services/task.service.spec.ts`                                  | Pass   | DELETE request and store update                                                                                                                                                                                                                                                                |
+| TASKS-04-T04 | Unit           | `backend/src/features/tasks/task-crud/task-crud.service.test.ts`                                           | Pass   | owner-scoped delete and response                                                                                                                                                                                                                                                               |
+| TASKS-04-T05 | Unit           | `backend/src/features/tasks/task-crud/task-crud.controller.test.ts`                                        | Pass   | owner-scoped delete and response                                                                                                                                                                                                                                                               |
+| TASKS-04-T06 | Integration    | `frontend/tests/integration/features/tasks/tasks.integration.spec.ts`                                      | Pass   | checks task delete confirmation and API responses through the real UI with mocked HTTP                                                                                                                                                                                                         |
+| TASKS-04-T07 | API collection | `tests/postman/07-task-crud/Project-Team-404 API - 07-task-crud.postman_collection.json`                   | Fail   | checks soft deletion, removal from lists, missing/foreign task behavior, and authentication in its delete cases. See tests/postman/07-task-crud/README.md; Not executed: Newman/Postman collections were not run; their documented collection-specific setup and assertions remain unverified. |
+| TASKS-04-T08 | End-to-end     | `tests/e2e/tasks/task-crud.e2e.spec.ts`                                                                    | Fail   | deletes a task and verifies it is absent afterward; E2E run: 1 E2E assertion failed.                                                                                                                                                                                                           |
+| TASKS-04-T09 | Regression     | `tests/regression/tasks/task-crud.regression.spec.ts`                                                      | Fail   | exercises task deletion in the API CRUD flow; Backend API regression run: 1 assertion(s) failed in this file.                                                                                                                                                                                  |
 
-### Backend Unit and Integration
+## Coverage Notes
 
-- `backend/src/features/tasks/task-crud/task-crud.service.test.ts` and `task-crud.controller.test.ts`: owner-scoped delete and response.
-- `backend/src/features/tasks/task-crud/db/queries/soft-delete-task.query.test.ts`: soft-delete behavior.
-- No dedicated backend integration directory exists for tasks; API behavior is covered by Postman and E2E.
-
-### Frontend Integration
-
-`frontend/tests/integration/features/tasks/tasks.integration.spec.ts` checks task delete confirmation and API responses through the real UI with mocked HTTP.
-
-### Postman
-
-`tests/postman/07-task-crud/Project-Team-404 API - 07-task-crud.postman_collection.json` checks soft deletion, removal from lists, missing/foreign task behavior, and authentication in its delete cases. See `tests/postman/07-task-crud/README.md`.
-
-### End-to-End and Regression
-
-- `tests/e2e/tasks/task-crud.e2e.spec.ts`: deletes a task and verifies it is absent afterward.
-- `tests/regression/tasks/task-crud.regression.spec.ts`: exercises task deletion in the API CRUD flow.
+No dedicated backend integration directory exists for tasks; API behavior is covered by Postman and E2E.

@@ -1,5 +1,9 @@
 # 06. Set a Task Priority and Labels
 
+**Version:** 1.0.0  
+**Created:** 2026-09-24  
+**Last Updated:** 2026-11-25
+
 ## In simple terms
 
 While creating or editing a task, the person picks a priority and any labels that describe it. HabitFlow validates the priority belongs to the person and that labels are active and owned by them. Label changes are synchronized as additions/removals after task details save.

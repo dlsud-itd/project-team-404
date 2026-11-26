@@ -1,5 +1,9 @@
 # 01. View Current and Upcoming Tasks
 
+**Version:** 1.0.0  
+**Created:** 2026-09-24  
+**Last Updated:** 2026-11-25
+
 ## In simple terms
 
 The dashboard shows open tasks due today and over the next few days. HabitFlow calculates “today” using the person's timezone, groups tasks by day, and shows only as many as the saved dashboard task limit allows.

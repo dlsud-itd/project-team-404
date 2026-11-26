@@ -1,5 +1,9 @@
 # 01. User Signup
 
+**Version:** 1.0.0  
+**Created:** 2026-09-24  
+**Last Updated:** 2026-11-25
+
 ## In simple terms
 
 A person enters a username, email, password, timezone, and password confirmation. HabitFlow checks the username and email while they type, then creates the account when the form is submitted. A successful signup also creates the user's profile and a starter Inbox project. Signup does not sign the person in; the UI offers a link to the login page.

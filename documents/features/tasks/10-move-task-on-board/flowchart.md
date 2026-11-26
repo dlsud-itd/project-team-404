@@ -1,5 +1,9 @@
 # 10. Move a Task on the Board
 
+**Version:** 1.0.0  
+**Created:** 2026-09-24  
+**Last Updated:** 2026-11-25
+
 ## In simple terms
 
 The board shows To Do, In Progress, and Done. The person drags a card or uses its Move menu. HabitFlow updates the board immediately, then saves the entire target column order. Moving into Done completes the task; moving it out of Done reopens it and updates completion/streak behavior.

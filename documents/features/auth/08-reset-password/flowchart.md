@@ -1,5 +1,9 @@
 # 08. Reset Password
 
+**Version:** 1.0.0  
+**Created:** 2026-09-24  
+**Last Updated:** 2026-11-25
+
 ## In simple terms
 
 After the reset link passes validation, the person enters and confirms a new password. HabitFlow checks the link again, marks it as used, updates the password with the identity provider, and signs out all sessions for that account. The browser clears its own session and sends the person to login.

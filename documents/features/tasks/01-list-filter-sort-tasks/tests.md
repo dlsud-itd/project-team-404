@@ -1,33 +1,30 @@
 # List, Filter, and Sort Tasks Tests
 
-## Direct Coverage
+**Version:** 1.0.0  
+**Created:** 2026-09-24  
+**Last Updated:** 2026-11-25
 
-### Frontend Unit
+## Test Matrix
 
-- `frontend/src/app/features/tasks/task-crud/task-list/task-list.spec.ts`: task list loading, filter/sort query state, rejected filter handling, empty/error states, and reordering availability.
-- `frontend/src/app/features/tasks/task-crud/services/task.service.spec.ts`: query parameter construction and task response mapping.
-- `frontend/src/app/features/tasks/task-organization/components/filter-bar/filter-bar.spec.ts` and `sort-menu` specs: filter and sort controls.
-- `frontend/src/app/features/tasks/task-organization/utils/task-query-params.util.spec.ts`: converting filters to/from URL parameters.
-- `frontend/src/app/features/tasks/task-organization/validators/task-filter.validator.spec.ts`: task filter validation where present in the frontend suite.
+| Test ID      | Test type      | Test file (repository-relative)                                                              | Result | Coverage / notes                                                                                                                                                                                                                                   |
+| ------------ | -------------- | -------------------------------------------------------------------------------------------- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| TASKS-01-T01 | Unit           | `frontend/src/app/features/tasks/task-crud/task-list/task-list.spec.ts`                      | Pass   | task list loading, filter/sort query state, rejected filter handling, empty/error states, and reordering availability                                                                                                                              |
+| TASKS-01-T02 | Unit           | `frontend/src/app/features/tasks/task-crud/services/task.service.spec.ts`                    | Pass   | query parameter construction and task response mapping                                                                                                                                                                                             |
+| TASKS-01-T03 | Unit           | `frontend/src/app/features/tasks/task-organization/components/filter-bar/filter-bar.spec.ts` | Pass   | sort-menu specs: filter and sort controls                                                                                                                                                                                                          |
+| TASKS-01-T04 | Unit           | `frontend/src/app/features/tasks/task-organization/utils/task-query-params.util.spec.ts`     | Pass   | converting filters to/from URL parameters                                                                                                                                                                                                          |
+| TASKS-01-T05 | Unit           | `backend/src/features/tasks/task-crud/validators/list-tasks-query.validator.test.ts`         | Pass   | valid/invalid task query parameters                                                                                                                                                                                                                |
+| TASKS-01-T06 | Unit           | `backend/src/features/tasks/task-crud/task-crud.service.test.ts`                             | Pass   | owner-scoped list and response mapping                                                                                                                                                                                                             |
+| TASKS-01-T07 | Unit           | `backend/src/features/tasks/task-crud/task-crud.controller.test.ts`                          | Pass   | owner-scoped list and response mapping                                                                                                                                                                                                             |
+| TASKS-01-T08 | Unit           | `backend/src/features/tasks/task-organization/validators/task-filter.validator.test.ts`      | Pass   | organization filter validation                                                                                                                                                                                                                     |
+| TASKS-01-T09 | Integration    | `frontend/tests/integration/features/tasks/tasks.integration.spec.ts`                        | Pass   | cover the real task route, API filters, status, ordering, and UI query state with mocked HTTP                                                                                                                                                      |
+| TASKS-01-T10 | Integration    | `frontend/tests/integration/features/tasks/sort-filter.integration.spec.ts`                  | Pass   | cover the real task route, API filters, status, ordering, and UI query state with mocked HTTP                                                                                                                                                      |
+| TASKS-01-T11 | API collection | `tests/postman/07-task-crud/Project-Team-404 API - 07-task-crud.postman_collection.json`     | Fail   | project-scoped active/completed lists and paging (requests 21–24), plus authentication and ownership failures; Not executed: Newman/Postman collections were not run; their documented collection-specific setup and assertions remain unverified. |
+| TASKS-01-T12 | API collection | `tests/postman/12-sort-filter/Project-Team-404 API - 12-sort-filter.postman_collection.json` | Fail   | a task filter matrix, task sort matrix, project matrix, and invalid-query/auth cases (requests 4–9); Not executed: Newman/Postman collections were not run; their documented collection-specific setup and assertions remain unverified.           |
+| TASKS-01-T13 | End-to-end     | `tests/e2e/tasks/task-crud.e2e.spec.ts`                                                      | Fail   | task lists, project scope, and persistence during CRUD; E2E run: 1 E2E assertion failed.                                                                                                                                                           |
+| TASKS-01-T14 | End-to-end     | `tests/e2e/tasks/task-organization.e2e.spec.ts`                                              | Fail   | organization/filter interactions; E2E run: 2 E2E assertions failed.                                                                                                                                                                                |
+| TASKS-01-T15 | Regression     | `tests/regression/tasks/task-crud.regression.spec.ts`                                        | Fail   | API-level list and ownership behavior; Backend API regression run: 1 assertion(s) failed in this file.                                                                                                                                             |
+| TASKS-01-T16 | Regression     | `tests/regression/tasks/task-organization.regression.spec.ts`                                | Pass   | API-level list and ownership behavior                                                                                                                                                                                                              |
 
-### Backend Unit and Integration
+## Coverage Notes
 
-- `backend/src/features/tasks/task-crud/validators/list-tasks-query.validator.test.ts`: valid/invalid task query parameters.
-- `backend/src/features/tasks/task-crud/task-crud.service.test.ts` and `task-crud.controller.test.ts`: owner-scoped list and response mapping.
-- `backend/src/features/tasks/task-organization/validators/task-filter.validator.test.ts`: organization filter validation.
-- `backend/tests/integration/features/tasks` has no dedicated integration directory; task API behavior is exercised by Postman and E2E.
-
-### Frontend Integration
-
-`frontend/tests/integration/features/tasks/tasks.integration.spec.ts` and `sort-filter.integration.spec.ts` cover the real task route, API filters, status, ordering, and UI query state with mocked HTTP.
-
-### Postman
-
-- `tests/postman/07-task-crud/Project-Team-404 API - 07-task-crud.postman_collection.json`: project-scoped active/completed lists and paging (requests 21–24), plus authentication and ownership failures.
-- `tests/postman/12-sort-filter/Project-Team-404 API - 12-sort-filter.postman_collection.json`: a task filter matrix, task sort matrix, project matrix, and invalid-query/auth cases (requests 4–9).
-
-### End-to-End and Regression
-
-- `tests/e2e/tasks/task-crud.e2e.spec.ts`: task lists, project scope, and persistence during CRUD.
-- `tests/e2e/tasks/task-organization.e2e.spec.ts`: organization/filter interactions.
-- `tests/regression/tasks/task-crud.regression.spec.ts` and `task-organization.regression.spec.ts`: API-level list and ownership behavior.
+`backend/tests/integration/features/tasks` has no dedicated integration directory; task API behavior is exercised by Postman and E2E.

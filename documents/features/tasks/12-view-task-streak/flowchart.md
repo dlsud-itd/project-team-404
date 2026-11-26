@@ -1,5 +1,9 @@
 # 12. View a Task Streak
 
+**Version:** 1.0.0  
+**Created:** 2026-09-24  
+**Last Updated:** 2026-11-25
+
 ## In simple terms
 
 Recurring tasks can show a streak badge and a detail view. HabitFlow counts completions in the person's timezone, tracks the longest and current streak, and determines the next occurrence. When a task is completed anywhere in the app, watched streaks refresh.

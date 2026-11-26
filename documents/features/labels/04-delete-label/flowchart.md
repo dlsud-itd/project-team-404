@@ -1,5 +1,9 @@
 # 04. Delete a Label
 
+**Version:** 1.0.0  
+**Created:** 2026-09-24  
+**Last Updated:** 2026-11-25
+
 ## In simple terms
 
 The person chooses Delete and confirms. HabitFlow removes the label for that user. Existing task-label links are removed by the database relation, but the tasks themselves remain.

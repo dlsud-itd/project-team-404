@@ -1,5 +1,9 @@
 # 04. Restore a Session and Protect Pages
 
+**Version:** 1.0.0  
+**Created:** 2026-09-24  
+**Last Updated:** 2026-11-25
+
 ## In simple terms
 
 When HabitFlow starts, it looks for a saved session token. If it finds one, it asks the backend who the token belongs to before deciding which page to show. A valid session lets the person open signed-in pages; a rejected token is removed and the person is sent to login. A temporary network error does not automatically erase the saved token.

@@ -1,5 +1,9 @@
 # 02. Create a Priority
 
+**Version:** 1.0.0  
+**Created:** 2026-09-24  
+**Last Updated:** 2026-11-25
+
 ## In simple terms
 
 The person creates a named priority level and may choose a color. HabitFlow appends it to their ordered levels, marks it non-default, and makes it available in task forms and filters.

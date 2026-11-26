@@ -1,5 +1,9 @@
 # 02. View Overdue Tasks
 
+**Version:** 1.0.0  
+**Created:** 2026-09-24  
+**Last Updated:** 2026-11-25
+
 ## In simple terms
 
 The dashboard shows open tasks whose deadlines have passed. HabitFlow compares deadlines with the current time, sorts the oldest deadline first, and caps the visible list using the saved task limit.

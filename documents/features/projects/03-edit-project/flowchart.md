@@ -1,5 +1,9 @@
 # 03. Edit a Project
 
+**Version:** 1.0.0  
+**Created:** 2026-09-24  
+**Last Updated:** 2026-11-25
+
 ## In simple terms
 
 The person chooses Edit on a project card. HabitFlow loads that project into a form. The person can change its name, description, or color; the form sends only fields that actually changed. The Inbox is read-only and cannot be edited.

@@ -1,5 +1,9 @@
 # 07. Validate a Password Reset Link
 
+**Version:** 1.0.0  
+**Created:** 2026-09-24  
+**Last Updated:** 2026-11-25
+
 ## In simple terms
 
 Before showing the new-password form, HabitFlow checks whether the link is real, unused, and still within its time limit. A missing, expired, or already-used link gets an explanatory page instead of an active form. The token is removed from the browser's address bar after it is read.

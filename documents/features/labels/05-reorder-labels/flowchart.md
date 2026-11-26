@@ -1,5 +1,9 @@
 # 05. Reorder Labels
 
+**Version:** 1.0.0  
+**Created:** 2026-09-24  
+**Last Updated:** 2026-11-25
+
 ## In simple terms
 
 The Labels settings page lets a person drag labels or use move controls to change their order. The page immediately shows the new order, sends every active label ID to the API, and rolls back with a toast if saving fails.

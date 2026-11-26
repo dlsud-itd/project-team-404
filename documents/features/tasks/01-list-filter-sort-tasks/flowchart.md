@@ -1,5 +1,9 @@
 # 01. View, Filter, and Sort Tasks
 
+**Version:** 1.0.0  
+**Created:** 2026-09-24  
+**Last Updated:** 2026-11-25
+
 ## In simple terms
 
 The person opens a project's task list. HabitFlow loads that project's tasks, then applies status, label, priority, date, repeat, and sort choices. The query stays in the page state, while the API limits returned tasks to the signed-in owner and selected project.

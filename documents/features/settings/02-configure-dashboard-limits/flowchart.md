@@ -1,5 +1,9 @@
 # 02. Configure Dashboard Limits
 
+**Version:** 1.0.0  
+**Created:** 2026-09-24  
+**Last Updated:** 2026-11-25
+
 ## In simple terms
 
 The person chooses how many tasks each dashboard widget and how many projects the Home sidebar should show. Values must be whole numbers from 1 to 50. Save persists the limits; Reset to defaults saves the default values immediately.

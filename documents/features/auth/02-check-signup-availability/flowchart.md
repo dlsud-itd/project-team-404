@@ -1,5 +1,9 @@
 # 02. Check Signup Availability
 
+**Version:** 1.0.0  
+**Created:** 2026-09-24  
+**Last Updated:** 2026-11-25
+
 ## In simple terms
 
 While someone is filling out signup, HabitFlow waits briefly after they stop typing and asks whether the username or email is already in use. This gives early feedback, but it is only a convenience: the final signup request checks uniqueness again because another person could claim the value in the meantime.

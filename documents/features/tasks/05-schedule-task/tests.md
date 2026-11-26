@@ -1,29 +1,34 @@
 # Schedule and Repeat Task Tests
 
-## Direct Coverage
+**Version:** 1.0.0  
+**Created:** 2026-09-24  
+**Last Updated:** 2026-11-25
 
-### Frontend Unit
+## Test Matrix
 
-- `frontend/src/app/features/tasks/task-scheduling/services/task-scheduling.service.spec.ts`: schedule/due/deadline/recurrence requests and ordered saves.
-- `due-date-picker.spec.ts`, `deadline-picker.spec.ts`, and `recurrence-picker.spec.ts`: date and repeat controls.
-- `deadline-after-due-date.validator.spec.ts`, `recurrence-requires-due-date.validator.spec.ts`, and `recurrence-rule.validator.spec.ts`: cross-field schedule constraints.
-- `date-format.util.spec.ts`, `recurrence-label.util.spec.ts`, and `occurrence-due.util.spec.ts`: timezone/date and repeat presentation.
-- `frontend/src/app/features/tasks/task-crud/task-form/task-form.spec.ts`: combined form schedule payload and validation.
+| Test ID      | Test type      | Test file (repository-relative)                                                                             | Result | Coverage / notes                                                                                                                                                            |
+| ------------ | -------------- | ----------------------------------------------------------------------------------------------------------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| TASKS-05-T01 | Unit           | `frontend/src/app/features/tasks/task-scheduling/services/task-scheduling.service.spec.ts`                  | Pass   | schedule/due/deadline/recurrence requests and ordered saves                                                                                                                 |
+| TASKS-05-T02 | Unit           | `frontend/src/app/features/tasks/task-scheduling/components/due-date-picker/due-date-picker.spec.ts`        | Pass   | date and repeat controls                                                                                                                                                    |
+| TASKS-05-T03 | Unit           | `frontend/src/app/features/tasks/task-scheduling/components/deadline-picker/deadline-picker.spec.ts`        | Pass   | date and repeat controls                                                                                                                                                    |
+| TASKS-05-T04 | Unit           | `frontend/src/app/features/tasks/task-scheduling/components/recurrence-picker/recurrence-picker.spec.ts`    | Pass   | date and repeat controls                                                                                                                                                    |
+| TASKS-05-T05 | Unit           | `frontend/src/app/features/tasks/task-scheduling/validators/deadline-after-due-date.validator.spec.ts`      | Pass   | cross-field schedule constraints                                                                                                                                            |
+| TASKS-05-T06 | Unit           | `frontend/src/app/features/tasks/task-scheduling/validators/recurrence-requires-due-date.validator.spec.ts` | Pass   | cross-field schedule constraints                                                                                                                                            |
+| TASKS-05-T07 | Unit           | `frontend/src/app/features/tasks/task-scheduling/validators/recurrence-rule.validator.spec.ts`              | Pass   | cross-field schedule constraints                                                                                                                                            |
+| TASKS-05-T08 | Unit           | `frontend/src/app/features/tasks/task-scheduling/utils/date-format.util.spec.ts`                            | Pass   | timezone/date and repeat presentation                                                                                                                                       |
+| TASKS-05-T09 | Unit           | `frontend/src/app/features/tasks/task-scheduling/utils/recurrence-label.util.spec.ts`                       | Pass   | timezone/date and repeat presentation                                                                                                                                       |
+| TASKS-05-T10 | Unit           | `frontend/src/app/features/tasks/shared/utils/occurrence-due.util.spec.ts`                                  | Pass   | timezone/date and repeat presentation                                                                                                                                       |
+| TASKS-05-T11 | Unit           | `frontend/src/app/features/tasks/task-crud/task-form/task-form.spec.ts`                                     | Pass   | combined form schedule payload and validation                                                                                                                               |
+| TASKS-05-T12 | Unit           | `backend/src/features/tasks/task-scheduling/validators/recurrence-rule.validator.test.ts`                   | Pass   | shared date validator tests cover accepted/rejected schedule inputs                                                                                                         |
+| TASKS-05-T13 | Unit           | `backend/src/features/tasks/task-scheduling/utils/recurrence-data.util.test.ts`                             | Pass   | recurrence persistence and generated occurrence dates                                                                                                                       |
+| TASKS-05-T14 | Unit           | `backend/src/features/tasks/task-scheduling/utils/next-occurrence.util.test.ts`                             | Pass   | recurrence persistence and generated occurrence dates                                                                                                                       |
+| TASKS-05-T15 | API collection | `tests/postman/07-task-crud/Project-Team-404 API - 07-task-crud.postman_collection.json`                    | Fail   | task create/update scheduling payloads; Not executed: Newman/Postman collections were not run; their documented collection-specific setup and assertions remain unverified. |
+| TASKS-05-T16 | End-to-end     | `tests/e2e/tasks/task-scheduling.e2e.spec.ts`                                                               | Pass   | task date/repeat form behavior and persistence                                                                                                                              |
+| TASKS-05-T17 | Regression     | `tests/regression/tasks/task-scheduling.regression.spec.ts`                                                 | Fail   | recurring/schedule behavior through the API; Backend API regression run: 3 assertion(s) failed in this file.                                                                |
+| TASKS-05-T18 | Integration    | `frontend/tests/integration/features/tasks/tasks.integration.spec.ts`                                       | Pass   | exercises schedule fields with task create/edit; checks date-related task filtering                                                                                         |
+| TASKS-05-T19 | Integration    | `frontend/tests/integration/features/tasks/sort-filter.integration.spec.ts`                                 | Pass   | exercises schedule fields with task create/edit; checks date-related task filtering                                                                                         |
 
-### Backend Unit
+## Coverage Notes
 
-- `backend/src/features/tasks/task-scheduling/validators/recurrence-rule.validator.test.ts` and shared date validator tests cover accepted/rejected schedule inputs.
-- `backend/src/features/tasks/task-scheduling/utils/recurrence-data.util.test.ts` and `next-occurrence.util.test.ts`: recurrence persistence and generated occurrence dates.
-- `backend/src/features/tasks/task-scheduling/task-scheduling.service.test.ts`: schedule updates, archived-task rejection, and invalid deadlines.
-
-### Postman, E2E, and Regression
-
-- `tests/postman/07-task-crud/Project-Team-404 API - 07-task-crud.postman_collection.json`: task create/update scheduling payloads.
-- `tests/postman/09-current-upcoming-tasks` and `10-overdue-tasks`: date-relative schedule and due-date behavior.
-- `tests/postman/17-sprint-6-streaks-views`: recurring task setup and next-occurrence behavior.
-- `tests/e2e/tasks/task-scheduling.e2e.spec.ts`: task date/repeat form behavior and persistence.
-- `tests/regression/tasks/task-scheduling.regression.spec.ts`: recurring/schedule behavior through the API.
-
-### Frontend Integration
-
-`frontend/tests/integration/features/tasks/tasks.integration.spec.ts` exercises schedule fields with task create/edit; `sort-filter.integration.spec.ts` checks date-related task filtering.
+`tests/postman/09-current-upcoming-tasks` and `10-overdue-tasks`: date-relative schedule and due-date behavior.
+`tests/postman/17-sprint-6-streaks-views`: recurring task setup and next-occurrence behavior.
