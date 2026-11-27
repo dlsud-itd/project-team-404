@@ -125,7 +125,8 @@ export class TimelineView {
       .filter((day) => day.isWeekend)
       .map((day) => dateToX(day.date, this.window())),
   );
-  protected readonly listLinkParams = computed(() => ({ [this.viewParam()]: null }));
+  /** Names List outright, so it wins over a view the page remembered for the project. */
+  protected readonly listLinkParams = computed(() => ({ [this.viewParam()]: 'list' }));
 
   /*
    * The day width the viewer has dragged to, per zoom, remembered in this browser. Null is the

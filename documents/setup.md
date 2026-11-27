@@ -127,7 +127,8 @@ password recovery, profile management, and Projects (create, edit, delete,
 favorite, archive, reorder, and switch), Tasks, and the Dashboard against the
 local frontend and API. Specs live in `tests/e2e/auth/`, `tests/e2e/projects/`,
 `tests/e2e/tasks/`, `tests/e2e/dashboard/`, `tests/e2e/organization/`,
-`tests/e2e/settings/`, `tests/e2e/archive/` and `tests/e2e/search/`.
+`tests/e2e/settings/`, `tests/e2e/archive/`, `tests/e2e/search/`,
+`tests/e2e/streaks/` and `tests/e2e/views/`.
 By default, it starts local Supabase and uses its seeded database. It forces the
 backend console mailer and does not read or connect to a linked/remote project.
 
@@ -154,6 +155,12 @@ Prerequisites:
 
 - Apply any migrations the local database is missing, without resetting it,
   with `npx supabase migration up --local`, then seed again.
+- If the runner cannot reach local Supabase (`ECONNREFUSED 127.0.0.1:55321`) or
+  `supabase start` fails with "ports are not available … access permissions",
+  Windows has reserved the 55xxx ports (check with
+  `netsh interface ipv4 show excludedportrange protocol=tcp`). From an
+  administrator PowerShell run `net stop winnat; net start winnat`, then
+  `npx supabase start`. Local data is kept.
 
 Run `npm run test:e2e` from the repository root, or choose
 **`🧪 E2E: Tests (run once)`** in VS Code. The runner starts the frontend at
@@ -218,6 +225,43 @@ local database first. Run all five, headless, twice in a row with:
 
 ```powershell
 npm run test:e2e -- organization/ settings/ archive/ search/ --repeat-each=2
+```
+
+The five Sprint 6 specs sign in as `james` (streaks, reordering, the board) or
+`harvey` (views, timeline) and use the Sprint 6 seeds (`011_task_positions.sql`
+to `014_board_status.sql`):
+
+- `streaks/streaks.e2e.spec.ts` shows the seeded daily task's 4-day streak,
+  completes today's occurrence from the Table view and checks 5 days, the next
+  occurrence due tomorrow, the task's streak detail and the dashboard's
+  Streaks section. A seeded series that missed a day shows no current streak
+  and its longest streak of 7 days.
+- `organization/reorder.e2e.spec.ts` drags the third task of
+  `Reorder - Project One` to the top in Default order, moves tasks with the
+  Move buttons and Alt+Arrow keys, and drags `Reorder - Project Two` above
+  `Reorder - Project One` in the project organizer, reloading after each.
+- `views/views.e2e.spec.ts` filters `Timeline - Work` to Active tasks and
+  checks the same tasks in List, Table, Board and Timeline, sorts the table by
+  Title both ways, and checks that the chosen view comes back after a reload
+  and when the URL names none.
+- `views/kanban.e2e.spec.ts` drags a `Board Status - Project` card from To Do
+  to In Progress and Done, checks it under Completed in the List view, then
+  drags it back to To Do and checks it is active again.
+- `views/timeline.e2e.spec.ts` checks that the spanning `Timeline - Personal`
+  bars start and end on the right day columns in the week (cut at the week's
+  edges), does the same in the month, and opens a task by clicking its bar.
+
+Every task row, completion, next occurrence, board status and project order
+they change is put back after each test, and the test fails if James's or
+Harvey's seeded rows differ afterwards. The streak, views and timeline
+fixtures are dated relative to the day the seed ran (re-seeding moves them to
+the new day), so those specs stop with a clear message unless the database was
+seeded today. Reset, seed, and run all five headless, twice in a row, with:
+
+```powershell
+npm run supabase:local:reset   # deletes local data
+npm run supabase:local:seed
+npm run test:e2e -- streaks/ organization/reorder views/ --repeat-each=2
 ```
 
 Pass extra Playwright arguments after `--`:
