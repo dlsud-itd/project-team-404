@@ -37,8 +37,9 @@ function context(validated: unknown = undefined, ownedProject?: ProjectRecord) {
   return { req, res, next };
 }
 
-function service() {
+function service(activeProjects = 0) {
   const dependencies: ProjectCrudDependencies = {
+    countActiveProjects: vi.fn().mockResolvedValue(activeProjects),
     createProject: vi.fn().mockResolvedValue(project),
     findOwnedProjects: vi.fn().mockResolvedValue([project]),
     updateOwnedProject: vi.fn().mockResolvedValue(project),
@@ -58,6 +59,21 @@ describe('ProjectCrudController', () => {
     expect(res.json).toHaveBeenCalledWith(
       expect.objectContaining({ id: 7, name: 'Planning' })
     );
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('answers 409 with a code once the project limit is reached', async () => {
+    const controller = createProjectCrudController(service(10));
+    const { req, res, next } = context({ name: 'Eleventh' });
+
+    await controller.create(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(409);
+    expect(res.json).toHaveBeenCalledWith({
+      error:
+        'You can have up to 10 active projects. Archive or delete one to add another.',
+      code: 'project-limit-reached',
+    });
     expect(next).not.toHaveBeenCalled();
   });
 

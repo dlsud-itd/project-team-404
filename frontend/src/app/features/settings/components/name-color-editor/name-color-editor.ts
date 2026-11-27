@@ -33,15 +33,17 @@ import { SETTING_NAME_MAX_LENGTH, type NameAndColor } from '../../types/settings
         (input)="name.set(nameInput.value)"
         (keydown.escape)="cancelled.emit()"
       />
-      <label class="visually-hidden" [for]="idPrefix() + '-color'">{{ kind() }} color</label>
-      <input
-        #colorInput
-        class="color"
-        type="color"
-        [id]="idPrefix() + '-color'"
-        [value]="color()"
-        (input)="color.set(colorInput.value)"
-      />
+      @if (showColor()) {
+        <label class="visually-hidden" [for]="idPrefix() + '-color'">{{ kind() }} color</label>
+        <input
+          #colorInput
+          class="color"
+          type="color"
+          [id]="idPrefix() + '-color'"
+          [value]="color()"
+          (input)="color.set(colorInput.value)"
+        />
+      }
       <button type="submit" class="save" [disabled]="busy() || !canSave()">
         {{ busy() ? 'Saving…' : submitLabel() }}
       </button>
@@ -126,6 +128,8 @@ export class NameColorEditor implements OnInit {
   readonly initialName = input('');
   readonly initialColor = input<string | null>(null);
   readonly defaultColor = input('#54A6A1');
+  /** False hides the color picker; the editor then saves `color: null`. */
+  readonly showColor = input(true);
   /** Names already in use, compared without case or surrounding spaces. */
   readonly takenNames = input<readonly string[]>([]);
   readonly submitLabel = input('Save');
@@ -170,6 +174,9 @@ export class NameColorEditor implements OnInit {
   protected submit(event: Event): void {
     event.preventDefault();
     if (this.busy() || !this.canSave()) return;
-    this.saved.emit({ name: this.name().trim(), color: this.color().toUpperCase() });
+    this.saved.emit({
+      name: this.name().trim(),
+      color: this.showColor() ? this.color().toUpperCase() : null,
+    });
   }
 }

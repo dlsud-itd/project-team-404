@@ -40,8 +40,8 @@
             kind="Label"
             submitLabel="Save"
             [autofocus]="true"
+            [showColor]="false"
             [initialName]="label.name"
-            [initialColor]="label.color"
             [takenNames]="takenNames(label.id)"
             [busy]="saving()"
             [serverError]="editError()"
@@ -59,7 +59,6 @@
           >
             ⠿
           </button>
-          <span class="swatch" [style.background-color]="label.color ?? noColor"></span>
           <span class="name">{{ label.name }}</span>
           @if (countLabel(label.taskCount); as count) {
             <span class="count">{{ count }}</span>
@@ -137,6 +136,7 @@
       kind="Label"
       placeholder="New label name"
       submitLabel="Add label"
+      [showColor]="false"
       [takenNames]="takenNames(null)"
       [busy]="creating()"
       [serverError]="createError()"

@@ -10,6 +10,7 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { finalize } from 'rxjs';
+import { ToastService } from '../../../shared/services/toast.service';
 import { settingsSaveError } from '../services/settings.service';
 import { SettingsStore } from '../state/settings.store';
 import {
@@ -40,6 +41,7 @@ import {
 export class PreferencesSettings {
   protected readonly store = inject(SettingsStore);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly toast = inject(ToastService);
 
   protected readonly sizes = FONT_SIZES;
   protected readonly families = FONT_FAMILIES;
@@ -150,6 +152,7 @@ export class PreferencesSettings {
         next: () => {
           this.touched.set(false);
           this.saved.set('Preferences saved.');
+          this.toast.neutral('Preferences saved');
         },
         error: (error: unknown) =>
           this.saveError.set(

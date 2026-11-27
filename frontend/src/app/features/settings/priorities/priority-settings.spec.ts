@@ -124,6 +124,9 @@ describe('PrioritySettings', () => {
 
     expect(names()).toEqual(['Low', 'Medium', 'High', 'Urgent']);
     expect(el('[role="dialog"]')).toBeNull();
+    expect(TestBed.inject(ToastService).toasts()[0]).toEqual(
+      expect.objectContaining({ kind: 'info', message: 'Priority “Urgent” created' }),
+    );
   });
 
   it('edits a level inline', () => {
@@ -219,7 +222,7 @@ describe('PrioritySettings', () => {
 
     const toast = TestBed.inject(ToastService).toasts()[0];
     expect(toast).toEqual(
-      expect.objectContaining({ message: 'Priority “Low” archived', kind: 'info' }),
+      expect.objectContaining({ message: 'Priority “Low” archived', kind: 'warning' }),
     );
 
     // Undo brings it back.

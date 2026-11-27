@@ -15,6 +15,7 @@ import {
   usernameFormatValidator,
 } from '../../../../shared/validators/username-format.validator';
 import { listTimezones } from '../../register/register';
+import { ToastService } from '../../../../shared/services/toast.service';
 import { ChangePasswordForm } from '../change-password/change-password-form';
 import { SessionService } from '../../session/session.service';
 import { mapProfileError } from '../mappers/profile-error.mapper';
@@ -34,6 +35,7 @@ type LoadState = 'loading' | 'ready' | 'error';
 export class ProfileSettings {
   private readonly profiles = inject(ProfileService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly toast = inject(ToastService);
   protected readonly session = inject(SessionService);
 
   protected readonly usernameMax = USERNAME_MAX_LENGTH;
@@ -105,6 +107,7 @@ export class ProfileSettings {
         next: (profile) => {
           this.showSaved(profile);
           this.saved.set('Profile updated.');
+          this.toast.neutral('Profile updated');
         },
         error: (error: unknown) => {
           const { message, field } = mapProfileError(error);

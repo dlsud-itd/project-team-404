@@ -77,6 +77,7 @@ export class PrioritySettings {
           this.createEditor()?.reset();
           this.createOpen.set(false);
           this.announcement.set(`Priority “${level.name}” created.`);
+          this.toast.info(`Priority “${level.name}” created`);
         },
         error: (error: unknown) => this.createError.set(saveError(error, input.name)),
       });
@@ -107,6 +108,7 @@ export class PrioritySettings {
         next: () => {
           this.editingId.set(null);
           this.focusAfterRender(`priority-${level.id}-edit`);
+          this.toast.neutral(`Priority “${input.name}” saved`);
         },
         error: (error: unknown) => this.editError.set(saveError(error, input.name)),
       });
@@ -124,6 +126,7 @@ export class PrioritySettings {
       .subscribe({
         next: () => {
           this.announcement.set(`${level.name} is now the default priority.`);
+          this.toast.info(`“${level.name}” is now the default priority`);
           this.focusAfterRender(`priority-${level.id}-edit`);
         },
         error: () =>

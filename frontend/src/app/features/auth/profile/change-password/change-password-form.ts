@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, ValidatorFn, Validators } from '@angular/forms';
 import { finalize } from 'rxjs';
+import { ToastService } from '../../../../shared/services/toast.service';
 import { mapChangePasswordError } from '../mappers/change-password-error.mapper';
 import { SessionService } from '../../session/session.service';
 import { ProfileService } from '../services/profile.service';
@@ -31,6 +32,7 @@ const passwordRules: ValidatorFn = (group) => {
 export class ChangePasswordForm {
   private readonly profiles = inject(ProfileService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly toast = inject(ToastService);
   protected readonly session = inject(SessionService);
 
   protected readonly minLength = PASSWORD_MIN_LENGTH;
@@ -81,6 +83,7 @@ export class ChangePasswordForm {
           this.form.reset();
           this.visible.set({ currentPassword: false, newPassword: false, confirmPassword: false });
           this.saved.set("Password changed. You've been signed out on other devices.");
+          this.toast.success('Password changed');
         },
         error: (error: unknown) => {
           const { message, field } = mapChangePasswordError(error);

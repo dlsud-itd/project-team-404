@@ -15,6 +15,7 @@ import {
   toArray,
 } from 'rxjs';
 import { environment } from '../../../../../environments/environment';
+import { ToastService } from '../../../../shared/services/toast.service';
 import { PrioritiesStore } from '../../../settings/state/priorities.store';
 import { TasksStore } from '../../shared/state/tasks.store';
 import type {
@@ -106,6 +107,7 @@ export class TaskService {
   private readonly priorities = inject(PrioritiesStore);
   private readonly legacyPriority = (priorityId: number) => this.priorities.legacyName(priorityId);
   private readonly baseUrl = `${environment.apiBaseUrl}/api/tasks`;
+  private readonly toast = inject(ToastService);
   private readonly completed = new Subject<TaskCompletion>();
 
   /** Each saved completion or reopening, wherever in the app it was made. */
@@ -117,6 +119,7 @@ export class TaskService {
    */
   announceCompletion(completion: TaskCompletion): void {
     this.completed.next(completion);
+    this.toastCompletion(completion);
   }
 
   /** GET /api/tasks, open and completed, optionally limited to one project. */
@@ -175,7 +178,10 @@ export class TaskService {
       .post<ApiTask>(this.baseUrl, toCreateTaskBody(request, this.legacyPriority))
       .pipe(
         map(toTask),
-        tap((task) => this.store.upsert(task)),
+        tap((task) => {
+          this.store.upsert(task);
+          this.toast.info(`Task “${task.title}” created`);
+        }),
       );
   }
 
@@ -190,7 +196,9 @@ export class TaskService {
         tap(() => {
           this.store.patch(taskId, changes);
           if (changes.completedAt !== undefined) {
-            this.completed.next({ taskId, completedAt: changes.completedAt });
+            const completion = { taskId, completedAt: changes.completedAt };
+            this.completed.next(completion);
+            this.toastCompletion(completion);
           }
         }),
       );
@@ -208,6 +216,10 @@ export class TaskService {
     return concat(...requests).pipe(
       last(),
       map(() => undefined),
+      tap(() => {
+        const title = details.title ?? this.store.byId(taskId)?.title;
+        this.toast.neutral(title ? `Changes to “${title}” saved` : 'Task changes saved');
+      }),
     );
   }
 
@@ -228,6 +240,16 @@ export class TaskService {
         return throwError(() => error);
       }),
     );
+  }
+
+  /** Green toast for a completion, grey for reopening; generic when the task isn't loaded here. */
+  private toastCompletion({ taskId, completedAt }: TaskCompletion): void {
+    const title = this.store.byId(taskId)?.title;
+    if (completedAt) {
+      this.toast.success(title ? `“${title}” completed` : 'Task completed');
+    } else {
+      this.toast.neutral(title ? `“${title}” marked not done` : 'Task reopened');
+    }
   }
 
   /** Soft-deletes a task, active or archived. */

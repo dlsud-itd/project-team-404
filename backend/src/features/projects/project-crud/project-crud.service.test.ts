@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import type { ProjectRecord } from '../shared/models/project.model';
 import {
   InboxProjectMutationError,
+  ProjectLimitReachedError,
   ProjectNotFoundError,
 } from './errors/project-crud.errors';
 import { ProjectCrudService } from './project-crud.service';
@@ -25,6 +26,7 @@ const project: ProjectRecord = {
 
 function dependencies() {
   return {
+    countActiveProjects: vi.fn().mockResolvedValue(0),
     createProject: vi.fn().mockResolvedValue(project),
     findOwnedProjects: vi.fn().mockResolvedValue([project]),
     updateOwnedProject: vi.fn().mockResolvedValue(project),
@@ -42,6 +44,24 @@ describe('ProjectCrudService', () => {
     expect(deps.createProject).toHaveBeenCalledWith('user-123', {
       name: 'Planning',
     });
+  });
+
+  it('creates the tenth active project but refuses an eleventh', async () => {
+    const deps = dependencies();
+    const service = new ProjectCrudService(deps);
+
+    deps.countActiveProjects.mockResolvedValue(9);
+    await expect(
+      service.create('user-123', { name: 'Tenth' })
+    ).resolves.toBeDefined();
+    expect(deps.countActiveProjects).toHaveBeenCalledWith('user-123');
+
+    deps.countActiveProjects.mockResolvedValue(10);
+    deps.createProject.mockClear();
+    await expect(
+      service.create('user-123', { name: 'Eleventh' })
+    ).rejects.toBeInstanceOf(ProjectLimitReachedError);
+    expect(deps.createProject).not.toHaveBeenCalled();
   });
 
   it('lists only the authenticated user projects', async () => {

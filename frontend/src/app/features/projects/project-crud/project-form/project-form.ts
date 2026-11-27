@@ -20,6 +20,7 @@ import {
   type ProjectField,
   type UpdateProjectRequest,
 } from '../../shared/types/project.types';
+import { ToastService } from '../../../../shared/services/toast.service';
 import { ProjectsStore } from '../../shared/state/projects.store';
 import { mapProjectError } from '../mappers/project-error.mapper';
 import { ProjectService } from '../services/project.service';
@@ -61,6 +62,7 @@ type LoadState = 'loading' | 'ready' | 'not-found' | 'error';
 export class ProjectForm {
   private readonly projects = inject(ProjectService);
   private readonly projectsStore = inject(ProjectsStore);
+  private readonly toast = inject(ToastService);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
   private readonly route = inject(ActivatedRoute).snapshot;
@@ -211,7 +213,10 @@ export class ProjectForm {
         takeUntilDestroyed(this.destroyRef),
       )
       .subscribe({
-        next: () => this.closed.emit(),
+        next: (project) => {
+          this.toast.info(`Project “${project.name}” created`);
+          this.closed.emit();
+        },
         error: (error: unknown) => this.showError(error),
       });
   }
@@ -237,6 +242,7 @@ export class ProjectForm {
             color: updated.color ?? '',
           });
           this.saved.set('Changes saved.');
+          this.toast.neutral(`Changes to “${updated.name}” saved`);
         },
         error: (error: unknown) => this.showError(error),
       });

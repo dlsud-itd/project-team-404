@@ -32,6 +32,7 @@ function makeApp() {
       .mockResolvedValue({ userId: 'user-123', expiresAt: new Date() }),
   } as unknown as SessionService;
   const dependencies = {
+    countActiveProjects: vi.fn().mockResolvedValue(0),
     setProjectFavorite: vi.fn().mockResolvedValue({ count: 1 }),
     setProjectArchived: vi.fn().mockResolvedValue(project),
     setProjectSortOrder: vi.fn().mockResolvedValue({ count: 1 }),

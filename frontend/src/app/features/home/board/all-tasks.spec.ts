@@ -5,6 +5,7 @@ import { provideRouter } from '@angular/router';
 import { environment } from '../../../../environments/environment';
 import { DASHBOARD_PROJECTS, DASHBOARD_TASKS, task } from '../testing/dashboard-fixture';
 import { DashboardStore } from '../dashboard.store';
+import { DASHBOARD_COLLAPSED_KEY } from '../dashboard-widgets.store';
 import { asApiTask } from '../../tasks/shared/testing/api-task';
 import { SettingsStore } from '../../settings/state/settings.store';
 import { clearSettingsCache, seedSettings } from '../../settings/testing/settings-cache';
@@ -62,6 +63,7 @@ describe('AllTasks', () => {
   }
 
   beforeEach(async () => {
+    localStorage.removeItem(DASHBOARD_COLLAPSED_KEY);
     vi.useFakeTimers({ toFake: ['Date'] });
     vi.setSystemTime(new Date(2026, 9, 30, 9, 0, 0));
     // Room for every fixture task; the limit itself is tested below.
@@ -88,6 +90,27 @@ describe('AllTasks', () => {
     http.verify();
     vi.useRealTimers();
     clearSettingsCache();
+    localStorage.removeItem(DASHBOARD_COLLAPSED_KEY);
+  });
+
+  it('collapses the task list from the header, keeping + New task usable', () => {
+    const toggle = () => el<HTMLButtonElement>('.heading-row app-collapse-toggle button')!;
+    const body = () => el<HTMLElement>('#all-tasks-body')!;
+    expect(toggle().getAttribute('aria-expanded')).toBe('true');
+    expect(body().hidden).toBe(false);
+
+    toggle().click();
+    render();
+    expect(toggle().getAttribute('aria-expanded')).toBe('false');
+    expect(toggle().getAttribute('aria-label')).toBe('Show all tasks');
+    expect(body().hidden).toBe(true);
+    expect(page.classList).toContain('collapsed');
+    expect(el<HTMLButtonElement>('button.new')!.disabled).toBe(false);
+
+    toggle().click();
+    render();
+    expect(body().hidden).toBe(false);
+    expect(page.classList).not.toContain('collapsed');
   });
 
   it('shows at most the saved number of tasks, with View all linking to the full list', () => {

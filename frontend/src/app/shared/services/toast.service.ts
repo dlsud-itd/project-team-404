@@ -9,7 +9,12 @@ export interface ToastAction {
 export interface Toast {
   id: number;
   message: string;
-  kind: 'success' | 'warning' | 'error' | 'info';
+  /**
+   * Picks the toast's stroke color by what happened: success (completed), info (created,
+   * restored), neutral (edited, reopened), warning (archived), danger (deleted on purpose) and
+   * error (something failed; the only kind announced as an alert).
+   */
+  kind: 'success' | 'warning' | 'error' | 'info' | 'neutral' | 'danger';
   action?: ToastAction;
 }
 
@@ -44,6 +49,14 @@ export class ToastService {
 
   info(message: string): number {
     return this.show(message, { kind: 'info' });
+  }
+
+  neutral(message: string): number {
+    return this.show(message, { kind: 'neutral' });
+  }
+
+  danger(message: string): number {
+    return this.show(message, { kind: 'danger' });
   }
 
   /** Shows a toast and returns its id so the caller can dismiss it early. */

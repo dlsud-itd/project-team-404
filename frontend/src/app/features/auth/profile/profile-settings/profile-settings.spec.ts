@@ -5,6 +5,7 @@ import { provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { of } from 'rxjs';
 import { environment } from '../../../../../environments/environment';
+import { ToastService } from '../../../../shared/services/toast.service';
 import { LoginService } from '../../login/services/login.service';
 import type { LoginResponse } from '../../login/types/login.types';
 import { SessionService } from '../../session/session.service';
@@ -145,6 +146,11 @@ describe('ProfileSettings', () => {
 
     expect(text('.form-notice')).toBe('Profile updated.');
     expect(saveButton().disabled).toBe(true);
+    expect(
+      TestBed.inject(ToastService)
+        .toasts()
+        .map((t) => [t.kind, t.message]),
+    ).toEqual([['neutral', 'Profile updated']]);
   });
 
   it('updates the session username after saving', () => {

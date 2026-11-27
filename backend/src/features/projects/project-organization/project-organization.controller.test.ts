@@ -37,6 +37,7 @@ function context(validated: unknown, ownedProject?: ProjectRecord) {
 
 function makeController(
   dependencies = {
+    countActiveProjects: vi.fn().mockResolvedValue(0),
     setProjectFavorite: vi.fn().mockResolvedValue({ count: 1 }),
     setProjectArchived: vi.fn().mockResolvedValue({
       ...project,
@@ -94,6 +95,7 @@ describe('ProjectOrganizationController', () => {
 
   it('returns the Inbox archive error and maps missing projects to 404', async () => {
     const deps = {
+      countActiveProjects: vi.fn().mockResolvedValue(0),
       setProjectFavorite: vi.fn().mockResolvedValue({ count: 1 }),
       setProjectArchived: vi.fn().mockResolvedValue({ count: 1 }),
       setProjectSortOrder: vi.fn().mockResolvedValue({ count: 1 }),

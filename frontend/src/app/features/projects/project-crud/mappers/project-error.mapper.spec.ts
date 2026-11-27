@@ -1,5 +1,9 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { mapProjectError } from './project-error.mapper';
+import {
+  PROJECT_LIMIT_MESSAGE,
+  isProjectLimitError,
+  mapProjectError,
+} from './project-error.mapper';
 
 const httpError = (status: number, error: unknown = null) =>
   new HttpErrorResponse({ status, error });
@@ -58,6 +62,31 @@ describe('mapProjectError', () => {
     expect(mapProjectError(httpError(404, { error: 'Invalid updating project.' }))).toEqual({
       message: 'Project not found.',
       notFound: true,
+    });
+  });
+
+  it('maps the project-limit 409 to the server’s explanation', () => {
+    const body = {
+      error: 'You can have up to 10 active projects. Archive or delete one to add another.',
+      code: 'project-limit-reached',
+    };
+    expect(isProjectLimitError(httpError(409, body))).toBe(true);
+    expect(mapProjectError(httpError(409, body))).toEqual({
+      message: body.error,
+      notFound: false,
+    });
+    // Without a message it still explains the limit.
+    expect(mapProjectError(httpError(409, { code: 'project-limit-reached' }))).toEqual({
+      message: PROJECT_LIMIT_MESSAGE,
+      notFound: false,
+    });
+  });
+
+  it('treats any other 409 as a generic failure', () => {
+    expect(isProjectLimitError(httpError(409, { error: 'Conflict' }))).toBe(false);
+    expect(mapProjectError(httpError(409, { error: 'Conflict' }))).toEqual({
+      message: 'Something went wrong. Please try again.',
+      notFound: false,
     });
   });
 

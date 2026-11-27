@@ -2,6 +2,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { environment } from '../../../../../environments/environment';
+import { ToastService } from '../../../../shared/services/toast.service';
 import { TasksStore } from '../../shared/state/tasks.store';
 import { asApiTask } from '../../shared/testing/api-task';
 import type { CreateTaskRequest, Task } from '../../shared/types/task.types';
@@ -33,6 +34,10 @@ describe('TaskService', () => {
   let service: TaskService;
   let store: TasksStore;
   let http: HttpTestingController;
+  const toastList = () =>
+    TestBed.inject(ToastService)
+      .toasts()
+      .map((t) => [t.kind, t.message]);
 
   beforeEach(() => {
     TestBed.configureTestingModule({
@@ -183,6 +188,7 @@ describe('TaskService', () => {
 
     expect(result).toEqual(DOCS);
     expect(store.byId(2)).toEqual(DOCS);
+    expect(toastList()).toEqual([['info', 'Task “Submit documentation” created']]);
   });
 
   it('updates only the changed details and patches the store', () => {
@@ -208,6 +214,28 @@ describe('TaskService', () => {
     req.flush({ taskId: 1, message: 'Task updated successfully' });
 
     expect(store.byId(1)?.completedAt).toBe(completedAt);
+    expect(toastList()).toEqual([['success', '“Study ILT Module 4” completed']]);
+  });
+
+  it('toasts reopening, and a plain message for a task not loaded here', () => {
+    store.setTasks(10, [STUDY]);
+    service.update(1, { completedAt: null }).subscribe();
+    http.expectOne(`${URL}/1`).flush({ taskId: 1, message: 'Task updated successfully' });
+
+    service.announceCompletion({ taskId: 99, completedAt: '2026-10-01T10:00:00.000Z' });
+
+    expect(toastList()).toEqual([
+      ['neutral', '“Study ILT Module 4” marked not done'],
+      ['success', 'Task completed'],
+    ]);
+  });
+
+  it('does not toast a detail update that is not a completion', () => {
+    store.setTasks(10, [STUDY]);
+    service.update(1, { title: 'Renamed' }).subscribe();
+    http.expectOne(`${URL}/1`).flush({ taskId: 1, message: 'Task updated successfully' });
+
+    expect(toastList()).toEqual([]);
   });
 
   it('leaves the store alone when an update fails', () => {
@@ -238,6 +266,8 @@ describe('TaskService', () => {
 
       expect(done).toBe(true);
       expect(store.byId(1)).toMatchObject({ title: 'Study', dueDate: '2026-10-05' });
+      // One toast for the whole edit, not one per request.
+      expect(toastList()).toEqual([['neutral', 'Changes to “Study” saved']]);
     });
 
     it('skips the part with no changes', () => {
@@ -264,6 +294,7 @@ describe('TaskService', () => {
         .flush({ error: 'Task title cannot be empty' }, { status: 400, statusText: 'Bad' });
 
       expect(failed).toBe(true);
+      expect(toastList()).toEqual([]);
     });
   });
 

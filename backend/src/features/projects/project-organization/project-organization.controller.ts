@@ -1,5 +1,8 @@
 import type { RequestHandler } from 'express';
-import { ProjectNotFoundError } from '../project-crud/errors/project-crud.errors';
+import {
+  ProjectLimitReachedError,
+  ProjectNotFoundError,
+} from '../project-crud/errors/project-crud.errors';
 import type { ProjectRecord } from '../shared/models/project.model';
 import { InboxCannotBeArchivedError } from './errors/inbox-cannot-be-archived.error';
 import type { ProjectOrganizationService } from './project-organization.service';
@@ -30,6 +33,10 @@ export function createProjectOrganizationController(
     }
     if (error instanceof InboxCannotBeArchivedError) {
       res.status(409).json({ error: error.message });
+      return;
+    }
+    if (error instanceof ProjectLimitReachedError) {
+      res.status(409).json({ error: error.message, code: error.code });
       return;
     }
     next(error);

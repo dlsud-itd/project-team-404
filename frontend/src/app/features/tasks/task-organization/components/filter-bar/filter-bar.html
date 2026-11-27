@@ -71,7 +71,6 @@
                   [checked]="query().labelIds.includes(label.labelId)"
                   (change)="toggleLabel(label.labelId)"
                 />
-                <span class="swatch" [style.background]="label.color ?? 'transparent'"></span>
                 {{ label.name }}
               </label>
             } @empty {

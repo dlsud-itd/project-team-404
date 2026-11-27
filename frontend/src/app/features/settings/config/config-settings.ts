@@ -212,6 +212,7 @@ export class ConfigSettings {
             dashboardProjectLimit: settings.dashboardProjectLimit,
           });
           this.saved.set(successMessage);
+          this.toast.neutral(successMessage.replace(/\.$/, ''));
         },
         error: (error: unknown) =>
           this.saveError.set(

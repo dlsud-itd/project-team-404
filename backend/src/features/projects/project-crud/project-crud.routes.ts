@@ -11,6 +11,7 @@ import { createProjectCrudController } from './project-crud.controller';
 import { ProjectCrudService } from './project-crud.service';
 import type { ProjectCrudDependencies } from './project-crud.service';
 import { findOwnedProjects } from '../shared/db/queries/find-owned-projects.query';
+import { countActiveProjects } from '../shared/db/queries/count-active-projects.query';
 import { createProjectValidator } from './validators/create-project.validator';
 import { listProjectsQueryValidator } from './validators/list-projects-query.validator';
 import { projectIdParamValidator } from './validators/project-id-param.validator';
@@ -20,6 +21,7 @@ import { createProjectOrganizationRouter } from '../project-organization/project
 export function createProjectCrudRouter(
   sessionService: SessionService,
   dependencies: ProjectCrudDependencies = {
+    countActiveProjects,
     createProject,
     findOwnedProjects,
     updateOwnedProject,

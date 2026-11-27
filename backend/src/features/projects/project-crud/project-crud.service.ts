@@ -1,7 +1,9 @@
 import {
   InboxProjectMutationError,
+  ProjectLimitReachedError,
   ProjectNotFoundError,
 } from './errors/project-crud.errors';
+import { MAX_ACTIVE_PROJECTS } from '../shared/project-limit';
 import type {
   CreateProjectInput,
   ListProjectsFilters,
@@ -12,6 +14,7 @@ import type { ProjectRecord } from '../shared/models/project.model';
 import { toProjectModel } from '../shared/models/project.model';
 
 export type ProjectCrudDependencies = {
+  countActiveProjects(userId: string): Promise<number>;
   createProject(
     userId: string,
     input: CreateProjectInput
@@ -35,6 +38,12 @@ export class ProjectCrudService {
   constructor(private readonly dependencies: ProjectCrudDependencies) {}
 
   async create(userId: string, input: CreateProjectInput) {
+    // Count, then create: not atomic, so two requests at the same instant could both pass at 9.
+    // The form disables its button while saving, which is enough for this limit.
+    const active = await this.dependencies.countActiveProjects(userId);
+    if (active >= MAX_ACTIVE_PROJECTS) {
+      throw new ProjectLimitReachedError(MAX_ACTIVE_PROJECTS);
+    }
     return toProjectModel(await this.dependencies.createProject(userId, input));
   }
 

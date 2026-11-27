@@ -303,7 +303,11 @@ export class ProjectCard {
     const isFavorite = !project.isFavorite;
     this.starring.set(true);
     this.organization.setFavorite(project, isFavorite).subscribe({
-      next: () => this.starring.set(false),
+      next: () => {
+        this.starring.set(false);
+        if (isFavorite) this.toast.success(`“${project.name}” added to favorites`);
+        else this.toast.neutral(`“${project.name}” removed from favorites`);
+      },
       error: (error: unknown) => {
         this.starring.set(false);
         this.toast.error(`Your change wasn't saved. ${mapProjectError(error).message}`);

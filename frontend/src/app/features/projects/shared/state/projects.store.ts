@@ -1,5 +1,6 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { SettingsStore } from '../../../settings/state/settings.store';
+import { MAX_ACTIVE_PROJECTS } from '../project-limit';
 import type { Project } from '../types/project.types';
 
 /** Inbox first, then by sortOrder, then by id so the order is stable. */
@@ -28,6 +29,9 @@ export class ProjectsStore {
   /** Projects shown in the main list: not archived, Inbox first. */
   readonly active = computed(() => this.projects().filter((p) => !p.isArchived));
   readonly archived = computed(() => this.projects().filter((p) => p.isArchived));
+  /** Projects that count toward MAX_ACTIVE_PROJECTS: active ones other than the Inbox. */
+  readonly activeCount = computed(() => this.active().filter((p) => !p.isInbox).length);
+  readonly atProjectLimit = computed(() => this.activeCount() >= MAX_ACTIVE_PROJECTS);
 
   /**
    * Where new tasks go: the project chosen in Settings, or the Inbox when none is chosen or the

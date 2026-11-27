@@ -246,16 +246,6 @@ tbody th {
   color: var(--ink);
   font-size: 0.75rem;
   line-height: 1.25rem;
-
-  /* Drawn in CSS so the cell's text stays just the label's name. */
-  &::before {
-    content: '';
-    flex: none;
-    width: 0.375rem;
-    height: 0.375rem;
-    border-radius: 50%;
-    background: var(--label-color, var(--ink-muted));
-  }
 }
 
 .col-labels {

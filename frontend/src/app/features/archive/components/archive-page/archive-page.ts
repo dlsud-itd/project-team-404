@@ -253,7 +253,7 @@ export class ArchivePage {
           this.deleting.set(false);
           this.confirming.set(null);
           this.removeRow(item);
-          this.toast.info(deletedToast(item.kind, item.name));
+          this.toast.danger(deletedToast(item.kind, item.name));
           this.announcement.set(`Deleted ${item.name}.`);
         },
         error: () => {
