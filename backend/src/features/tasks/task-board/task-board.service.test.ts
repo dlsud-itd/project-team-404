@@ -31,6 +31,17 @@ describe('TaskBoardService', () => {
     expect(deps.listBoardTasks).toHaveBeenCalledWith('user-1', query);
   });
 
+  it('lists every active project when no project is given', async () => {
+    const deps = dependencies();
+    const service = new TaskBoardService(deps);
+    const query = { status: 'all' as const };
+
+    await service.list('user-1', query);
+
+    expect(deps.findOwnedProject).not.toHaveBeenCalled();
+    expect(deps.listBoardTasks).toHaveBeenCalledWith('user-1', query);
+  });
+
   it('hides missing, foreign, or archived projects', async () => {
     const deps = dependencies();
     vi.mocked(deps.findOwnedProject).mockResolvedValue(null);

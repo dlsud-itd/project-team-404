@@ -14,6 +14,9 @@ import { Subscription, map } from 'rxjs';
 import { ToastService } from '../../../../shared/services/toast.service';
 import { ProjectService } from '../../../projects/project-crud/services/project.service';
 import { ProjectsStore } from '../../../projects/shared/state/projects.store';
+import { DeletePriorityDialog } from '../../../settings/priorities/delete-priority-dialog/delete-priority-dialog';
+import { PrioritiesStore } from '../../../settings/state/priorities.store';
+import type { PriorityLevel } from '../../../settings/types/settings.types';
 import { ArchiveService } from '../../services/archive.service';
 import { ArchiveUndoService } from '../../services/archive-undo.service';
 import {
@@ -42,15 +45,17 @@ const COUNT_KEY: Record<ArchiveItem['kind'], Exclude<ArchiveTab, 'all'>> = {
   task: 'tasks',
   project: 'projects',
   label: 'labels',
+  priority: 'priorities',
 };
 
 /**
- * /archive: every archived task, project and label in one place, newest first. Items can be
- * restored (optimistically) or deleted for good after a confirmation.
+ * /archive: every archived task, project, label and priority in one place, newest first. Items
+ * can be restored (optimistically) or deleted for good after a confirmation. This is the only
+ * place anything is deleted permanently.
  */
 @Component({
   selector: 'app-archive-page',
-  imports: [RouterLink, ConfirmDialog],
+  imports: [RouterLink, ConfirmDialog, DeletePriorityDialog],
   templateUrl: './archive-page.html',
   styleUrl: './archive-page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -61,6 +66,7 @@ export class ArchivePage {
   private readonly toast = inject(ToastService);
   private readonly projects = inject(ProjectsStore);
   private readonly projectService = inject(ProjectService);
+  protected readonly priorities = inject(PrioritiesStore);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
@@ -88,7 +94,24 @@ export class ArchivePage {
   protected readonly deleteError = signal<string | null>(null);
   protected readonly confirmText = computed(() => {
     const item = this.confirming();
-    return item ? deleteConfirm(item) : null;
+    return item && item.kind !== 'priority' ? deleteConfirm(item) : null;
+  });
+  /**
+   * A priority being deleted, shaped for the dialog that asks where its tasks go. Its tasks can
+   * only move to a level that is still in use.
+   */
+  protected readonly confirmingPriority = computed<PriorityLevel | null>(() => {
+    const item = this.confirming();
+    if (item?.kind !== 'priority') return null;
+    return {
+      id: item.id,
+      name: item.name,
+      color: item.color ?? null,
+      sortOrder: 0,
+      isDefault: false,
+      taskCount: item.taskCount ?? null,
+      isArchived: true,
+    };
   });
 
   protected readonly empty = computed(() => emptyState(this.tab()));
@@ -217,13 +240,13 @@ export class ArchivePage {
     this.deleteError.set(null);
   }
 
-  protected confirmDelete(): void {
+  protected confirmDelete(reassignTo: number | null = null): void {
     const item = this.confirming();
     if (!item || this.deleting()) return;
     this.deleting.set(true);
     this.deleteError.set(null);
     this.archive
-      .deletePermanently(item.kind, item.id)
+      .deletePermanently(item.kind, item.id, reassignTo)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => {
@@ -281,9 +304,12 @@ export class ArchivePage {
       this.counts.set(counts);
       return;
     }
-    const previous = this.counts() ?? { all: 0, tasks: 0, projects: 0, labels: 0 };
+    const previous = this.counts() ?? { all: 0, tasks: 0, projects: 0, labels: 0, priorities: 0 };
     const next = { ...previous, [tab]: counts[tab] };
-    this.counts.set({ ...next, all: next.tasks + next.projects + next.labels });
+    this.counts.set({
+      ...next,
+      all: next.tasks + next.projects + next.labels + next.priorities,
+    });
   }
 
   private removeRow(item: ArchiveItem): void {

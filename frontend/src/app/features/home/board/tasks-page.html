@@ -7,6 +7,8 @@
     </button>
   </header>
 
+  <app-priority-legend class="legend" />
+
   <section class="toolbar" aria-label="Filter and sort tasks">
     <app-task-filter-bar
       [query]="query.query()"
@@ -38,31 +40,31 @@
   @if (loading()) {
     <p class="status" role="status">Loading your tasks…</p>
   } @else if (view() === 'board') {
-    @if (boardProjectId(); as projectId) {
+    @if (loadError(); as message) {
+      <div class="load-error" role="alert">
+        <p>Couldn't load your projects and tasks. {{ message }}</p>
+        <button type="button" class="retry" (click)="load()">Try again</button>
+      </div>
+    } @else {
       <div class="board-project">
         <label for="board-project">Project</label>
         <select id="board-project" (change)="selectBoardProject($event)">
+          <!-- Every active project; the default. -->
+          <option value="" [selected]="boardProjectId() === null">All Projects</option>
           @for (project of projectsStore.active(); track project.projectId) {
-            <option [value]="project.projectId" [selected]="project.projectId === projectId">
+            <option [value]="project.projectId" [selected]="project.projectId === boardProjectId()">
               {{ project.name }}
             </option>
           }
         </select>
       </div>
       <app-board-view
-        [projectId]="projectId"
+        [projectId]="boardProjectId()"
         [filter]="boardFilter()"
         [filtersActive]="query.count() > 0"
         (clearFilters)="query.clear()"
         (newTask)="openNewTaskDialog()"
       />
-    } @else if (loadError(); as message) {
-      <div class="load-error" role="alert">
-        <p>Couldn't load your projects and tasks. {{ message }}</p>
-        <button type="button" class="retry" (click)="load()">Try again</button>
-      </div>
-    } @else {
-      <p class="empty">Create a project to see its tasks on a board.</p>
     }
   } @else if (view() === 'timeline') {
     <!-- Every project's dated tasks, grouped by project. -->
@@ -80,7 +82,15 @@
   } @else {
     <ul class="list" [attr.aria-busy]="refreshing()">
       @for (task of tasks(); track task.taskId) {
-        <li class="task" [class.done]="task.completedAt !== null">
+        <li
+          class="task priority-tint"
+          [class.done]="task.completedAt !== null"
+          [style.--priority-bg]="tone(task.priorityId).bg"
+          [style.--priority-accent]="tone(task.priorityId).accent"
+          [attr.title]="'Priority: ' + tone(task.priorityId).name"
+          animate.enter="row-enter"
+          animate.leave="row-leave"
+        >
           <!-- The badge sits beside the label, not in it, so clicking it never ticks the task. -->
           <span class="name">
             <label class="check" [attr.title]="notDueLabel(task)">
@@ -96,7 +106,8 @@
                 "
                 (change)="toggleCompleted(task)"
               />
-              <span class="title">{{ task.title }}</span>
+              <span class="title strike-sweep">{{ task.title }}</span>
+              <span class="visually-hidden">, {{ tone(task.priorityId).name }} priority</span>
               @if (notDueLabel(task); as label) {
                 <span class="not-due" [id]="'not-due-' + task.taskId">{{ label }}</span>
               }
@@ -108,13 +119,6 @@
           <span class="project">
             <span class="swatch" [style.background]="projectColor(task.projectId)"></span>
             {{ projectName(task.projectId) }}
-          </span>
-          <span
-            class="priority"
-            [attr.data-priority]="task.priorityId"
-            [style.background]="priorities.colorOf(task.priorityId)"
-          >
-            {{ priorityName(task.priorityId) }}
           </span>
           <span class="due" [class.overdue]="isOverdue(task)">
             {{ formatDueDate(task.dueDate) }}
@@ -128,17 +132,6 @@
               [disabled]="isBusy(task)"
               [hooks]="archiveHooks"
             />
-            <button
-              type="button"
-              class="delete"
-              [disabled]="isBusy(task)"
-              [attr.aria-label]="'Delete ' + task.title"
-              (click)="askDelete(task)"
-            >
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6" />
-              </svg>
-            </button>
           </div>
         </li>
       } @empty {
@@ -156,16 +149,6 @@
     </ul>
   }
 </section>
-
-@if (pendingDelete(); as task) {
-  <app-confirm-delete-task-dialog
-    [task]="task"
-    [busy]="deleting()"
-    [error]="deleteError()"
-    (confirmed)="confirmDelete()"
-    (cancelled)="cancelDelete()"
-  />
-}
 
 @if (tasksStore.creating()) {
   <app-new-task-dialog (created)="addCreatedTask($event)" />

@@ -85,7 +85,7 @@ export async function listBoardTasks(userId: string, query: BoardQuery) {
     }
 
     return {
-      projectId: query.projectId,
+      projectId: query.projectId ?? null,
       columns: { todo, inProgress, done },
       counts,
     };

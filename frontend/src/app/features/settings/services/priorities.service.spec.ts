@@ -36,7 +36,7 @@ describe('PrioritiesService', () => {
     req.flush(LEVELS);
 
     expect(levels.map((level) => level.name)).toEqual(['Low', 'Medium', 'High']);
-    expect(levels[1]).toEqual(LEVELS[2]);
+    expect(levels[1]).toEqual({ ...LEVELS[2], isArchived: false, archivedAt: null });
   });
 
   it('treats a missing task count as unknown', () => {

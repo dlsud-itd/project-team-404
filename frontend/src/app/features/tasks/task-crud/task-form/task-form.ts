@@ -199,10 +199,12 @@ export class TaskForm implements OnInit {
       if (this.archived()) this.form.disable({ emitEvent: false });
       else if (this.form.disabled) this.form.enable({ emitEvent: false });
     });
+    // A task opened without a project goes to the default project from Settings; that falls back
+    // to the Inbox when none is chosen, or the chosen one is archived or gone.
     effect(() => {
-      const inbox = this.projectsStore.inbox();
+      const fallback = this.projectsStore.defaultProject();
       const project = this.form.controls.projectId;
-      if (inbox && !project.value) project.setValue(inbox.projectId);
+      if (fallback && !project.value) project.setValue(fallback.projectId);
     });
     // The user's levels may load after the form opens; new tasks follow their default until picked.
     effect(() => {

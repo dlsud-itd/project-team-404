@@ -6,8 +6,8 @@
     </a>
     <h1>Archive</h1>
     <p class="intro">
-      Archived tasks, projects and labels are hidden everywhere else. Restore them or delete them
-      for good.
+      Archived tasks, projects, labels and priorities are hidden everywhere else. Restore them, or
+      delete them for good.
     </p>
   </header>
 
@@ -49,10 +49,15 @@
     } @else {
       <ul class="list">
         @for (item of items(); track item.kind + ':' + item.id) {
-          <li class="row" [attr.data-kind]="item.kind">
+          <li
+            class="row"
+            [attr.data-kind]="item.kind"
+            animate.enter="row-enter"
+            animate.leave="row-leave"
+          >
             <div class="details">
               <p class="name">
-                @if (item.kind === 'label') {
+                @if (item.kind === 'label' || item.kind === 'priority') {
                   <span
                     class="dot"
                     [style.background]="item.color ?? null"
@@ -80,7 +85,7 @@
                       {{ project }}
                     </span>
                   }
-                } @else if (item.kind === 'label' && item.taskCount) {
+                } @else if ((item.kind === 'label' || item.kind === 'priority') && item.taskCount) {
                   <span>{{ item.taskCount }} {{ item.taskCount === 1 ? 'task' : 'tasks' }}</span>
                 }
                 <span class="when">{{ archivedLabel(item) }}</span>
@@ -149,6 +154,17 @@
     [busy]="deleting()"
     [error]="deleteError()"
     (confirmed)="confirmDelete()"
+    (cancelled)="cancelDelete()"
+  />
+}
+
+@if (confirmingPriority(); as level) {
+  <app-delete-priority-dialog
+    [level]="level"
+    [levels]="priorities.levels()"
+    [busy]="deleting()"
+    [error]="deleteError()"
+    (confirmed)="confirmDelete($event)"
     (cancelled)="cancelDelete()"
   />
 }

@@ -50,13 +50,13 @@
 
 .egg {
   fill: #fff;
-  stroke: #7b23a8;
+  stroke: var(--theme-primary);
   stroke-width: 3;
 }
 
 .crack {
   fill: none;
-  stroke: #7b23a8;
+  stroke: var(--theme-primary);
   stroke-width: 2.5;
   stroke-linecap: round;
   stroke-linejoin: round;
@@ -68,7 +68,7 @@
 
 .title {
   margin: 0;
-  font-weight: 700;
+  font-weight: 500;
 }
 
 .note {

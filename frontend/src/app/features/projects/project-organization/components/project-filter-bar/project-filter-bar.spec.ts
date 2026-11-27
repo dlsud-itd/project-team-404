@@ -1,4 +1,5 @@
 import { type ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 import { DEFAULT_PROJECT_QUERY, type ProjectQuery } from '../../utils/project-query-params.util';
 import { ProjectFilterBar } from './project-filter-bar';
 
@@ -22,6 +23,7 @@ describe('ProjectFilterBar', () => {
   }
 
   beforeEach(() => {
+    TestBed.configureTestingModule({ providers: [provideRouter([])] });
     fixture = TestBed.createComponent(ProjectFilterBar);
     host = fixture.nativeElement;
     fixture.componentRef.setInput('colors', ['#2563EB', '#D9F2FF']);
@@ -32,12 +34,14 @@ describe('ProjectFilterBar', () => {
     render();
   });
 
-  it('toggles Favorites and Archived as pressed buttons', () => {
+  it('toggles Favorites as a pressed button and links Archived to the Archive page', () => {
     expect(chip('Favorites').getAttribute('aria-pressed')).toBe('false');
 
     chip('Favorites').click();
-    chip('Archived').click();
-    expect(changes).toEqual([{ favorites: true }, { archived: true }]);
+    expect(changes).toEqual([{ favorites: true }]);
+    // Archived projects aren't a filter here; they live on the Archive page.
+    expect(chip('Archived').tagName).toBe('A');
+    expect(chip('Archived').getAttribute('href')).toBe('/archive?tab=projects');
 
     render({ favorites: true });
     expect(chip('Favorites').getAttribute('aria-pressed')).toBe('true');

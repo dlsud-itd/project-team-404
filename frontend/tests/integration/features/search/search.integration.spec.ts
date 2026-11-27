@@ -307,6 +307,8 @@ describe('Search integration (top-bar search box, /search page + API)', () => {
   afterEach(() => {
     vi.useRealTimers();
     try {
+      // Opening a project stamps it for the dashboard's "Recently accessed" sort.
+      http?.match((r) => r.url.endsWith('/access'));
       if (http) http.verify();
     } finally {
       TestBed.resetTestingModule();

@@ -16,7 +16,7 @@
   height: 2rem;
   padding: 0 0.625rem;
   border: 1px solid var(--orange-light);
-  border-radius: 999px;
+  border-radius: 0.5rem;
   background: var(--cream);
   color: var(--ink-muted);
   cursor: text;
@@ -61,7 +61,7 @@ input {
 .shortcut {
   flex: none;
   padding: 0.0625rem 0.375rem;
-  border: 1px solid #e3cfc6;
+  border: 1px solid var(--divider);
   border-radius: 0.3125rem;
   background: var(--theme-surface);
   color: var(--ink-muted);
@@ -79,7 +79,7 @@ input {
   flex: none;
   width: 0.875rem;
   height: 0.875rem;
-  border: 2px solid #e6d6cf;
+  border: 2px solid var(--divider);
   border-top-color: var(--orange);
   border-radius: 50%;
   animation: spin 700ms linear infinite;
@@ -104,7 +104,7 @@ input {
   border: 1px solid var(--orange-light);
   border-radius: 0.75rem;
   background: var(--theme-surface);
-  box-shadow: 0 8px 24px rgb(0 0 0 / 0.08);
+  box-shadow: var(--elevation-2);
 }
 
 @media (prefers-reduced-motion: reduce) {

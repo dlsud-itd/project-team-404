@@ -5,6 +5,9 @@ model UserSetting {
   fontSize             String   @default("medium") @db.VarChar(10) @map("font_size")
   fontFamily           String   @default("system") @db.VarChar(30) @map("font_family")
   theme                Json     @default("{}") @db.JsonB
+  /// The project new tasks go to; null, or an archived or missing project, means the Inbox.
+  defaultProjectId     Int?     @map("default_project_id")
+  dashboardProjectSort String   @default("custom") @db.VarChar(20) @map("dashboard_project_sort")
   createdAt            DateTime @default(now()) @db.Timestamptz(6) @map("created_at")
   updatedAt            DateTime @default(now()) @db.Timestamptz(6) @map("updated_at")
   user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)

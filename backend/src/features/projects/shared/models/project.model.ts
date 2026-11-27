@@ -14,6 +14,7 @@ export function toProjectModel(project: ProjectRecord): Project {
     isArchived,
     archivedAt,
     sortOrder,
+    lastAccessedAt,
     createdAt,
     updatedAt,
   } = project;
@@ -27,6 +28,7 @@ export function toProjectModel(project: ProjectRecord): Project {
     isArchived,
     archivedAt,
     sortOrder,
+    lastAccessedAt,
     createdAt,
     updatedAt,
   };

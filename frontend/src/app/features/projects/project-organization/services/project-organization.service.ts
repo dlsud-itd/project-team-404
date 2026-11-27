@@ -40,6 +40,18 @@ export class ProjectOrganizationService {
     );
   }
 
+  /**
+   * Records that the user opened a project, for the dashboard's "Recently accessed" sort. The
+   * store changes at once; a failed request is ignored, since it only affects that sort.
+   */
+  markAccessed(projectId: number): void {
+    const lastAccessedAt = new Date().toISOString();
+    if (this.store.byId(projectId)) this.store.patch(projectId, { lastAccessedAt });
+    this.http
+      .put(`${this.baseUrl}/${projectId}/access`, null)
+      .subscribe({ error: () => undefined });
+  }
+
   /** PUT /api/projects/reorder, then stores the sort orders the server saved. */
   reorder({ request, sortOrders }: ReorderPayload): Observable<ReorderProjectsResponse> {
     return defer(() => {

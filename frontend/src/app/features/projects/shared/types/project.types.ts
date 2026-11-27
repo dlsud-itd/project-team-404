@@ -13,6 +13,8 @@ export interface Project {
   /** ISO timestamps, used for sorting; older responses may leave them out. */
   createdAt?: string;
   updatedAt?: string;
+  /** ISO instant the user last opened the project, or null if never. */
+  lastAccessedAt?: string | null;
 }
 
 /**

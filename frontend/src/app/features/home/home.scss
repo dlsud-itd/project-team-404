@@ -13,7 +13,7 @@
 }
 
 .panel[data-slide] {
-  animation: slide-in 320ms cubic-bezier(0.22, 1, 0.36, 1);
+  animation: slide-in var(--duration-slow) var(--ease-out);
 }
 
 .panel[data-slide='left'] {
@@ -90,7 +90,7 @@
   }
 
   &:hover {
-    background: color-mix(in srgb, var(--theme-primary) 12%, var(--theme-surface));
+    background: var(--hover-bg);
   }
 
   &:focus-visible {
@@ -120,7 +120,7 @@
 .retry {
   padding: 0.45rem 0.8rem;
   border: 1px solid var(--field-border);
-  border-radius: 999px;
+  border-radius: 0.5rem;
   background: var(--theme-surface);
   color: var(--ink);
   font: inherit;
@@ -138,7 +138,7 @@
 .greeting {
   margin: 0.125rem 0 0.25rem;
   font-size: clamp(1.5rem, 3.5vw, 1.75rem);
-  font-weight: 700;
+  font-weight: 500;
 }
 
 .overdue-note {
@@ -166,7 +166,7 @@
   dd {
     margin: 0;
     font-size: 1.125rem;
-    font-weight: 700;
+    font-weight: 500;
     line-height: 1;
   }
 

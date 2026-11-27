@@ -1,21 +1,16 @@
 <div class="login">
   <section class="intro" aria-labelledby="intro-heading">
     <div class="brand-row">
-      <a class="brand" routerLink="/">
-        <span class="brand-mark" aria-hidden="true"></span>
-        HabitFlow
-      </a>
+      <a class="brand" routerLink="/"> HabitFlow </a>
       <app-theme-switcher />
     </div>
 
-    <h2 id="intro-heading" class="intro-heading">
-      Welcome back. Keep up your <span class="accent">streak</span>.
-    </h2>
+    <h2 id="intro-heading" class="intro-heading">Keep your streak going</h2>
 
     <ul class="features" aria-label="What you get">
-      <li>Daily check-ins</li>
-      <li>Reminders and notifications</li>
-      <li>Streaks and statistics</li>
+      <li>Projects for every class, job or routine</li>
+      <li>Deadlines and priority levels</li>
+      <li>Streaks on recurring tasks</li>
     </ul>
 
     <p class="credit">Team 404 Project</p>
@@ -23,8 +18,7 @@
 
   <main class="panel">
     <div class="panel-inner">
-      <p class="eyebrow">Log in to your account</p>
-      <h1 class="title">Good to see you</h1>
+      <h1 class="title">Log in</h1>
 
       @if (passwordReset) {
         <p class="form-notice" role="status">

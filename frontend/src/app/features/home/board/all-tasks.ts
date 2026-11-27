@@ -12,11 +12,11 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, type ValidatorFn, Validators } from '@angular/forms';
 import { finalize } from 'rxjs';
-import { ConfirmDeleteTaskDialog } from '../../tasks/task-crud/components/confirm-delete-dialog/confirm-delete-dialog';
 import { TasksStore } from '../../tasks/shared/state/tasks.store';
 import { NewTaskDialog } from '../../tasks/task-crud/components/new-task-dialog/new-task-dialog';
 import { ViewAllLink } from '../../../shared/components/view-all-link/view-all-link';
 import { PrioritiesStore } from '../../settings/state/priorities.store';
+import { PriorityLegend } from '../../settings/components/priority-legend/priority-legend';
 import { SettingsStore } from '../../settings/state/settings.store';
 import { DashboardStore, type Task } from '../dashboard.store';
 import { mapTaskError } from '../../tasks/task-crud/mappers/task-error.mapper';
@@ -37,8 +37,8 @@ const notBlank: ValidatorFn = ({ value }) =>
   selector: 'app-all-tasks',
   imports: [
     ReactiveFormsModule,
-    ConfirmDeleteTaskDialog,
     NewTaskDialog,
+    PriorityLegend,
     ViewAllLink,
     StreakBadge,
     ArchiveAction,
@@ -63,8 +63,6 @@ export class AllTasks {
   protected readonly submitting = signal(false);
   protected readonly busyTasks = signal<ReadonlySet<number>>(new Set());
   protected readonly openTaskMenuId = signal<number | null>(null);
-  protected readonly pendingDelete = signal<Task | null>(null);
-  protected readonly deleteError = signal<string | null>(null);
   protected readonly editingTaskId = signal<number | null>(null);
   private readonly tasksApi = inject(TaskService);
   private readonly taskPopups = inject(TasksStore);
@@ -198,37 +196,6 @@ export class AllTasks {
     this.closeTaskMenu();
     this.actionError.set(null);
     this.editingTaskId.set(task.id);
-  }
-
-  protected askDelete(task: Task, event: MouseEvent): void {
-    event.stopPropagation();
-    this.closeTaskMenu();
-    this.deleteError.set(null);
-    this.pendingDelete.set(task);
-  }
-
-  protected cancelDelete(): void {
-    this.pendingDelete.set(null);
-  }
-
-  protected confirmDelete(): void {
-    const task = this.pendingDelete();
-    if (!task || this.isBusy(task)) return;
-    this.setBusy(task.id, true);
-    this.deleteError.set(null);
-    this.tasksApi
-      .delete(task.id)
-      .pipe(
-        finalize(() => this.setBusy(task.id, false)),
-        takeUntilDestroyed(this.destroyRef),
-      )
-      .subscribe({
-        next: () => {
-          this.store.removeTask(task.id);
-          this.pendingDelete.set(null);
-        },
-        error: (error: unknown) => this.deleteError.set(mapTaskError(error).message),
-      });
   }
 
   /** Archive takes the task off the dashboard at once and puts it back on failure or Undo. */

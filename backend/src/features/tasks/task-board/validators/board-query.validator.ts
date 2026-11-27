@@ -6,7 +6,8 @@ import {
 
 export const boardQueryValidator = z
   .object({
-    projectId: z.coerce.number().int().positive(),
+    // Left out, the board shows every task in every active project.
+    projectId: z.coerce.number().int().positive().optional(),
     status: z.enum(['all', 'active', 'completed']).default('all'),
     ...taskFilterValidator.shape,
     isArchived: z

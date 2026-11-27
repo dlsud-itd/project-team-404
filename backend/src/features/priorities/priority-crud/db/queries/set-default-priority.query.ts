@@ -2,7 +2,8 @@ import { prisma } from '../../../../../shared/db/prisma.client';
 
 export async function setDefaultPriority(priorityId: number, userId: string) {
   const priority = await prisma.priorityLevel.findFirst({
-    where: { id: priorityId, userId, deletedAt: null },
+    // An archived level is hidden from pickers, so it can't be what new tasks get.
+    where: { id: priorityId, userId, deletedAt: null, archivedAt: null },
   });
   if (!priority) return null;
 

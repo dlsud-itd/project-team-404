@@ -4,6 +4,7 @@ import {
   THEME_PRESETS,
   type ThemeMode,
 } from '../../../features/settings/types/user-settings.types';
+import { readableOn } from '../../utils/readable-on.util';
 
 export const PUBLIC_THEME_STORAGE_KEY = 'habitflow-public-theme';
 
@@ -43,7 +44,7 @@ export const PUBLIC_THEME_STORAGE_KEY = 'habitflow-public-theme';
       flex: 0 0 auto;
       place-items: center;
       padding: 0;
-      border: 1px solid var(--field-border);
+      border: 1px solid var(--divider);
       border-radius: 50%;
       background: var(--theme-surface);
       color: var(--theme-text);
@@ -51,7 +52,7 @@ export const PUBLIC_THEME_STORAGE_KEY = 'habitflow-public-theme';
     }
 
     .theme-switcher:hover {
-      background: color-mix(in srgb, var(--theme-primary) 10%, var(--theme-surface));
+      background: var(--hover-bg);
     }
 
     .theme-switcher:focus-visible {
@@ -64,7 +65,7 @@ export const PUBLIC_THEME_STORAGE_KEY = 'habitflow-public-theme';
       height: 1.125rem;
       fill: none;
       stroke: currentColor;
-      stroke-width: 1.8;
+      stroke-width: 1.5;
       stroke-linecap: round;
       stroke-linejoin: round;
     }
@@ -126,7 +127,8 @@ export class ThemeSwitcher {
 
   private apply(mode: ThemeMode): void {
     const preset = THEME_PRESETS.find(
-      (item) => item.mode === mode && item.id === (mode === 'dark' ? 'midnight' : 'terracotta'),
+      // Purple accents for logged-out pages: no priority color is purple, so nothing reads as one.
+      (item) => item.mode === mode && item.id === (mode === 'dark' ? 'graphite' : 'paper'),
     );
     if (!preset) return;
 
@@ -135,5 +137,6 @@ export class ThemeSwitcher {
     for (const [key, value] of Object.entries(preset.colors)) {
       root.style.setProperty(`--theme-${key}`, value);
     }
+    root.style.setProperty('--on-primary', readableOn(preset.colors.primary));
   }
 }

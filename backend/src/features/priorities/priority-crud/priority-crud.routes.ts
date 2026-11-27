@@ -16,6 +16,8 @@ import { updatePriorityValidator } from './validators/update-priority.validator'
 import { priorityIdParamValidator } from './validators/priority-id-param.validator';
 import { reorderPrioritiesValidator } from './validators/reorder-priorities.validator';
 import { deletePriorityQueryValidator } from './validators/delete-priority-query.validator';
+import { setPriorityArchived } from './db/queries/set-priority-archived.query';
+import { setPriorityArchivedValidator } from './validators/set-priority-archived.validator';
 
 export function createPriorityCrudRouter(
   sessionService: SessionService,
@@ -27,6 +29,7 @@ export function createPriorityCrudRouter(
     setDefaultPriority,
     reorderPriorities,
     deletePriorityAndReassign,
+    setPriorityArchived,
   }
 ): Router {
   const router = Router();
@@ -75,6 +78,17 @@ export function createPriorityCrudRouter(
     auth,
     validatePriorityId,
     controller.setDefault
+  );
+  router.put(
+    '/:priorityId/archive',
+    auth,
+    validatePriorityId,
+    validateRequest(
+      setPriorityArchivedValidator,
+      'body',
+      'isArchived is required'
+    ),
+    controller.archive
   );
   router.delete(
     '/:priorityId',

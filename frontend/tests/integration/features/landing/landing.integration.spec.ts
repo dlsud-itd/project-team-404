@@ -96,15 +96,15 @@ describe('Landing integration (landing page, guestGuard, session)', () => {
 
     expect(router.url).toBe('/');
     expect(TestBed.inject(Title).getTitle()).toBe('HabitFlow');
-    expect(text('h1')).toMatch(/^Build habits that last,\s*forever$/);
+    expect(text('h1')).toBe('Plan the week, keep the streak');
     expect(all('app-landing-features h3').map((h) => h.textContent?.trim())).toEqual([
-      'Task Management',
-      'Scheduling & Organization',
-      'Projects & Dashboard',
-      'Account & Security',
+      'Task management',
+      'Scheduling and organization',
+      'Projects and dashboard',
+      'Account and security',
     ]);
     expect(all('app-landing-steps ol > li')).toHaveLength(4);
-    expect(text('#closing-heading')).toBe('Get your first task done today.');
+    expect(text('#closing-heading')).toBe('Get your first task done today');
     expect(el('app-landing-footer footer')).toBeTruthy();
     // No session to restore, so nothing is sent.
     http.expectNone(() => true);
@@ -112,7 +112,7 @@ describe('Landing integration (landing page, guestGuard, session)', () => {
 
   // Case 2
   it.each([
-    ['Get Started', '.topbar', '/register'],
+    ['Get started', '.topbar', '/register'],
     ['Create free account', '.hero', '/register'],
     ['Create free account', 'app-landing-closing', '/register'],
     ['Log in', '.topbar', '/login'],
@@ -194,7 +194,7 @@ describe('Landing integration (landing page, guestGuard, session)', () => {
     await settle();
 
     expect(router.url).toBe('/');
-    expect(text('h1')).toMatch(/^Build habits that last,\s*forever$/);
+    expect(text('h1')).toBe('Plan the week, keep the streak');
   });
 
   // Case 5

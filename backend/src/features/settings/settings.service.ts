@@ -11,7 +11,20 @@ export type SettingsDependencies = {
     userId: string,
     input: UpdateSettingsInput
   ): Promise<UserSettingsRecord>;
+  /** Looks up one of the user's own projects; used to check a new default project. */
+  findOwnedProject?(
+    projectId: number,
+    userId: string
+  ): Promise<{ isArchived: boolean } | null>;
 };
+
+/** The chosen default project isn't one of the user's active projects. */
+export class DefaultProjectNotFoundError extends Error {
+  constructor() {
+    super('Default project not found');
+    this.name = 'DefaultProjectNotFoundError';
+  }
+}
 
 export class SettingsService {
   constructor(private readonly dependencies: SettingsDependencies) {}
@@ -26,6 +39,18 @@ export class SettingsService {
     userId: string,
     input: UpdateSettingsInput
   ): Promise<UserSettings> {
+    if (
+      typeof input.defaultProjectId === 'number' &&
+      this.dependencies.findOwnedProject
+    ) {
+      const project = await this.dependencies.findOwnedProject(
+        input.defaultProjectId,
+        userId
+      );
+      if (!project || project.isArchived) {
+        throw new DefaultProjectNotFoundError();
+      }
+    }
     return toUserSettingsModel(
       await this.dependencies.updateSettings(userId, input)
     );

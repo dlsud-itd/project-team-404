@@ -2,6 +2,11 @@ import { toLabelModel } from '../labels/shared/models/label.model';
 import { toProjectModel } from '../projects/shared/models/project.model';
 import { toTaskModel } from '../tasks/shared/models/task.model';
 import { listArchivedLabels } from './db/queries/list-archived-labels.query';
+import { listArchivedPriorities } from './db/queries/list-archived-priorities.query';
+import {
+  toPriorityModel,
+  type PriorityRecord,
+} from '../priorities/priority-crud/models/priority.model';
 import { listArchivedProjects } from './db/queries/list-archived-projects.query';
 import { listArchivedTasks } from './db/queries/list-archived-tasks.query';
 import type {
@@ -34,11 +39,17 @@ export type ArchiveDependencies = {
     limit: number,
     cursor?: ArchiveCursor
   ): Promise<ArchivePage<LabelListRecord>>;
+  listArchivedPriorities(
+    userId: string,
+    limit: number,
+    cursor?: ArchiveCursor
+  ): Promise<ArchivePage<PriorityRecord>>;
 };
 
 const emptyTasks: ArchivePage<TaskRecord> = { items: [], total: 0 };
 const emptyProjects: ArchivePage<ProjectRecord> = { items: [], total: 0 };
 const emptyLabels: ArchivePage<LabelListRecord> = { items: [], total: 0 };
+const emptyPriorities: ArchivePage<PriorityRecord> = { items: [], total: 0 };
 
 export class ArchiveService {
   constructor(
@@ -46,13 +57,14 @@ export class ArchiveService {
       listArchivedTasks,
       listArchivedProjects,
       listArchivedLabels,
+      listArchivedPriorities,
     }
   ) {}
 
   async list(userId: string, query: ArchiveQuery): Promise<ArchiveResponse> {
-    const includes = (type: 'tasks' | 'projects' | 'labels') =>
+    const includes = (type: 'tasks' | 'projects' | 'labels' | 'priorities') =>
       query.type === 'all' || query.type === type;
-    const [tasks, projects, labels] = await Promise.all([
+    const [tasks, projects, labels, priorities] = await Promise.all([
       includes('tasks')
         ? this.dependencies.listArchivedTasks(userId, query.limit, query.cursor)
         : Promise.resolve(emptyTasks),
@@ -70,6 +82,13 @@ export class ArchiveService {
             query.cursor
           )
         : Promise.resolve(emptyLabels),
+      includes('priorities')
+        ? this.dependencies.listArchivedPriorities(
+            userId,
+            query.limit,
+            query.cursor
+          )
+        : Promise.resolve(emptyPriorities),
     ]);
 
     const entries = [
@@ -87,6 +106,12 @@ export class ArchiveService {
       })),
       ...labels.items.map((record) => ({
         type: 'labels' as const,
+        id: record.id,
+        archivedAt: requireArchivedAt(record.archivedAt),
+        record,
+      })),
+      ...priorities.items.map((record) => ({
+        type: 'priorities' as const,
         id: record.id,
         archivedAt: requireArchivedAt(record.archivedAt),
         record,
@@ -124,6 +149,12 @@ export class ArchiveService {
             toLabelModel(entry.record, entry.record._count.taskLabels)
           ),
         total: labels.total,
+      },
+      priorities: {
+        items: page
+          .filter((entry) => entry.type === 'priorities')
+          .map((entry) => toPriorityModel(entry.record)),
+        total: priorities.total,
       },
       nextCursor,
     };

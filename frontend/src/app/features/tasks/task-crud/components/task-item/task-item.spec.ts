@@ -62,8 +62,8 @@ describe('TaskItem', () => {
 
     expect(text('.title')).toBe('Study ILT Module 4');
     expect(text('.description')).toBe('Read all lessons');
-    expect(text('.priority')).toBe('High');
-    expect(el('.priority')?.getAttribute('aria-label')).toBe('High priority');
+    expect(el('.item')?.getAttribute('title')).toBe('Priority: High');
+    expect(text('.visually-hidden')).toBe('High priority');
     expect(text('.label')).toBe('Study');
   });
 
@@ -84,7 +84,9 @@ describe('TaskItem', () => {
     render(BARE);
 
     expect(el('.description')).toBeNull();
-    expect(el('.meta')).toBeNull();
+    // The meta line always names the priority, and holds nothing else here.
+    expect(el('.meta')?.children).toHaveLength(1);
+    expect(el('.meta .priority-name')).not.toBeNull();
     expect(el('.labels')).toBeNull();
   });
 
@@ -110,13 +112,21 @@ describe('TaskItem', () => {
     expect(el('a.edit')?.getAttribute('aria-label')).toBe('Edit Study ILT Module 4');
   });
 
-  it('asks the parent to delete the task', () => {
+  it('offers Archive and no Delete; tasks are deleted only from the Archive', () => {
     render(STUDY);
-    let requested: Task | undefined;
-    fixture.componentInstance.deleteRequested.subscribe((task) => (requested = task));
 
-    el<HTMLButtonElement>('button.delete')!.click();
+    expect(el('button[aria-label="Archive task Study ILT Module 4"]')).toBeTruthy();
+    expect(el('button.delete')).toBeNull();
+    expect(page.textContent).not.toContain('Delete');
+  });
 
-    expect(requested).toEqual(STUDY);
+  it('shows priority as a tint and left accent with a tooltip, not as a tag', () => {
+    render(STUDY);
+
+    const item = el<HTMLElement>('.item')!;
+    expect(item.classList).toContain('priority-tint');
+    expect(item.getAttribute('title')).toMatch(/^Priority: /);
+    expect(item.style.getPropertyValue('--priority-accent')).not.toBe('');
+    expect(el('.priority')).toBeNull();
   });
 });

@@ -40,7 +40,12 @@
     </thead>
     <tbody>
       @for (row of rows(); track row.task.taskId) {
-        <tr class="row" [class.done]="row.done" (click)="openRow($event, row.task)">
+        <tr
+          class="row"
+          [class.done]="row.done"
+          [style.--priority-color]="row.priorityColor"
+          (click)="openRow($event, row.task)"
+        >
           <th scope="row" class="col-title">
             <span class="title-cell">
               <input
@@ -68,9 +73,9 @@
           </th>
           <td class="col-project">{{ row.project }}</td>
           <td class="col-priority">
-            <span class="priority" [style.--priority-color]="row.priorityColor">{{
-              row.priority
-            }}</span>
+            <span class="priority"
+              ><span class="dot" aria-hidden="true"></span>{{ row.priority }}</span
+            >
           </td>
           <td class="col-labels">
             @if (row.task.labels.length) {
@@ -103,7 +108,9 @@
             }
           </td>
           <td class="col-status">
-            <span class="status" [attr.data-status]="row.status">{{ row.status }}</span>
+            <span class="status" [attr.data-status]="row.status"
+              ><span class="dot" aria-hidden="true"></span>{{ row.status }}</span
+            >
           </td>
         </tr>
       }

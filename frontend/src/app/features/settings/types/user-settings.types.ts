@@ -5,7 +5,25 @@ export type FontSize = 'small' | 'medium' | 'large' | 'x-large';
 export type FontFamily = 'system' | 'sans-serif' | 'serif' | 'monospace' | 'atkinson-hyperlegible';
 
 export type ThemeMode = 'light' | 'dark';
-export type ThemePresetId = 'terracotta' | 'meadow' | 'coast' | 'midnight' | 'forest' | 'violet';
+export type ThemePresetId =
+  'paper' | 'graphite' | 'terracotta' | 'meadow' | 'coast' | 'midnight' | 'forest' | 'violet';
+
+/** How the dashboard orders favorite projects. */
+export type DashboardProjectSort =
+  'custom' | 'name-asc' | 'name-desc' | 'recent' | 'created-desc' | 'created-asc';
+
+export const DASHBOARD_PROJECT_SORTS: readonly { value: DashboardProjectSort; label: string }[] = [
+  { value: 'custom', label: 'Custom order' },
+  { value: 'name-asc', label: 'Name (A–Z)' },
+  { value: 'name-desc', label: 'Name (Z–A)' },
+  { value: 'recent', label: 'Recently accessed' },
+  { value: 'created-desc', label: 'Newest first' },
+  { value: 'created-asc', label: 'Oldest first' },
+];
+
+export function isDashboardProjectSort(value: unknown): value is DashboardProjectSort {
+  return DASHBOARD_PROJECT_SORTS.some((sort) => sort.value === value);
+}
 
 export interface ThemeColors {
   primary: string;
@@ -36,6 +54,11 @@ export interface UserSettings {
   fontSize: FontSize;
   fontFamily: FontFamily;
   theme: ThemeSettings;
+  /**
+   * The project new tasks go to. Null, or a project that is archived or gone, means the Inbox.
+   */
+  defaultProjectId: number | null;
+  dashboardProjectSort: DashboardProjectSort;
   /** ISO instant of the last save, or null before the server has answered. */
   updatedAt: string | null;
 }
@@ -54,7 +77,43 @@ export const DEFAULT_SETTINGS: UserSettings = {
   fontFamily: 'system',
   theme: {
     mode: 'light',
-    preset: 'terracotta',
+    preset: 'paper',
+    // A neutral base (Notion-like text and greys) with one violet accent.
+    colors: {
+      primary: '#6941c6',
+      secondary: '#73726e',
+      background: '#fbfbfa',
+      surface: '#ffffff',
+      text: '#37352f',
+      muted: '#73726e',
+      border: '#8f8e8a',
+      success: '#2f7d4f',
+      warning: '#8a5a00',
+      error: '#c4332d',
+      info: '#6941c6',
+    },
+  },
+  defaultProjectId: null,
+  dashboardProjectSort: 'custom',
+  updatedAt: null,
+};
+
+export const THEME_PRESETS: readonly {
+  id: ThemePresetId;
+  mode: ThemeMode;
+  label: string;
+  colors: ThemeColors;
+}[] = [
+  {
+    id: 'paper',
+    mode: 'light',
+    label: 'Paper',
+    colors: DEFAULT_SETTINGS.theme.colors,
+  },
+  {
+    id: 'terracotta',
+    mode: 'light',
+    label: 'Terracotta',
     colors: {
       primary: '#d9531e',
       secondary: '#d98cf0',
@@ -68,21 +127,6 @@ export const DEFAULT_SETTINGS: UserSettings = {
       error: '#b42318',
       info: '#176b87',
     },
-  },
-  updatedAt: null,
-};
-
-export const THEME_PRESETS: readonly {
-  id: ThemePresetId;
-  mode: ThemeMode;
-  label: string;
-  colors: ThemeColors;
-}[] = [
-  {
-    id: 'terracotta',
-    mode: 'light',
-    label: 'Terracotta',
-    colors: DEFAULT_SETTINGS.theme.colors,
   },
   {
     id: 'meadow',
@@ -118,6 +162,24 @@ export const THEME_PRESETS: readonly {
       warning: '#945b0b',
       error: '#b42332',
       info: '#176b87',
+    },
+  },
+  {
+    id: 'graphite',
+    mode: 'dark',
+    label: 'Graphite',
+    colors: {
+      primary: '#7f5af0',
+      secondary: '#a3a29e',
+      background: '#191919',
+      surface: '#202020',
+      text: '#e6e5e3',
+      muted: '#a3a29e',
+      border: '#6b6a66',
+      success: '#5fb97f',
+      warning: '#e0a544',
+      error: '#f07a72',
+      info: '#a48afb',
     },
   },
   {

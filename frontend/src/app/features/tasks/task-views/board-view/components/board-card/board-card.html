@@ -1,7 +1,16 @@
-<article class="card" [class.done]="card().isDone">
+<article
+  class="card priority-tint"
+  [class.done]="card().isDone"
+  [style.--priority-bg]="tone()?.bg ?? null"
+  [style.--priority-accent]="tone()?.accent ?? null"
+  [attr.title]="tone() ? 'Priority: ' + tone()!.name : null"
+>
   <div class="top">
-    @if (priority(); as name) {
-      <span class="priority" [style.--priority-color]="priorityColor()">{{ name }}</span>
+    @if (showProject() && project(); as project) {
+      <span class="project">
+        <span class="dot" [style.background]="project.color ?? null" aria-hidden="true"></span>
+        {{ project.name }}
+      </span>
     }
     <button
       type="button"
@@ -21,11 +30,14 @@
 
   <h3 class="title">
     <a
-      class="open"
+      class="open strike-sweep"
       draggable="false"
-      [routerLink]="['/projects', projectId(), 'tasks', card().taskId, 'edit']"
+      [routerLink]="['/projects', taskProjectId(), 'tasks', card().taskId, 'edit']"
       >{{ card().title }}</a
     >
+    @if (tone(); as tone) {
+      <span class="visually-hidden">, {{ tone.name }} priority</span>
+    }
   </h3>
 
   @if (due() || task()?.isRecurring) {

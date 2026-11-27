@@ -18,7 +18,7 @@ describe('LandingClosing', () => {
 
   it('shows the closing heading', () => {
     expect(page.querySelector('#closing-heading')?.textContent?.trim()).toBe(
-      'Get your first task done today.',
+      'Get your first task done today',
     );
     expect(page.querySelector('section')?.getAttribute('aria-labelledby')).toBe('closing-heading');
   });

@@ -1,21 +1,16 @@
 <div class="register">
   <section class="intro" aria-labelledby="intro-heading">
     <div class="brand-row">
-      <a class="brand" routerLink="/">
-        <span class="brand-mark" aria-hidden="true"></span>
-        HabitFlow
-      </a>
+      <a class="brand" routerLink="/"> HabitFlow </a>
       <app-theme-switcher />
     </div>
 
-    <h2 id="intro-heading" class="intro-heading">
-      Build better habits. Start your <span class="accent">streak</span>.
-    </h2>
+    <h2 id="intro-heading" class="intro-heading">Start your first streak</h2>
 
     <ul class="features" aria-label="What you get">
-      <li>Daily check-ins</li>
-      <li>Reminders and notifications</li>
-      <li>Streaks and statistics</li>
+      <li>Projects for every class, job or routine</li>
+      <li>Deadlines and priority levels</li>
+      <li>Streaks on recurring tasks</li>
     </ul>
 
     <p class="credit">Team 404 Project</p>
@@ -25,7 +20,6 @@
     <div class="panel-inner">
       @if (registered()) {
         <div class="success" role="status">
-          <p class="eyebrow">You're all set</p>
           <h1 class="title">Account created</h1>
           <p class="success-copy">
             Your account and your Inbox are ready. Log in to start tracking your habits.
@@ -33,8 +27,7 @@
           <a class="submit" routerLink="/login">Log in</a>
         </div>
       } @else {
-        <p class="eyebrow">Register an account</p>
-        <h1 class="title">Join HabitFlow</h1>
+        <h1 class="title">Create your account</h1>
 
         @if (formError(); as message) {
           <p class="form-error" role="alert">{{ message }}</p>

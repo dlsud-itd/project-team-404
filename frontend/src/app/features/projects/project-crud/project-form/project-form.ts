@@ -28,16 +28,18 @@ import { projectNameValidator } from '../validators/project-name.validator';
 
 export type ProjectFormMode = 'create' | 'edit';
 
-/** The colors a user can pick. The picker only offers these (plus a project's current color). */
+/**
+ * The colors a user can pick (plus a project's current color). They stay clear of the priority
+ * colors (red, orange, yellow, blue) and the default purple accent, so a project dot never reads
+ * as a priority. Projects saved with another color keep it.
+ */
 export const PROJECT_COLORS: readonly { value: string; label: string }[] = [
-  { value: '#DC2626', label: 'Red' },
-  { value: '#EA580C', label: 'Orange' },
-  { value: '#CA8A04', label: 'Yellow' },
   { value: '#16A34A', label: 'Green' },
+  { value: '#65A30D', label: 'Lime' },
   { value: '#0D9488', label: 'Teal' },
-  { value: '#2563EB', label: 'Blue' },
-  { value: '#7C3AED', label: 'Violet' },
+  { value: '#0891B2', label: 'Cyan' },
   { value: '#DB2777', label: 'Pink' },
+  { value: '#8B5E3C', label: 'Brown' },
   { value: '#6B7280', label: 'Gray' },
 ];
 

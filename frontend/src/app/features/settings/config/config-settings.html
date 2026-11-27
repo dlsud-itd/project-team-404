@@ -79,3 +79,24 @@
     </button>
   </div>
 </form>
+
+<section class="card default-project" aria-labelledby="default-project-heading">
+  <h3 id="default-project-heading">Default project</h3>
+  <label class="field-label" for="default-project">New tasks go to</label>
+  <select
+    id="default-project"
+    [disabled]="savingDefault() || !projects.loaded()"
+    aria-describedby="default-project-hint"
+    (change)="setDefaultProject($event)"
+  >
+    @for (project of projects.active(); track project.projectId) {
+      <option [value]="project.projectId" [selected]="project.projectId === defaultProjectId()">
+        {{ project.name }}
+      </option>
+    }
+  </select>
+  <p class="hint" id="default-project-hint">
+    Saved as soon as you pick one. If that project is archived later, new tasks go to your Inbox.
+    You can also set it from a project's ⋯ menu.
+  </p>
+</section>

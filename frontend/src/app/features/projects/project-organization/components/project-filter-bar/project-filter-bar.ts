@@ -8,14 +8,17 @@ import {
   output,
   signal,
 } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { activeProjectFilterCount, type ProjectQuery } from '../../utils/project-query-params.util';
 
 /**
- * Favorites and Archived toggle chips and a Color chip with a small panel of color radios.
+ * A Favorites toggle chip, a link to archived projects on the Archive page, and a Color chip
+ * with a small panel of color radios.
  * The bar only reports changes; the project list writes them to the URL.
  */
 @Component({
   selector: 'app-project-filter-bar',
+  imports: [RouterLink],
   templateUrl: './project-filter-bar.html',
   styleUrl: './project-filter-bar.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

@@ -42,8 +42,9 @@ import {
 export const BOARD_CONFLICT_MESSAGE = 'The board changed elsewhere, so it was reloaded.';
 
 /**
- * A project's tasks as a Kanban board: To Do, In Progress and Done. Cards move by dragging or
- * with each card's Move menu; the move shows at once and is put back if saving fails.
+ * A project's tasks as a Kanban board: To Do, In Progress and Done. With no project it shows
+ * every active project's tasks ("All Projects"). Cards move by dragging or with each card's Move
+ * menu; the move shows at once and is put back if saving fails.
  */
 @Component({
   selector: 'app-board-view',
@@ -53,7 +54,8 @@ export const BOARD_CONFLICT_MESSAGE = 'The board changed elsewhere, so it was re
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class BoardView {
-  readonly projectId = input.required<number>();
+  /** Null shows every active project. */
+  readonly projectId = input.required<number | null>();
   /** A new filter object reloads the board, even when its values are unchanged. */
   readonly filter = input.required<BoardFilter>();
   /** Whether filters hide part of the board; moves then save against the full columns. */
@@ -89,7 +91,7 @@ export class BoardView {
 
   /** Each load replaces the one before it, so a slow old answer never overwrites a newer one. */
   private readonly loads = new Subject<{ silent: boolean }>();
-  private shownProjectId: number | null = null;
+  private shownProjectId: number | null | undefined = undefined;
 
   constructor() {
     this.loads
@@ -140,12 +142,17 @@ export class BoardView {
     if (!from || !after) return;
 
     const card = before.columns[from.column][from.index];
+    // Positions are kept per project, so an all-projects move saves into the card's own project.
+    const projectId = this.projectId() ?? card.task?.projectId ?? null;
+    if (projectId === null) {
+      this.toast.error(`Couldn't move “${card.title}”. Please reload the board.`);
+      return;
+    }
     this.board.set(after);
     this.saving.set(true);
     this.announcement.set(moveAnnouncement(after, taskId, card.title));
     if (fromMenu) this.focusMoveButton(taskId);
 
-    const projectId = this.projectId();
     this.columnOrder(projectId, to, after, taskId)
       .pipe(
         switchMap((taskIds) => this.api.reorder(projectId, to, taskIds)),
@@ -199,7 +206,8 @@ export class BoardView {
     taskId: number,
   ): Observable<number[]> {
     const visibleIds = board.columns[column].map((card) => card.taskId);
-    if (!this.filtersActive()) return of(visibleIds);
+    // The all-projects board mixes projects, so it always places the card among its own.
+    if (!this.filtersActive() && this.projectId() !== null) return of(visibleIds);
     return this.api.get(projectId).pipe(
       map((full) =>
         fullColumnOrder(

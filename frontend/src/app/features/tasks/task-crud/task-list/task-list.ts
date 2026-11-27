@@ -18,10 +18,9 @@ import { EMPTY, Subject, catchError, finalize, switchMap } from 'rxjs';
 import { SessionService } from '../../../auth/session/session.service';
 import { mapProjectError } from '../../../projects/project-crud/mappers/project-error.mapper';
 import { ProjectService } from '../../../projects/project-crud/services/project.service';
+import { ProjectOrganizationService } from '../../../projects/project-organization/services/project-organization.service';
 import { ProjectsStore } from '../../../projects/shared/state/projects.store';
 import { TasksStore } from '../../shared/state/tasks.store';
-import type { Task } from '../../shared/types/task.types';
-import { ConfirmDeleteTaskDialog } from '../components/confirm-delete-dialog/confirm-delete-dialog';
 import { mapTaskError } from '../mappers/task-error.mapper';
 import { TaskService } from '../services/task.service';
 import { PrioritiesStore } from '../../../settings/state/priorities.store';
@@ -59,7 +58,6 @@ import { ViewSwitcher } from '../../task-views/view-switcher/view-switcher';
   selector: 'app-task-list',
   imports: [
     RouterLink,
-    ConfirmDeleteTaskDialog,
     TaskFilterBar,
     SortMenu,
     BoardView,
@@ -78,6 +76,7 @@ export class TaskList {
   private readonly tasks = inject(TaskService);
   private readonly projects = inject(ProjectService);
   private readonly projectsStore = inject(ProjectsStore);
+  private readonly organization = inject(ProjectOrganizationService);
   private readonly route = inject(ActivatedRoute);
   private readonly session = inject(SessionService);
   private readonly destroyRef = inject(DestroyRef);
@@ -119,9 +118,6 @@ export class TaskList {
   );
   protected readonly canReorder = computed(() => this.reorderBlocked() === null);
 
-  protected readonly pendingDelete = signal<Task | null>(null);
-  protected readonly deleting = signal(false);
-  protected readonly deleteError = signal<string | null>(null);
   protected readonly notice = signal<string | null>(null);
   protected readonly actionError = signal<string | null>(null);
   /** Says which filter the server refused and was removed; cleared by the next change. */
@@ -186,6 +182,8 @@ export class TaskList {
     if (this.projectMissing()) return;
     // Before the load, so it fills the view this project opens on.
     this.views.setProject(projectId);
+    // For the dashboard's "Recently accessed" sort.
+    this.organization.markAccessed(projectId);
     this.loadProject();
     this.load();
   }
@@ -293,49 +291,6 @@ export class TaskList {
   protected newTask(): void {
     this.notice.set(null);
     this.store.creating.set({ projectId: this.projectId() });
-  }
-
-  protected askDelete(task: Task): void {
-    this.notice.set(null);
-    this.actionError.set(null);
-    this.deleteError.set(null);
-    this.pendingDelete.set(task);
-  }
-
-  protected cancelDelete(): void {
-    this.pendingDelete.set(null);
-  }
-
-  protected confirmDelete(): void {
-    const task = this.pendingDelete();
-    if (!task || this.deleting()) return;
-
-    this.deleting.set(true);
-    this.deleteError.set(null);
-
-    this.tasks
-      .delete(task.taskId)
-      .pipe(
-        finalize(() => this.deleting.set(false)),
-        takeUntilDestroyed(this.destroyRef),
-      )
-      .subscribe({
-        next: () => {
-          this.pendingDelete.set(null);
-          this.notice.set(`“${task.title}” was deleted.`);
-        },
-        error: (error: unknown) => {
-          const { message, notFound } = mapTaskError(error);
-          if (notFound) {
-            // Already gone (e.g. deleted in another tab): close and show the real list.
-            this.pendingDelete.set(null);
-            this.actionError.set(message);
-            this.load();
-            return;
-          }
-          this.deleteError.set(message);
-        },
-      });
   }
 
   /** Fetches the project for its name; a missing project replaces the page with a message. */

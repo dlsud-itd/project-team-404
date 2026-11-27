@@ -37,6 +37,7 @@
           [cards]="board.columns[key]"
           [count]="board.counts[key]"
           [projectId]="projectId()"
+          [showProject]="projectId() === null"
           [collapsible]="key === 'done'"
           [collapsed]="key === 'done' && doneCollapsed()"
           [busy]="saving()"

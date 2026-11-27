@@ -22,11 +22,7 @@
           aria-labelledby="tab-projects"
           [attr.data-slide]="slideFrom()"
         >
-          @if (organizing()) {
-            <app-project-switcher />
-          } @else {
-            <app-projects-page />
-          }
+          <app-projects-page />
         </section>
       }
       @default {

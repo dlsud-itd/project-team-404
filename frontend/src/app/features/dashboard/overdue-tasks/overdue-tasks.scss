@@ -48,7 +48,7 @@
   list-style: none;
 
   &:focus-visible {
-    outline: 2px solid #7b23a8;
+    outline: 2px solid var(--theme-primary);
     outline-offset: 2px;
   }
 }
@@ -87,7 +87,7 @@ a.title {
     text-decoration: underline;
   }
   &:focus-visible {
-    outline: 2px solid #7b23a8;
+    outline: 2px solid var(--theme-primary);
     outline-offset: 2px;
   }
 }
@@ -128,7 +128,7 @@ a.title {
 .retry {
   padding: 0.25rem 0.75rem;
   border: 1px solid var(--error);
-  border-radius: 999px;
+  border-radius: 0.5rem;
   background: var(--theme-surface);
   color: var(--error);
   font: inherit;

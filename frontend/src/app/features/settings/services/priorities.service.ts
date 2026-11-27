@@ -11,6 +11,8 @@ interface ApiPriority {
   sortOrder: number;
   isDefault: boolean;
   taskCount?: number;
+  isArchived?: boolean;
+  archivedAt?: string | null;
 }
 
 /** Calls for /api/priorities, the user's own priority levels (Sprint 5 API). */
@@ -49,6 +51,13 @@ export class PrioritiesService {
     return this.http.delete<DeletePriorityResult>(`${this.baseUrl}/${priorityId}`, { params });
   }
 
+  /** PUT /api/priorities/:id/archive: true archives the level, false restores it. */
+  setArchived(priorityId: number, isArchived: boolean): Observable<PriorityLevel> {
+    return this.http
+      .put<ApiPriority>(`${this.baseUrl}/${priorityId}/archive`, { isArchived })
+      .pipe(map(toPriorityLevel));
+  }
+
   setDefault(priorityId: number): Observable<{ id: number; isDefault: true }> {
     return this.http.put<{ id: number; isDefault: true }>(
       `${this.baseUrl}/${priorityId}/default`,
@@ -72,5 +81,7 @@ function toPriorityLevel(level: ApiPriority): PriorityLevel {
     sortOrder: level.sortOrder,
     isDefault: level.isDefault,
     taskCount: level.taskCount ?? null,
+    isArchived: level.isArchived ?? false,
+    archivedAt: level.archivedAt ?? null,
   };
 }

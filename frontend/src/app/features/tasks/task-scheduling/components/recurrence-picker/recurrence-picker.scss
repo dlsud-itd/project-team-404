@@ -57,7 +57,7 @@ legend {
 
   input:checked + span {
     background: var(--theme-primary);
-    color: #fff;
+    color: var(--on-primary);
   }
 
   input:focus-visible + span {
@@ -122,7 +122,7 @@ legend {
   input:checked + span {
     border-color: var(--theme-primary);
     background: var(--theme-primary);
-    color: #fff;
+    color: var(--on-primary);
   }
 
   input[aria-invalid='true'] + span {

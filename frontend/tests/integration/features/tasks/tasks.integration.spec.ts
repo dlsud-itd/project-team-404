@@ -249,6 +249,8 @@ describe('Tasks integration (Task Scheduling screens + API)', () => {
     try {
       // Repeating tasks also load their streak; task-streaks has its own specs for that.
       http?.match((r) => r.url.endsWith('/streak'));
+      // Opening a project stamps it for the dashboard's "Recently accessed" sort.
+      http?.match((r) => r.url.endsWith('/access'));
       if (http) http.verify();
     } finally {
       TestBed.resetTestingModule();
@@ -732,10 +734,11 @@ describe('Tasks integration (Task Scheduling screens + API)', () => {
       );
       await settle();
 
-      const badge = el('app-task-item .priority');
-      expect(badge.textContent?.trim()).toBe('High');
-      expect(badge.getAttribute('data-priority')).toBe('1');
-      expect(badge.getAttribute('aria-label')).toBe('High priority');
+      // Priority shows as the task's tint and left accent, named by its tooltip.
+      const item = el('app-task-item .item');
+      expect(item.getAttribute('title')).toBe('Priority: High');
+      expect(item.getAttribute('data-priority')).toBe('1');
+      expect(item.querySelector('.visually-hidden')?.textContent?.trim()).toBe('High priority');
     });
 
     // FE-ORG-01
@@ -747,7 +750,7 @@ describe('Tasks integration (Task Scheduling screens + API)', () => {
       await startSignedIn();
       await openList([apiTask({ priority })]);
 
-      expect(text('app-task-item .priority')).toBe(label);
+      expect(el('app-task-item .item').getAttribute('title')).toBe(`Priority: ${label}`);
     });
 
     // FE-ORG-01

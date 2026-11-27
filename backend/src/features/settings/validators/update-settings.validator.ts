@@ -1,4 +1,9 @@
 import { z } from 'zod';
+import {
+  DARK_THEME_PRESETS,
+  DASHBOARD_PROJECT_SORTS,
+  LIGHT_THEME_PRESETS,
+} from '../types';
 
 const themeColors = z
   .object({
@@ -19,21 +24,14 @@ const themeColors = z
 const theme = z
   .object({
     mode: z.enum(['light', 'dark']),
-    preset: z.enum([
-      'terracotta',
-      'meadow',
-      'coast',
-      'midnight',
-      'forest',
-      'violet',
-    ]),
+    preset: z.enum([...LIGHT_THEME_PRESETS, ...DARK_THEME_PRESETS]),
     colors: themeColors,
   })
   .strict()
   .refine(
     (value) =>
       value.mode ===
-      (['terracotta', 'meadow', 'coast'].includes(value.preset)
+      ((LIGHT_THEME_PRESETS as readonly string[]).includes(value.preset)
         ? 'light'
         : 'dark'),
     { message: 'Theme preset must match its color mode' }
@@ -54,6 +52,9 @@ export const updateSettingsValidator = z
       ])
       .optional(),
     theme: theme.optional(),
+    /** Null goes back to the Inbox. */
+    defaultProjectId: z.number().int().positive().nullable().optional(),
+    dashboardProjectSort: z.enum(DASHBOARD_PROJECT_SORTS).optional(),
   })
   .strict()
   .refine((value) => Object.keys(value).length > 0, {

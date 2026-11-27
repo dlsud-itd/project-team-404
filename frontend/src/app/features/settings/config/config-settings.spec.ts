@@ -8,6 +8,18 @@ import { DEFAULT_SETTINGS, type UserSettings } from '../types/user-settings.type
 import { ConfigSettings } from './config-settings';
 
 const URL = `${environment.apiBaseUrl}/api/settings`;
+const PROJECTS_URL = `${environment.apiBaseUrl}/api/projects`;
+const INBOX = {
+  id: 1,
+  name: 'Inbox',
+  description: null,
+  color: null,
+  isInbox: true,
+  isFavorite: false,
+  isArchived: false,
+  sortOrder: 0,
+};
+const THESIS = { ...INBOX, id: 7, name: 'Thesis', isInbox: false, sortOrder: 1 };
 const SAVED: UserSettings = {
   ...DEFAULT_SETTINGS,
   dashboardTaskLimit: 8,
@@ -46,6 +58,9 @@ describe('ConfigSettings', () => {
     page = fixture.nativeElement;
     render();
     http.expectOne(URL).flush(settings);
+    // The default-project picker lists the user's projects.
+    http.expectOne(`${PROJECTS_URL}?isArchived=false`).flush([INBOX, THESIS]);
+    http.expectOne(`${PROJECTS_URL}?isArchived=true`).flush([]);
     render();
   }
 
@@ -182,6 +197,7 @@ describe('ConfigSettings', () => {
     page = fixture.nativeElement;
     render();
     http.expectOne(URL).flush(null, { status: 404, statusText: 'Not Found' });
+    for (const req of http.match((r) => r.url.startsWith(PROJECTS_URL))) req.flush([]);
     render();
 
     expect(text('[role="alert"]')).toContain("Couldn't load your settings.");
@@ -194,5 +210,42 @@ describe('ConfigSettings', () => {
     render();
     expect(el('[role="alert"]')).toBeNull();
     expect(button('Save').disabled).toBe(false);
+  });
+
+  describe('default project', () => {
+    const picker = () => el<HTMLSelectElement>('#default-project')!;
+
+    it('starts on the Inbox when no default is chosen', () => {
+      open();
+      expect(picker().selectedOptions[0].textContent?.trim()).toBe('Inbox');
+    });
+
+    it('falls back to the Inbox when the chosen project is gone', () => {
+      open({ ...SAVED, defaultProjectId: 99 });
+      expect(picker().selectedOptions[0].textContent?.trim()).toBe('Inbox');
+    });
+
+    it('saves a new default as soon as one is picked', () => {
+      open();
+      picker().value = '7';
+      picker().dispatchEvent(new Event('change'));
+      const req = http.expectOne(URL);
+      expect(req.request.method).toBe('PATCH');
+      expect(req.request.body).toEqual({ defaultProjectId: 7 });
+      req.flush({ ...SAVED, defaultProjectId: 7 });
+      render();
+
+      expect(TestBed.inject(SettingsStore).defaultProjectId()).toBe(7);
+      expect(picker().selectedOptions[0].textContent?.trim()).toBe('Thesis');
+    });
+
+    it('clears the setting when the Inbox is picked', () => {
+      open({ ...SAVED, defaultProjectId: 7 });
+      picker().value = '1';
+      picker().dispatchEvent(new Event('change'));
+      const req = http.expectOne(URL);
+      expect(req.request.body).toEqual({ defaultProjectId: null });
+      req.flush({ ...SAVED, defaultProjectId: null });
+    });
   });
 });

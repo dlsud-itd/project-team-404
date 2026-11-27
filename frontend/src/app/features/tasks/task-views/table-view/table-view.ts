@@ -94,7 +94,7 @@ export class TableView {
         done,
         project: this.projects.byId(task.projectId)?.name ?? 'Inbox',
         priority: this.priorities.nameOf(task.priorityId),
-        priorityColor: this.priorities.colorOf(task.priorityId),
+        priorityColor: this.priorities.toneOf(task.priorityId).accent,
         scheduled: task.scheduledDate ? formatDate(task.scheduledDate) : null,
         due: task.dueDate ? formatDate(task.dueDate) : null,
         deadline: task.deadline ? formatDate(instantToDate(task.deadline, timeZone)) : null,

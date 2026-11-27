@@ -27,7 +27,10 @@ export class BoardColumn {
   readonly cards = input.required<readonly BoardCardModel[]>();
   /** Every matching task in the column; Done can hold more than it shows. */
   readonly count = input.required<number>();
-  readonly projectId = input.required<number>();
+  /** Null on the all-projects board; each card then links through its own project. */
+  readonly projectId = input.required<number | null>();
+  /** Shows each card's project, for the all-projects board. */
+  readonly showProject = input(false);
   readonly collapsible = input(false);
   readonly collapsed = input(false);
   /** True while a move is saving; dragging and the Move menus wait for it. */

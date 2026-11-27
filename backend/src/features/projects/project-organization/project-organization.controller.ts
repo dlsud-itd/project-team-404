@@ -17,6 +17,7 @@ export function createProjectOrganizationController(
   archive: RequestHandler;
   reorder: RequestHandler;
   sortOrder: RequestHandler;
+  access: RequestHandler;
 } {
   const respondToError = (
     error: unknown,
@@ -67,6 +68,17 @@ export function createProjectOrganizationController(
           projects,
           message: 'Project order updated successfully',
         });
+      } catch (error) {
+        respondToError(error, res, next);
+      }
+    },
+    access: async (req, res, next) => {
+      try {
+        const result = await service.markAccessed(
+          res.locals.ownedProject as ProjectRecord,
+          req.auth!.userId
+        );
+        res.status(200).json(result);
       } catch (error) {
         respondToError(error, res, next);
       }

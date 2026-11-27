@@ -4,9 +4,13 @@
 
 .panel {
   padding: 1.25rem 1rem 1rem;
-  border: 1px solid var(--orange-light);
   border-radius: 0.75rem;
   background: var(--theme-surface);
+  box-shadow: var(--elevation-1);
+}
+
+.legend {
+  margin: 0 0 0.75rem;
 }
 
 .heading-row {
@@ -28,7 +32,7 @@
   margin-right: auto;
 }
 
-// The board shows one project at a time; this picks it.
+// The board shows every project (the default) or one; this picks it.
 .board-project {
   display: flex;
   flex-wrap: wrap;
@@ -43,8 +47,8 @@
     min-width: 12rem;
     max-width: 100%;
     padding: 0 2rem 0 0.75rem;
-    border: 1px solid #d9cbc4;
-    border-radius: 999px;
+    border: 1px solid var(--field-border);
+    border-radius: 0.5rem;
     background: var(--theme-surface);
     color: var(--ink);
     font: inherit;
@@ -52,7 +56,7 @@
     cursor: pointer;
 
     &:focus-visible {
-      outline: 2px solid var(--ink);
+      outline: 2px solid var(--theme-primary);
       outline-offset: 2px;
     }
   }
@@ -62,7 +66,7 @@
 .retry {
   padding: 0.45rem 0.8rem;
   border: 1px solid var(--field-border);
-  border-radius: 999px;
+  border-radius: 0.5rem;
   background: var(--theme-surface);
   color: var(--ink);
   font: inherit;
@@ -72,9 +76,14 @@
 }
 
 .new {
-  border-color: var(--orange);
-  background: var(--orange);
-  color: #fff;
+  border-color: var(--theme-primary);
+  background: var(--theme-primary);
+  color: var(--on-primary);
+  transition: filter var(--duration-fast) var(--ease-out);
+
+  &:hover:not(:disabled) {
+    filter: brightness(1.08);
+  }
 }
 
 button:disabled {
@@ -83,19 +92,28 @@ button:disabled {
 }
 
 .list {
+  display: grid;
+  gap: 2px;
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
+// Priority shows as the row's tint and left accent (.priority-tint), not as a tag.
 .task {
   display: grid;
-  grid-template-columns: minmax(12rem, 1fr) minmax(5rem, auto) 3.5rem 5.5rem auto;
+  grid-template-columns: minmax(12rem, 1fr) minmax(5rem, auto) 5.5rem auto;
   align-items: center;
   gap: 0.75rem;
   min-height: 2.75rem;
-  border-bottom: 1px solid var(--orange-light);
+  padding: 0 0.5rem 0 0.875rem;
+  border-radius: 0.375rem;
   font-size: 0.8rem;
+  transition: background-color var(--duration-fast) var(--ease-out);
+
+  &:hover {
+    background-color: var(--hover-bg);
+  }
 }
 
 // The first column: the checkbox label, then a repeating task's streak badge.
@@ -140,11 +158,6 @@ button:disabled {
   white-space: nowrap;
 }
 
-.done .title {
-  color: var(--ink-muted);
-  text-decoration: line-through;
-}
-
 .project {
   display: inline-flex;
   align-items: center;
@@ -158,17 +171,6 @@ button:disabled {
   flex: 0 0 auto;
   border-radius: 50%;
   background: var(--ink-muted);
-}
-
-.priority {
-  border-radius: 999px;
-  background: #eee;
-  padding: 0.15rem 0.4rem;
-  color: #fff;
-  text-shadow: 0 0 2px rgb(0 0 0 / 0.35);
-  text-align: center;
-  font-size: 0.7rem;
-  font-weight: 700;
 }
 
 .due {
@@ -188,32 +190,6 @@ button:disabled {
   gap: 0.125rem;
 }
 
-.delete {
-  display: grid;
-  width: 2rem;
-  height: 2rem;
-  place-items: center;
-  border: 0;
-  border-radius: 0.35rem;
-  background: transparent;
-  color: var(--ink-muted);
-  cursor: pointer;
-
-  svg {
-    width: 1rem;
-    fill: none;
-    stroke: currentColor;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-    stroke-width: 1.7;
-  }
-
-  &:hover {
-    background: color-mix(in srgb, var(--theme-primary) 10%, var(--theme-surface));
-    color: var(--error);
-  }
-}
-
 .empty,
 .status {
   padding: 1.25rem 0;
@@ -230,7 +206,7 @@ button:disabled {
   .task {
     grid-template-columns: minmax(0, 1fr) auto auto;
     gap: 0.4rem;
-    padding: 0.4rem 0;
+    padding: 0.4rem 0.5rem 0.4rem 0.875rem;
   }
 
   .name {
@@ -261,7 +237,7 @@ button:disabled {
 
 .list[aria-busy='true'] {
   opacity: 0.6;
-  transition: opacity 150ms ease;
+  transition: opacity var(--duration-fast) var(--ease-out);
 }
 
 .empty-title {
@@ -273,9 +249,9 @@ button:disabled {
 .clear-filters {
   padding: 0.45rem 0.9rem;
   border: 0;
-  border-radius: 999px;
-  background: var(--orange);
-  color: #fff;
+  border-radius: 0.5rem;
+  background: var(--theme-primary);
+  color: var(--on-primary);
   font: inherit;
   font-size: 0.8rem;
   font-weight: 600;

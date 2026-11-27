@@ -12,17 +12,13 @@
       Favorites
     </button>
 
-    <button
-      type="button"
-      class="chip"
-      [attr.aria-pressed]="query().archived"
-      (click)="toggleArchived()"
-    >
+    <!-- Archived projects only appear on the Archive page. -->
+    <a class="chip" routerLink="/archive" [queryParams]="{ tab: 'projects' }">
       <svg class="icon" viewBox="0 0 16 16" aria-hidden="true">
         <path d="M2 3.5h12v3H2zM3 6.5v6.5h10V6.5M6.5 9h3" />
       </svg>
       Archived
-    </button>
+    </a>
 
     <div
       #colorWrap

@@ -1,13 +1,19 @@
 import { formatDate } from '../../tasks/task-scheduling/utils/date-format.util';
 import type { ArchiveItem, ArchiveKind, ArchiveTab } from '../types/archive.types';
 
-const NOUN: Record<ArchiveKind, string> = { task: 'Task', project: 'Project', label: 'Label' };
+const NOUN: Record<ArchiveKind, string> = {
+  task: 'Task',
+  project: 'Project',
+  label: 'Label',
+  priority: 'Priority',
+};
 
 const TAB_LABEL: Record<ArchiveTab, string> = {
   all: 'All',
   tasks: 'Tasks',
   projects: 'Projects',
   labels: 'Labels',
+  priorities: 'Priorities',
 };
 
 /** "Task", "Project" or "Label". */
@@ -65,10 +71,15 @@ export function emptyState(tab: ArchiveTab): { title: string; hint: string } {
         title: 'No archived labels',
         hint: 'Archive a label from Settings → Labels to hide it from the picker.',
       };
+    case 'priorities':
+      return {
+        title: 'No archived priorities',
+        hint: 'Archive a priority from Settings → Priorities to hide it from pickers and filters.',
+      };
     default:
       return {
         title: 'Nothing archived yet',
-        hint: 'Archived tasks, projects and labels show up here so you can restore them.',
+        hint: 'Archived tasks, projects, labels and priorities show up here so you can restore them.',
       };
   }
 }
@@ -95,6 +106,13 @@ export function deleteConfirm(item: Pick<ArchiveItem, 'kind' | 'name' | 'taskCou
           : "This can't be undone.",
       };
     }
+    case 'priority':
+      return {
+        title,
+        message: item.taskCount
+          ? "Choose a level for its tasks first. This can't be undone."
+          : "This can't be undone.",
+      };
     default:
       return { title, message: "The task and its history will be removed. This can't be undone." };
   }

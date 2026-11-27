@@ -1,4 +1,5 @@
-import { Injectable, computed, signal } from '@angular/core';
+import { Injectable, computed, inject, signal } from '@angular/core';
+import { SettingsStore } from '../../../settings/state/settings.store';
 import type { Project } from '../types/project.types';
 
 /** Inbox first, then by sortOrder, then by id so the order is stable. */
@@ -15,6 +16,7 @@ function byDisplayOrder(a: Project, b: Project): number {
 @Injectable({ providedIn: 'root' })
 export class ProjectsStore {
   private readonly list = signal<Project[]>([]);
+  private readonly settings = inject(SettingsStore);
 
   readonly projects = computed(() => [...this.list()].sort(byDisplayOrder));
   readonly loading = signal(false);
@@ -26,6 +28,16 @@ export class ProjectsStore {
   /** Projects shown in the main list: not archived, Inbox first. */
   readonly active = computed(() => this.projects().filter((p) => !p.isArchived));
   readonly archived = computed(() => this.projects().filter((p) => p.isArchived));
+
+  /**
+   * Where new tasks go: the project chosen in Settings, or the Inbox when none is chosen or the
+   * chosen one is archived or gone.
+   */
+  readonly defaultProject = computed(() => {
+    const id = this.settings.defaultProjectId();
+    const chosen = id === null ? undefined : this.active().find((p) => p.projectId === id);
+    return chosen ?? this.inbox();
+  });
 
   /** The project the user switched to, if any. */
   readonly selectedProjectId = signal<number | null>(null);

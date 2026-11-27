@@ -13,7 +13,6 @@ import { TopBar, HOME_TABS, type HomeTab, asTab } from '../../shared/components/
 import { SessionService } from '../auth/session/session.service';
 import { ProjectService } from '../projects/project-crud/services/project.service';
 import { ProjectList as ProjectsPage } from '../projects/project-crud/project-list/project-list';
-import { ProjectSwitcher } from '../projects/project-organization/project-switcher/project-switcher';
 import { mapTaskError } from '../tasks/task-crud/mappers/task-error.mapper';
 import { TaskService } from '../tasks/task-crud/services/task.service';
 import { mapProjectError } from '../projects/project-crud/mappers/project-error.mapper';
@@ -40,7 +39,6 @@ const tabIndex = (tab: HomeTab) => HOME_TABS.findIndex((t) => t.id === tab);
     AllTasks,
     TasksPage,
     ProjectsPage,
-    ProjectSwitcher,
   ],
   providers: [DashboardStore],
   templateUrl: './home.html',
@@ -59,8 +57,6 @@ export class Home {
 
   /** The tab on screen. It follows the URL (?tab=…) so refresh and Back keep it. */
   protected readonly tab = signal<HomeTab>('dashboard');
-  /** Whether the Projects tab shows the organize view. It follows the URL (?view=organize). */
-  protected readonly organizing = signal(false);
   /** Which side the new panel slides in from; null on first load, so nothing moves. */
   protected readonly slideFrom = signal<'left' | 'right' | null>(null);
 
@@ -70,7 +66,6 @@ export class Home {
       this.show(tab);
       if (tab === 'dashboard' && this.previousTab !== 'dashboard') this.loadDashboard();
       this.previousTab = tab;
-      this.organizing.set(params.get('view') === 'organize');
     });
   }
 

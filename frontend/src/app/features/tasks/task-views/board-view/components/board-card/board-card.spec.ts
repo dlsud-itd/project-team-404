@@ -62,7 +62,11 @@ describe('BoardCard', () => {
       ),
     );
 
-    expect(text('.priority')).toBe('High');
+    // Priority is the card's tint and left accent; the tooltip and hidden text name it.
+    expect(el('.priority')).toBeNull();
+    expect(el('.card')!.classList).toContain('priority-tint');
+    expect(el('.card')!.getAttribute('title')).toBe('Priority: High');
+    expect(text('.title .visually-hidden')).toBe(', High priority');
     expect(text('.due')).toMatch(/^Due /);
     expect(el('.due')!.classList).not.toContain('overdue');
     expect([...host.querySelectorAll('.label')].map((l) => l.textContent?.trim())).toEqual([
@@ -86,7 +90,7 @@ describe('BoardCard', () => {
 
   it('shows just the title when the details are missing', () => {
     render(card(boardTask(7, 'Bare'), false, false));
-    expect(el('.priority')).toBeNull();
+    expect(el('.card')!.getAttribute('title')).toBeNull();
     expect(el('.meta')).toBeNull();
     expect(el('.labels')).toBeNull();
   });

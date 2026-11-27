@@ -14,6 +14,8 @@ export async function updateSettings(
       fontSize: input.fontSize ?? 'medium',
       fontFamily: input.fontFamily ?? 'system',
       theme: input.theme ?? DEFAULT_THEME_SETTINGS,
+      defaultProjectId: input.defaultProjectId ?? null,
+      dashboardProjectSort: input.dashboardProjectSort ?? 'custom',
     },
     update: {
       ...(input.dashboardTaskLimit !== undefined
@@ -27,6 +29,12 @@ export async function updateSettings(
         ? { fontFamily: input.fontFamily }
         : {}),
       ...(input.theme !== undefined ? { theme: input.theme } : {}),
+      ...(input.defaultProjectId !== undefined
+        ? { defaultProjectId: input.defaultProjectId }
+        : {}),
+      ...(input.dashboardProjectSort !== undefined
+        ? { dashboardProjectSort: input.dashboardProjectSort }
+        : {}),
     },
   });
 }

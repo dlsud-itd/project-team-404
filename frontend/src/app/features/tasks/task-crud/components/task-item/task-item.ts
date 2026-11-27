@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { SessionService } from '../../../../auth/session/session.service';
 import { PrioritiesStore } from '../../../../settings/state/priorities.store';
@@ -18,43 +18,45 @@ import { TasksStore } from '../../../shared/state/tasks.store';
   selector: 'app-task-item',
   imports: [RouterLink, StreakBadge, ArchiveAction],
   template: `
-    <article class="item" [class.done]="done()">
-      <span
-        class="priority"
-        [attr.data-priority]="task().priorityId"
-        [style.--priority-color]="priorityColor()"
-        [attr.aria-label]="priority() + ' priority'"
-        >{{ priority() }}</span
-      >
-
+    <!-- Priority shows as a tint, a left accent and its name in the meta line. -->
+    <article
+      class="item priority-tint"
+      [class.done]="done()"
+      [attr.data-priority]="task().priorityId"
+      [style.--priority-bg]="tone().bg"
+      [style.--priority-accent]="tone().accent"
+      [attr.title]="'Priority: ' + tone().name"
+    >
       <div class="body">
-        <h3 class="title">{{ task().title }}</h3>
+        <h3 class="title">
+          <span class="strike-sweep">{{ task().title }}</span>
+        </h3>
+        <span class="visually-hidden">{{ tone().name }} priority</span>
         @if (task().description; as description) {
           <p class="description">{{ description }}</p>
         }
 
-        @if (scheduled() || due() || deadline() || repeats() || done()) {
-          <p class="meta">
-            @if (scheduled(); as scheduled) {
-              <span class="scheduled">Scheduled {{ scheduled }}</span>
-            }
-            @if (due(); as due) {
-              <span class="due">Due {{ due }}</span>
-            }
-            @if (deadline(); as deadline) {
-              <span class="deadline">Deadline {{ deadline }}</span>
-            }
-            @if (repeats(); as repeats) {
-              <span class="badge">{{ repeats }}</span>
-            }
-            @if (task().isRecurring) {
-              <app-streak-badge [task]="task()" />
-            }
-            @if (done()) {
-              <span class="badge complete">Done</span>
-            }
-          </p>
-        }
+        <p class="meta">
+          <span class="priority-name" aria-hidden="true">{{ tone().name }}</span>
+          @if (scheduled(); as scheduled) {
+            <span class="scheduled">Scheduled {{ scheduled }}</span>
+          }
+          @if (due(); as due) {
+            <span class="due">Due {{ due }}</span>
+          }
+          @if (deadline(); as deadline) {
+            <span class="deadline">Deadline {{ deadline }}</span>
+          }
+          @if (repeats(); as repeats) {
+            <span class="badge">{{ repeats }}</span>
+          }
+          @if (task().isRecurring) {
+            <app-streak-badge [task]="task()" />
+          }
+          @if (done()) {
+            <span class="badge complete">Done</span>
+          }
+        </p>
 
         @if (task().labels.length) {
           <ul class="labels" aria-label="Labels">
@@ -85,14 +87,6 @@ import { TasksStore } from '../../../shared/state/tasks.store';
           [name]="task().title"
           [hooks]="archiveHooks"
         />
-        <button
-          type="button"
-          class="action delete"
-          [attr.aria-label]="'Delete ' + task().title"
-          (click)="deleteRequested.emit(task())"
-        >
-          Delete
-        </button>
       </div>
     </article>
   `,
@@ -104,27 +98,14 @@ import { TasksStore } from '../../../shared/state/tasks.store';
       display: flex;
       align-items: flex-start;
       gap: 0.75rem;
-      padding: 0.875rem 1rem;
-      border: 1px solid var(--orange-light);
-      border-radius: 0.75rem;
-      background: #fff;
-    }
-    .done .title {
-      color: var(--ink-muted);
-      text-decoration: line-through;
-    }
-    .priority {
-      flex-shrink: 0;
-      min-width: 1.875rem;
-      padding: 0.0625rem 0.375rem;
-      border: 1px solid;
-      border-radius: 999px;
-      border-color: var(--priority-color, #6b7280);
-      background: color-mix(in srgb, var(--priority-color, #6b7280) 14%, #fff);
-      color: color-mix(in srgb, var(--priority-color, #6b7280) 70%, #000);
-      font-size: 0.6875rem;
-      font-weight: 700;
-      text-align: center;
+      padding: 0.875rem 1rem 0.875rem 1.125rem;
+      border: 1px solid var(--divider);
+      border-radius: 0.5rem;
+      background-color: var(--theme-surface);
+      transition: background-color var(--duration-fast) var(--ease-out);
+      &:hover {
+        background-color: color-mix(in srgb, var(--theme-surface), var(--theme-text) 3%);
+      }
     }
     .body {
       flex: 1;
@@ -154,15 +135,28 @@ import { TasksStore } from '../../../shared/state/tasks.store';
     .deadline {
       color: var(--error);
     }
+    /* A small square in the priority color, the same mark as the row's edge, then the name. */
+    .priority-name {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.375rem;
+      color: var(--ink);
+      &::before {
+        content: '';
+        width: 0.5rem;
+        height: 0.5rem;
+        border-radius: 2px;
+        background: var(--priority-accent, var(--priority-none-accent));
+      }
+    }
     .badge {
-      padding: 0 0.5rem;
-      border-radius: 999px;
-      background: #f3e2f7;
-      color: var(--theme-primary);
-      font-weight: 600;
+      padding: 0 0.375rem;
+      border-radius: 0.375rem;
+      background: var(--active-bg);
+      color: var(--ink-muted);
+      font-weight: 500;
     }
     .complete {
-      background: #e6f4ea;
       color: var(--success);
     }
     .labels {
@@ -175,9 +169,9 @@ import { TasksStore } from '../../../shared/state/tasks.store';
     }
     .label {
       padding: 0 0.5rem;
-      border: 1px solid #e6dcd7;
-      border-radius: 999px;
-      font-size: 0.6875rem;
+      border: 1px solid var(--divider);
+      border-radius: 0.375rem;
+      font-size: 0.75rem;
       &.archived {
         border-style: dashed;
         color: var(--ink-muted);
@@ -192,37 +186,33 @@ import { TasksStore } from '../../../shared/state/tasks.store';
       gap: 0.375rem;
       --archive-action-font-size: 0.75rem;
       --archive-action-padding: 0.25rem 0.75rem;
-      --archive-action-glyph: none;
+      --archive-action-glyph: inline-block;
     }
     .action {
       padding: 0.25rem 0.75rem;
-      border: 1px solid var(--field-border);
-      border-radius: 999px;
-      background: #fff;
+      border: 1px solid var(--divider);
+      border-radius: 0.5rem;
+      background: var(--theme-surface);
       color: var(--ink);
       font: inherit;
       font-size: 0.75rem;
-      font-weight: 600;
+      font-weight: 500;
       text-decoration: none;
       cursor: pointer;
+      transition: background-color var(--duration-fast) var(--ease-out);
       &:hover {
-        background: color-mix(in srgb, var(--theme-primary) 10%, var(--theme-surface));
+        background: var(--hover-bg);
       }
       &:focus-visible {
         outline: 2px solid var(--theme-primary);
         outline-offset: 2px;
       }
     }
-    .delete {
-      border-color: var(--error);
-      color: var(--error);
-    }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TaskItem {
   readonly task = input.required<Task>();
-  readonly deleteRequested = output<Task>();
 
   private readonly tasksStore = inject(TasksStore);
   /** Archiving hides the task from the list at once; a failure or Undo brings it back. */
@@ -235,10 +225,8 @@ export class TaskItem {
 
   protected readonly done = computed(() => this.task().completedAt !== null);
   private readonly priorities = inject(PrioritiesStore);
-  protected readonly priority = computed(() => this.priorities.nameOf(this.task().priorityId));
-  protected readonly priorityColor = computed(() =>
-    this.priorities.colorOf(this.task().priorityId),
-  );
+  /** The tint, left accent and name of the task's priority. */
+  protected readonly tone = computed(() => this.priorities.toneOf(this.task().priorityId));
   protected readonly repeats = computed(() => {
     const { recurrence, recurrenceDays, recurrenceEndDate } = this.task();
     return recurrenceSummary(recurrence, recurrenceDays, recurrenceEndDate);

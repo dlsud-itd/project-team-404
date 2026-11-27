@@ -9,6 +9,7 @@ import { setProjectArchived } from './db/queries/set-project-archived.query';
 import { setProjectFavorite } from './db/queries/set-project-favorite.query';
 import { setProjectSortOrder } from './db/queries/set-project-sort-order.query';
 import { updateProjectSortOrders } from './db/queries/update-project-sort-orders.query';
+import { touchProjectAccess } from './db/queries/touch-project-access.query';
 import { createProjectOrganizationController } from './project-organization.controller';
 import { ProjectOrganizationService } from './project-organization.service';
 import type { ProjectOrganizationDependencies } from './project-organization.service';
@@ -24,6 +25,7 @@ export function createProjectOrganizationRouter(
     setProjectArchived,
     setProjectSortOrder,
     updateProjectSortOrders,
+    touchProjectAccess,
   },
   findProject = findOwnedProject
 ): Router {
@@ -62,6 +64,14 @@ export function createProjectOrganizationRouter(
     requireOwnedProject,
     validateRequest(setArchivedValidator, 'body', 'isArchived is required'),
     controller.archive
+  );
+  // Opening a project's page calls this, for the dashboard's "Recently accessed" sort.
+  router.put(
+    '/:projectId/access',
+    auth,
+    validateProjectId,
+    requireOwnedProject,
+    controller.access
   );
   router.put(
     '/:projectId/sort-order',

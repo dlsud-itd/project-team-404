@@ -1,10 +1,11 @@
 import type { z } from 'zod';
 import type { Label } from '../../labels/shared/models/label.model';
+import type { PriorityModel } from '../../priorities/priority-crud/models/priority.model';
 import type { Project } from '../../projects/shared/models/project.model';
 import type { Task } from '../../tasks/shared/models/task.model';
 import type { archiveQueryValidator } from '../validators/archive-query.validator';
 
-export type ArchiveItemType = 'tasks' | 'projects' | 'labels';
+export type ArchiveItemType = 'tasks' | 'projects' | 'labels' | 'priorities';
 export type ArchiveCursor = {
   type: ArchiveItemType;
   id: number;
@@ -21,5 +22,6 @@ export type ArchiveResponse = {
   tasks: { items: Task[]; total: number };
   projects: { items: Project[]; total: number };
   labels: { items: Label[]; total: number };
+  priorities: { items: PriorityModel[]; total: number };
   nextCursor: string | null;
 };

@@ -2,6 +2,9 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
+import { SettingsStore } from '../../settings/state/settings.store';
+import { clearSettingsCache } from '../../settings/testing/settings-cache';
+import { DEFAULT_SETTINGS } from '../../settings/types/user-settings.types';
 import { environment } from '../../../../environments/environment';
 import { apiProject } from '../../projects/testing/helpers/api-project';
 import type { Project } from '../../projects/shared/types/project.types';
@@ -90,7 +93,11 @@ describe('TasksPage', () => {
     expect(element('li.task .title')?.textContent).toContain(TASK.title);
     expect(element('li.task .project')?.textContent).toContain('Design');
     expect(element<HTMLElement>('li.task .swatch')?.style.background).toBe('rgb(37, 99, 235)');
-    expect(element('li.task .priority')?.textContent).toContain('High');
+    // Priority is the row's tint and left accent, named by its tooltip, not a tag.
+    expect(element('li.task .priority')).toBeNull();
+    expect(element('li.task')?.getAttribute('title')).toBe('Priority: High');
+    expect(element('li.task')?.classList).toContain('priority-tint');
+    expect(element('app-priority-legend')).toBeTruthy();
   });
 
   it('completes a task through the task update API', () => {
@@ -121,18 +128,30 @@ describe('TasksPage', () => {
     expect(TestBed.inject(TasksStore).creating()).toEqual({ projectId: INBOX.projectId });
   });
 
-  it('deletes a task through the confirmation dialog and API', () => {
+  it('opens the new-task dialog in the default project chosen in Settings', () => {
+    load([]);
+    TestBed.inject(SettingsStore).save({ defaultProjectId: DESIGN.projectId }).subscribe();
+    http
+      .expectOne(`${environment.apiBaseUrl}/api/settings`)
+      .flush({ ...DEFAULT_SETTINGS, defaultProjectId: DESIGN.projectId });
+
+    element<HTMLButtonElement>('.new')!.click();
+    fixture.detectChanges();
+    http.expectOne(LABELS_URL).flush([]);
+
+    expect(TestBed.inject(TasksStore).creating()).toEqual({ projectId: DESIGN.projectId });
+    clearSettingsCache();
+  });
+
+  it('archives a task instead of deleting it', () => {
     load();
-    element<HTMLButtonElement>('.delete')!.click();
-    fixture.detectChanges();
-    element<HTMLButtonElement>('.confirm')!.click();
-
-    const request = http.expectOne(`${TASKS_URL}/${TASK.taskId}`);
-    expect(request.request.method).toBe('DELETE');
-    request.flush({ message: 'Task deleted successfully' });
+    expect(element('.delete')).toBeNull();
+    element<HTMLButtonElement>(`button[aria-label="Archive task ${TASK.title}"]`)!.click();
     fixture.detectChanges();
 
-    expect(element('li.task')).toBeNull();
+    const request = http.expectOne(`${TASKS_URL}/${TASK.taskId}/archive`);
+    expect(request.request.body).toEqual({ isArchived: true });
+    request.flush({ taskId: TASK.taskId, isArchived: true, archivedAt: '2026-11-27T00:00:00Z' });
   });
 });
 
@@ -274,9 +293,10 @@ describe('TasksPage board view', () => {
     fixture.detectChanges();
   }
 
-  /** Answers the board's requests for one project. */
-  function flushBoard(projectId: number, tasks: Task[]): void {
-    http.expectOne(`${BOARD_URL}?projectId=${projectId}`).flush({
+  /** Answers the board's requests for one project, or for every project when null. */
+  function flushBoard(projectId: number | null, tasks: Task[]): void {
+    const boardUrl = projectId === null ? BOARD_URL : `${BOARD_URL}?projectId=${projectId}`;
+    http.expectOne(boardUrl).flush({
       projectId,
       columns: {
         todo: tasks.map((t, position) => ({
@@ -292,9 +312,11 @@ describe('TasksPage board view', () => {
       },
       counts: { todo: tasks.length, inProgress: 0, done: 0 },
     });
-    http
-      .expectOne(`${TASKS_URL}?projectId=${projectId}&status=all&pageSize=100&page=1`)
-      .flush(tasks.map(asApiTask));
+    const detailsUrl =
+      projectId === null
+        ? `${TASKS_URL}?status=all&pageSize=100&page=1`
+        : `${TASKS_URL}?projectId=${projectId}&status=all&pageSize=100&page=1`;
+    http.expectOne(detailsUrl).flush(tasks.map(asApiTask));
     fixture.detectChanges();
   }
 
@@ -344,19 +366,33 @@ describe('TasksPage board view', () => {
     expect(el('app-timeline-view .undated a')?.getAttribute('href')).toBe('/?tab=tasks');
   });
 
-  it('shows the first real project’s board and hides the sort', async () => {
+  it('shows every project’s board (All Projects) by default and hides the sort', async () => {
     await open('/?tab=tasks&taskView=board');
-    flushBoard(DESIGN.projectId, [TASK]);
+    flushBoard(null, [TASK]);
 
-    expect(el<HTMLSelectElement>('#board-project')!.value).toBe(String(DESIGN.projectId));
+    const select = el<HTMLSelectElement>('#board-project')!;
+    expect(select.value).toBe('');
+    expect(select.options[0].textContent?.trim()).toBe('All Projects');
     expect(el('app-board-column .open')?.textContent?.trim()).toBe(TASK.title);
+    // Each card shows its project on the all-projects board, and links through it.
+    expect(el('app-board-card .project')?.textContent?.trim()).toBe('Design');
+    expect(el('app-board-column .open')?.getAttribute('href')).toBe(
+      `/projects/${DESIGN.projectId}/tasks/${TASK.taskId}/edit`,
+    );
     expect(el('app-sort-menu')).toBeNull();
     expect(el('li.task')).toBeNull();
   });
 
+  it('falls back to All Projects when the URL names a project that is gone', async () => {
+    await open('/?tab=tasks&taskView=board&boardProject=999');
+    flushBoard(null, []);
+
+    expect(el<HTMLSelectElement>('#board-project')!.value).toBe('');
+  });
+
   it('switches the board to another project through the URL', async () => {
     await open('/?tab=tasks&taskView=board');
-    flushBoard(DESIGN.projectId, [TASK]);
+    flushBoard(null, [TASK]);
 
     const select = el<HTMLSelectElement>('#board-project')!;
     select.value = String(INBOX.projectId);

@@ -12,6 +12,7 @@ import {
 import { Observable, tap } from 'rxjs';
 import { SessionService } from '../../auth/session/session.service';
 import { TokenStorageService } from '../../auth/session/token-storage.service';
+import { readableOn } from '../../../shared/utils/readable-on.util';
 import { SettingsService } from '../services/settings.service';
 import {
   DASHBOARD_LIMIT_MAX,
@@ -22,6 +23,7 @@ import {
   isFontFamily,
   isFontSize,
   isThemeMode,
+  isDashboardProjectSort,
   isThemePresetId,
   THEME_PRESETS,
   type Appearance,
@@ -60,6 +62,9 @@ export class SettingsStore {
 
   readonly taskLimit = computed(() => this.current().dashboardTaskLimit);
   readonly projectLimit = computed(() => this.current().dashboardProjectLimit);
+  /** The chosen default project; ProjectsStore falls back to the Inbox when it can't be used. */
+  readonly defaultProjectId = computed(() => this.current().defaultProjectId);
+  readonly dashboardProjectSort = computed(() => this.current().dashboardProjectSort);
   /** What the page shows right now: the preview, else the saved settings. */
   readonly appearance = computed<Appearance>(() => {
     const { fontSize, fontFamily, theme } = this.current();
@@ -124,8 +129,8 @@ export class SettingsStore {
       typeof window.matchMedia === 'function' &&
       window.matchMedia('(prefers-color-scheme: dark)').matches;
     const theme = darkDefault
-      ? THEME_PRESETS.find((item) => item.id === 'midnight')!
-      : THEME_PRESETS.find((item) => item.id === 'terracotta')!;
+      ? THEME_PRESETS.find((item) => item.id === 'graphite')!
+      : THEME_PRESETS.find((item) => item.id === 'paper')!;
     this.current.set({
       ...DEFAULT_SETTINGS,
       theme: { mode: theme.mode, preset: theme.id, colors: theme.colors },
@@ -193,6 +198,7 @@ export function applyAppearance(
   root.style.setProperty('--theme-warning', colors.warning);
   root.style.setProperty('--theme-error', colors.error);
   root.style.setProperty('--theme-info', colors.info);
+  root.style.setProperty('--on-primary', readableOn(colors.primary));
 }
 
 /** Keeps only known values, so a bad cache or reply can't break the page. */
@@ -230,6 +236,15 @@ function sanitize(value: Partial<UserSettings>): UserSettings {
     fontSize: isFontSize(value.fontSize) ? value.fontSize : DEFAULT_SETTINGS.fontSize,
     fontFamily: isFontFamily(value.fontFamily) ? value.fontFamily : DEFAULT_SETTINGS.fontFamily,
     theme,
+    defaultProjectId:
+      typeof value.defaultProjectId === 'number' &&
+      Number.isInteger(value.defaultProjectId) &&
+      value.defaultProjectId > 0
+        ? value.defaultProjectId
+        : null,
+    dashboardProjectSort: isDashboardProjectSort(value.dashboardProjectSort)
+      ? value.dashboardProjectSort
+      : DEFAULT_SETTINGS.dashboardProjectSort,
     updatedAt: typeof value.updatedAt === 'string' ? value.updatedAt : null,
   };
 }

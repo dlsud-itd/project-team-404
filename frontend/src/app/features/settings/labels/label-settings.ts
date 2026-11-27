@@ -12,6 +12,7 @@ import {
   viewChild,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { RouterLink } from '@angular/router';
 import { finalize, forkJoin } from 'rxjs';
 import { ToastService } from '../../../shared/services/toast.service';
 import { ArchiveUndoService } from '../../archive/services/archive-undo.service';
@@ -23,10 +24,13 @@ import { moveFocusTarget, moveItem, taskCountLabel } from '../utils/reorder.util
 export const LABEL_REORDER_FAILED_MESSAGE =
   "Couldn't save the new label order. It has been put back.";
 
-/** /settings/labels: the user's labels, in their order, with archive and restore. */
+/**
+ * /settings/labels: the user's labels, in their order. Labels are archived here, with Undo;
+ * archived labels are restored or deleted for good from the Archive page.
+ */
 @Component({
   selector: 'app-label-settings',
-  imports: [CdkDropList, CdkDrag, CdkDragHandle, NameColorEditor],
+  imports: [CdkDropList, CdkDrag, CdkDragHandle, NameColorEditor, RouterLink],
   templateUrl: './label-settings.html',
   styleUrl: '../components/settings-list.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -40,6 +44,7 @@ export class LabelSettings {
   private readonly createEditor = viewChild<NameColorEditor>('createEditor');
 
   protected readonly labels = signal<LabelSetting[]>([]);
+  /** Not shown here (archived items only appear on the Archive page), but names stay taken. */
   protected readonly archived = signal<LabelSetting[]>([]);
   protected readonly loading = signal(true);
   protected readonly loadError = signal<string | null>(null);
@@ -52,10 +57,6 @@ export class LabelSettings {
   protected readonly editError = signal<string | null>(null);
   /** Labels with an archive or restore request in flight. */
   protected readonly busyIds = signal<ReadonlySet<number>>(new Set());
-
-  protected readonly pendingDelete = signal<LabelSetting | null>(null);
-  protected readonly deleting = signal(false);
-  protected readonly deleteError = signal<string | null>(null);
 
   /** Read out by screen readers after a move. */
   protected readonly announcement = signal('');
@@ -227,47 +228,6 @@ export class LabelSettings {
     };
     if (isArchived) this.archiveUndo.archive(target, hooks);
     else this.archiveUndo.restore(target, hooks);
-  }
-
-  protected askDelete(label: LabelSetting): void {
-    this.deleteError.set(null);
-    this.pendingDelete.set(label);
-    this.focusAfterRender('delete-label-cancel');
-  }
-
-  protected cancelDelete(): void {
-    const label = this.pendingDelete();
-    this.pendingDelete.set(null);
-    if (label) this.focusAfterRender(`label-${label.id}-delete`);
-  }
-
-  /** What the confirm dialog says happens to the label's tasks. */
-  protected deleteImpact(label: LabelSetting): string {
-    if (label.taskCount === null) return 'Any tasks that use it will lose this label.';
-    if (label.taskCount === 0) return 'No tasks use this label.';
-    return `${taskCountLabel(label.taskCount)} will lose this label.`;
-  }
-
-  protected confirmDelete(): void {
-    const label = this.pendingDelete();
-    if (!label || this.deleting()) return;
-    this.deleting.set(true);
-    this.deleteError.set(null);
-    this.api
-      .delete(label.id)
-      .pipe(
-        finalize(() => this.deleting.set(false)),
-        takeUntilDestroyed(this.destroyRef),
-      )
-      .subscribe({
-        next: () => {
-          this.labels.update((labels) => labels.filter((item) => item.id !== label.id));
-          this.archived.update((labels) => labels.filter((item) => item.id !== label.id));
-          this.pendingDelete.set(null);
-          this.announcement.set(`Label “${label.name}” deleted.`);
-        },
-        error: () => this.deleteError.set("Couldn't delete the label. Please try again."),
-      });
   }
 
   private setBusy(id: number, busy: boolean): void {

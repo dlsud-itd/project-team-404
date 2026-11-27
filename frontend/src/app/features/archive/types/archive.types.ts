@@ -1,10 +1,16 @@
 /** What can be archived. */
-export type ArchiveKind = 'task' | 'project' | 'label';
+export type ArchiveKind = 'task' | 'project' | 'label' | 'priority';
 
 /** The tabs of the Archive page; also the `type` filter of GET /api/archive. */
-export type ArchiveTab = 'all' | 'tasks' | 'projects' | 'labels';
+export type ArchiveTab = 'all' | 'tasks' | 'projects' | 'labels' | 'priorities';
 
-export const ARCHIVE_TABS: readonly ArchiveTab[] = ['all', 'tasks', 'projects', 'labels'];
+export const ARCHIVE_TABS: readonly ArchiveTab[] = [
+  'all',
+  'tasks',
+  'projects',
+  'labels',
+  'priorities',
+];
 
 /** One row of the Archive page. */
 export interface ArchiveItem {
@@ -18,7 +24,7 @@ export interface ArchiveItem {
   projectName?: string | null;
   /** Projects and labels: hex color, or null for none. Tasks: their project's color. */
   color?: string | null;
-  /** Labels: how many tasks still carry the label. */
+  /** Labels and priorities: how many tasks still use it. */
   taskCount?: number | null;
 }
 
@@ -27,6 +33,7 @@ export interface ArchiveCounts {
   tasks: number;
   projects: number;
   labels: number;
+  priorities: number;
 }
 
 /** One page of GET /api/archive, flattened into a single list. */
@@ -68,6 +75,14 @@ export interface ApiArchivedLabel {
   archivedAt: string | null;
 }
 
+export interface ApiArchivedPriority {
+  id: number;
+  name: string;
+  color: string | null;
+  taskCount?: number;
+  archivedAt: string | null;
+}
+
 interface ApiArchiveGroup<T> {
   items: T[];
   total: number;
@@ -78,5 +93,7 @@ export interface ApiArchiveResponse {
   tasks: ApiArchiveGroup<ApiArchivedTask>;
   projects: ApiArchiveGroup<ApiArchivedProject>;
   labels: ApiArchiveGroup<ApiArchivedLabel>;
+  /** Missing from servers older than priority archiving. */
+  priorities?: ApiArchiveGroup<ApiArchivedPriority>;
   nextCursor: string | null;
 }

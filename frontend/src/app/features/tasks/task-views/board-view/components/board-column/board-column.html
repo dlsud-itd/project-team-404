@@ -37,6 +37,8 @@
       @for (card of cards(); track card.taskId; let i = $index, first = $first, last = $last) {
         <li
           class="slot"
+          animate.enter="row-enter"
+          animate.leave="row-leave"
           cdkDrag
           [cdkDragData]="card.taskId"
           [cdkDragStartDelay]="dragDelay"
@@ -45,6 +47,7 @@
           <app-board-card
             [card]="card"
             [projectId]="projectId()"
+            [showProject]="showProject()"
             [column]="key()"
             [canMoveUp]="!first"
             [canMoveDown]="!last"

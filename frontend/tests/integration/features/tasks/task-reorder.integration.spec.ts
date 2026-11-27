@@ -179,6 +179,8 @@ describe('Task reorder integration (Drag & Drop Reordering + API)', () => {
 
   afterEach(() => {
     try {
+      // Opening a project stamps it for the dashboard's "Recently accessed" sort.
+      http?.match((r) => r.url.endsWith('/access'));
       if (http) http.verify();
     } finally {
       TestBed.resetTestingModule();
@@ -398,7 +400,7 @@ describe('Task reorder integration (Drag & Drop Reordering + API)', () => {
   });
 
   // Projects use the Sprint 2 reorder request.
-  it('drags a project in the switcher and sends PUT /projects/reorder with every id', async () => {
+  it('drags a project on the Projects page and sends PUT /projects/reorder with every id', async () => {
     const project = (id: number, name: string, overrides: object = {}) => ({
       ...CAPSTONE,
       id,
@@ -412,13 +414,15 @@ describe('Task reorder integration (Drag & Drop Reordering + API)', () => {
     const OLD = project(13, 'Old class', { isArchived: true, sortOrder: 3 });
 
     await startSignedIn();
+    // The old Organize address now opens the single Projects page, where dragging lives.
     await harness.navigateByUrl('/projects/organize');
     await settle();
+    expect(TestBed.inject(Router).url).toBe('/home?tab=projects');
     http.expectOne(`${PROJECTS_API}?isArchived=false`).flush([INBOX, GYM, CAPSTONE, THESIS]);
     http.expectOne(`${PROJECTS_API}?isArchived=true`).flush([OLD]);
     await settle();
     const active = () =>
-      all('section[aria-labelledby="switcher-projects-heading"] .item .name').map((n) =>
+      all('section[aria-labelledby="projects-heading"] .item .tasks-link').map((n) =>
         n.textContent?.trim(),
       );
     expect(active()).toEqual(['Capstone', 'Thesis']);

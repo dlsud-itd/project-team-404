@@ -17,6 +17,7 @@ const project: ProjectRecord = {
   isArchived: false,
   archivedAt: null,
   sortOrder: 0,
+  lastAccessedAt: null,
   createdAt: new Date('2026-10-20T00:00:00.000Z'),
   updatedAt: new Date('2026-10-20T00:00:00.000Z'),
   deletedAt: null,

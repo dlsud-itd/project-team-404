@@ -182,17 +182,17 @@ export function taskCount(count: number): string {
       background: none;
       font-size: 1rem;
       &:hover {
-        background: color-mix(in srgb, var(--theme-primary) 10%, var(--theme-surface));
+        background: var(--hover-bg);
       }
     }
     .nav .today-button {
       margin-right: 0.25rem;
       padding: 0 0.5rem;
-      border: 1px solid var(--theme-secondary);
-      border-radius: 999px;
-      color: var(--theme-primary);
-      font-size: 0.6875rem;
-      font-weight: 600;
+      border: 1px solid var(--divider);
+      border-radius: 0.375rem;
+      color: var(--ink);
+      font-size: 0.75rem;
+      font-weight: 500;
     }
     .viewport {
       overflow: hidden;
@@ -203,10 +203,10 @@ export function taskCount(count: number): string {
       row-gap: 0.125rem;
       text-align: center;
       &[data-slide='right'] {
-        animation: slide-from-right 260ms cubic-bezier(0.22, 1, 0.36, 1);
+        animation: slide-from-right var(--duration-slow) var(--ease-out);
       }
       &[data-slide='left'] {
-        animation: slide-from-left 260ms cubic-bezier(0.22, 1, 0.36, 1);
+        animation: slide-from-left var(--duration-slow) var(--ease-out);
       }
     }
     .row {
@@ -236,12 +236,9 @@ export function taskCount(count: number): string {
       background: none;
       color: var(--theme-text);
       font-size: 0.75rem;
-      transition:
-        background 150ms,
-        transform 150ms;
+      transition: background-color var(--duration-fast) var(--ease-out);
       &:hover {
-        background: color-mix(in srgb, var(--theme-primary) 10%, var(--theme-surface));
-        transform: scale(1.08);
+        background: var(--hover-bg);
       }
     }
     .outside {
@@ -249,19 +246,18 @@ export function taskCount(count: number): string {
     }
     .today {
       background: var(--theme-primary);
-      color: var(--theme-surface);
+      color: var(--on-primary);
       font-weight: 600;
-      outline: 2px solid var(--theme-secondary);
       &:hover {
         background: color-mix(in srgb, var(--theme-primary) 88%, var(--theme-text));
       }
     }
     .selected {
       box-shadow: 0 0 0 2px var(--orange);
-      font-weight: 700;
+      font-weight: 600;
     }
     .selected:not(.today) {
-      background: color-mix(in srgb, var(--theme-primary) 14%, var(--theme-surface));
+      background: var(--active-bg);
     }
     .mark {
       position: absolute;

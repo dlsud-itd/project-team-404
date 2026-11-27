@@ -9,6 +9,7 @@ model Project {
   isArchived  Boolean   @default(false) @map("is_archived")
   archivedAt  DateTime? @db.Timestamptz(6) @map("archived_at")
   sortOrder   Int       @default(0) @map("sort_order")
+  lastAccessedAt DateTime? @db.Timestamptz(6) @map("last_accessed_at")
   createdAt   DateTime  @default(now()) @db.Timestamptz(6) @map("created_at")
   updatedAt   DateTime  @default(now()) @db.Timestamptz(6) @map("updated_at")
   deletedAt   DateTime? @db.Timestamptz(6) @map("deleted_at")

@@ -2,9 +2,10 @@ import type { Routes } from '@angular/router';
 
 /** Lazy-loaded under /projects; app.routes.ts puts authGuard in front of all of these. */
 export const PROJECTS_ROUTES: Routes = [
-  // The list and the organize view live in the Projects tab of the home page.
+  // The project list lives in the Projects tab of the home page. Its drag-to-reorder used to
+  // be a separate Organize view; old links to it land on the same page.
   { path: '', pathMatch: 'full', redirectTo: '/home?tab=projects' },
-  { path: 'organize', pathMatch: 'full', redirectTo: '/home?tab=projects&view=organize' },
+  { path: 'organize', pathMatch: 'full', redirectTo: '/home?tab=projects' },
   // New projects are made in a popup on that tab.
   { path: 'new', pathMatch: 'full', redirectTo: '/home?tab=projects' },
   {

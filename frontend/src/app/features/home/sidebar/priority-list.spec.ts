@@ -13,7 +13,7 @@ describe('PriorityList (sidebar)', () => {
   let page: HTMLElement;
 
   const rows = () => [...page.querySelectorAll<HTMLButtonElement>('button.row')];
-  const badges = () => rows().map((r) => r.querySelector<HTMLElement>('.badge')!);
+  const badges = () => rows().map((r) => r.querySelector<HTMLElement>('.label')!);
 
   beforeEach(async () => {
     vi.useFakeTimers({ toFake: ['Date'] });
@@ -49,7 +49,10 @@ describe('PriorityList (sidebar)', () => {
     fixture.detectChanges();
 
     expect(badges().map((badge) => badge.textContent?.trim())).toEqual(['Urgent', 'High', 'Low']);
-    expect(badges()[0].style.backgroundColor).toBe('rgb(196, 69, 54)');
+    // A custom level tints with its own color, as its tasks do.
+    expect(
+      badges()[0].querySelector<HTMLElement>('.chip')!.style.getPropertyValue('--priority-accent'),
+    ).toBe('#C44536');
     expect(rows().map((r) => r.querySelector('.count')?.textContent)).toEqual(['0', '3', '2']);
   });
 

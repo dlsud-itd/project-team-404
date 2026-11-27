@@ -15,12 +15,12 @@ describe('LandingFeatures', () => {
   });
 
   it('shows the four feature groups under one heading', () => {
-    expect(page.querySelector('h2')?.textContent?.trim()).toBe('Everything you need');
+    expect(page.querySelector('h2')?.textContent?.trim()).toBe('What you can do in HabitFlow');
     expect(all('.row h3').map((h) => h.textContent?.trim())).toEqual([
-      'Task Management',
-      'Scheduling & Organization',
-      'Projects & Dashboard',
-      'Account & Security',
+      'Task management',
+      'Scheduling and organization',
+      'Projects and dashboard',
+      'Account and security',
     ]);
   });
 
@@ -30,7 +30,7 @@ describe('LandingFeatures', () => {
     expect(
       rows.map((row) => row.querySelector('.cards')!.classList.contains('cards--four')),
     ).toEqual([false, true, false, true]);
-    expect(rows[0].querySelector('.card')?.textContent?.trim()).toBe('Add Tasks');
+    expect(rows[0].querySelector('.card')?.textContent?.trim()).toBe('Add tasks');
   });
 
   it('hides the decorative icons from assistive tech', () => {

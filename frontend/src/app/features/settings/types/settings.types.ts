@@ -10,6 +10,13 @@ export interface PriorityLevel {
   isDefault: boolean;
   /** Tasks on this level, or null when the server does not say. */
   taskCount: number | null;
+  /**
+   * Archived levels are hidden from pickers, filters and Settings, but tasks that use them keep
+   * their color. Missing means active.
+   */
+  isArchived?: boolean;
+  /** ISO instant the level was archived, or null while active. */
+  archivedAt?: string | null;
 }
 
 /** A label as the settings page shows it. */

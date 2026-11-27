@@ -264,6 +264,8 @@ describe('Task Streaks integration (streak badge, detail and dashboard + API)', 
 
   afterEach(() => {
     try {
+      // Opening a project stamps it for the dashboard's "Recently accessed" sort.
+      http?.match((r) => r.url.endsWith('/access'));
       if (http) http.verify();
     } finally {
       TestBed.resetTestingModule();

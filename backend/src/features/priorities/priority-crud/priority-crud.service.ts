@@ -39,6 +39,11 @@ export type PriorityCrudDependencies = {
     userId: string,
     query: DeletePriorityQuery
   ): Promise<PriorityRecord | null>;
+  setPriorityArchived(
+    priorityId: number,
+    userId: string,
+    isArchived: boolean
+  ): Promise<PriorityRecord | null>;
 };
 
 export class PriorityCrudService {
@@ -117,6 +122,23 @@ export class PriorityCrudService {
       input.priorityIds
     );
     return priorities.map(toPriorityModel);
+  }
+
+  /** Archives (true) or restores (false) a level; its tasks keep it either way. */
+  async setArchived(
+    priorityId: number,
+    userId: string,
+    isArchived: boolean
+  ): Promise<PriorityModel> {
+    const priority = await this.dependencies.setPriorityArchived(
+      priorityId,
+      userId,
+      isArchived
+    );
+    if (!priority) {
+      throw new PriorityNotFoundError();
+    }
+    return toPriorityModel(priority);
   }
 
   async delete(

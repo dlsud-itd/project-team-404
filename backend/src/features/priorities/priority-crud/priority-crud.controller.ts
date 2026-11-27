@@ -3,6 +3,7 @@ import { PriorityNameTakenError } from './errors/priority-name-taken.error';
 import { LastPriorityError } from './errors/last-priority.error';
 import { ReassignRequiredError } from './errors/reassign-required.error';
 import { PriorityNotFoundError } from './errors/priority-not-found.error';
+import { DefaultPriorityArchiveError } from './errors/default-priority-archive.error';
 import type { PriorityCrudService } from './priority-crud.service';
 import type {
   CreatePriorityInput,
@@ -19,6 +20,7 @@ export function createPriorityCrudController(service: PriorityCrudService): {
   setDefault: RequestHandler;
   reorder: RequestHandler;
   delete: RequestHandler;
+  archive: RequestHandler;
 } {
   const respondToError = (
     error: unknown,
@@ -37,6 +39,12 @@ export function createPriorityCrudController(service: PriorityCrudService): {
     }
     if (error instanceof ReassignRequiredError) {
       res.status(409).json({ code: 'reassign-required', error: error.message });
+      return;
+    }
+    if (error instanceof DefaultPriorityArchiveError) {
+      res
+        .status(409)
+        .json({ code: 'default-priority-archive', error: error.message });
       return;
     }
     if (error instanceof PriorityNotFoundError) {
@@ -106,6 +114,20 @@ export function createPriorityCrudController(service: PriorityCrudService): {
           req.body as ReorderPrioritiesInput
         );
         res.status(200).json(priorities);
+      } catch (error) {
+        respondToError(error, res, next);
+      }
+    },
+    archive: async (req, res, next) => {
+      try {
+        const priorityId = Number(req.params.priorityId);
+        const { isArchived } = res.locals.validated as { isArchived: boolean };
+        const priority = await service.setArchived(
+          priorityId,
+          req.auth!.userId,
+          isArchived
+        );
+        res.status(200).json(priority);
       } catch (error) {
         respondToError(error, res, next);
       }
