@@ -49,7 +49,6 @@ const TOKEN = 'session-token';
 
 /** Thursday 19 November 2026, 12:00 in Manila. */
 const NOW = '2026-11-19T04:00:00.000Z';
-const TODAY = '2026-11-19';
 const WEEK = { from: '2026-11-16', to: '2026-11-22' };
 
 const USER = {
