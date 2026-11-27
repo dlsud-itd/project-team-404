@@ -36,7 +36,9 @@ function standard(tone: StandardTone, name: string): PriorityTone {
  * the level was given, so the same priority always looks the same; custom levels tint with their
  * own color the same way.
  */
-export function priorityTone(level: { name: string; color: string | null } | undefined): PriorityTone {
+export function priorityTone(
+  level: { name: string; color: string | null } | undefined,
+): PriorityTone {
   if (!level) return standard('none', 'No priority');
   const preset = STANDARD_NAMES[level.name.trim().toLowerCase()];
   if (preset) return standard(preset, level.name);

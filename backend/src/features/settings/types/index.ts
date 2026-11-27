@@ -11,8 +11,7 @@ export const DARK_THEME_PRESETS = [
   'violet',
 ] as const;
 export type ThemePresetId =
-  | (typeof LIGHT_THEME_PRESETS)[number]
-  | (typeof DARK_THEME_PRESETS)[number];
+  (typeof LIGHT_THEME_PRESETS)[number] | (typeof DARK_THEME_PRESETS)[number];
 
 /** How the dashboard orders favorite projects. */
 export const DASHBOARD_PROJECT_SORTS = [

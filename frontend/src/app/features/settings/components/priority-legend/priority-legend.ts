@@ -59,6 +59,8 @@ export class PriorityLegend {
   private readonly priorities = inject(PrioritiesStore);
 
   protected readonly items = computed(() =>
-    this.priorities.levels().map((level) => ({ id: level.id, tone: this.priorities.toneOf(level.id) })),
+    this.priorities
+      .levels()
+      .map((level) => ({ id: level.id, tone: this.priorities.toneOf(level.id) })),
   );
 }

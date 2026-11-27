@@ -96,9 +96,9 @@ describe('PriorityCrudService', () => {
         },
       });
 
-      await expect(service.setArchived(3, 'user-1', true)).rejects.toBeInstanceOf(
-        DefaultPriorityArchiveError
-      );
+      await expect(
+        service.setArchived(3, 'user-1', true)
+      ).rejects.toBeInstanceOf(DefaultPriorityArchiveError);
     });
   });
 });

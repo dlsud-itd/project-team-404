@@ -18,20 +18,26 @@ export function sortDashboardProjects(
   switch (sort) {
     case 'name-asc':
       return list.sort(
-        (a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }) || byCustomOrder(a, b),
+        (a, b) =>
+          a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }) || byCustomOrder(a, b),
       );
     case 'name-desc':
       return list.sort(
-        (a, b) => b.name.localeCompare(a.name, undefined, { sensitivity: 'base' }) || byCustomOrder(a, b),
+        (a, b) =>
+          b.name.localeCompare(a.name, undefined, { sensitivity: 'base' }) || byCustomOrder(a, b),
       );
     case 'recent':
       return list.sort(
         (a, b) => time(b.lastAccessedAt) - time(a.lastAccessedAt) || byCustomOrder(a, b),
       );
     case 'created-desc':
-      return list.sort((a, b) => time(b.createdAt) - time(a.createdAt) || b.projectId - a.projectId);
+      return list.sort(
+        (a, b) => time(b.createdAt) - time(a.createdAt) || b.projectId - a.projectId,
+      );
     case 'created-asc':
-      return list.sort((a, b) => time(a.createdAt) - time(b.createdAt) || a.projectId - b.projectId);
+      return list.sort(
+        (a, b) => time(a.createdAt) - time(b.createdAt) || a.projectId - b.projectId,
+      );
     default:
       return list.sort(byCustomOrder);
   }
