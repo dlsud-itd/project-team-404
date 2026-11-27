@@ -305,7 +305,7 @@ select
         and project.name = 'Streak - Daily Review'
         and task.title = 'Streak seed - Daily review'
         and completion.completed_on =
-          ((now() at time zone profile.timezone)::date - 4)
+          ((now() at time zone profile.timezone)::date - 5)
     ) = 0
       then 'PASS'
     else 'FAIL'
@@ -325,6 +325,41 @@ select
         and task.recurrence_series_id = '9b9d0e1a-6d7d-4f4d-9f3e-9ebd4fbf1102'::uuid
         and task.deleted_at is null
     )
+      then 'PASS'
+    else 'FAIL'
+  end as result;
+
+select
+  'streak_seed_today_open' as check_name,
+  case
+    when (
+      select count(*)
+      from public.tbl_task_completion as completion
+      join public.tbl_user as profile on profile.user_id = completion.user_id
+      where profile.email = 'james@example.com'
+        and completion.series_id = '9b9d0e1a-6d7d-4f4d-9f3e-9ebd4fbf1101'::uuid
+        and completion.completed_on = (now() at time zone profile.timezone)::date
+    ) = 0
+      then 'PASS'
+    else 'FAIL'
+  end as result;
+
+select
+  'streak_seed_missed_day_series' as check_name,
+  case
+    when (
+      select count(*)
+      from public.tbl_task_completion as completion
+      join public.tbl_task as task on task.task_id = completion.task_id
+      join public.tbl_user as profile on profile.user_id = task.user_id
+      where profile.email = 'james@example.com'
+        and task.title = 'Streak seed - Missed day'
+        and task.deleted_at is null
+        and completion.series_id = '9b9d0e1a-6d7d-4f4d-9f3e-9ebd4fbf1103'::uuid
+        and completion.completed_on
+          between (now() at time zone profile.timezone)::date - 9
+          and (now() at time zone profile.timezone)::date - 3
+    ) = 7
       then 'PASS'
     else 'FAIL'
   end as result;
