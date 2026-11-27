@@ -2,13 +2,13 @@
 
 **Version:** 1.0.0  
 **Created:** 2026-09-24  
-**Last Updated:** 2026-11-25
+**Last Updated:** 2026-11-27
 
 ## Overview
 
 This matrix covers Task Streaks, Drag & Drop Reordering, List & Table Views, Kanban View, and Timeline View across backend integration, frontend integration, and end-to-end tests. The Sprint 6 [API Specification](<./Team-404 - API Specification - Streaks, Reordering & Views.md>) defines the routes, fields, validation, and response contracts. Expected results below describe observable behavior; use the specification for exact request and response shapes.
 
-The Sprint 6 API specification is a draft awaiting Tech Lead approval, and backend code must not start before it is approved. Every backend integration row is therefore Blocked. Frontend integration rows are Blocked until their backend rows pass, and every end-to-end row is Blocked until its backend and frontend integration rows pass.
+The earlier note that Sprint 6 backend work had not started is stale: the API implementation and integration suites are present. Matrix statuses below reflect executed coverage, not approval assumptions. The Sprint 6 regression gate remains blocked until the failures recorded in [Sprint6_Regression_Log.md](./Sprint6_Regression_Log.md) are resolved and signed off.
 
 Backend integration tests should use the isolated Supabase test project and verify persisted state, ownership, and non-mutation on errors. Frontend integration tests should exercise the real routes, components, stores, and services while faking only HTTP responses (with the backend's bodies and status codes) and the clock where dates matter. End-to-end tests should exercise the integrated application with isolated test data and verify state after reload.
 
@@ -17,6 +17,18 @@ Run backend integration tests with `npm run test:integration` from `backend`, fr
 Status values: `Failing` means the case is planned but not yet passing; `Blocked` means a prerequisite must pass first; `Passing` means verified.
 
 ID prefixes: `STR` Task Streaks, `DND` Drag & Drop Reordering, `LTV` List & Table Views, `KAN` Kanban View, `TML` Timeline View.
+
+## Sign-off Regression Run
+
+Run on 2026-11-27 against the reset-and-seeded local database. The requested Sprint 6 regression cases passed; the full Sprint 1-6 gate did not. See the [regression log](./Sprint6_Regression_Log.md) for suite results and blockers.
+
+| Regression case                 | Coverage                                                                                                      | Result  |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------- | ------- |
+| Streak recurrence               | Completion creates exactly one next occurrence with the original `series_id`.                                 | Passing |
+| Task and project ordering       | New tasks append after reordered tasks; supported legacy `orderBy` values and project ordering remain intact. | Passing |
+| Board completion                | Checkbox completion and the Done column agree; board reorder does not change dashboard totals.                | Passing |
+| Timeline scope                  | Deleted, archived, archived-project, and foreign tasks are omitted.                                           | Passing |
+| Full Sprint 1-6 regression gate | Backend integration, API regression, and E2E contain failures; E2E also has one skipped test.                 | Failing |
 
 ## 1. Task Streaks
 
