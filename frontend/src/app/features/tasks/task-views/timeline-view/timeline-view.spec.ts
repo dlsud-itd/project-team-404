@@ -270,7 +270,7 @@ describe('TimelineView', () => {
     answer([DRAFT], 3);
 
     expect(text('.undated')).toBe('3 undated tasks not shown. See them in the List view');
-    expect(el('.undated a')?.getAttribute('href')).toBe('/?tab=tasks');
+    expect(el('.undated a')?.getAttribute('href')).toBe('/?tab=tasks&taskView=list');
   });
 
   it('shows an error with Try again when the timeline fails to load', () => {
