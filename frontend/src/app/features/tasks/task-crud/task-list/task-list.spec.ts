@@ -10,6 +10,7 @@ import { AppShell } from '../../../../shared/components/app-shell/app-shell';
 import type { Task } from '../../shared/types/task.types';
 import { TASK_QUERY_DEBOUNCE_MS } from '../../task-organization/state/task-query.store';
 import { instantToDate, userTimeZone } from '../../task-scheduling/utils/date-format.util';
+import { taskViewStorageKey } from '../../task-views/task-views.store';
 import { TaskList } from './task-list';
 
 const TASKS_URL = `${environment.apiBaseUrl}/api/tasks`;
@@ -132,6 +133,8 @@ describe('TaskList', () => {
   }
 
   beforeEach(async () => {
+    // Each project remembers its last view; start every test on the default list.
+    localStorage.clear();
     TestBed.configureTestingModule({
       providers: [
         // The popup lives in the top bar, so the list runs inside the shell as it does for real.
@@ -483,12 +486,13 @@ describe('TaskList', () => {
       ];
       expect(views().map((v) => [v.textContent?.trim(), v.getAttribute('aria-current')])).toEqual([
         ['List', 'page'],
+        ['Table', null],
         ['Board', null],
         ['Timeline', null],
       ]);
       expect(el('app-sort-menu')).not.toBeNull();
 
-      views()[1].click();
+      views()[2].click();
       await harness.fixture.whenStable();
       harness.detectChanges();
 
@@ -578,6 +582,113 @@ describe('TaskList', () => {
       expect(el('app-timeline-bar .title')?.textContent?.trim()).toBe('Write chapter 1');
       expect(el('app-timeline-bar .check')?.getAttribute('role')).toBe('checkbox');
       expect(el('app-task-item')).toBeNull();
+    });
+  });
+
+  describe('table view', () => {
+    const rowTitles = () =>
+      [...page().querySelectorAll('app-table-view tbody .title')].map((n) => n.textContent?.trim());
+
+    it('switches from the list to the table without asking the server again', async () => {
+      await open('/projects/10/tasks?status=active');
+      http.expectOne(`${PROJECTS_URL}/10`).flush(asApi(CAPSTONE));
+      http
+        .expectOne(`${TASKS_URL}?projectId=10&status=active&pageSize=100&${POSITION_ORDER}`)
+        .flush([asApiTask(CHAPTER), asApiTask(OUTLINE)]);
+      harness.detectChanges();
+
+      el<HTMLAnchorElement>('app-view-switcher a[href*="view=table"]')!.click();
+      await harness.fixture.whenStable();
+      harness.detectChanges();
+
+      expect(TestBed.inject(Router).url).toBe('/projects/10/tasks?status=active&view=table');
+      expect(rowTitles()).toEqual(['Write chapter 1', 'Outline']);
+      expect(el('app-task-item')).toBeNull();
+      // The filter bar and sort stay above the table.
+      expect(el('app-task-filter-bar')).not.toBeNull();
+      expect(el('app-sort-menu')).not.toBeNull();
+      expect(el('.page')!.classList).toContain('wide');
+    });
+
+    it('sorts from a header through the URL and reloads in that order', async () => {
+      await open('/projects/10/tasks?view=table');
+      loadWith([CHAPTER, OUTLINE]);
+
+      el<HTMLButtonElement>('app-table-view th.col-title button')!.click();
+      await harness.fixture.whenStable();
+
+      expect(TestBed.inject(Router).url).toBe('/projects/10/tasks?view=table&orderBy=title');
+      http
+        .expectOne(listUrl('orderBy=title&orderDirection=asc'))
+        .flush([asApiTask(OUTLINE), asApiTask(CHAPTER)]);
+      harness.detectChanges();
+
+      expect(rowTitles()).toEqual(['Outline', 'Write chapter 1']);
+      expect(el('app-table-view th.col-title')!.getAttribute('aria-sort')).toBe('ascending');
+    });
+
+    it('remembers the view for the project', async () => {
+      await open('/projects/10/tasks?view=table');
+      loadWith([CHAPTER]);
+
+      expect(localStorage.getItem(taskViewStorageKey(10))).toBe('table');
+    });
+
+    it('opens a project on the view last used there', async () => {
+      localStorage.setItem(taskViewStorageKey(10), 'table');
+
+      await open('/projects/10/tasks');
+      loadWith([CHAPTER]);
+
+      expect(TestBed.inject(Router).url).toBe('/projects/10/tasks');
+      expect(rowTitles()).toEqual(['Write chapter 1']);
+      const current = el('app-view-switcher [aria-current="page"]');
+      expect(current?.textContent?.trim()).toBe('Table');
+    });
+
+    it('shows the same empty state as the list', async () => {
+      await open('/projects/10/tasks?view=table&status=completed');
+      http.expectOne(`${PROJECTS_URL}/10`).flush(asApi(CAPSTONE));
+      http
+        .expectOne(`${TASKS_URL}?projectId=10&status=completed&pageSize=100&${POSITION_ORDER}`)
+        .flush([]);
+      harness.detectChanges();
+
+      expect(el('app-table-view')).toBeNull();
+      expect(text('.empty-title')).toBe('No tasks match these filters.');
+    });
+  });
+
+  describe('reordering', () => {
+    it('saves the new order when a task is moved down', async () => {
+      await open();
+      loadWith([CHAPTER, { ...OUTLINE, sortOrder: 1 }]);
+
+      el<HTMLButtonElement>('button[aria-label="Move Write chapter 1 down"]')!.click();
+      harness.detectChanges();
+
+      const req = http.expectOne(`${TASKS_URL}/reorder`);
+      expect(req.request.method).toBe('PUT');
+      expect(req.request.body).toEqual({ projectId: 10, taskIds: [2, 1] });
+      req.flush({});
+      harness.detectChanges();
+
+      expect(titles()).toEqual(['Outline', 'Write chapter 1']);
+    });
+
+    it('turns reordering off while filtered, saying why', async () => {
+      await open('/projects/10/tasks?recurring=false');
+      http.expectOne(`${PROJECTS_URL}/10`).flush(asApi(CAPSTONE));
+      http
+        .expectOne(listUrl('recurring=false'))
+        .flush([asApiTask(CHAPTER), asApiTask({ ...OUTLINE, sortOrder: 1 })]);
+      harness.detectChanges();
+
+      expect(text('#reorder-hint')).toBe('Clear the filters to reorder tasks.');
+      expect(
+        el<HTMLButtonElement>('button[aria-label="Move Write chapter 1 down"]')!.disabled,
+      ).toBe(true);
+      expect(el('.handle')).toBeNull();
     });
   });
 });

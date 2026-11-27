@@ -1,0 +1,93 @@
+<section class="group" aria-labelledby="open-heading">
+  <h2 id="open-heading">To do · {{ open().length }}</h2>
+  @if (reorderBlocked() && open().length > 1) {
+    <p id="reorder-hint" class="reorder-hint">{{ reorderBlocked() }}</p>
+  }
+  @if (open().length) {
+    <ul
+      class="list reorderable"
+      cdkDropList
+      cdkDropListLockAxis="y"
+      [cdkDropListDisabled]="!canReorder()"
+      (cdkDropListDropped)="dropped($event)"
+    >
+      @for (task of open(); track task.taskId; let i = $index, count = $count) {
+        <li
+          class="item"
+          cdkDrag
+          [cdkDragData]="task"
+          [attr.aria-keyshortcuts]="canReorder() ? 'Alt+ArrowUp Alt+ArrowDown' : null"
+          (keydown.alt.arrowup)="moveByKey($event, i, i - 1, 'up')"
+          (keydown.alt.arrowdown)="moveByKey($event, i, i + 1, 'down')"
+        >
+          @if (canReorder()) {
+            <span class="handle" cdkDragHandle aria-hidden="true" title="Drag to reorder">
+              <svg viewBox="0 0 24 24">
+                <circle cx="9" cy="6" r="1.5" />
+                <circle cx="15" cy="6" r="1.5" />
+                <circle cx="9" cy="12" r="1.5" />
+                <circle cx="15" cy="12" r="1.5" />
+                <circle cx="9" cy="18" r="1.5" />
+                <circle cx="15" cy="18" r="1.5" />
+              </svg>
+            </span>
+          }
+          <app-task-item
+            class="item-body"
+            [task]="task"
+            (deleteRequested)="deleteRequested.emit($event)"
+          />
+          @if (count > 1) {
+            <div class="move">
+              <button
+                type="button"
+                class="icon"
+                [id]="'task-' + task.taskId + '-up'"
+                [attr.aria-label]="'Move ' + task.title + ' up'"
+                [attr.aria-describedby]="reorderBlocked() ? 'reorder-hint' : null"
+                [disabled]="!canReorder() || i === 0"
+                (click)="moved.emit({ from: i, to: i - 1, button: 'up' })"
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="m6 15 6-6 6 6" />
+                </svg>
+              </button>
+              <button
+                type="button"
+                class="icon"
+                [id]="'task-' + task.taskId + '-down'"
+                [attr.aria-label]="'Move ' + task.title + ' down'"
+                [attr.aria-describedby]="reorderBlocked() ? 'reorder-hint' : null"
+                [disabled]="!canReorder() || i === count - 1"
+                (click)="moved.emit({ from: i, to: i + 1, button: 'down' })"
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="m6 9 6 6 6-6" />
+                </svg>
+              </button>
+            </div>
+          }
+          <div class="placeholder" *cdkDragPlaceholder></div>
+        </li>
+      }
+    </ul>
+    <p class="visually-hidden" aria-live="polite" aria-atomic="true">
+      {{ announcement() }}
+    </p>
+  } @else {
+    <p class="status">Everything here is done.</p>
+  }
+</section>
+
+@if (completed().length) {
+  <section class="group" aria-labelledby="completed-heading">
+    <h2 id="completed-heading">Completed · {{ completed().length }}</h2>
+    <ul class="list">
+      @for (task of completed(); track task.taskId) {
+        <li>
+          <app-task-item [task]="task" (deleteRequested)="deleteRequested.emit($event)" />
+        </li>
+      }
+    </ul>
+  </section>
+}
