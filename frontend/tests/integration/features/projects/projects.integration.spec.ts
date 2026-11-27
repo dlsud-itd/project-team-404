@@ -1,10 +1,6 @@
 import { type CdkDragDrop, CdkDropList } from '@angular/cdk/drag-drop';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
-import {
-  HttpTestingController,
-  type TestRequest,
-  provideHttpClientTesting,
-} from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { Router, provideRouter } from '@angular/router';
@@ -14,7 +10,6 @@ import { provideSessionRestore } from '../../../../src/app/features/auth/session
 import { authInterceptor } from '../../../../src/app/features/auth/session/auth.interceptor';
 import { SessionService } from '../../../../src/app/features/auth/session/session.service';
 import { TOKEN_STORAGE_KEY } from '../../../../src/app/features/auth/session/token-storage.service';
-import { ProjectsStore } from '../../../../src/app/features/projects/shared/state/projects.store';
 import { environment } from '../../../../src/environments/environment';
 import { ToastService } from '../../../../src/app/shared/services/toast.service';
 
@@ -91,9 +86,6 @@ describe('Projects integration (Project CRUD screens + API)', () => {
   const el = <T extends HTMLElement>(selector: string) => page().querySelector(selector) as T;
   const all = (selector: string) => [...page().querySelectorAll<HTMLElement>(selector)];
   const text = (selector: string) => el(selector)?.textContent?.trim() ?? '';
-  // The confirm dialog is rendered inside the list page.
-  const dialogButton = (label: string) =>
-    all('[role="alertdialog"] button').find((b) => b.textContent?.trim() === label)!;
 
   async function settle(): Promise<void> {
     await harness.fixture.whenStable();

@@ -55,7 +55,7 @@ describe('Home integration (live dashboard APIs)', () => {
     )!;
   const priorityRow = (label: string) =>
     all('app-priority-list button.row').find(
-      (button) => button.querySelector('.badge')?.textContent === label,
+      (button) => button.querySelector('.label')?.textContent?.trim() === label,
     )!;
 
   async function settle(): Promise<void> {
