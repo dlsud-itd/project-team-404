@@ -236,6 +236,8 @@ describe('Task views integration (List & Table views + API)', () => {
 
   /** Like pressing F5: a fresh app on `url`, signed in again from the stored token. */
   async function reload(url: string): Promise<void> {
+    // Opening a project stamps it for the dashboard's "Recently accessed" sort.
+    http.match((r) => r.url.endsWith('/access'));
     http.verify();
     TestBed.resetTestingModule();
     configure();
@@ -311,6 +313,8 @@ describe('Task views integration (List & Table views + API)', () => {
     vi.useRealTimers();
     vi.restoreAllMocks();
     try {
+      // Opening a project stamps it for the dashboard's "Recently accessed" sort.
+      http?.match((r) => r.url.endsWith('/access'));
       if (http) http.verify();
     } finally {
       TestBed.resetTestingModule();

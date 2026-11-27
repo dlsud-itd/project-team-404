@@ -35,8 +35,10 @@ export class TaskBoardService {
   private readonly tasks = inject(TaskService);
   private readonly baseUrl = `${environment.apiBaseUrl}/api/tasks/board`;
 
-  get(projectId: number, filter: BoardFilter = {}): Observable<ApiTaskBoard> {
-    let params = new HttpParams().set('projectId', projectId);
+  /** One project's board, or every active project's when `projectId` is null. */
+  get(projectId: number | null, filter: BoardFilter = {}): Observable<ApiTaskBoard> {
+    let params = new HttpParams();
+    if (projectId !== null) params = params.set('projectId', projectId);
     if (filter.status && filter.status !== 'all') params = params.set('status', filter.status);
     params = appendTaskFilters(params, filter);
     return this.http.get<ApiTaskBoard>(this.baseUrl, { params });
@@ -46,9 +48,9 @@ export class TaskBoardService {
    * The board with each card's details. Cards whose details fail to load still show their
    * title, so a failed details request never hides the board.
    */
-  load(projectId: number, filter: BoardFilter = {}): Observable<BoardState> {
+  load(projectId: number | null, filter: BoardFilter = {}): Observable<BoardState> {
     const details = this.tasks
-      .listAll({ ...filter, projectId })
+      .listAll(projectId === null ? { ...filter } : { ...filter, projectId })
       .pipe(catchError(() => of<Task[]>([])));
     return forkJoin([this.get(projectId, filter), details]).pipe(
       map(([board, tasks]) => toBoardState(board, tasks)),

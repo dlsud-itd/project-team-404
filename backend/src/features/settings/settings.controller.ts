@@ -1,5 +1,8 @@
 import type { RequestHandler } from 'express';
-import type { SettingsService } from './settings.service';
+import {
+  DefaultProjectNotFoundError,
+  type SettingsService,
+} from './settings.service';
 import type { UpdateSettingsInput } from './types';
 
 export function createSettingsController(service: SettingsService): {
@@ -23,6 +26,12 @@ export function createSettingsController(service: SettingsService): {
         );
         res.status(200).json(settings);
       } catch (error) {
+        if (error instanceof DefaultProjectNotFoundError) {
+          res
+            .status(404)
+            .json({ code: 'default-project-not-found', error: error.message });
+          return;
+        }
         next(error);
       }
     },

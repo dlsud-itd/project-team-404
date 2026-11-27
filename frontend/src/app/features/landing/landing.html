@@ -11,81 +11,85 @@
     <div class="actions">
       <app-theme-switcher />
       <a class="login" routerLink="/login">Log in</a>
-      <a class="cta cta--small" routerLink="/register">Get Started</a>
+      <a class="cta cta--small" routerLink="/register">Get started</a>
     </div>
   </header>
 
   <main>
     <section class="hero" aria-labelledby="hero-heading">
       <div class="hero-copy">
-        <span class="decor-circle" aria-hidden="true"></span>
-        <span class="decor-ring" aria-hidden="true"></span>
+        <h1 id="hero-heading" class="headline">Plan the week, keep the streak</h1>
+        <p class="subhead">Projects, deadlines, priorities and recurring tasks in one planner</p>
 
-        <p class="badge">Keep track of everything</p>
-
-        <h1 id="hero-heading" class="headline">
-          Build <span class="accent-orange">habits</span><br />
-          that last,<br />
-          <span class="accent-purple">forever</span>
-        </h1>
-
-        <a class="cta cta--large" routerLink="/register">
-          Create free account
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M7 17 17 7M9 7h8v8" />
-          </svg>
-        </a>
-
-        <div class="showcase">
-          <ul class="showcase-cards">
-            @for (item of showcases; track item.label) {
-              <li
-                class="showcase-card"
-                [class.showcase-card--focus]="item.label === 'Focus'"
-                [class.showcase-card--routine]="item.label === 'Routine'"
-                [class.showcase-card--consistent]="item.label === 'Consistent'"
-                role="img"
-                [attr.aria-label]="item.label + ' illustration'"
-              >
-                <span class="showcase-art" aria-hidden="true">
-                  <span></span>
-                  <span></span>
-                  <span></span>
-                </span>
-              </li>
-            }
-          </ul>
-          <ul class="showcase-tags" aria-label="What HabitFlow helps with">
-            @for (item of showcases; track item.label) {
-              <li class="tag" [class.tag--peach]="item.tone === 'peach'">{{ item.label }}</li>
-            }
-          </ul>
+        <div class="hero-actions">
+          <a class="cta cta--large" routerLink="/register">Create free account</a>
+          <a class="secondary" routerLink="/" fragment="how-it-works">How it works</a>
         </div>
       </div>
 
+      <!-- A static picture of the Today list, drawn from the app's own pieces. -->
       <figure class="hero-art">
-        <div class="hero-board" role="img" aria-label="A preview of a daily habit checklist">
-          <p class="hero-board__eyebrow">TODAY'S HABITS</p>
-          <h2>Small steps, steady progress</h2>
-          <div class="hero-board__row">
-            <span></span>
-            <p>Morning walk</p>
-            <b>Done</b>
+        <div
+          class="hero-board"
+          role="img"
+          aria-label="A preview of today's tasks: two done, one due today, one weekly, and a 12-day streak"
+        >
+          <div class="board-head">
+            <p class="board-title">Today</p>
+            <p class="board-date">Thursday, Mar 12</p>
           </div>
-          <div class="hero-board__row">
-            <span></span>
-            <p>Read for 20 minutes</p>
-            <b>Done</b>
-          </div>
-          <div class="hero-board__row">
-            <span></span>
-            <p>Plan tomorrow</p>
-            <b>Next</b>
-          </div>
-          <div class="hero-board__progress">
-            <span>Weekly rhythm</span>
-            <b>4 of 7 days</b>
-            <i><span></span></i>
+
+          <ul class="board-tasks">
+            @for (task of previewTasks; track task.title) {
+              <li
+                class="board-task"
+                [class.is-done]="task.done"
+                [style.--priority-color]="'var(--priority-' + task.priority + '-accent)'"
+              >
+                <span class="board-check">
+                  @if (task.done) {
+                    <svg aria-hidden="true" viewBox="0 0 16 16">
+                      <path d="m4 8.5 2.5 2.5L12 5.5" />
+                    </svg>
+                  }
+                </span>
+                <span class="board-text">
+                  <span class="board-name">{{ task.title }}</span>
+                  <span class="board-meta">{{ task.meta }}</span>
+                </span>
+                @if (task.streak) {
+                  <span class="board-streak">
+                    <svg aria-hidden="true" class="flame" viewBox="0 0 24 24">
+                      <path
+                        d="M12 2c1 3.6-1.6 5.2-1.6 7.7 0 1.4 1 2.5 2.4 2.5 1.6 0 2.7-1.4 2.3-3.5 2.4 1.7 3.9 4.3 3.9 6.8 0 3.6-3.1 6.5-7 6.5s-7-2.9-7-6.5C5 10 10.5 7.6 12 2z"
+                      />
+                    </svg>
+                    {{ task.streak }}
+                  </span>
+                } @else if (task.due) {
+                  <span class="board-due">{{ task.due }}</span>
+                }
+              </li>
+            }
+          </ul>
+
+          <div class="board-week">
+            <ol class="week">
+              @for (day of previewWeek; track $index) {
+                <li class="week-day" [attr.data-state]="day.state">
+                  <span class="week-label">{{ day.label }}</span>
+                  <span class="week-box"></span>
+                </li>
+              }
+            </ol>
+            <p class="week-streak">
+              <svg aria-hidden="true" class="flame" viewBox="0 0 24 24">
+                <path
+                  d="M12 2c1 3.6-1.6 5.2-1.6 7.7 0 1.4 1 2.5 2.4 2.5 1.6 0 2.7-1.4 2.3-3.5 2.4 1.7 3.9 4.3 3.9 6.8 0 3.6-3.1 6.5-7 6.5s-7-2.9-7-6.5C5 10 10.5 7.6 12 2z"
+                />
+              </svg>
+              <span><b>12</b> day streak</span>
+            </p>
           </div>
         </div>
       </figure>

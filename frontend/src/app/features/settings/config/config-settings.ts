@@ -11,6 +11,9 @@ import {
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators, type FormControl } from '@angular/forms';
 import { finalize, startWith } from 'rxjs';
+import { ProjectService } from '../../projects/project-crud/services/project.service';
+import { ProjectsStore } from '../../projects/shared/state/projects.store';
+import { ToastService } from '../../../shared/services/toast.service';
 import { settingsSaveError } from '../services/settings.service';
 import { SettingsStore } from '../state/settings.store';
 import {
@@ -28,7 +31,7 @@ interface LimitFieldInfo {
   hint: string;
 }
 
-/** /settings/config: how many tasks and projects the dashboard lists. */
+/** /settings/config: how many tasks and projects the dashboard lists, and the default project. */
 @Component({
   selector: 'app-config-settings',
   imports: [ReactiveFormsModule],
@@ -39,6 +42,19 @@ interface LimitFieldInfo {
 export class ConfigSettings {
   protected readonly store = inject(SettingsStore);
   private readonly destroyRef = inject(DestroyRef);
+  protected readonly projects = inject(ProjectsStore);
+  private readonly projectService = inject(ProjectService);
+  private readonly toast = inject(ToastService);
+
+  /** Saving the default project; it saves on its own, as soon as one is picked. */
+  protected readonly savingDefault = signal(false);
+  /**
+   * The project new tasks go to. When the chosen one is archived or gone this shows the Inbox,
+   * which is where new tasks go then.
+   */
+  protected readonly defaultProjectId = computed(
+    () => this.projects.defaultProject()?.projectId ?? null,
+  );
 
   protected readonly min = DASHBOARD_LIMIT_MIN;
   protected readonly max = DASHBOARD_LIMIT_MAX;
@@ -101,6 +117,13 @@ export class ConfigSettings {
 
   constructor() {
     this.store.load();
+    // The default-project picker lists the user's projects.
+    if (!this.projects.loaded() && !this.projects.loading()) {
+      this.projectService
+        .refresh()
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe({ error: () => {} });
+    }
     // Fresh settings from the server fill the fields unless the user has started editing.
     effect(() => {
       const { dashboardTaskLimit, dashboardProjectLimit } = this.store.settings();
@@ -194,6 +217,25 @@ export class ConfigSettings {
           this.saveError.set(
             settingsSaveError(error, "Couldn't save your limits. Please try again."),
           ),
+      });
+  }
+
+  /** Saves the picked project as the default; the Inbox clears the setting. */
+  protected setDefaultProject(event: Event): void {
+    const projectId = Number((event.target as HTMLSelectElement).value);
+    const project = this.projects.byId(projectId);
+    if (!project || this.savingDefault()) return;
+    this.savingDefault.set(true);
+    this.store
+      .save({ defaultProjectId: project.isInbox ? null : project.projectId })
+      .pipe(
+        finalize(() => this.savingDefault.set(false)),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe({
+        next: () => this.toast.info(`New tasks will go to “${project.name}”.`),
+        error: (error: unknown) =>
+          this.toast.error(settingsSaveError(error, "Couldn't save the default project.")),
       });
   }
 }

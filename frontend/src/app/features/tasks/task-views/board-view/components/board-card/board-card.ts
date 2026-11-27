@@ -2,6 +2,7 @@ import { CdkMenu, CdkMenuItem, CdkMenuTrigger } from '@angular/cdk/menu';
 import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { SessionService } from '../../../../../auth/session/session.service';
+import { ProjectsStore } from '../../../../../projects/shared/state/projects.store';
 import { PrioritiesStore } from '../../../../../settings/state/priorities.store';
 import {
   formatDate,
@@ -28,7 +29,10 @@ const MAX_LABELS = 3;
 })
 export class BoardCard {
   readonly card = input.required<BoardCardModel>();
-  readonly projectId = input.required<number>();
+  /** The board's project; null on the all-projects board, where the task's own is used. */
+  readonly projectId = input.required<number | null>();
+  /** Shows the card's project (a dot and its name), for the all-projects board. */
+  readonly showProject = input(false);
   readonly column = input.required<BoardColumnKey>();
   readonly canMoveUp = input(false);
   readonly canMoveDown = input(false);
@@ -44,6 +48,7 @@ export class BoardCard {
   readonly archive = output<void>();
 
   private readonly priorities = inject(PrioritiesStore);
+  private readonly projects = inject(ProjectsStore);
   private readonly session = inject(SessionService);
 
   protected readonly columns = BOARD_COLUMNS;
@@ -51,13 +56,16 @@ export class BoardCard {
 
   protected readonly task = computed(() => this.card().task);
   protected readonly menuButtonId = computed(() => `board-card-${this.card().taskId}-move`);
-  protected readonly priority = computed(() => {
-    const task = this.task();
-    return task ? this.priorities.nameOf(task.priorityId) : null;
+  /** The project the card's task belongs to, which its link goes through. */
+  protected readonly taskProjectId = computed(() => this.task()?.projectId ?? this.projectId());
+  protected readonly project = computed(() => {
+    const id = this.task()?.projectId;
+    return id ? (this.projects.byId(id) ?? null) : null;
   });
-  protected readonly priorityColor = computed(() => {
+  /** Priority shows as the card's tint and left accent; null when details didn't load. */
+  protected readonly tone = computed(() => {
     const task = this.task();
-    return task ? this.priorities.colorOf(task.priorityId) : null;
+    return task ? this.priorities.toneOf(task.priorityId) : null;
   });
   protected readonly labels = computed(() => this.task()?.labels.slice(0, MAX_LABELS) ?? []);
   protected readonly hiddenLabels = computed(() =>

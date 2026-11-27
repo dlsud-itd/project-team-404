@@ -300,6 +300,8 @@ describe('Archive integration (task list, task form, project switcher, Archive p
 
   afterEach(() => {
     try {
+      // Opening a project stamps it for the dashboard's "Recently accessed" sort.
+      http?.match((r) => r.url.endsWith('/access'));
       if (http) http.verify();
     } finally {
       TestBed.resetTestingModule();
@@ -475,12 +477,12 @@ describe('Archive integration (task list, task form, project switcher, Archive p
       expect(toasts().map((t) => t.message)).toEqual(['Project “Old class” restored']);
       expect(text('app-archive-page .empty-title')).toBe('Nothing archived yet');
 
-      await harness.navigateByUrl('/projects/organize');
+      await harness.navigateByUrl('/home?tab=projects');
       await settle();
       answerProjects([INBOX, CAPSTONE, { ...OLD_CLASS, isArchived: false, archivedAt: null }], []);
       await settle();
-      const active = all('section[aria-labelledby="switcher-projects-heading"] .item .name').map(
-        (n) => clean(n.textContent),
+      const active = all('section[aria-labelledby="projects-heading"] .item .tasks-link').map((n) =>
+        clean(n.textContent),
       );
       expect(active).toContain('Old class');
     });
@@ -550,7 +552,7 @@ describe('Archive integration (task list, task form, project switcher, Archive p
 
   // FE-ARC-02
   describe('Archiving a label', () => {
-    it('moves it to Archived in Settings > Labels, and Undo restores it', async () => {
+    it('takes it off Settings > Labels (archived labels live on the Archive page), and Undo restores it', async () => {
       await startSignedIn();
       await harness.navigateByUrl('/settings/labels');
       await settle();
@@ -566,12 +568,9 @@ describe('Archive integration (task list, task form, project switcher, Archive p
       await settle();
       const activeNames = () =>
         all('ul[aria-label="Labels"] .name').map((name) => clean(name.textContent));
-      const archivedNames = () =>
-        all('ul[aria-labelledby="archived-labels-heading"] .name').map((name) =>
-          clean(name.textContent),
-        );
+      // Archived labels are never listed in Settings.
       expect(activeNames()).toEqual(['Planning', 'Follow-up']);
-      expect(archivedNames()).toEqual(['Ideas']);
+      expect(page().textContent).not.toContain('Ideas');
 
       await press(byLabel('Archive Planning'));
       expectArchivePut(`labels/${PLANNING.id}`, true).flush({
@@ -580,7 +579,6 @@ describe('Archive integration (task list, task form, project switcher, Archive p
       });
       await settle();
       expect(activeNames()).toEqual(['Follow-up']);
-      expect(archivedNames()).toContain('Planning');
       const [toast] = toasts();
       expect(toast.message).toBe('Label “Planning” archived');
 
@@ -588,7 +586,6 @@ describe('Archive integration (task list, task form, project switcher, Archive p
       expectArchivePut(`labels/${PLANNING.id}`, false).flush({ ...PLANNING, taskCount: 2 });
       await settle();
       expect(activeNames()).toEqual(['Planning', 'Follow-up']);
-      expect(archivedNames()).toEqual(['Ideas']);
     });
   });
 
@@ -676,17 +673,26 @@ describe('Archive integration (task list, task form, project switcher, Archive p
   // Case 7
   describe('The Inbox', () => {
     // FE-ARC-02
-    it('has no Archive action in the project switcher, while other projects do', async () => {
+    it('has no Archive action on the Projects page, while other projects do', async () => {
       await startSignedIn();
-      await harness.navigateByUrl('/projects/organize');
+      await harness.navigateByUrl('/home?tab=projects');
       await settle();
       answerProjects();
       await settle();
 
-      expect(text('.item.inbox .name')).toBe('Inbox');
-      expect(el('.item.inbox [aria-label^="Archive"]')).toBeNull();
-      expect(byLabel('Archive Inbox')).toBeNull();
-      expect(byLabel('Archive Capstone')).toBeTruthy();
+      const menuItems = async (name: string) => {
+        await press(byLabel(`More actions for ${name}`));
+        const items = [...document.querySelectorAll('.cdk-overlay-container .item')].map((i) =>
+          clean(i.textContent),
+        );
+        document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+        await settle();
+        return items;
+      };
+
+      expect(text('app-project-card.inbox .tasks-link')).toBe('Inbox');
+      expect(await menuItems('Inbox')).not.toContain('Archive');
+      expect(await menuItems('Capstone')).toContain('Archive');
     });
   });
 

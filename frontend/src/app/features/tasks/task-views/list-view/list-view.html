@@ -16,6 +16,8 @@
           class="item"
           cdkDrag
           [cdkDragData]="task"
+          animate.enter="row-enter"
+          animate.leave="row-leave"
           [attr.aria-keyshortcuts]="canReorder() ? 'Alt+ArrowUp Alt+ArrowDown' : null"
           (keydown.alt.arrowup)="moveByKey($event, i, i - 1, 'up')"
           (keydown.alt.arrowdown)="moveByKey($event, i, i + 1, 'down')"
@@ -32,11 +34,7 @@
               </svg>
             </span>
           }
-          <app-task-item
-            class="item-body"
-            [task]="task"
-            (deleteRequested)="deleteRequested.emit($event)"
-          />
+          <app-task-item class="item-body" [task]="task" />
           @if (count > 1) {
             <div class="move">
               <button
@@ -84,8 +82,8 @@
     <h2 id="completed-heading">Completed · {{ completed().length }}</h2>
     <ul class="list">
       @for (task of completed(); track task.taskId) {
-        <li>
-          <app-task-item [task]="task" (deleteRequested)="deleteRequested.emit($event)" />
+        <li animate.enter="row-enter" animate.leave="row-leave">
+          <app-task-item [task]="task" />
         </li>
       }
     </ul>

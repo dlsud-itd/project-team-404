@@ -32,28 +32,21 @@ describe('Landing', () => {
     ]);
   });
 
-  it('links Log in, Get Started and the hero button to the auth pages', () => {
+  it('links Log in, Get started and the hero button to the auth pages', () => {
     expect(href('.topbar .login')).toBe('/login');
     expect(href('.topbar .cta')).toBe('/register');
     expect(href('.hero .cta')).toBe('/register');
     expect(el('.hero .cta')?.textContent?.trim()).toBe('Create free account');
   });
 
-  it('shows the hero heading and accessible local illustrations', () => {
+  it('shows the hero heading, one secondary link and an accessible preview', () => {
     expect(el('h1')?.id).toBe('hero-heading');
+    expect(el('h1')?.textContent?.trim()).toBe('Plan the week, keep the streak');
     expect(el('.hero')?.getAttribute('aria-labelledby')).toBe('hero-heading');
-    expect(all('.showcase-card').map((card) => card.getAttribute('aria-label'))).toEqual([
-      'Focus illustration',
-      'Routine illustration',
-      'Consistent illustration',
-    ]);
+    expect(href('.hero .secondary')).toBe('/#how-it-works');
     expect(el('.hero-board[role="img"]')?.getAttribute('aria-label')).toBeTruthy();
+    expect(all('.hero-board .board-task')).toHaveLength(4);
     expect(all('img')).toHaveLength(0);
-    expect(all('.showcase-tags .tag').map((t) => t.textContent?.trim())).toEqual([
-      'Focus',
-      'Routine',
-      'Consistent',
-    ]);
   });
 
   it('places the sections at the ids the nav links point to', () => {

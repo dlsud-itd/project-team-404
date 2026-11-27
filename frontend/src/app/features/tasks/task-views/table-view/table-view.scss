@@ -15,7 +15,7 @@
 /* The table keeps its width and scrolls sideways inside this box, never the page. */
 .scroller {
   overflow-x: auto;
-  border: 1px solid var(--orange-light);
+  border: 1px solid var(--divider);
   border-radius: 0.75rem;
   background: var(--theme-surface);
   -webkit-overflow-scrolling: touch;
@@ -32,12 +32,14 @@
   border-collapse: separate;
   border-spacing: 0;
   font-size: 0.8125rem;
+  line-height: 1.5rem;
 }
 
+/* 8 + 24 + 8: every row is 40px tall unless a title or labels wrap. */
 th,
 td {
-  padding: 0.625rem 0.75rem;
-  border-bottom: 1px solid color-mix(in srgb, var(--orange-light) 60%, var(--theme-surface));
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid var(--divider);
   text-align: left;
   vertical-align: middle;
   white-space: nowrap;
@@ -47,19 +49,20 @@ thead th {
   position: sticky;
   top: 0;
   z-index: 1;
-  background: color-mix(in srgb, var(--theme-primary) 6%, var(--theme-surface));
+  background: var(--theme-surface);
   color: var(--ink-muted);
   font-size: 0.75rem;
-  font-weight: 700;
-  letter-spacing: 0.03em;
-  text-transform: uppercase;
+  font-weight: 500;
 }
 
 tbody tr:last-child > * {
   border-bottom: 0;
 }
 
-/* The title stays in view while the other columns scroll past it. */
+/*
+ * The title stays in view while the other columns scroll past it. Its left edge carries the
+ * task's priority color, the same accent priority gets everywhere else in the app.
+ */
 .col-title {
   position: sticky;
   left: 0;
@@ -68,20 +71,34 @@ tbody tr:last-child > * {
   max-width: 22rem;
   background: inherit;
   white-space: normal;
-  box-shadow: 1px 0 0 color-mix(in srgb, var(--orange-light) 60%, var(--theme-surface));
+  box-shadow: 1px 0 0 var(--divider);
+}
+
+tbody .col-title {
+  box-shadow:
+    inset 3px 0 0 var(--priority-color, var(--priority-none-accent)),
+    1px 0 0 var(--divider);
 }
 
 thead .col-title {
   z-index: 2;
-  background: color-mix(in srgb, var(--theme-primary) 6%, var(--theme-surface));
 }
 
+/*
+ * The sticky title cell inherits the row's background, so hover and focus are solid colors
+ * mixed from the surface: a translucent wash would let scrolled cells show through it.
+ */
 .row {
   background: var(--theme-surface);
   cursor: pointer;
+  transition: background-color var(--duration-fast) var(--ease-out);
 
   &:hover {
-    background: color-mix(in srgb, var(--theme-primary) 9%, var(--theme-surface));
+    background: color-mix(in srgb, var(--ink) 4%, var(--theme-surface));
+  }
+
+  &:focus-within {
+    background: color-mix(in srgb, var(--ink) 6%, var(--theme-surface));
   }
 
   &.done .title {
@@ -103,9 +120,8 @@ tbody th {
   background: none;
   color: inherit;
   font: inherit;
-  letter-spacing: inherit;
-  text-transform: inherit;
   cursor: pointer;
+  transition: color var(--duration-fast) var(--ease-out);
 
   &:hover {
     color: var(--ink);
@@ -138,14 +154,15 @@ tbody th {
 .title-cell {
   display: flex;
   align-items: flex-start;
-  gap: 0.625rem;
+  gap: 0.5rem;
 }
 
+/* Centered on the 24px first line of the title. */
 .check {
   flex: none;
   width: 1rem;
   height: 1rem;
-  margin: 0.125rem 0 0;
+  margin: 0.25rem 0 0;
   accent-color: var(--theme-primary);
   cursor: pointer;
 
@@ -156,19 +173,19 @@ tbody th {
   @media (pointer: coarse) {
     width: 1.25rem;
     height: 1.25rem;
+    margin-top: 0.125rem;
   }
 }
 
 .title-text {
   display: grid;
-  gap: 0.125rem;
   min-width: 0;
 }
 
 .title {
   color: var(--ink);
   font-size: 0.875rem;
-  font-weight: 600;
+  font-weight: 500;
   text-decoration: none;
   overflow-wrap: anywhere;
 
@@ -186,17 +203,27 @@ tbody th {
 .not-due {
   color: var(--ink-muted);
   font-size: 0.75rem;
+  line-height: 1rem;
 }
 
-.priority {
-  display: inline-block;
-  padding: 0.0625rem 0.5rem;
-  border: 1px solid var(--priority-color, #6b7280);
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--priority-color, #6b7280) 14%, var(--theme-surface));
-  color: color-mix(in srgb, var(--priority-color, #6b7280) 70%, var(--ink));
-  font-size: 0.6875rem;
-  font-weight: 700;
+/* Priority, labels and status share one shape: a small color dot before plain text. */
+.dot {
+  flex: none;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.priority,
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.priority .dot {
+  background: var(--priority-color, var(--priority-none-accent));
 }
 
 .labels {
@@ -210,10 +237,25 @@ tbody th {
 }
 
 .label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
   padding: 0 0.5rem;
-  border: 1px solid var(--label-color, var(--orange-light));
-  border-radius: 999px;
-  font-size: 0.6875rem;
+  border: 1px solid var(--divider);
+  border-radius: 0.375rem;
+  color: var(--ink);
+  font-size: 0.75rem;
+  line-height: 1.25rem;
+
+  /* Drawn in CSS so the cell's text stays just the label's name. */
+  &::before {
+    content: '';
+    flex: none;
+    width: 0.375rem;
+    height: 0.375rem;
+    border-radius: 50%;
+    background: var(--label-color, var(--ink-muted));
+  }
 }
 
 .col-labels {
@@ -225,9 +267,16 @@ tbody th {
   white-space: normal;
 }
 
+.col-scheduled,
+.col-due,
+.col-deadline {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Overdue reads once, on the date that slipped; the status column stays a quiet dot. */
 .col-due.overdue {
   color: var(--error);
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .none {
@@ -235,20 +284,21 @@ tbody th {
 }
 
 .status {
-  padding: 0.0625rem 0.5rem;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--theme-primary) 10%, var(--theme-surface));
   color: var(--ink);
-  font-size: 0.6875rem;
-  font-weight: 700;
 
-  &[data-status='Done'] {
-    background: color-mix(in srgb, var(--success) 14%, var(--theme-surface));
-    color: var(--success);
+  .dot {
+    background: var(--priority-none-accent);
   }
 
-  &[data-status='Overdue'] {
-    background: color-mix(in srgb, var(--error) 14%, var(--theme-surface));
-    color: var(--error);
+  &[data-status='Done'] {
+    color: var(--ink-muted);
+
+    .dot {
+      background: var(--success);
+    }
+  }
+
+  &[data-status='Overdue'] .dot {
+    background: var(--error);
   }
 }

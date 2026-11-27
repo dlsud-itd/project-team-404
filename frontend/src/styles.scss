@@ -15,19 +15,22 @@
 }
 
 :root {
-  --theme-primary: #d9531e;
-  --theme-secondary: #d98cf0;
-  --theme-background: #fffaf7;
+  --theme-primary: #6941c6;
+  --theme-secondary: #73726e;
+  --theme-background: #fbfbfa;
   --theme-surface: #fff;
-  --theme-text: #1d1714;
-  --theme-muted: #6b5b54;
-  --theme-border: #3a2f2a;
-  --theme-success: #1f7a3d;
-  --theme-warning: #9a5b00;
-  --theme-error: #b42318;
-  --theme-info: #176b87;
+  --theme-text: #37352f;
+  --theme-muted: #73726e;
+  --theme-border: #8f8e8a;
+  --theme-success: #2f7d4f;
+  --theme-warning: #8a5a00;
+  --theme-error: #c4332d;
+  --theme-info: #6941c6;
+  /* Text on accent-filled controls; SettingsStore recomputes it for the chosen theme. */
+  --on-primary: #fff;
   --orange: var(--theme-primary);
-  --orange-light: color-mix(in srgb, var(--theme-primary) 48%, var(--theme-surface));
+  /* Containers are separated by spacing and a hairline, not by colored outlines. */
+  --orange-light: var(--divider);
   --purple: var(--theme-secondary);
   --purple-strong: var(--theme-secondary);
   --cream: var(--theme-background);
@@ -39,6 +42,38 @@
   --warning: var(--theme-warning);
   --info: var(--theme-info);
   --field-border: var(--theme-border);
+
+  /* Notion-style neutrals: a hairline between containers and a soft hover wash. */
+  --divider: color-mix(in srgb, var(--theme-text) 10%, transparent);
+  --hover-bg: rgb(0 0 0 / 0.04);
+  --active-bg: rgb(0 0 0 / 0.06);
+  --elevation-1: 0 1px 2px rgb(15 15 15 / 0.06), 0 0 0 1px rgb(15 15 15 / 0.04);
+  --elevation-2: 0 8px 24px rgb(15 15 15 / 0.12), 0 0 0 1px rgb(15 15 15 / 0.05);
+
+  /* Motion: short and calm. prefers-reduced-motion turns all of it off below. */
+  --ease-out: cubic-bezier(0.2, 0, 0, 1);
+  --duration-fast: 150ms;
+  --duration-base: 200ms;
+  --duration-slow: 250ms;
+
+  /*
+   * Priority colors. These are reserved for priority: a soft tint behind the task and a solid
+   * accent on its left edge. Five steps a full hue apart, so neighbors never read as one:
+   * red, orange, yellow, blue, grey.
+   */
+  --priority-urgent-bg: #fdecec;
+  --priority-urgent-accent: #e5484d;
+  --priority-high-bg: #fff0e5;
+  --priority-high-accent: #f06a12;
+  --priority-medium-bg: #fdf6d6;
+  --priority-medium-accent: #e2b008;
+  --priority-low-bg: #e8f3ff;
+  --priority-low-accent: #3b82f6;
+  --priority-none-bg: transparent;
+  --priority-none-accent: #d4d4d4;
+
+  /* The streak flame: the one warm mark outside priority, wherever a streak is shown. */
+  --streak: #d9622b;
 
   /*
    * Set on <html> by SettingsStore from the user's Preferences. Every size in the app is in rem,
@@ -69,32 +104,43 @@ body {
 
 :root[data-theme='dark'] {
   color-scheme: dark;
-  --theme-primary: #ff9468;
-  --theme-secondary: #bca3ff;
-  --theme-background: #17191e;
-  --theme-surface: #22252c;
-  --theme-text: #f1f2f4;
-  --theme-muted: #b1b5bf;
-  --theme-border: #515761;
-  --theme-success: #6bc58a;
-  --theme-warning: #f2bd61;
-  --theme-error: #ff8178;
-  --theme-info: #75c6e2;
+  --hover-bg: rgb(255 255 255 / 0.055);
+  --active-bg: rgb(255 255 255 / 0.08);
+  --elevation-1: 0 1px 2px rgb(0 0 0 / 0.4), 0 0 0 1px rgb(255 255 255 / 0.06);
+  --elevation-2: 0 8px 24px rgb(0 0 0 / 0.5), 0 0 0 1px rgb(255 255 255 / 0.08);
+  /* The light tints would glare on a dark page, so dark mode washes the same accents instead. */
+  --priority-urgent-bg: color-mix(in srgb, #e5484d 16%, transparent);
+  --priority-high-bg: color-mix(in srgb, #f06a12 16%, transparent);
+  --priority-medium-bg: color-mix(in srgb, #e2b008 14%, transparent);
+  --priority-low-bg: color-mix(in srgb, #3b82f6 16%, transparent);
+  --priority-none-accent: #5a5a5a;
+  --streak: #f08a4b;
+  --theme-primary: #7f5af0;
+  --theme-secondary: #a3a29e;
+  --theme-background: #191919;
+  --theme-surface: #202020;
+  --theme-text: #e6e5e3;
+  --theme-muted: #a3a29e;
+  --theme-border: #6b6a66;
+  --theme-success: #5fb97f;
+  --theme-warning: #e0a544;
+  --theme-error: #f07a72;
+  --theme-info: #a48afb;
 }
 
 :root[data-theme='light'] {
   color-scheme: light;
-  --theme-primary: #d9531e;
-  --theme-secondary: #d98cf0;
-  --theme-background: #fffaf7;
+  --theme-primary: #6941c6;
+  --theme-secondary: #73726e;
+  --theme-background: #fbfbfa;
   --theme-surface: #fff;
-  --theme-text: #1d1714;
-  --theme-muted: #6b5b54;
-  --theme-border: #3a2f2a;
-  --theme-success: #1f7a3d;
-  --theme-warning: #9a5b00;
-  --theme-error: #b42318;
-  --theme-info: #176b87;
+  --theme-text: #37352f;
+  --theme-muted: #73726e;
+  --theme-border: #8f8e8a;
+  --theme-success: #2f7d4f;
+  --theme-warning: #8a5a00;
+  --theme-error: #c4332d;
+  --theme-info: #6941c6;
 }
 
 /* Form controls don't inherit the page font by default. */
@@ -294,5 +340,154 @@ textarea:focus-visible {
     color: var(--ink-muted);
     font-size: 0.75rem;
     font-weight: 400;
+  }
+}
+
+/* ───────────────────────── Priority color (tasks only) ───────────────────────── */
+
+/*
+ * A task's priority shows as a soft tint plus a solid accent on its left edge, never as a tag.
+ * Components set --priority-bg and --priority-accent from PrioritiesStore.toneOf().
+ */
+.priority-tint {
+  /* An image layer, so the tint sits over whatever surface color the component sets. */
+  background-image: linear-gradient(
+    var(--priority-bg, var(--priority-none-bg)),
+    var(--priority-bg, var(--priority-none-bg))
+  );
+  box-shadow: inset 3px 0 0 var(--priority-accent, var(--priority-none-accent));
+}
+
+/* ───────────────────────── Motion ───────────────────────── */
+
+@keyframes row-enter {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+
+/*
+ * Leaving rows fade, then their height collapses so the rows below slide up instead of jumping.
+ * max-height comfortably covers a two-line task row.
+ */
+@keyframes row-leave {
+  0% {
+    max-height: 12rem;
+    opacity: 1;
+  }
+  45% {
+    max-height: 12rem;
+    opacity: 0;
+  }
+  100% {
+    max-height: 0;
+    margin-block: 0;
+    padding-block: 0;
+    border-width: 0;
+    opacity: 0;
+  }
+}
+
+/* Used with Angular's animate.enter / animate.leave on list items. */
+.row-enter {
+  animation: row-enter var(--duration-base) var(--ease-out);
+}
+
+.row-leave {
+  overflow: hidden;
+  pointer-events: none;
+  animation: row-leave var(--duration-slow) var(--ease-out) forwards;
+}
+
+@keyframes menu-in {
+  from {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+}
+
+/* Every dropdown and menu (CDK menus set role="menu" themselves) fades and scales in. */
+[role='menu'],
+.dropdown-panel {
+  transform-origin: top;
+  animation: menu-in var(--duration-fast) var(--ease-out);
+}
+
+@keyframes check-pop {
+  50% {
+    transform: scale(1.18);
+  }
+}
+
+/* Only a box the user just ticked is focused, so boxes already ticked on load stay still. */
+input[type='checkbox']:checked:focus {
+  animation: check-pop var(--duration-base) var(--ease-out);
+}
+
+/*
+ * A strikethrough that sweeps in from the left. Put it on the title; the parent's .done class
+ * draws the line. It works across wrapped lines.
+ */
+.strike-sweep {
+  background-image: linear-gradient(currentColor, currentColor);
+  background-repeat: no-repeat;
+  background-position: 0 55%;
+  background-size: 0 1px;
+  transition:
+    background-size var(--duration-slow) var(--ease-out),
+    color var(--duration-slow) var(--ease-out);
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+
+.done .strike-sweep {
+  background-size: 100% 1px;
+  color: var(--ink-muted);
+  text-decoration: none;
+}
+
+/* Drag and drop: the lifted item floats on a soft shadow and the others glide aside. */
+.cdk-drag-preview {
+  border-radius: 0.5rem;
+  box-shadow: var(--elevation-2);
+  opacity: 0.98;
+}
+
+.cdk-drag-placeholder {
+  opacity: 0.35;
+}
+
+.cdk-drag-animating,
+.cdk-drop-list-dragging .cdk-drag:not(.cdk-drag-placeholder) {
+  transition: transform var(--duration-slow) var(--ease-out);
+}
+
+/* A drag handle that only shows while its row is hovered or focused. */
+.hover-handle {
+  opacity: 0;
+  cursor: grab;
+  transition: opacity var(--duration-fast) var(--ease-out);
+}
+
+:is(li, .row, .item):is(:hover, :focus-within) > .hover-handle,
+.cdk-drag-preview .hover-handle {
+  opacity: 1;
+}
+
+@media (hover: none) {
+  .hover-handle {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }

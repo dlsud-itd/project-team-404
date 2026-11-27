@@ -18,7 +18,7 @@
 h2 {
   margin: 0;
   font-size: 1rem;
-  font-weight: 700;
+  font-weight: 500;
 }
 
 .risk,
@@ -53,14 +53,12 @@ dt {
   color: var(--ink-muted);
   font-size: 0.6875rem;
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
 }
 
 dd {
   margin: 0;
   font-size: 0.9375rem;
-  font-weight: 700;
+  font-weight: 500;
 }
 
 .strip {
@@ -133,7 +131,7 @@ dd {
 .retry {
   padding: 0.25rem 0.75rem;
   border: 1px solid var(--error);
-  border-radius: 999px;
+  border-radius: 0.5rem;
   background: var(--theme-surface);
   color: var(--error);
   font: inherit;

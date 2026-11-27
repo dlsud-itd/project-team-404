@@ -19,11 +19,21 @@ import { kindNoun } from '../../utils/archive-labels.util';
         [class]="buttonClass()"
         [attr.role]="variant() === 'menuitem' ? 'menuitem' : null"
         [attr.aria-label]="ariaLabel()"
+        [attr.title]="label()"
         [disabled]="disabled()"
         (click)="run($event)"
       >
         @if (variant() === 'menuitem') {
-          {{ label() }}
+          <svg class="glyph" viewBox="0 0 24 24" aria-hidden="true">
+            @if (archived()) {
+              <path d="M3 12a9 9 0 1 0 3-6.7L3 8" />
+              <path d="M3 3v5h5" />
+            } @else {
+              <rect x="3" y="4" width="18" height="5" rx="1" />
+              <path d="M5 9v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V9M10 13h4" />
+            }
+          </svg>
+          <span>{{ label() }}</span>
         } @else if (variant() === 'button') {
           <svg class="glyph" viewBox="0 0 24 24" aria-hidden="true">
             @if (archived()) {
@@ -60,7 +70,7 @@ import { kindNoun } from '../../utils/archive-labels.util';
         opacity: 0.6;
       }
       &:focus-visible {
-        outline: 2px solid #7b23a8;
+        outline: 2px solid var(--theme-primary);
         outline-offset: 2px;
       }
     }
@@ -77,7 +87,7 @@ import { kindNoun } from '../../utils/archive-labels.util';
     }
     /* Hosts can match their own menu items through these custom properties. */
     .menu-item {
-      display: block;
+      display: flex;
       width: 100%;
       padding: var(--archive-action-padding, 0.5rem 0.75rem);
       border: 0;
@@ -86,19 +96,23 @@ import { kindNoun } from '../../utils/archive-labels.util';
       color: var(--ink);
       font-size: var(--archive-action-font-size, inherit);
       text-align: left;
+      transition: background-color var(--duration-fast) var(--ease-out);
       &:hover {
-        background: var(--archive-action-hover, var(--cream));
+        background: var(--archive-action-hover, var(--hover-bg));
       }
     }
     .archive-button {
       padding: var(--archive-action-padding, 0.375rem 0.75rem);
-      border: 1px solid var(--field-border);
-      border-radius: 999px;
-      background: #fff;
+      border: 1px solid var(--divider);
+      border-radius: 0.5rem;
+      background: var(--theme-surface);
       font-size: var(--archive-action-font-size, 0.875rem);
       font-weight: 600;
+      transition:
+        background-color var(--duration-fast) var(--ease-out),
+        color var(--duration-fast) var(--ease-out);
       &:hover {
-        background: var(--cream);
+        background: var(--hover-bg);
       }
     }
     .icon-only {
@@ -106,8 +120,10 @@ import { kindNoun } from '../../utils/archive-labels.util';
       padding: 0.375rem;
       border-color: transparent;
       background: none;
+      border-radius: 0.375rem;
       color: var(--ink-muted);
       &:hover {
+        background: var(--hover-bg);
         color: var(--ink);
       }
     }

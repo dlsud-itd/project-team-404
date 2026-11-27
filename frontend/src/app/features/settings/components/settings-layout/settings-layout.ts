@@ -75,7 +75,7 @@ export const SETTINGS_TABS: readonly SettingsTab[] = [
     h1 {
       margin: 0;
       font-size: clamp(1.75rem, 4vw, 2.25rem);
-      font-weight: 800;
+      font-weight: 600;
     }
     .tabs {
       grid-area: tabs;
@@ -100,7 +100,7 @@ export const SETTINGS_TABS: readonly SettingsTab[] = [
         color: var(--brown);
       }
       &:focus-visible {
-        outline: 2px solid #7b23a8;
+        outline: 2px solid var(--theme-primary);
         outline-offset: 2px;
       }
     }

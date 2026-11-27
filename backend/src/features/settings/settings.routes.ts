@@ -4,6 +4,7 @@ import { requireAuth } from '../auth/session/middleware/require-auth.middleware'
 import { validateRequest } from '../../shared/middleware/validate-request.middleware';
 import { getOrCreateSettings } from './db/queries/get-or-create-settings.query';
 import { updateSettings } from './db/queries/update-settings.query';
+import { findOwnedProject } from '../projects/shared/db/queries/find-owned-project.query';
 import { createSettingsController } from './settings.controller';
 import { SettingsService } from './settings.service';
 import { updateSettingsValidator } from './validators/update-settings.validator';
@@ -13,6 +14,7 @@ export function createSettingsRouter(
   dependencies = {
     getOrCreateSettings,
     updateSettings,
+    findOwnedProject,
   }
 ): Router {
   const router = Router();

@@ -4,7 +4,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { environment } from '../../../../../environments/environment';
 import type { Project } from '../../shared/types/project.types';
-import { ProjectList, deletedNotice } from './project-list';
+import { ProjectList } from './project-list';
 import { apiProject } from '../../testing/helpers/api-project';
 
 const URL = `${environment.apiBaseUrl}/api/projects`;
@@ -55,11 +55,6 @@ describe('ProjectList', () => {
     http
       .expectOne(`${URL}?isArchived=true`)
       .flush(projects.filter((project) => project.isArchived).map(apiProject));
-    render();
-  }
-
-  function askToDelete(name: string): void {
-    el<HTMLButtonElement>(`button[aria-label="Delete ${name}"]`)!.click();
     render();
   }
 
@@ -156,15 +151,23 @@ describe('ProjectList', () => {
       expect(text('#results-heading')).toBe('Projects · 1');
     });
 
-    it('shows archived projects and filters by color from the URL', async () => {
+    it('never shows archived projects, even from an old ?archived link, and filters by color', async () => {
       loadWith([CAPSTONE, OLD, GYM, BLUE, INBOX]);
 
       await goTo('/?archived=true');
-      expect(cardNames()).toEqual(['Old class']);
-      expect(text('#results-heading')).toBe('Archived projects · 1');
+      expect(cardNames()).not.toContain('Old class');
 
       await goTo('/?color=%232563eb');
       expect(cardNames()).toEqual(['Blue notes']);
+    });
+
+    it('links to archived projects on the Archive page instead of toggling them', () => {
+      loadWith([CAPSTONE, INBOX]);
+
+      const link = [
+        ...page.querySelectorAll<HTMLAnchorElement>('app-project-filter-bar a.chip'),
+      ].find((a) => a.textContent?.includes('Archived'));
+      expect(link?.getAttribute('href')).toBe('/archive?tab=projects');
     });
 
     it('sorts by name, keeping the Inbox on top while nothing is filtered', async () => {
@@ -192,69 +195,56 @@ describe('ProjectList', () => {
     });
   });
 
-  describe('deleting', () => {
-    beforeEach(() => loadWith([INBOX, CAPSTONE]));
+  describe('custom order', () => {
+    const NOTES: Project = { ...CAPSTONE, projectId: 14, name: 'Notes', sortOrder: 2 };
 
-    it('asks for confirmation and makes no request when cancelled', () => {
-      askToDelete('Capstone');
-      expect(text('#delete-title')).toBe('Delete “Capstone”?');
+    it('has no subtabs and no delete buttons', () => {
+      loadWith([INBOX, CAPSTONE, NOTES]);
 
-      el<HTMLButtonElement>('button.cancel')!.click();
-      render();
-
-      expect(el('app-confirm-delete-dialog')).toBeNull();
-      http.expectNone(`${URL}/10`);
+      expect(el('nav.tabs')).toBeNull();
+      expect(page.textContent).not.toContain('Organize');
+      expect(el('button[aria-label^="Delete"]')).toBeNull();
     });
 
-    it('deletes once on 204 No Content, removes the project and shows a notice', () => {
-      askToDelete('Capstone');
-      el<HTMLButtonElement>('button.confirm')!.click();
-      render();
+    it('shows a drag handle on each reorderable project', () => {
+      loadWith([INBOX, CAPSTONE, NOTES, GYM]);
 
-      expect(el<HTMLButtonElement>('button.confirm')!.disabled).toBe(true);
-      el<HTMLButtonElement>('button.confirm')!.click();
-
-      const req = http.expectOne(`${URL}/10`);
-      expect(req.request.method).toBe('DELETE');
-      req.flush(null, { status: 204, statusText: 'No Content' });
-      render();
-
-      expect(el('app-confirm-delete-dialog')).toBeNull();
-      expect(text('.form-notice')).toBe('“Capstone” was deleted.');
-      expect(cardNames()).toEqual(['Inbox']);
+      expect(page.querySelectorAll('.item .hover-handle').length).toBe(3);
+      expect(page.querySelectorAll('app-project-card.inbox').length).toBe(1);
     });
 
-    it('keeps the project and shows the error in the dialog when the delete fails', () => {
-      askToDelete('Capstone');
-      el<HTMLButtonElement>('button.confirm')!.click();
-      http.expectOne(`${URL}/10`).flush(null, { status: 500, statusText: 'Server Error' });
+    it('moves a project with Alt+Down and saves the whole order', () => {
+      loadWith([INBOX, CAPSTONE, NOTES]);
+
+      const first = page.querySelectorAll<HTMLElement>('#projects-heading ~ ul .item')[0];
+      first.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', altKey: true }));
       render();
 
-      expect(text('.dialog [role="alert"]')).toBe('Something went wrong. Please try again.');
-      expect(el<HTMLButtonElement>('button.confirm')!.disabled).toBe(false);
-      expect(cardNames()).toEqual(['Inbox', 'Capstone']);
+      const req = http.expectOne(`${URL}/reorder`);
+      expect(req.request.method).toBe('PUT');
+      expect(req.request.body).toEqual({ projectIds: [14, 10] });
+      expect(cardNames('#projects-heading ~ ul')).toEqual(['Notes', 'Capstone']);
+      req.flush({
+        projects: [
+          { projectId: 14, sortOrder: 0 },
+          { projectId: 10, sortOrder: 1 },
+        ],
+        message: 'ok',
+      });
     });
 
-    it('closes the dialog and reloads the list when the project is already gone', () => {
-      askToDelete('Capstone');
-      el<HTMLButtonElement>('button.confirm')!.click();
+    it('puts the order back and says so when saving fails', () => {
+      loadWith([INBOX, CAPSTONE, NOTES]);
+
+      const first = page.querySelectorAll<HTMLElement>('#projects-heading ~ ul .item')[0];
+      first.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', altKey: true }));
       http
-        .expectOne(`${URL}/10`)
-        .flush({ error: 'Project not found' }, { status: 404, statusText: 'Not Found' });
+        .expectOne(`${URL}/reorder`)
+        .flush({ error: 'boom' }, { status: 500, statusText: 'Server Error' });
       render();
 
-      expect(el('app-confirm-delete-dialog')).toBeNull();
-      expect(text('.banner-error')).toBe('Project not found.');
-      loadWith([INBOX]);
-      expect(cardNames()).toEqual(['Inbox']);
+      expect(cardNames('#projects-heading ~ ul')).toEqual(['Capstone', 'Notes']);
+      expect(text('.banner-error')).toContain("Your new order wasn't saved.");
     });
-  });
-});
-
-describe('deletedNotice', () => {
-  it('words the moved-task count', () => {
-    expect(deletedNotice('Gym', 0)).toBe('“Gym” was deleted.');
-    expect(deletedNotice('Gym', 1)).toBe('“Gym” was deleted. 1 task moved to your Inbox.');
-    expect(deletedNotice('Gym', 3)).toBe('“Gym” was deleted. 3 tasks moved to your Inbox.');
   });
 });

@@ -55,7 +55,7 @@ describe('Home integration (live dashboard APIs)', () => {
     )!;
   const priorityRow = (label: string) =>
     all('app-priority-list button.row').find(
-      (button) => button.querySelector('.badge')?.textContent === label,
+      (button) => button.querySelector('.label')?.textContent?.trim() === label,
     )!;
 
   async function settle(): Promise<void> {
@@ -91,7 +91,8 @@ describe('Home integration (live dashboard APIs)', () => {
     await settle();
     const projectRequest = http.expectOne(`${PROJECTS_API}?isArchived=false`);
     expect(projectRequest.request.method).toBe('GET');
-    projectRequest.flush(apiProjects());
+    // The dashboard sidebar lists starred projects only.
+    projectRequest.flush(apiProjects().map((p) => (p.isInbox ? p : { ...p, isFavorite: true })));
     http.expectOne(`${PROJECTS_API}?isArchived=true`).flush([]);
     const taskRequest = http.expectOne(TASKS_LIST);
     expect(taskRequest.request.method).toBe('GET');

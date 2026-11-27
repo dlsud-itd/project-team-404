@@ -6,9 +6,19 @@ import { LandingFooter } from './footer/landing-footer';
 import { LandingSteps } from './steps/landing-steps';
 import { ThemeSwitcher } from '../../shared/components/theme-switcher/theme-switcher';
 
-interface Showcase {
+/** One row of the hero preview. Priority names match the app's --priority-*-accent tokens. */
+interface PreviewTask {
+  title: string;
+  meta: string;
+  priority: 'urgent' | 'medium' | 'low' | 'none';
+  done: boolean;
+  streak?: number;
+  due?: string;
+}
+
+interface PreviewDay {
   label: string;
-  tone: 'purple' | 'peach';
+  state: 'done' | 'today' | 'ahead';
 }
 
 @Component({
@@ -32,9 +42,32 @@ export class Landing {
     { label: 'About', fragment: 'about' },
   ];
 
-  protected readonly showcases: Showcase[] = [
-    { label: 'Focus', tone: 'purple' },
-    { label: 'Routine', tone: 'peach' },
-    { label: 'Consistent', tone: 'purple' },
+  protected readonly previewTasks: PreviewTask[] = [
+    {
+      title: 'Morning run',
+      meta: 'Personal · Every day',
+      priority: 'medium',
+      done: true,
+      streak: 12,
+    },
+    { title: 'Read chapter 4', meta: 'Biology', priority: 'low', done: true },
+    {
+      title: 'Draft capstone outline',
+      meta: 'Capstone',
+      priority: 'urgent',
+      done: false,
+      due: 'Due today',
+    },
+    { title: 'Plan next week', meta: 'Personal · Every Thursday', priority: 'none', done: false },
+  ];
+
+  protected readonly previewWeek: PreviewDay[] = [
+    { label: 'M', state: 'done' },
+    { label: 'T', state: 'done' },
+    { label: 'W', state: 'done' },
+    { label: 'T', state: 'today' },
+    { label: 'F', state: 'ahead' },
+    { label: 'S', state: 'ahead' },
+    { label: 'S', state: 'ahead' },
   ];
 }

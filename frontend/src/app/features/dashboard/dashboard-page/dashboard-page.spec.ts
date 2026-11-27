@@ -64,7 +64,7 @@ describe('DashboardPage', () => {
     const el = harness.routeNativeElement as HTMLElement;
     expect(page).toBeInstanceOf(DashboardPage);
     expect(el.querySelector('h1')?.textContent?.trim()).toBe('Streak');
-    expect(el.querySelector('.greeting')?.textContent?.trim()).toBe('Welcome back, james.');
+    expect(el.querySelector('.greeting')).toBeNull();
     expect(el.querySelector('app-streak-pet h2')?.textContent?.trim()).toBe('Streak pet');
     expect(el.querySelector('app-current-upcoming-tasks h2')?.textContent?.trim()).toBe(
       'Current & Upcoming',

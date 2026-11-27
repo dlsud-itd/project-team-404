@@ -127,9 +127,9 @@ describe('TaskList', () => {
       params.includes('orderBy=') || params.includes('page=') ? '' : `&${POSITION_ORDER}`
     }`;
 
-  function askToDelete(title: string): void {
-    el<HTMLButtonElement>(`button[aria-label="Delete ${title}"]`)!.click();
-    harness.detectChanges();
+  /** Opening a project stamps it for the dashboard's "Recently accessed" sort. */
+  function flushAccess(): void {
+    for (const req of http.match((r) => r.url.endsWith('/access'))) req.flush({});
   }
 
   beforeEach(async () => {
@@ -155,7 +155,10 @@ describe('TaskList', () => {
     harness = await RouterTestingHarness.create();
   });
 
-  afterEach(() => http.verify());
+  afterEach(() => {
+    flushAccess();
+    http.verify();
+  });
 
   it('shows a loading state until the list arrives', async () => {
     await open();
@@ -410,63 +413,33 @@ describe('TaskList', () => {
     expect(text('.message p')).toBe('Project not found.');
   });
 
-  describe('deleting', () => {
+  describe('archive instead of delete', () => {
     beforeEach(async () => {
       await open();
       loadWith([OUTLINE, CHAPTER]);
     });
 
-    it('asks for confirmation and makes no request when cancelled', () => {
-      askToDelete('Outline');
-      expect(text('#delete-title')).toBe('Delete “Outline”?');
-
-      el<HTMLButtonElement>('button.cancel')!.click();
-      harness.detectChanges();
-
-      expect(el('app-confirm-delete-task-dialog')).toBeNull();
-      http.expectNone(`${TASKS_URL}/2`);
+    it('records that the project was opened', () => {
+      const access = http.match(
+        (r) => r.url === `${environment.apiBaseUrl}/api/projects/10/access`,
+      );
+      expect(access).toHaveLength(1);
+      expect(access[0].request.method).toBe('PUT');
+      access[0].flush({ projectId: 10, lastAccessedAt: '2026-11-27T00:00:00Z' });
     });
 
-    it('deletes once, removes the task and confirms it', () => {
-      askToDelete('Outline');
-      el<HTMLButtonElement>('button.confirm')!.click();
-      harness.detectChanges();
-
-      expect(el<HTMLButtonElement>('button.confirm')!.disabled).toBe(true);
-      el<HTMLButtonElement>('button.confirm')!.click();
-
-      const req = http.expectOne(`${TASKS_URL}/2`);
-      expect(req.request.method).toBe('DELETE');
-      req.flush({ message: 'Task deleted successfully' });
-      harness.detectChanges();
-
-      expect(el('app-confirm-delete-task-dialog')).toBeNull();
-      expect(text('.form-notice')).toBe('“Outline” was deleted.');
-      expect(titles()).toEqual(['Write chapter 1']);
+    it('has no Delete buttons, only Archive', () => {
+      expect(el('button[aria-label^="Delete"]')).toBeNull();
+      expect(el('button[aria-label="Archive task Outline"]')).toBeTruthy();
     });
 
-    it('keeps the task and shows the error in the dialog when the delete fails', () => {
-      askToDelete('Outline');
-      el<HTMLButtonElement>('button.confirm')!.click();
-      http.expectOne(`${TASKS_URL}/2`).flush(null, { status: 500, statusText: 'Server Error' });
+    it('archives a task, hiding it at once', () => {
+      el<HTMLButtonElement>('button[aria-label="Archive task Outline"]')!.click();
       harness.detectChanges();
 
-      expect(text('.dialog [role="alert"]')).toBe('Something went wrong. Please try again.');
-      expect(el<HTMLButtonElement>('button.confirm')!.disabled).toBe(false);
-      expect(titles()).toEqual(['Outline', 'Write chapter 1']);
-    });
-
-    it('closes the dialog and reloads the list when the task is already gone', () => {
-      askToDelete('Outline');
-      el<HTMLButtonElement>('button.confirm')!.click();
-      http
-        .expectOne(`${TASKS_URL}/2`)
-        .flush({ error: 'Invalid deleting task.' }, { status: 404, statusText: 'Not Found' });
-      harness.detectChanges();
-
-      expect(el('app-confirm-delete-task-dialog')).toBeNull();
-      expect(text('.banner-error')).toBe('Task not found.');
-      http.expectOne(LIST_URL).flush([asApiTask(CHAPTER)]);
+      const req = http.expectOne(`${TASKS_URL}/2/archive`);
+      expect(req.request.body).toEqual({ isArchived: true });
+      req.flush({ taskId: 2, isArchived: true, archivedAt: '2026-11-27T00:00:00Z' });
       harness.detectChanges();
       expect(titles()).toEqual(['Write chapter 1']);
     });

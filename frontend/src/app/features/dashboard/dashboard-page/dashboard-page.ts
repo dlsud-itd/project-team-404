@@ -1,5 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
-import { SessionService } from '../../auth/session/session.service';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { CurrentUpcomingTasks } from '../current-upcoming-tasks/current-upcoming-tasks';
 import { OverdueTasks } from '../overdue-tasks/overdue-tasks';
 import { StreakPet } from '../streak-pet/streak-pet';
@@ -16,8 +15,4 @@ import { StreaksSection } from '../streaks/streaks-section';
   styleUrl: './dashboard-page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class DashboardPage {
-  private readonly session = inject(SessionService);
-
-  protected readonly username = computed(() => this.session.currentUser()?.username ?? null);
-}
+export class DashboardPage {}

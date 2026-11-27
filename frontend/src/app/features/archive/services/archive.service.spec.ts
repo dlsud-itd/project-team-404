@@ -143,7 +143,7 @@ describe('ArchiveService', () => {
           taskCount: 2,
         },
       ]);
-      expect(counts).toEqual({ all: 7, tasks: 4, projects: 1, labels: 2 });
+      expect(counts).toEqual({ all: 7, tasks: 4, projects: 1, labels: 2, priorities: 0 });
       expect(cursor).toBe('abc');
     });
   });

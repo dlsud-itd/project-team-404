@@ -61,7 +61,7 @@ import {
       padding: 1.5rem;
       border-radius: 1rem;
       background: #fff;
-      box-shadow: 0 20px 48px rgb(0 0 0 / 0.2);
+      box-shadow: var(--elevation-2);
     }
     h2 {
       margin: 0 0 0.5rem;
@@ -90,7 +90,7 @@ import {
     button {
       padding: 0.5rem 1rem;
       border: 1px solid var(--field-border);
-      border-radius: 999px;
+      border-radius: 0.5rem;
       background: #fff;
       font: inherit;
       font-size: 0.875rem;
@@ -101,7 +101,7 @@ import {
         opacity: 0.7;
       }
       &:focus-visible {
-        outline: 2px solid #7b23a8;
+        outline: 2px solid var(--theme-primary);
         outline-offset: 2px;
       }
     }

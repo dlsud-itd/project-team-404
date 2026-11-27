@@ -23,6 +23,8 @@
 .chip {
   @include chips.chip;
 
+  text-decoration: none;
+
   &[aria-expanded='true'] .caret {
     transform: rotate(180deg);
   }

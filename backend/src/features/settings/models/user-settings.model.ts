@@ -1,5 +1,10 @@
 import type { UserSetting } from '@prisma/client';
-import { DEFAULT_THEME_SETTINGS, type ThemeSettings } from '../types';
+import {
+  DASHBOARD_PROJECT_SORTS,
+  DEFAULT_THEME_SETTINGS,
+  type DashboardProjectSort,
+  type ThemeSettings,
+} from '../types';
 
 export type UserSettingsRecord = UserSetting;
 export type UserSettings = {
@@ -10,6 +15,9 @@ export type UserSettings = {
   fontFamily:
     'system' | 'sans-serif' | 'serif' | 'monospace' | 'atkinson-hyperlegible';
   theme: ThemeSettings;
+  /** The project new tasks go to; null means the Inbox. */
+  defaultProjectId: number | null;
+  dashboardProjectSort: DashboardProjectSort;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -30,6 +38,12 @@ export function toUserSettingsModel(record: UserSettingsRecord): UserSettings {
     fontSize: record.fontSize as UserSettings['fontSize'],
     fontFamily: record.fontFamily as UserSettings['fontFamily'],
     theme,
+    defaultProjectId: record.defaultProjectId ?? null,
+    dashboardProjectSort: (
+      DASHBOARD_PROJECT_SORTS as readonly string[]
+    ).includes(record.dashboardProjectSort)
+      ? (record.dashboardProjectSort as DashboardProjectSort)
+      : 'custom',
     createdAt: new Date(record.createdAt),
     updatedAt: new Date(record.updatedAt),
   };

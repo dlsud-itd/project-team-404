@@ -13,5 +13,6 @@ export function toProject(project: ApiProject): Project {
     sortOrder: project.sortOrder,
     ...(project.createdAt ? { createdAt: project.createdAt } : {}),
     ...(project.updatedAt ? { updatedAt: project.updatedAt } : {}),
+    ...(project.lastAccessedAt !== undefined ? { lastAccessedAt: project.lastAccessedAt } : {}),
   };
 }

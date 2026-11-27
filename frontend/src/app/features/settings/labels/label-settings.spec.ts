@@ -1,6 +1,7 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 import { environment } from '../../../../environments/environment';
 import { ToastService } from '../../../shared/services/toast.service';
 import { LABEL_REORDER_FAILED_MESSAGE, LabelSettings } from './label-settings';
@@ -60,7 +61,7 @@ describe('LabelSettings', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [LabelSettings],
-      providers: [provideHttpClient(), provideHttpClientTesting()],
+      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
     }).compileComponents();
     http = TestBed.inject(HttpTestingController);
     fixture = TestBed.createComponent(LabelSettings);
@@ -89,12 +90,11 @@ describe('LabelSettings', () => {
     expect(first.classList).toContain('cdk-drag');
   });
 
-  it('shows archived labels separately, each with a Restore action', () => {
+  it('keeps archived labels off this page and points to the Archive instead', () => {
     flushLists();
-    expect(text('#archived-labels-heading')).toBe('Archived');
-    expect(all('ul.archived .name').map((n) => n.textContent)).toEqual(['Old stuff']);
-    expect(byLabel('Restore Old stuff')).toBeTruthy();
-    expect(el('ul.archived button[aria-label^="Move"]')).toBeNull();
+    expect(el('#archived-labels-heading')).toBeNull();
+    expect(page.textContent).not.toContain('Old stuff');
+    expect(el('.archive-note a')?.getAttribute('href')).toBe('/archive?tab=labels');
   });
 
   it('offers to try again when the labels fail to load', () => {
@@ -263,14 +263,16 @@ describe('LabelSettings', () => {
     archive.flush({ ...label(9, 'Errands', 1, 1), isArchived: true, archivedAt: 'now' });
     render();
     expect(activeNames()).toEqual(['Planning', 'Reading']);
-    expect(all('ul.archived .name').map((n) => n.textContent)).toEqual(['Old stuff', 'Errands']);
 
-    byLabel('Restore Old stuff').click();
-    const restore = http.expectOne(`${URL}/7/archive`);
+    // The toast's Undo restores it.
+    const toast = TestBed.inject(ToastService).toasts()[0];
+    expect(toast.message).toBe('Label “Errands” archived');
+    toast.action!.run();
+    const restore = http.expectOne(`${URL}/9/archive`);
     expect(restore.request.body).toEqual({ isArchived: false });
-    restore.flush(label(7, 'Old stuff', 2, 2));
+    restore.flush(label(9, 'Errands', 1, 1));
     render();
-    expect(activeNames()).toEqual(['Planning', 'Reading', 'Old stuff']);
+    expect(activeNames()).toEqual(['Planning', 'Errands', 'Reading']);
   });
 
   it('shows a toast when archiving fails', () => {
@@ -284,64 +286,9 @@ describe('LabelSettings', () => {
     );
   });
 
-  it('confirms a delete, saying how many tasks lose the label', () => {
+  it('has no Delete buttons; labels are deleted for good from the Archive', () => {
     flushLists();
-    byLabel('Delete Planning').click();
-    render();
-
-    const dialog = el('[role="alertdialog"]')!;
-    expect(dialog.getAttribute('aria-modal')).toBe('true');
-    expect(text('#delete-label-title')).toBe('Delete “Planning”?');
-    expect(text('#delete-label-impact')).toBe(
-      "3 tasks will lose this label. This can't be undone.",
-    );
-
-    dialog.querySelector<HTMLButtonElement>('#delete-label-cancel')!.click();
-    render();
-    expect(el('[role="alertdialog"]')).toBeNull();
-    http.expectNone(`${URL}/4`);
-
-    byLabel('Delete Planning').click();
-    render();
-    [...page.querySelectorAll<HTMLButtonElement>('[role="alertdialog"] button')]
-      .find((b) => b.textContent?.trim() === 'Delete label')!
-      .click();
-    const req = http.expectOne(`${URL}/4`);
-    expect(req.request.method).toBe('DELETE');
-    req.flush(null, { status: 204, statusText: 'No Content' });
-    render();
-
-    expect(activeNames()).toEqual(['Errands', 'Reading']);
-    expect(el('[role="alertdialog"]')).toBeNull();
-  });
-
-  it('words the delete warning for one task, none, or an unknown count', () => {
-    flushLists([label(1, 'One', 0, 1), label(2, 'None', 1, 0), label(3, 'Unknown', 2, null)], []);
-    const impact = (name: string) => {
-      byLabel(`Delete ${name}`).click();
-      render();
-      const message = text('#delete-label-impact');
-      el<HTMLButtonElement>('#delete-label-cancel')!.click();
-      render();
-      return message;
-    };
-    expect(impact('One')).toBe("1 task will lose this label. This can't be undone.");
-    expect(impact('None')).toBe("No tasks use this label. This can't be undone.");
-    expect(impact('Unknown')).toBe(
-      "Any tasks that use it will lose this label. This can't be undone.",
-    );
-  });
-
-  it('keeps the dialog open with an error when the delete fails', () => {
-    flushLists();
-    byLabel('Delete Reading').click();
-    render();
-    [...page.querySelectorAll<HTMLButtonElement>('[role="alertdialog"] button')]
-      .find((b) => b.textContent?.trim() === 'Delete label')!
-      .click();
-    http.expectOne(`${URL}/2`).flush(null, { status: 500, statusText: 'x' });
-    render();
-    expect(text('.dialog-error')).toBe("Couldn't delete the label. Please try again.");
-    expect(activeNames()).toContain('Reading');
+    expect(el('button[aria-label^="Delete"]')).toBeNull();
+    expect(page.textContent).not.toContain('Delete');
   });
 });

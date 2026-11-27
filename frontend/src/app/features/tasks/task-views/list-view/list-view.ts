@@ -38,7 +38,6 @@ export class ListView {
   readonly announcement = input('');
 
   readonly moved = output<ListMove>();
-  readonly deleteRequested = output<Task>();
 
   protected dropped(event: CdkDragDrop<unknown>): void {
     this.moved.emit({ from: event.previousIndex, to: event.currentIndex });

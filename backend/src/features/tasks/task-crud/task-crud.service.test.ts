@@ -30,6 +30,7 @@ const task: TaskRecord = {
     name: 'high',
     color: '#ef4444',
     isDefault: false,
+    archivedAt: null,
     sortOrder: 3,
     deletedAt: null,
     createdAt: new Date('2026-10-20T00:00:00.000Z'),

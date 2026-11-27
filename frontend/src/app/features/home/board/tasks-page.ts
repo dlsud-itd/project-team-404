@@ -13,13 +13,14 @@ import { SessionService } from '../../auth/session/session.service';
 import { mapProjectError } from '../../projects/project-crud/mappers/project-error.mapper';
 import { ProjectService } from '../../projects/project-crud/services/project.service';
 import { ProjectsStore } from '../../projects/shared/state/projects.store';
-import { ConfirmDeleteTaskDialog } from '../../tasks/task-crud/components/confirm-delete-dialog/confirm-delete-dialog';
 import { mapTaskError } from '../../tasks/task-crud/mappers/task-error.mapper';
 import { TaskService } from '../../tasks/task-crud/services/task.service';
 import { NewTaskDialog } from '../../tasks/task-crud/components/new-task-dialog/new-task-dialog';
 import { TasksStore } from '../../tasks/shared/state/tasks.store';
 import { PrioritiesStore } from '../../settings/state/priorities.store';
+import { PriorityLegend } from '../../settings/components/priority-legend/priority-legend';
 import type { Task } from '../../tasks/shared/types/task.types';
+import type { PriorityTone } from '../../settings/utils/priority-tone.util';
 import { TaskFilterBar } from '../../tasks/task-organization/components/filter-bar/filter-bar';
 import {
   SortMenu,
@@ -60,8 +61,8 @@ export const BOARD_PROJECT_PARAM = 'boardProject';
 @Component({
   selector: 'app-tasks-page',
   imports: [
-    ConfirmDeleteTaskDialog,
     NewTaskDialog,
+    PriorityLegend,
     TaskFilterBar,
     SortMenu,
     StreakBadge,
@@ -111,9 +112,6 @@ export class TasksPage {
   protected readonly loadError = signal<string | null>(null);
   protected readonly actionError = signal<string | null>(null);
   protected readonly busyTasks = signal<ReadonlySet<number>>(new Set());
-  protected readonly pendingDelete = signal<Task | null>(null);
-  protected readonly deleting = signal(false);
-  protected readonly deleteError = signal<string | null>(null);
 
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
@@ -125,14 +123,13 @@ export class TasksPage {
   /** The project named in the URL, if any. */
   private readonly requestedProject = signal<number | null>(null);
   /**
-   * The board's project: the one in the URL if it still exists, otherwise the first project
-   * that is not the Inbox, otherwise the Inbox.
+   * The board's project: the one in the URL if it is still active, otherwise null, which shows
+   * every active project ("All Projects", the default).
    */
   protected readonly boardProjectId = computed(() => {
-    const projects = this.projectsStore.active();
     const requested = this.requestedProject();
-    if (requested !== null && projects.some((p) => p.projectId === requested)) return requested;
-    return (projects.find((p) => !p.isInbox) ?? projects[0])?.projectId ?? null;
+    if (requested === null) return null;
+    return this.projectsStore.active().some((p) => p.projectId === requested) ? requested : null;
   });
   /** The board's or timeline's filters; a new object reloads it. */
   protected readonly boardFilter = signal<BoardFilter>({});
@@ -206,8 +203,10 @@ export class TasksPage {
     else this.reloads.next();
   }
 
+  /** The empty value is All Projects, which drops the parameter. */
   protected selectBoardProject(event: Event): void {
-    const projectId = Number((event.target as HTMLSelectElement).value);
+    const value = (event.target as HTMLSelectElement).value;
+    const projectId = value ? Number(value) : null;
     void this.router.navigate([], {
       relativeTo: this.route,
       queryParams: { [BOARD_PROJECT_PARAM]: projectId },
@@ -236,8 +235,9 @@ export class TasksPage {
     return this.projectsStore.byId(projectId)?.color ?? null;
   }
 
-  protected priorityName(priorityId: number): string {
-    return this.priorities.nameOf(priorityId);
+  /** A row's priority tint, left accent and name. */
+  protected tone(priorityId: number): PriorityTone {
+    return this.priorities.toneOf(priorityId);
   }
 
   protected isBusy(task: Task): boolean {
@@ -281,12 +281,13 @@ export class TasksPage {
       });
   }
 
-  /** New tasks go to the Inbox, or to the board's project while the board is shown. */
+  /**
+   * New tasks go to the board's project while one project's board is shown, otherwise to the
+   * default project chosen in Settings (the Inbox when none is chosen).
+   */
   protected openNewTaskDialog(): void {
-    const projectId =
-      this.view() === 'board'
-        ? this.boardProjectId()
-        : (this.projectsStore.inbox()?.projectId ?? null);
+    const boardProject = this.view() === 'board' ? this.boardProjectId() : null;
+    const projectId = boardProject ?? this.projectsStore.defaultProject()?.projectId ?? null;
     this.tasksStore.creating.set({ projectId });
   }
 
@@ -295,36 +296,6 @@ export class TasksPage {
     this.taskList.update((tasks) =>
       tasks.some((item) => item.taskId === task.taskId) ? tasks : [...tasks, task],
     );
-  }
-
-  protected askDelete(task: Task): void {
-    this.deleteError.set(null);
-    this.pendingDelete.set(task);
-  }
-
-  protected cancelDelete(): void {
-    if (!this.deleting()) this.pendingDelete.set(null);
-  }
-
-  protected confirmDelete(): void {
-    const task = this.pendingDelete();
-    if (!task || this.deleting()) return;
-
-    this.deleting.set(true);
-    this.deleteError.set(null);
-    this.tasksApi
-      .delete(task.taskId)
-      .pipe(
-        finalize(() => this.deleting.set(false)),
-        takeUntilDestroyed(this.destroyRef),
-      )
-      .subscribe({
-        next: () => {
-          this.taskList.update((tasks) => tasks.filter((item) => item.taskId !== task.taskId));
-          this.pendingDelete.set(null);
-        },
-        error: (error: unknown) => this.deleteError.set(mapTaskError(error).message),
-      });
   }
 
   /** Archive takes the row out at once and puts it back on failure or Undo. */

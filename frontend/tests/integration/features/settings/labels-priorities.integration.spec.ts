@@ -316,6 +316,8 @@ describe('Labels & Priorities integration (Settings, task form and filters + API
 
   afterEach(() => {
     try {
+      // Opening a project stamps it for the dashboard's "Recently accessed" sort.
+      http?.match((r) => r.url.endsWith('/access'));
       if (http) http.verify();
     } finally {
       TestBed.resetTestingModule();
@@ -450,30 +452,17 @@ describe('Labels & Priorities integration (Settings, task form and filters + API
     });
 
     // FE-LPM-04
-    it('asks before deleting a label and says how many tasks lose it', async () => {
+    it('archives a label instead of deleting it; Delete is only on the Archive page', async () => {
       await startSignedIn();
       await openLabels();
 
-      await press(el('#label-21-delete'));
-      const dialog = el('[role="alertdialog"]');
-      expect(clean(dialog.querySelector('h3')?.textContent)).toBe('Delete “Planning”?');
-      expect(text('#delete-label-impact')).toBe(
-        "3 tasks will lose this label. This can't be undone.",
-      );
-
-      await press(el('#delete-label-cancel'));
-      expect(el('[role="alertdialog"]')).toBeNull();
-      http.expectNone(`${LABELS_API}/21`);
-
-      await press(el('#label-21-delete'));
-      await press(
-        all('[role="alertdialog"] button').find((b) => clean(b.textContent) === 'Delete label')!,
-      );
-      const remove = expectAuthorized(http.expectOne(`${LABELS_API}/21`), 'DELETE');
-      remove.flush(null, status(204, 'No Content'));
+      expect(el('#label-21-delete')).toBeNull();
+      await press(el('button[aria-label="Archive Planning"]'));
+      const archive = expectAuthorized(http.expectOne(`${LABELS_API}/21/archive`), 'PUT');
+      expect(archive.request.body).toEqual({ isArchived: true });
+      archive.flush({ ...LABELS[0], isArchived: true, archivedAt: '2026-11-27T00:00:00.000Z' });
       await settle();
 
-      expect(el('[role="alertdialog"]')).toBeNull();
       expect(rows('Labels')).toEqual(['Follow-up (1 task)', 'Ideas (0 tasks)']);
     });
 
@@ -616,18 +605,35 @@ describe('Labels & Priorities integration (Settings, task form and filters + API
       expect(byLabel('Set Normal as default')).toBeTruthy();
     });
 
-    // FE-LPM-03
-    it('requires a target before deleting a used level and sends reassignTo', async () => {
+    // FE-LPM-04
+    it('deletes an archived level from the Archive page, requiring a target for its tasks', async () => {
       await startSignedIn();
-      await openPriorities();
+      await harness.navigateByUrl('/archive?tab=priorities');
+      await settle();
+      const archived = { ...URGENT, isArchived: true, archivedAt: '2026-11-27T00:00:00.000Z' };
+      const empty = { items: [], total: 0 };
+      http
+        .match((r) => r.url === `${API}/archive`)
+        .forEach((r) =>
+          r.flush({
+            tasks: empty,
+            projects: empty,
+            labels: empty,
+            priorities: { items: [archived], total: 1 },
+            nextCursor: null,
+          }),
+        );
+      http.match((r) => r.url === PROJECTS_API).forEach((r) => r.flush([]));
+      await settle();
 
-      await press(el('#priority-11-delete'));
+      await press(el('button[aria-label="Delete priority Urgent permanently"]'));
       expect(text('#delete-priority-impact')).toBe(
         '2 tasks use this level and will move to the level you choose.',
       );
       const options = [...el<HTMLSelectElement>('#reassign-priority').options].map((o) =>
         clean(o.textContent),
       );
+      // Only levels still in use can take its tasks.
       expect(options).toEqual(['Choose a level…', 'Normal (default)', 'Someday']);
       const confirm = () =>
         all('app-delete-priority-dialog button').find(
@@ -645,47 +651,32 @@ describe('Labels & Priorities integration (Settings, task form and filters + API
         'DELETE',
       );
       expect(req.request.params.get('reassignTo')).toBe('12');
-      // The backend answers with the deleted level.
       req.flush(URGENT);
       await settle();
 
       expect(el('app-delete-priority-dialog')).toBeNull();
-      expect(rows('Priority levels')).toEqual(['Normal [Default] (7 tasks)', 'Someday (0 tasks)']);
+      expect(el('li.row[data-kind="priority"]')).toBeNull();
     });
 
     // FE-LPM-03
-    it('deletes an unused level without a target and offers no delete for the last level', async () => {
+    it('archives a level from Settings, but never the default or the last level', async () => {
       await startSignedIn();
       await openPriorities();
 
-      await press(el('#priority-13-delete'));
-      expect(text('#delete-priority-impact')).toBe('No tasks use this level.');
-      expect(el('#reassign-priority')).toBeNull();
-      await press(
-        all('app-delete-priority-dialog button').find(
-          (b) => clean(b.textContent) === 'Delete level',
-        )!,
-      );
-      const req = http.expectOne((r) => r.url === `${PRIORITIES_API}/13`);
-      expect(req.request.method).toBe('DELETE');
-      expect(req.request.params.has('reassignTo')).toBe(false);
-      req.flush(SOMEDAY);
+      expect(el('#priority-13-delete')).toBeNull();
+      await press(el('#priority-13-archive'));
+      const req = expectAuthorized(http.expectOne(`${PRIORITIES_API}/13/archive`), 'PUT');
+      expect(req.request.body).toEqual({ isArchived: true });
+      req.flush({ ...SOMEDAY, isArchived: true, archivedAt: '2026-11-27T00:00:00.000Z' });
       await settle();
       expect(rows('Priority levels')).toEqual(['Urgent (2 tasks)', 'Normal [Default] (5 tasks)']);
 
-      // A user with a single level.
-      await harness.navigateByUrl('/settings/labels');
-      await settle();
-      expectLabelList(false).flush([]);
-      expectLabelList(true).flush([]);
-      await openPriorities([{ ...NORMAL, sortOrder: 0 }]);
-      const onlyDelete = el<HTMLButtonElement>('#priority-12-delete');
-      expect(onlyDelete.disabled).toBe(true);
-      expect(onlyDelete.title).toBe('You need at least one priority level');
+      const archiveDefault = el<HTMLButtonElement>('#priority-12-archive');
+      expect(archiveDefault.disabled).toBe(true);
+      expect(archiveDefault.title).toBe('Make another level the default before archiving this one');
     });
   });
 
-  // Case 4
   describe('Levels in the task list and task form', () => {
     function expectTaskList(params: Record<string, string> = {}): TestRequest {
       const req = http.expectOne(
@@ -724,11 +715,18 @@ describe('Labels & Priorities integration (Settings, task form and filters + API
       await press(chip);
       const options = all('#task-filter-priority .option');
       expect(options.map((o) => clean(o.textContent))).toEqual(['Urgent', 'Normal', 'Someday']);
-      const badges = all('app-task-item .priority');
-      expect(badges.map((b) => clean(b.textContent))).toEqual(['Urgent', 'Normal', 'Someday']);
-      expect(badges.map((b) => b.style.getPropertyValue('--priority-color'))).toEqual([
-        '#B91C1C',
-        '#F59E0B',
+      // No tags: each task is tinted by its level. Urgent and Normal use the shared palette;
+      // the custom Someday level tints with its own color.
+      expect(all('app-task-item .priority')).toEqual([]);
+      const items = all('app-task-item .item');
+      expect(items.map((i) => i.getAttribute('title'))).toEqual([
+        'Priority: Urgent',
+        'Priority: Normal',
+        'Priority: Someday',
+      ]);
+      expect(items.map((i) => i.style.getPropertyValue('--priority-accent'))).toEqual([
+        'var(--priority-urgent-accent)',
+        'var(--priority-medium-accent)',
         '#94A3B8',
       ]);
 
@@ -775,7 +773,7 @@ describe('Labels & Priorities integration (Settings, task form and filters + API
       create.flush(apiTask(34, 'Plan sprint', NORMAL), status(201, 'Created'));
       await settle();
 
-      expect(clean(el('app-task-item .priority').textContent)).toBe('Normal');
+      expect(el('app-task-item .item').getAttribute('title')).toBe('Priority: Normal');
     });
   });
 

@@ -25,7 +25,9 @@ export class TaskBoardService {
   constructor(private readonly dependencies: TaskBoardDependencies) {}
 
   async list(userId: string, query: BoardQuery) {
-    await this.requireActiveProject(query.projectId, userId);
+    if (query.projectId !== undefined) {
+      await this.requireActiveProject(query.projectId, userId);
+    }
     return this.dependencies.listBoardTasks(userId, query);
   }
 

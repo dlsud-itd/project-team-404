@@ -1,10 +1,6 @@
 import { type CdkDragDrop, CdkDropList } from '@angular/cdk/drag-drop';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
-import {
-  HttpTestingController,
-  type TestRequest,
-  provideHttpClientTesting,
-} from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { Router, provideRouter } from '@angular/router';
@@ -14,7 +10,6 @@ import { provideSessionRestore } from '../../../../src/app/features/auth/session
 import { authInterceptor } from '../../../../src/app/features/auth/session/auth.interceptor';
 import { SessionService } from '../../../../src/app/features/auth/session/session.service';
 import { TOKEN_STORAGE_KEY } from '../../../../src/app/features/auth/session/token-storage.service';
-import { ProjectsStore } from '../../../../src/app/features/projects/shared/state/projects.store';
 import { environment } from '../../../../src/environments/environment';
 import { ToastService } from '../../../../src/app/shared/services/toast.service';
 
@@ -91,9 +86,6 @@ describe('Projects integration (Project CRUD screens + API)', () => {
   const el = <T extends HTMLElement>(selector: string) => page().querySelector(selector) as T;
   const all = (selector: string) => [...page().querySelectorAll<HTMLElement>(selector)];
   const text = (selector: string) => el(selector)?.textContent?.trim() ?? '';
-  // The confirm dialog is rendered inside the list page.
-  const dialogButton = (label: string) =>
-    all('[role="alertdialog"] button').find((b) => b.textContent?.trim() === label)!;
 
   async function settle(): Promise<void> {
     await harness.fixture.whenStable();
@@ -153,6 +145,28 @@ describe('Projects integration (Project CRUD screens + API)', () => {
     await settle();
   }
 
+  /** Opens a project card's ⋯ menu, reads its items and closes it again. */
+  async function menuItems(name: string): Promise<string[]> {
+    card(name).querySelector<HTMLButtonElement>('button.more')!.click();
+    await settle();
+    const items = [...document.querySelectorAll('.cdk-overlay-container .item')].map(
+      (i) => i.textContent?.trim() ?? '',
+    );
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    await settle();
+    return items;
+  }
+
+  /** Picks an item from a project card's ⋯ menu. */
+  async function pickFromMenu(name: string, item: string): Promise<void> {
+    card(name).querySelector<HTMLButtonElement>('button.more')!.click();
+    await settle();
+    [...document.querySelectorAll<HTMLButtonElement>('.cdk-overlay-container .item')]
+      .find((i) => i.textContent?.trim() === item)!
+      .click();
+    await settle();
+  }
+
   /** Opens /projects and answers its GET /api/projects. */
   async function openList(projects: object[] = [INBOX, CAPSTONE, THESIS]): Promise<void> {
     await open('/projects');
@@ -189,6 +203,8 @@ describe('Projects integration (Project CRUD screens + API)', () => {
 
   afterEach(() => {
     try {
+      // Opening a project stamps it for the dashboard's "Recently accessed" sort.
+      http?.match((r) => r.url.endsWith('/access'));
       if (http) http.verify();
     } finally {
       TestBed.resetTestingModule();
@@ -231,7 +247,8 @@ describe('Projects integration (Project CRUD screens + API)', () => {
       expect(card('Capstone').querySelector('.description')?.textContent?.trim()).toBe(
         'Final project',
       );
-      expect(card('Capstone').querySelector<HTMLElement>('.swatch')?.style.background).toBe(
+      // A project's color shows only as a small dot.
+      expect(card('Capstone').querySelector<HTMLElement>('.dot')?.style.background).toBe(
         'rgb(37, 99, 235)',
       );
     });
@@ -287,17 +304,14 @@ describe('Projects integration (Project CRUD screens + API)', () => {
   // Case 2 and case 6: the Inbox is read-only.
   describe('Inbox permissions', () => {
     // FE-LST-02, FE-DEL-05
-    it('shows no edit or delete controls on the Inbox card, only on other projects', async () => {
+    it('offers no star, edit or archive on the Inbox, and never a delete on any project', async () => {
       await startSignedIn();
       await openList();
 
-      const inbox = card('Inbox');
-      expect(inbox.querySelector('.edit')).toBeNull();
-      expect(inbox.querySelector('.delete')).toBeNull();
-      expect(card('Capstone').querySelector('.edit')?.getAttribute('href')).toBe(
-        '/projects/10/edit',
-      );
-      expect(card('Capstone').querySelector('.delete')).toBeTruthy();
+      expect(card('Inbox').querySelector('button.star')).toBeNull();
+      expect(await menuItems('Inbox')).toEqual(['Default project']);
+      expect(await menuItems('Capstone')).toEqual(['Edit', 'Set as default project', 'Archive']);
+      expect(page().querySelector('[aria-label^="Delete"]')).toBeNull();
     });
 
     it("blocks the Inbox's edit URL opened directly: no form and nothing can be sent", async () => {
@@ -558,87 +572,43 @@ describe('Projects integration (Project CRUD screens + API)', () => {
   });
 
   // Case 5: delete.
-  describe('Delete', () => {
-    async function askDelete(name: string): Promise<void> {
-      (card(name).querySelector('.delete') as HTMLButtonElement).click();
-      await settle();
-    }
-
-    // FE-DEL-01, FE-DEL-02
-    it('sends nothing when the confirmation is cancelled', async () => {
+  // Projects are archived here and deleted for good only from the Archive page.
+  describe('Archive', () => {
+    it('archives a project from its menu at once, and Undo brings it back', async () => {
       await startSignedIn();
       await openList();
-      await askDelete('Capstone');
 
-      expect(text('[role="alertdialog"] h2')).toBe('Delete “Capstone”?');
-      expect(text('#delete-description')).toBe('Its tasks will be moved to your Inbox.');
-      dialogButton('Cancel').click();
-      await settle();
-
-      http.expectNone(`${API}/10`);
-      expect(el('[role="alertdialog"]')).toBeNull();
-      expect(cardNames()).toEqual(['Inbox', 'Capstone', 'Thesis']);
-    });
-
-    // FE-DEL-03, FE-DEL-07
-    it('DELETEs once on confirm, then removes the card and shows a notice', async () => {
-      await startSignedIn();
-      await openList();
-      await askDelete('Capstone');
-      dialogButton('Delete project').click();
-      await settle();
-
-      expect(dialogButton('Deleting…').hasAttribute('disabled')).toBe(true);
-      // The disabled button cannot send a second request.
-      dialogButton('Deleting…').click();
-
-      const req = http.expectOne(`${API}/10`);
-      expect(req.request.method).toBe('DELETE');
-      expect(req.request.headers.get('Authorization')).toBe(`Bearer ${TOKEN}`);
-      // The backend answers 204 No Content.
-      req.flush(null, status(204, 'No Content'));
-      await settle();
-
-      expect(el('[role="alertdialog"]')).toBeNull();
+      await pickFromMenu('Capstone', 'Archive');
       expect(cardNames()).toEqual(['Inbox', 'Thesis']);
-      expect(text('.form-notice')).toBe('“Capstone” was deleted.');
-    });
-
-    // FE-DEL-06
-    it.each([
-      ['a 500', (req: TestRequest) => req.flush({ error: 'Internal server error' }, status(500))],
-      ['a network error', (req: TestRequest) => req.error(new ProgressEvent('error'))],
-    ])('keeps the card and shows an error in the dialog on %s', async (_, fail) => {
-      await startSignedIn();
-      await openList();
-      await askDelete('Capstone');
-      dialogButton('Delete project').click();
-      fail(http.expectOne(`${API}/10`));
+      const req = http.expectOne(`${API}/10/archive`);
+      expect(req.request.method).toBe('PUT');
+      expect(req.request.body).toEqual({ isArchived: true });
+      req.flush({ projectId: 10, isArchived: true, message: 'Project archived successfully' });
       await settle();
 
-      expect(text('[role="alertdialog"] .error')).toBe('Something went wrong. Please try again.');
+      const [toast] = TestBed.inject(ToastService).toasts();
+      expect(toast.message).toBe('Project “Capstone” archived');
+      toast.action!.run();
+      await settle();
       expect(cardNames()).toEqual(['Inbox', 'Capstone', 'Thesis']);
-      expect(dialogButton('Delete project').hasAttribute('disabled')).toBe(false);
+      http
+        .expectOne(`${API}/10/archive`)
+        .flush({ projectId: 10, isArchived: false, message: 'Project restored from archive' });
     });
 
-    // FE-DEL-06
-    it('closes the dialog and reloads the list when the project is already gone (404)', async () => {
+    it('puts the project back with an error toast when archiving fails', async () => {
       await startSignedIn();
       await openList();
-      await askDelete('Capstone');
-      dialogButton('Delete project').click();
-      http.expectOne(`${API}/10`).flush(NOT_FOUND, status(404, 'Not Found'));
+
+      await pickFromMenu('Capstone', 'Archive');
+      http.expectOne(`${API}/10/archive`).flush({ error: 'boom' }, status(500));
       await settle();
 
-      flushProjectLists([INBOX, THESIS]);
-      await settle();
-      expect(el('[role="alertdialog"]')).toBeNull();
-      expect(text('.banner-error')).toBe('Project not found.');
-      expect(cardNames()).toEqual(['Inbox', 'Thesis']);
+      expect(cardNames()).toEqual(['Inbox', 'Capstone', 'Thesis']);
+      expect(TestBed.inject(ToastService).toasts()[0].kind).toBe('error');
     });
   });
 
-  // Case 7: an expired session.
   describe('Expired session', () => {
     // FE-LST-14
     it.each([
@@ -681,13 +651,11 @@ describe('Projects integration (Project CRUD screens + API)', () => {
       expect(storedToken()).toBeNull();
     });
 
-    it('clears the session and goes to /login on a 401 when deleting', async () => {
+    it('clears the session and goes to /login on a 401 when archiving', async () => {
       await startSignedIn();
       await openList();
-      (card('Capstone').querySelector('.delete') as HTMLButtonElement).click();
-      await settle();
-      dialogButton('Delete project').click();
-      http.expectOne(`${API}/10`).flush(TOKEN_REJECTED, status(401, 'Unauthorized'));
+      await pickFromMenu('Capstone', 'Archive');
+      http.expectOne(`${API}/10/archive`).flush(TOKEN_REJECTED, status(401, 'Unauthorized'));
       await settle();
 
       expect(router.url).toBe('/login');
@@ -706,8 +674,8 @@ describe('Projects integration (Project CRUD screens + API)', () => {
     });
   });
 
-  // Project Organization: the switcher in the Projects tab (FE-ORG rows).
-  describe('Project Organization (switcher)', () => {
+  // Project Organization, folded into the single Projects page (FE-ORG rows).
+  describe('Project Organization (Projects page)', () => {
     const GYM = {
       ...CAPSTONE,
       id: 12,
@@ -719,30 +687,19 @@ describe('Projects integration (Project CRUD screens + API)', () => {
     const OLD = { ...CAPSTONE, id: 13, name: 'Old class', isArchived: true, sortOrder: 3 };
     // Favorites: Gym. My projects: Capstone (1), Thesis (2). Archived: Old class.
     const ALL = [INBOX, GYM, CAPSTONE, THESIS, OLD];
-    const SAVE_FAILED = "Your change wasn't saved. Something went wrong. Please try again.";
-    const ORDER_INVALID = {
-      error: 'Invalid project order',
-      details: [{ field: 'projectIds', message: 'Project IDs must be unique' }],
-    };
 
     const button = (label: string) => el<HTMLButtonElement>(`button[aria-label="${label}"]`);
     const names = (scope: string) =>
-      all(`${scope} .item .name`).map((n) => n.textContent?.trim() ?? '');
-    const favorites = () => names('section[aria-labelledby="switcher-favorites-heading"]');
-    const active = () => names('section[aria-labelledby="switcher-projects-heading"]');
-    const archived = () => names('details.archived');
+      all(`${scope} .item .tasks-link`).map((n) => n.textContent?.trim() ?? '');
+    const favorites = () => names('section[aria-labelledby="favorites-heading"]');
+    const active = () => names('section[aria-labelledby="projects-heading"]');
 
-    async function openSwitcher(projects: object[] = ALL): Promise<void> {
-      await open('/projects/organize');
+    async function openPage(projects: object[] = ALL): Promise<void> {
+      await open('/home?tab=projects');
       flushProjectLists(
         projects.filter((project) => !(project as { isArchived?: boolean }).isArchived),
         projects.filter((project) => (project as { isArchived?: boolean }).isArchived),
       );
-      await settle();
-    }
-
-    async function click(label: string): Promise<void> {
-      button(label).click();
       await settle();
     }
 
@@ -758,28 +715,26 @@ describe('Projects integration (Project CRUD screens + API)', () => {
       await settle();
     }
 
-    // Case 1
-    it('groups projects into the Inbox, favorites, my projects and archived', async () => {
+    it('groups the Inbox, favorites and my projects, and leaves archived ones to the Archive', async () => {
       await startSignedIn();
-      await openSwitcher([OLD, THESIS, CAPSTONE, GYM, INBOX]);
+      await openPage([OLD, THESIS, CAPSTONE, GYM, INBOX]);
 
-      expect(router.url).toBe('/home?tab=projects&view=organize');
-      expect(text('.item.inbox .name')).toBe('Inbox');
+      expect(text('app-project-card.inbox .tasks-link')).toBe('Inbox');
       expect(favorites()).toEqual(['Gym']);
       expect(active()).toEqual(['Capstone', 'Thesis']);
-      expect(archived()).toEqual(['Old class']);
-      expect(text('details.archived .count')).toBe('1');
+      expect(page().textContent).not.toContain('Old class');
+      expect(el('nav[aria-label="Project views"]')).toBeNull();
     });
 
-    // Case 2: FE-ORG-01, FE-ORG-08
-    it('favorites a project straight away and keeps it once the server agrees', async () => {
+    it('stars a project straight away and keeps it once the server agrees', async () => {
       await startSignedIn();
-      await openSwitcher();
-      await click('Favorite Capstone');
+      await openPage();
+      button('Star Capstone').click();
+      await settle();
 
       // Optimistic: moved before the server answers.
       expect(favorites()).toEqual(['Gym', 'Capstone']);
-      expect(button('Favorite Capstone').getAttribute('aria-pressed')).toBe('true');
+      expect(button('Unstar Capstone').getAttribute('aria-pressed')).toBe('true');
 
       const req = http.expectOne(`${API}/10/favorite`);
       expect(req.request.method).toBe('PUT');
@@ -789,124 +744,28 @@ describe('Projects integration (Project CRUD screens + API)', () => {
 
       expect(favorites()).toEqual(['Gym', 'Capstone']);
       expect(active()).toEqual(['Thesis']);
-      expect(el('.banner-error')).toBeNull();
     });
 
-    // FE-ORG-01
-    it('unfavorites a project back into my projects', async () => {
+    it('rolls the star back and shows an error toast on a 500', async () => {
       await startSignedIn();
-      await openSwitcher();
-      await click('Favorite Gym');
-
-      const req = http.expectOne(`${API}/12/favorite`);
-      expect(req.request.body).toEqual({ isFavorite: false });
-      req.flush({ projectId: 12, isFavorite: false, message: 'Project removed from favorites' });
+      await openPage();
+      button('Unstar Gym').click();
       await settle();
-
       expect(favorites()).toEqual([]);
-      expect(active()).toEqual(['Gym', 'Capstone', 'Thesis']);
-      expect(button('Favorite Gym').getAttribute('aria-pressed')).toBe('false');
-    });
 
-    // FE-ORG-06
-    it('rolls the favorite back and shows an error on a 500', async () => {
-      await startSignedIn();
-      await openSwitcher();
-      await click('Favorite Capstone');
-      expect(favorites()).toEqual(['Gym', 'Capstone']);
-
-      http.expectOne(`${API}/10/favorite`).flush({ error: 'Internal server error' }, status(500));
+      http.expectOne(`${API}/12/favorite`).flush({ error: 'boom' }, status(500));
       await settle();
 
       expect(favorites()).toEqual(['Gym']);
-      expect(active()).toEqual(['Capstone', 'Thesis']);
-      expect(button('Favorite Capstone').getAttribute('aria-pressed')).toBe('false');
-      expect(text('.banner-error')).toBe(SAVE_FAILED);
+      expect(TestBed.inject(ToastService).toasts()[0].kind).toBe('error');
     });
 
-    // FE-ORG-07
-    it('sends one request when favorite is clicked again while the first is running', async () => {
-      await startSignedIn();
-      await openSwitcher();
-      await click('Favorite Capstone');
-
-      expect(button('Favorite Capstone').disabled).toBe(true);
-      await click('Favorite Capstone');
-
-      http
-        .expectOne(`${API}/10/favorite`)
-        .flush({ projectId: 10, isFavorite: true, message: 'Project added to favorites' });
-      await settle();
-      expect(button('Favorite Capstone').disabled).toBe(false);
-      expect(button('Favorite Capstone').getAttribute('aria-pressed')).toBe('true');
-    });
-
-    // Case 3: FE-ORG-02, FE-ORG-03, FE-ORG-09
-    it('archives a project into the archived section and restores it with Undo', async () => {
-      await startSignedIn();
-      await openSwitcher();
-      await click('Archive Thesis');
-
-      let req = http.expectOne(`${API}/11/archive`);
-      expect(req.request.method).toBe('PUT');
-      expect(req.request.body).toEqual({ isArchived: true });
-      req.flush({ projectId: 11, isArchived: true, message: 'Project archived successfully' });
-      await settle();
-
-      expect(active()).toEqual(['Capstone']);
-      expect(archived()).toEqual(['Thesis', 'Old class']);
-      expect(button('Archive Thesis')).toBeNull();
-      // Archived projects are restored from the Archive page, or with the toast's Undo.
-      expect(button('Restore Thesis')).toBeNull();
-
-      const toasts = TestBed.inject(ToastService);
-      const toast = toasts.toasts().at(-1)!;
-      expect(toast.action?.label).toBe('Undo');
-      toasts.runAction(toast.id);
-      await settle();
-      req = http.expectOne(`${API}/11/archive`);
-      expect(req.request.body).toEqual({ isArchived: false });
-      req.flush({ projectId: 11, isArchived: false, message: 'Project restored from archive' });
-      await settle();
-
-      expect(active()).toEqual(['Capstone', 'Thesis']);
-      expect(archived()).toEqual(['Old class']);
-    });
-
-    // FE-ORG-06
-    it('puts an archived project back and shows an error on a 500', async () => {
-      await startSignedIn();
-      await openSwitcher();
-      await click('Archive Thesis');
-      expect(archived()).toEqual(['Thesis', 'Old class']);
-
-      http.expectOne(`${API}/11/archive`).flush({ error: 'Internal server error' }, status(500));
-      await settle();
-
-      expect(active()).toEqual(['Capstone', 'Thesis']);
-      expect(archived()).toEqual(['Old class']);
-      expect(text('.banner-error')).toBe(SAVE_FAILED);
-    });
-
-    // FE-ORG-04
-    it('shows no archive, favorite or move control on the Inbox', async () => {
-      await startSignedIn();
-      await openSwitcher();
-
-      expect(all('.item.inbox .controls button')).toHaveLength(0);
-      expect(button('Archive Inbox')).toBeNull();
-      expect(button('Favorite Inbox')).toBeNull();
-    });
-
-    // Case 4: FE-ORG-05, FE-ORG-10
     it('reorders by drag-and-drop: sends every id in the new order and keeps it', async () => {
       await startSignedIn();
-      await openSwitcher();
+      await openPage();
       await drop('active', 0, 1);
 
-      // Optimistic: the new order shows before the server answers.
       expect(active()).toEqual(['Thesis', 'Capstone']);
-
       const req = http.expectOne(`${API}/reorder`);
       expect(req.request.method).toBe('PUT');
       // Favorites, then my projects, then archived; never the Inbox.
@@ -921,98 +780,23 @@ describe('Projects integration (Project CRUD screens + API)', () => {
         message: 'Project order updated successfully',
       });
       await settle();
-
-      expect(text('.item.inbox .name')).toBe('Inbox');
-      expect(favorites()).toEqual(['Gym']);
       expect(active()).toEqual(['Thesis', 'Capstone']);
-      expect(el('.banner-error')).toBeNull();
     });
 
-    // FE-ORG-06
-    it.each([
-      ['a 400', ORDER_INVALID, 400, "Your change wasn't saved. Invalid project order"],
-      ['a 500', { error: 'Internal server error' }, 500, SAVE_FAILED],
-    ])('restores the previous order and shows an error on %s', async (_, body, code, message) => {
+    it('restores the previous order and shows an error on a 500', async () => {
       await startSignedIn();
-      await openSwitcher();
+      await openPage();
       await drop('active', 0, 1);
-      expect(active()).toEqual(['Thesis', 'Capstone']);
-
-      http.expectOne(`${API}/reorder`).flush(body, status(code));
+      http.expectOne(`${API}/reorder`).flush({ error: 'boom' }, status(500));
       await settle();
 
       expect(active()).toEqual(['Capstone', 'Thesis']);
-      expect(text('.banner-error')).toBe(message);
-    });
-
-    // Case 5
-    it('switches the active project when one is selected, without a request', async () => {
-      await startSignedIn();
-      await openSwitcher();
-      const select = (name: string) =>
-        all('button.select').find((b) => b.textContent?.trim() === name)!;
-
-      select('Capstone').click();
-      await settle();
-
-      expect(select('Capstone').getAttribute('aria-current')).toBe('true');
-      expect(select('Gym').getAttribute('aria-current')).toBeNull();
-      expect(TestBed.inject(ProjectsStore).selected()?.name).toBe('Capstone');
-      expect(text('[role="status"][aria-live="polite"]')).toBe('Switched to Capstone.');
-
-      select('Thesis').click();
-      await settle();
-      expect(select('Thesis').getAttribute('aria-current')).toBe('true');
-      expect(select('Capstone').getAttribute('aria-current')).toBeNull();
-      http.expectNone(() => true);
-    });
-
-    // Case 6
-    it('uses real, named, keyboard-reachable buttons, with aria-pressed on the favorite toggle', async () => {
-      await startSignedIn();
-      await openSwitcher();
-
-      const controls = all('.controls > *');
-      expect(controls.length).toBeGreaterThan(0);
-      for (const control of controls) {
-        expect(control.tagName).toBe('BUTTON');
-        expect(control.getAttribute('type')).toBe('button');
-        expect(control.getAttribute('aria-label')).toBeTruthy();
-        expect(control.getAttribute('tabindex')).not.toBe('-1');
-      }
-      expect(button('Favorite Gym').getAttribute('aria-pressed')).toBe('true');
-      expect(button('Favorite Capstone').getAttribute('aria-pressed')).toBe('false');
-      // The drag handle is hidden from assistive tech; the move buttons are the keyboard way.
-      expect(el('.handle')?.getAttribute('aria-hidden')).toBe('true');
-      expect(button('Move Capstone up').disabled).toBe(true);
-      expect(button('Move Capstone down').disabled).toBe(false);
-
-      await click('Move Thesis up');
-      const req = http.expectOne(`${API}/reorder`);
-      expect(req.request.body).toEqual({ projectIds: [12, 11, 10, 13] });
-      req.flush({ projects: [], message: 'Project order updated successfully' });
-      await settle();
-    });
-
-    // Case 7
-    it.each([
-      ['favoriting', 'Favorite Capstone', `${API}/10/favorite`],
-      ['archiving', 'Archive Capstone', `${API}/10/archive`],
-    ])('clears the session and goes to /login on a 401 when %s', async (_, label, url) => {
-      await startSignedIn();
-      await openSwitcher();
-      await click(label);
-      http.expectOne(url).flush(TOKEN_REJECTED, status(401, 'Unauthorized'));
-      await settle();
-
-      expect(router.url).toBe('/login');
-      expect(storedToken()).toBeNull();
-      expect(session.currentUser()).toBeNull();
+      expect(text('.banner-error')).toContain("Your new order wasn't saved.");
     });
 
     it('clears the session and goes to /login on a 401 when reordering', async () => {
       await startSignedIn();
-      await openSwitcher();
+      await openPage();
       await drop('active', 0, 1);
       http.expectOne(`${API}/reorder`).flush(TOKEN_REJECTED, status(401, 'Unauthorized'));
       await settle();

@@ -13,7 +13,7 @@ describe('PriorityList (sidebar)', () => {
   let page: HTMLElement;
 
   const rows = () => [...page.querySelectorAll<HTMLButtonElement>('button.row')];
-  const badges = () => rows().map((r) => r.querySelector<HTMLElement>('.badge')!);
+  const badges = () => rows().map((r) => r.querySelector<HTMLElement>('.label')!);
 
   beforeEach(async () => {
     vi.useFakeTimers({ toFake: ['Date'] });
@@ -43,13 +43,18 @@ describe('PriorityList (sidebar)', () => {
       .expectOne(`${environment.apiBaseUrl}/api/priorities`)
       .flush([
         { id: 3, name: 'Low', color: '#6E9F79', sortOrder: 2, isDefault: false, taskCount: 2 },
-        { id: 7, name: 'Urgent', color: '#C44536', sortOrder: 0, isDefault: false, taskCount: 0 },
+        { id: 7, name: 'Blocker', color: '#C44536', sortOrder: 0, isDefault: false, taskCount: 0 },
         { id: 1, name: 'High', color: '#D84A4A', sortOrder: 1, isDefault: true, taskCount: 3 },
       ]);
     fixture.detectChanges();
 
-    expect(badges().map((badge) => badge.textContent?.trim())).toEqual(['Urgent', 'High', 'Low']);
-    expect(badges()[0].style.backgroundColor).toBe('rgb(196, 69, 54)');
+    expect(badges().map((badge) => badge.textContent?.trim())).toEqual(['Blocker', 'High', 'Low']);
+    const accent = (i: number) =>
+      badges()[i].querySelector<HTMLElement>('.chip')!.style.getPropertyValue('--priority-accent');
+    // A custom level tints with its own color, as its tasks do.
+    expect(accent(0)).toBe('#C44536');
+    // A standard name uses the shared palette, whatever color it was saved with.
+    expect(accent(1)).toBe('var(--priority-high-accent)');
     expect(rows().map((r) => r.querySelector('.count')?.textContent)).toEqual(['0', '3', '2']);
   });
 

@@ -32,6 +32,7 @@ const latestTask: TaskRecord = {
     name: 'Medium',
     color: '#888888',
     isDefault: true,
+    archivedAt: null,
     sortOrder: 1,
     deletedAt: null,
     createdAt: new Date('2026-11-01T00:00:00.000Z'),
@@ -50,6 +51,7 @@ const archivedProject: ProjectRecord = {
   isArchived: true,
   archivedAt: new Date('2026-11-09T09:30:00.000Z'),
   sortOrder: 1,
+  lastAccessedAt: null,
   createdAt: new Date('2026-11-01T00:00:00.000Z'),
   updatedAt: new Date('2026-11-01T00:00:00.000Z'),
   deletedAt: null,
@@ -66,6 +68,20 @@ const archivedLabel: LabelListRecord = {
   _count: { taskLabels: 3 },
 };
 
+const archivedPriority = {
+  id: 9,
+  userId: 'user-1',
+  name: 'Someday',
+  color: '#3B82F6',
+  isDefault: false,
+  sortOrder: 4,
+  archivedAt: new Date('2026-11-07T09:30:00.000Z'),
+  deletedAt: null,
+  createdAt: new Date('2026-11-01T00:00:00.000Z'),
+  updatedAt: new Date('2026-11-01T00:00:00.000Z'),
+  _count: { tasks: 2 },
+};
+
 function dependencies(): ArchiveDependencies {
   return {
     listArchivedTasks: vi.fn().mockResolvedValue({
@@ -79,6 +95,10 @@ function dependencies(): ArchiveDependencies {
     listArchivedLabels: vi.fn().mockResolvedValue({
       items: [archivedLabel],
       total: 3,
+    }),
+    listArchivedPriorities: vi.fn().mockResolvedValue({
+      items: [archivedPriority],
+      total: 1,
     }),
   };
 }
@@ -99,6 +119,7 @@ describe('ArchiveService', () => {
     expect(response.tasks.total).toBe(4);
     expect(response.projects.total).toBe(2);
     expect(response.labels.total).toBe(3);
+    expect(response.priorities.total).toBe(1);
     expect(decodeArchiveCursor(response.nextCursor!)?.type).toBe('projects');
   });
 
@@ -114,11 +135,33 @@ describe('ArchiveService', () => {
     expect(deps.listArchivedTasks).not.toHaveBeenCalled();
     expect(deps.listArchivedProjects).not.toHaveBeenCalled();
     expect(deps.listArchivedLabels).toHaveBeenCalledOnce();
+    expect(deps.listArchivedPriorities).not.toHaveBeenCalled();
     expect(response.tasks).toEqual({ items: [], total: 0 });
     expect(response.projects).toEqual({ items: [], total: 0 });
     expect(response.labels).toMatchObject({
       total: 3,
       items: [{ id: 4, taskCount: 3, isArchived: true }],
     });
+  });
+
+  it('lists archived priorities last within the same instant, with their task counts', async () => {
+    const deps = dependencies();
+    const service = new ArchiveService(deps);
+
+    const response = await service.list('user-1', {
+      type: 'priorities',
+      limit: 20,
+    });
+
+    expect(deps.listArchivedPriorities).toHaveBeenCalledWith(
+      'user-1',
+      20,
+      undefined
+    );
+    expect(response.priorities).toMatchObject({
+      total: 1,
+      items: [{ id: 9, name: 'Someday', taskCount: 2, isArchived: true }],
+    });
+    expect(response.tasks).toEqual({ items: [], total: 0 });
   });
 });

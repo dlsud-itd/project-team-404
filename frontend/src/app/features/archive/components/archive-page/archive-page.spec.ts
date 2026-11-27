@@ -111,7 +111,7 @@ describe('ArchivePage', () => {
     await create();
     expectList().flush(body());
     await settle();
-    expect(tabs()).toEqual(['All 3', 'Tasks 1', 'Projects 1', 'Labels 1']);
+    expect(tabs()).toEqual(['All 3', 'Tasks 1', 'Projects 1', 'Labels 1', 'Priorities 0']);
     expect(el('[role="tab"][aria-selected="true"]')?.textContent).toContain('All');
   });
 
@@ -124,7 +124,7 @@ describe('ArchivePage', () => {
     await settle();
 
     expect(rows()).toEqual(['Work']);
-    expect(tabs()).toEqual(['All 6', 'Tasks 4', 'Projects 1', 'Labels 1']);
+    expect(tabs()).toEqual(['All 6', 'Tasks 4', 'Projects 1', 'Labels 1', 'Priorities 0']);
   });
 
   it('moves between tabs with the arrow keys', async () => {
@@ -171,7 +171,7 @@ describe('ArchivePage', () => {
     button('Restore task Buy milk')!.click();
     await settle();
     expect(rows()).toEqual(['Old', 'Work']);
-    expect(tabs()).toEqual(['All 2', 'Tasks 0', 'Projects 1', 'Labels 1']);
+    expect(tabs()).toEqual(['All 2', 'Tasks 0', 'Projects 1', 'Labels 1', 'Priorities 0']);
 
     const req = http.expectOne(`${API}/tasks/9/archive`);
     expect(req.request.body).toEqual({ isArchived: false });
@@ -192,7 +192,7 @@ describe('ArchivePage', () => {
     await settle();
 
     expect(rows()).toEqual(['Buy milk', 'Old', 'Work']);
-    expect(tabs()).toEqual(['All 3', 'Tasks 1', 'Projects 1', 'Labels 1']);
+    expect(tabs()).toEqual(['All 3', 'Tasks 1', 'Projects 1', 'Labels 1', 'Priorities 0']);
     const toast = toasts.toasts().at(-1)!;
     expect(toast.kind).toBe('error');
     expect(toast.message).toBe("Couldn't restore label “Work”. Please try again.");

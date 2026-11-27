@@ -19,7 +19,8 @@ export interface ApiBoardTask {
 
 /** Body of GET /api/tasks/board. */
 export interface ApiTaskBoard {
-  projectId: number;
+  /** Null for the all-projects board. */
+  projectId: number | null;
   columns: Record<BoardColumnKey, ApiBoardTask[]>;
   /** Every matching task per column; Done may hold more than the 50 it returns. */
   counts: Record<BoardColumnKey, number>;

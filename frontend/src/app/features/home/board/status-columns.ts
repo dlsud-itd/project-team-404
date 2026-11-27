@@ -17,7 +17,7 @@ import { DashboardStore, type Task, type TaskStatus } from '../dashboard.store';
             <li class="task">
               <span
                 class="dot"
-                [style.background]="store.projectById(task.projectId)?.color ?? '#bbb'"
+                [style.background]="store.projectById(task.projectId)?.color ?? null"
               ></span>
               <span class="title">{{ task.title }}</span>
               <span class="due">{{ shortDate(task.due) }}</span>
@@ -46,33 +46,30 @@ import { DashboardStore, type Task, type TaskStatus } from '../dashboard.store';
     .column {
       position: relative;
       min-height: 11.75rem;
-      padding: 1.75rem 0.75rem 0.75rem;
-      border: 1px solid var(--orange-light);
+      padding: 0.875rem 0.75rem 0.75rem;
       border-radius: 0.75rem;
       background: var(--theme-surface);
       color: var(--theme-text);
+      box-shadow: var(--elevation-1);
     }
+    /*
+     * Column headings stay neutral: red, orange and blue are reserved for priority. Only the
+     * current column takes the accent.
+     */
     .pill {
-      position: absolute;
-      top: -0.375rem;
-      left: 50%;
-      transform: translateX(-50%);
-      margin: 0;
-      padding: 0.25rem 0.625rem;
+      display: inline-block;
+      margin: 0 0 0.625rem;
+      padding: 0.125rem 0.5rem;
       border-radius: 0.375rem;
-      color: var(--theme-surface);
+      background: var(--active-bg);
+      color: var(--ink-muted);
       font-size: 0.75rem;
-      font-weight: 600;
+      font-weight: 500;
       white-space: nowrap;
     }
     .pill--current {
-      background: var(--theme-primary);
-    }
-    .pill--upcoming {
-      background: var(--theme-warning);
-    }
-    .pill--overdue {
-      background: var(--theme-error);
+      background: color-mix(in srgb, var(--ink) 10%, transparent);
+      color: var(--ink);
     }
     /* A fixed maximum height: long columns scroll inside the card. */
     .list {
@@ -85,7 +82,7 @@ import { DashboardStore, type Task, type TaskStatus } from '../dashboard.store';
       overscroll-behavior: contain;
       list-style: none;
       &:focus-visible {
-        outline: 2px solid var(--theme-info);
+        outline: 2px solid var(--theme-primary);
         outline-offset: 2px;
       }
     }
@@ -104,6 +101,7 @@ import { DashboardStore, type Task, type TaskStatus } from '../dashboard.store';
       height: 0.5rem;
       border-radius: 50%;
       flex-shrink: 0;
+      background: var(--ink-muted);
     }
     .title {
       flex: 1;

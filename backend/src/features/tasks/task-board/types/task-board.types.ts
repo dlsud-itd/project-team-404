@@ -16,7 +16,8 @@ export type BoardTask = {
 };
 
 export type TaskBoardResult = {
-  projectId: number;
+  /** Null for the all-projects board. */
+  projectId: number | null;
   columns: {
     todo: BoardTask[];
     inProgress: BoardTask[];

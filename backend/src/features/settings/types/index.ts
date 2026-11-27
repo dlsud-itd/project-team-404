@@ -1,6 +1,32 @@
+export const LIGHT_THEME_PRESETS = [
+  'paper',
+  'terracotta',
+  'meadow',
+  'coast',
+] as const;
+export const DARK_THEME_PRESETS = [
+  'graphite',
+  'midnight',
+  'forest',
+  'violet',
+] as const;
+export type ThemePresetId =
+  (typeof LIGHT_THEME_PRESETS)[number] | (typeof DARK_THEME_PRESETS)[number];
+
+/** How the dashboard orders favorite projects. */
+export const DASHBOARD_PROJECT_SORTS = [
+  'custom',
+  'name-asc',
+  'name-desc',
+  'recent',
+  'created-desc',
+  'created-asc',
+] as const;
+export type DashboardProjectSort = (typeof DASHBOARD_PROJECT_SORTS)[number];
+
 export type ThemeSettings = {
   mode: 'light' | 'dark';
-  preset: 'terracotta' | 'meadow' | 'coast' | 'midnight' | 'forest' | 'violet';
+  preset: ThemePresetId;
   colors: {
     primary: string;
     secondary: string;
@@ -16,21 +42,22 @@ export type ThemeSettings = {
   };
 };
 
+/** Paper: a neutral base with one violet accent. New accounts start here. */
 export const DEFAULT_THEME_SETTINGS: ThemeSettings = {
   mode: 'light',
-  preset: 'terracotta',
+  preset: 'paper',
   colors: {
-    primary: '#d9531e',
-    secondary: '#d98cf0',
-    background: '#fffaf7',
+    primary: '#6941c6',
+    secondary: '#73726e',
+    background: '#fbfbfa',
     surface: '#ffffff',
-    text: '#1d1714',
-    muted: '#6b5b54',
-    border: '#3a2f2a',
-    success: '#1f7a3d',
-    warning: '#9a5b00',
-    error: '#b42318',
-    info: '#176b87',
+    text: '#37352f',
+    muted: '#73726e',
+    border: '#8f8e8a',
+    success: '#2f7d4f',
+    warning: '#8a5a00',
+    error: '#c4332d',
+    info: '#6941c6',
   },
 };
 
@@ -41,4 +68,6 @@ export type UpdateSettingsInput = Partial<{
   fontFamily:
     'system' | 'sans-serif' | 'serif' | 'monospace' | 'atkinson-hyperlegible';
   theme: ThemeSettings;
+  defaultProjectId: number | null;
+  dashboardProjectSort: DashboardProjectSort;
 }>;

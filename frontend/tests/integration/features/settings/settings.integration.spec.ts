@@ -269,6 +269,10 @@ describe('Settings integration (Config, Preferences and limited dashboard widget
     await harness.navigateByUrl(`/settings/${path}`);
     await settle();
     expectSettingsGet().flush(saved);
+    // Config lists the projects for its default-project picker.
+    http
+      .match((r) => r.url === PROJECTS_API && r.method === 'GET')
+      .forEach((r) => r.flush(r.request.params.get('isArchived') === 'true' ? [] : PROJECTS));
     await settle();
   }
 
@@ -527,18 +531,20 @@ describe('Settings integration (Config, Preferences and limited dashboard widget
     });
 
     // FE-SET-04
-    it('lists 4 projects on /home, and View all opens the full project list', async () => {
+    it('lists 4 favorite projects on /home, and View all opens the full project list', async () => {
+      // The dashboard shows starred projects only; the Inbox can't be starred.
+      const starred = PROJECTS.map((p) => (p.isInbox ? p : { ...p, isFavorite: true }));
       await startSignedIn(limited);
       await harness.navigateByUrl('/home');
       await settle();
-      answerHome();
+      answerHome(starred);
       await settle();
 
       const names = all('app-project-list li.project .name').map((n) => clean(n.textContent));
-      // The first four in the user's order, Inbox included.
-      expect(names).toEqual(['Inbox', 'School', 'Work', 'Personal']);
+      // The first four favorites in the user's order.
+      expect(names).toEqual(['School', 'Work', 'Personal', 'Health']);
       const viewAll = el<HTMLAnchorElement>('app-project-list a.view-all');
-      expect(clean(viewAll.textContent)).toBe(`View all (${PROJECTS.length})`);
+      expect(clean(viewAll.textContent)).toBe(`View all (${starred.length - 1})`);
 
       await press(viewAll);
       answerHome();

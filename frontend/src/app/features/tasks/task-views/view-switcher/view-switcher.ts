@@ -45,19 +45,21 @@ export function toTaskView(value: string | null): TaskView {
       gap: 0.25rem;
       max-width: 100%;
       padding: 0.25rem;
-      border-radius: 999px;
-      background: color-mix(in srgb, var(--theme-primary) 10%, var(--theme-surface));
+      border-radius: 0.5rem;
+      background: var(--active-bg);
       /* Four options can outgrow a phone; the control scrolls instead of the page. */
       overflow-x: auto;
       scrollbar-width: none;
     }
     .view {
       flex: none;
-      padding: 0.375rem 1rem;
-      border-radius: 999px;
+      padding: 0.25rem 0.75rem;
+      border-radius: 0.375rem;
       color: var(--ink-muted);
-      font-size: 0.875rem;
-      font-weight: 600;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      line-height: 1.5rem;
+      transition: color var(--duration-fast) var(--ease-out);
       text-decoration: none;
       &:hover {
         color: var(--ink);
@@ -65,10 +67,10 @@ export function toTaskView(value: string | null): TaskView {
       &[aria-current='page'] {
         background: var(--theme-surface);
         color: var(--ink);
-        box-shadow: 0 1px 2px rgb(29 23 20 / 0.08);
+        box-shadow: var(--elevation-1);
       }
       &:focus-visible {
-        outline: 2px solid var(--ink);
+        outline: 2px solid var(--theme-primary);
         outline-offset: -2px;
       }
       @media (pointer: coarse) {

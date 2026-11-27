@@ -31,6 +31,8 @@
         cdkDrag
         [cdkDragDisabled]="editingId() !== null"
         [attr.data-label-id]="label.id"
+        animate.enter="row-enter"
+        animate.leave="row-leave"
       >
         @if (editingId() === label.id) {
           <app-name-color-editor
@@ -99,16 +101,11 @@
               [attr.aria-label]="'Archive ' + label.name"
               (click)="setArchived(label, true)"
             >
+              <svg class="glyph" viewBox="0 0 24 24" aria-hidden="true">
+                <rect x="3" y="4" width="18" height="5" rx="1" />
+                <path d="M5 9v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V9M10 13h4" />
+              </svg>
               Archive
-            </button>
-            <button
-              type="button"
-              class="action danger"
-              [id]="'label-' + label.id + '-delete'"
-              [attr.aria-label]="'Delete ' + label.name"
-              (click)="askDelete(label)"
-            >
-              Delete
             </button>
           </div>
         }
@@ -118,40 +115,10 @@
     }
   </ul>
 
-  @if (archived().length) {
-    <h3 id="archived-labels-heading">Archived</h3>
-    <ul class="list archived" aria-labelledby="archived-labels-heading">
-      @for (label of archived(); track label.id) {
-        <li class="row">
-          <span class="swatch" [style.background-color]="label.color ?? noColor"></span>
-          <span class="name">{{ label.name }}</span>
-          @if (countLabel(label.taskCount); as count) {
-            <span class="count">{{ count }}</span>
-          }
-          <div class="actions">
-            <button
-              type="button"
-              class="action"
-              [disabled]="isBusy(label)"
-              [attr.aria-label]="'Restore ' + label.name"
-              (click)="setArchived(label, false)"
-            >
-              Restore
-            </button>
-            <button
-              type="button"
-              class="action danger"
-              [id]="'label-' + label.id + '-delete'"
-              [attr.aria-label]="'Delete ' + label.name"
-              (click)="askDelete(label)"
-            >
-              Delete
-            </button>
-          </div>
-        </li>
-      }
-    </ul>
-  }
+  <p class="archive-note">
+    Archived labels are hidden from the label picker and filters. Restore or delete them from the
+    <a routerLink="/archive" [queryParams]="{ tab: 'labels' }">Archive</a>.
+  </p>
 }
 
 @if (createOpen()) {
@@ -176,37 +143,5 @@
       (saved)="create($event)"
       (cancelled)="createOpen.set(false)"
     />
-  </section>
-}
-
-@if (pendingDelete(); as label) {
-  <div class="backdrop" (click)="cancelDelete()"></div>
-  <section
-    class="dialog"
-    role="alertdialog"
-    aria-modal="true"
-    aria-labelledby="delete-label-title"
-    aria-describedby="delete-label-impact"
-    (keydown.escape)="cancelDelete()"
-  >
-    <h3 id="delete-label-title">Delete “{{ label.name }}”?</h3>
-    <p id="delete-label-impact">{{ deleteImpact(label) }} This can't be undone.</p>
-    @if (deleteError(); as message) {
-      <p class="dialog-error" role="alert">{{ message }}</p>
-    }
-    <div class="dialog-actions">
-      <button
-        type="button"
-        class="action"
-        id="delete-label-cancel"
-        [disabled]="deleting()"
-        (click)="cancelDelete()"
-      >
-        Cancel
-      </button>
-      <button type="button" class="action danger" [disabled]="deleting()" (click)="confirmDelete()">
-        {{ deleting() ? 'Deleting…' : 'Delete label' }}
-      </button>
-    </div>
   </section>
 }

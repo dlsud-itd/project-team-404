@@ -1,6 +1,7 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 import { environment } from '../../../../environments/environment';
 import { ToastService } from '../../../shared/services/toast.service';
 import { PrioritiesStore, REORDER_FAILED_MESSAGE } from '../state/priorities.store';
@@ -51,7 +52,7 @@ describe('PrioritySettings', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [PrioritySettings],
-      providers: [provideHttpClient(), provideHttpClientTesting()],
+      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
     }).compileComponents();
     http = TestBed.inject(HttpTestingController);
   });
@@ -63,8 +64,9 @@ describe('PrioritySettings', () => {
 
     expect(names()).toEqual(['Low', 'Medium', 'High']);
     const rows = all('ul[aria-label="Priority levels"] li.row');
+    // The swatch shows the color tasks get: standard names use the shared priority palette.
     expect(rows[0].querySelector<HTMLElement>('.swatch')!.style.backgroundColor).toBe(
-      'rgb(110, 159, 121)',
+      'var(--priority-low-accent)',
     );
     expect(rows.map((row) => row.querySelector('.count')?.textContent)).toEqual([
       '2 tasks',
@@ -202,60 +204,62 @@ describe('PrioritySettings', () => {
     http.expectOne(`${URL}/reorder`).flush({ priorityIds: [12, 13, 11] });
   });
 
-  it('deletes a level after choosing where its tasks go', () => {
+  it('archives a level instead of deleting it, with an Undo toast', () => {
     open();
-    byLabel('Delete Medium').click();
-    render();
-    expect(el('app-delete-priority-dialog')).toBeTruthy();
+    expect(el('button[aria-label^="Delete"]')).toBeNull();
 
-    const select = el<HTMLSelectElement>('#reassign-priority')!;
-    select.value = '13';
-    select.dispatchEvent(new Event('change'));
+    byLabel('Archive Low').click();
     render();
-    [...page.querySelectorAll<HTMLButtonElement>('app-delete-priority-dialog button')]
-      .find((b) => b.textContent?.trim() === 'Delete level')!
-      .click();
-    render();
+    expect(names()).toEqual(['Medium', 'High']);
 
-    const req = http.expectOne((r) => r.url === `${URL}/12`);
-    expect(req.request.method).toBe('DELETE');
-    expect(req.request.params.get('reassignTo')).toBe('13');
-    req.flush({ deletedId: 12, reassignedTo: 13, tasksReassigned: 5 });
-    render();
+    const req = http.expectOne(`${URL}/11/archive`);
+    expect(req.request.method).toBe('PUT');
+    expect(req.request.body).toEqual({ isArchived: true });
+    req.flush({ ...LEVELS[0], isArchived: true, archivedAt: '2026-11-27T00:00:00.000Z' });
 
-    expect(el('app-delete-priority-dialog')).toBeNull();
-    expect(names()).toEqual(['Low', 'High']);
-    const high = all('ul[aria-label="Priority levels"] li.row')[1];
-    expect(high.querySelector('.badge')?.textContent).toBe('Default');
-    expect(high.querySelector('.count')?.textContent).toBe('6 tasks');
-  });
+    const toast = TestBed.inject(ToastService).toasts()[0];
+    expect(toast).toEqual(
+      expect.objectContaining({ message: 'Priority “Low” archived', kind: 'info' }),
+    );
 
-  it('shows the server’s reason when it refuses a delete', () => {
-    open();
-    byLabel('Delete Low').click();
+    // Undo brings it back.
+    toast.action!.run();
     render();
-    const select = el<HTMLSelectElement>('#reassign-priority')!;
-    select.value = '12';
-    select.dispatchEvent(new Event('change'));
-    render();
-    [...page.querySelectorAll<HTMLButtonElement>('app-delete-priority-dialog button')]
-      .find((b) => b.textContent?.trim() === 'Delete level')!
-      .click();
-    http
-      .expectOne((r) => r.url === `${URL}/11`)
-      .flush(
-        { error: 'Priority is still in use', code: 'PriorityInUse' },
-        { status: 409, statusText: 'Conflict' },
-      );
-    render();
-    expect(text('app-delete-priority-dialog [role="alert"]')).toBe('Priority is still in use');
     expect(names()).toEqual(['Low', 'Medium', 'High']);
+    http.expectOne(`${URL}/11/archive`).flush({ ...LEVELS[0], isArchived: false });
   });
 
-  it('does not let the last level be deleted', () => {
-    open([{ ...LEVELS[1] }]);
-    const remove = byLabel('Delete Medium');
-    expect(remove.disabled).toBe(true);
-    expect(remove.title).toBe('You need at least one priority level');
+  it('puts the level back when archiving fails', () => {
+    open();
+    byLabel('Archive High').click();
+    http.expectOne(`${URL}/13/archive`).flush(null, { status: 500, statusText: 'Server Error' });
+    render();
+
+    expect(names()).toEqual(['Low', 'Medium', 'High']);
+    expect(TestBed.inject(ToastService).toasts()).toEqual([
+      expect.objectContaining({ kind: 'error' }),
+    ]);
+  });
+
+  it('does not archive the default level or the last one', () => {
+    open();
+    const archiveDefault = byLabel('Archive Medium');
+    expect(archiveDefault.disabled).toBe(true);
+    expect(archiveDefault.title).toBe('Make another level the default before archiving this one');
+  });
+
+  it('keeps archived levels out of the list and after the others when reordering', () => {
+    open([
+      ...LEVELS,
+      { id: 14, name: 'Someday', color: null, sortOrder: 3, isDefault: false, isArchived: true },
+    ]);
+    expect(names()).toEqual(['Low', 'Medium', 'High']);
+    expect(page.textContent).toContain('Archive');
+
+    byLabel('Move Low down').click();
+    render();
+    const req = http.expectOne(`${URL}/reorder`);
+    expect(req.request.body).toEqual({ priorityIds: [12, 11, 13, 14] });
+    req.flush({ priorityIds: [12, 11, 13, 14] });
   });
 });

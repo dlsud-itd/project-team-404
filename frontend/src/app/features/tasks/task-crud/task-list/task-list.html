@@ -107,7 +107,6 @@
               [reorderBlocked]="reorderBlocked()"
               [announcement]="announcement()"
               (moved)="moveTask($event)"
-              (deleteRequested)="askDelete($event)"
             />
           }
         } @else if (query.count() > 0) {
@@ -127,13 +126,3 @@
     }
   }
 </main>
-
-@if (pendingDelete(); as task) {
-  <app-confirm-delete-task-dialog
-    [task]="task"
-    [busy]="deleting()"
-    [error]="deleteError()"
-    (confirmed)="confirmDelete()"
-    (cancelled)="cancelDelete()"
-  />
-}

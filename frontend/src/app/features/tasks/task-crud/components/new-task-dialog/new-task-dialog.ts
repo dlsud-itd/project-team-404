@@ -62,7 +62,7 @@ import { TaskForm } from '../../task-form/task-form';
       border-radius: 1rem;
       background: var(--theme-surface);
       color: var(--theme-text);
-      box-shadow: 0 20px 48px rgb(0 0 0 / 0.2);
+      box-shadow: var(--elevation-2);
     }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,

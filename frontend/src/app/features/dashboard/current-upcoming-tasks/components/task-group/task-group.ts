@@ -27,7 +27,7 @@ export class TaskGroup {
   }
 
   protected priorityColor(task: Task): string {
-    return this.priorities.colorOf(task.priorityId);
+    return this.priorities.toneOf(task.priorityId).accent;
   }
 
   protected dueLabel(task: Task): string {

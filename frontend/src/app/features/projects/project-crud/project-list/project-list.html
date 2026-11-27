@@ -1,9 +1,8 @@
 <main class="page">
   <app-projects-header />
 
-  @if (notice(); as message) {
-    <p class="form-notice" role="status">{{ message }}</p>
-  }
+  <p class="visually-hidden" aria-live="polite">{{ announcement() }}</p>
+
   @if (actionError(); as message) {
     <p class="banner-error" role="alert">{{ message }}</p>
   }
@@ -46,13 +45,11 @@
     @if (flat()) {
       @if (visible().length) {
         <section class="group" aria-labelledby="results-heading">
-          <h2 id="results-heading">
-            {{ query().archived ? 'Archived projects' : 'Projects' }} · {{ visible().length }}
-          </h2>
+          <h2 id="results-heading">Projects · {{ visible().length }}</h2>
           <ul class="list">
             @for (project of visible(); track project.projectId) {
-              <li>
-                <app-project-card [project]="project" (deleteRequested)="askDelete($event)" />
+              <li animate.enter="row-enter" animate.leave="row-leave">
+                <app-project-card [project]="project" />
               </li>
             }
           </ul>
@@ -67,29 +64,28 @@
         <ng-container [ngTemplateOutlet]="onlyInbox" />
       }
     } @else {
+      <p class="hint">
+        Drag a project by its handle (or press Alt+↑ / Alt+↓) to set your custom order. Star a
+        project to pin it to the dashboard.
+      </p>
+
       @if (favorites().length) {
         <section class="group" aria-labelledby="favorites-heading">
           <h2 id="favorites-heading">Favorites</h2>
-          <ul class="list">
-            @for (project of favorites(); track project.projectId) {
-              <li>
-                <app-project-card [project]="project" (deleteRequested)="askDelete($event)" />
-              </li>
-            }
-          </ul>
+          <ng-container
+            [ngTemplateOutlet]="reorderable"
+            [ngTemplateOutletContext]="{ $implicit: favorites(), group: 'favorites' }"
+          />
         </section>
       }
 
       <section class="group" aria-labelledby="projects-heading">
         <h2 id="projects-heading">My projects</h2>
         @if (others().length) {
-          <ul class="list">
-            @for (project of others(); track project.projectId) {
-              <li>
-                <app-project-card [project]="project" (deleteRequested)="askDelete($event)" />
-              </li>
-            }
-          </ul>
+          <ng-container
+            [ngTemplateOutlet]="reorderable"
+            [ngTemplateOutletContext]="{ $implicit: others(), group: 'active' }"
+          />
         } @else if (!favorites().length) {
           <ng-container [ngTemplateOutlet]="onlyInbox" />
         }
@@ -97,6 +93,43 @@
     }
   }
 </main>
+
+<!-- One group in custom order. Dragging only reorders within its group. -->
+<ng-template #reorderable let-projects let-group="group">
+  <ul
+    class="list"
+    cdkDropList
+    cdkDropListLockAxis="y"
+    [cdkDropListDisabled]="reordering()"
+    (cdkDropListDropped)="dropped(group, $event)"
+  >
+    @for (project of projects; track project.projectId; let i = $index) {
+      <li
+        class="item"
+        cdkDrag
+        [cdkDragData]="project"
+        animate.enter="row-enter"
+        animate.leave="row-leave"
+        aria-keyshortcuts="Alt+ArrowUp Alt+ArrowDown"
+        (keydown.alt.arrowup)="moveByKey($event, group, i, i - 1)"
+        (keydown.alt.arrowdown)="moveByKey($event, group, i, i + 1)"
+      >
+        <span class="handle hover-handle" cdkDragHandle aria-hidden="true" title="Drag to reorder">
+          <svg viewBox="0 0 24 24">
+            <circle cx="9" cy="6" r="1.5" />
+            <circle cx="15" cy="6" r="1.5" />
+            <circle cx="9" cy="12" r="1.5" />
+            <circle cx="15" cy="12" r="1.5" />
+            <circle cx="9" cy="18" r="1.5" />
+            <circle cx="15" cy="18" r="1.5" />
+          </svg>
+        </span>
+        <app-project-card class="item-card" [project]="project" />
+        <div class="placeholder" *cdkDragPlaceholder></div>
+      </li>
+    }
+  </ul>
+</ng-template>
 
 <ng-template #onlyInbox>
   <div class="empty">
@@ -107,13 +140,3 @@
     </button>
   </div>
 </ng-template>
-
-@if (pendingDelete(); as project) {
-  <app-confirm-delete-dialog
-    [project]="project"
-    [busy]="deleting()"
-    [error]="deleteError()"
-    (confirmed)="confirmDelete()"
-    (cancelled)="cancelDelete()"
-  />
-}

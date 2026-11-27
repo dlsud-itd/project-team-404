@@ -23,6 +23,11 @@ export type ProjectOrganizationDependencies = {
     projectIds: number[],
     userId: string
   ): Promise<ProjectSortOrder[]>;
+  touchProjectAccess?(
+    projectId: number,
+    userId: string,
+    at: Date
+  ): Promise<{ count: number }>;
 };
 
 export class ProjectOrganizationService {
@@ -88,6 +93,18 @@ export class ProjectOrganizationService {
       sortOrder,
       message: 'Project sort order updated successfully',
     };
+  }
+
+  /** Stamps lastAccessedAt with the current time. */
+  async markAccessed(project: ProjectRecord, userId: string) {
+    const at = new Date();
+    const result = await this.dependencies.touchProjectAccess?.(
+      project.id,
+      userId,
+      at
+    );
+    if (result && result.count !== 1) throw new ProjectNotFoundError();
+    return { projectId: project.id, lastAccessedAt: at };
   }
 
   reorder(projectIds: number[], userId: string) {

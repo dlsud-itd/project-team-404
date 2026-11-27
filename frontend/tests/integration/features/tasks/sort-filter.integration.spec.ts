@@ -265,6 +265,7 @@ describe('Sort & filter integration (task list, projects page + API)', () => {
 
   /** Like pressing F5 on `url`: a fresh app, signed in again from the stored token. */
   async function reload(url: string): Promise<void> {
+    http.match((r) => r.url.endsWith('/access'));
     http.verify();
     TestBed.resetTestingModule();
     configure();
@@ -385,6 +386,8 @@ describe('Sort & filter integration (task list, projects page + API)', () => {
   afterEach(() => {
     vi.useRealTimers();
     try {
+      // Opening a project stamps it for the dashboard's "Recently accessed" sort.
+      http?.match((r) => r.url.endsWith('/access'));
       if (http) http.verify();
     } finally {
       TestBed.resetTestingModule();
@@ -842,7 +845,7 @@ describe('Sort & filter integration (task list, projects page + API)', () => {
     });
 
     // FE-SF-03, FE-SF-04
-    it('writes favorites, color, archived and sort to the URL and filters the loaded projects', async () => {
+    it('writes favorites, color and sort to the URL and filters the loaded projects', async () => {
       await startSignedIn();
       await harness.navigateByUrl('/projects');
       await settle();
@@ -874,10 +877,10 @@ describe('Sort & filter integration (task list, projects page + API)', () => {
       expect(urlParams()).toMatchObject({ sort: 'name', dir: 'desc' });
       expect(cardNames()).toEqual(['Capstone', 'Biology']);
 
+      // Archived projects never show here; the Archived chip links to the Archive page.
       await press(projectChip('Favorites'));
-      await press(projectChip('Archived'));
-      expect(text('#results-heading')).toBe('Archived projects · 1');
-      expect(cardNames()).toEqual(['Old notes']);
+      expect(cardNames()).not.toContain('Old notes');
+      expect(projectChip('Archived')?.getAttribute('href')).toBe('/archive?tab=projects');
 
       // Filtering and sorting happen on the loaded lists: none of it reaches the server.
       expect(http.match((r) => r.url.startsWith(PROJECTS_API))).toEqual([]);

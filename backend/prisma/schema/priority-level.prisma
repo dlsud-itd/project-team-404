@@ -5,6 +5,8 @@ model PriorityLevel {
   color     String?   @db.Char(7)
   isDefault Boolean   @default(false) @map("is_default")
   sortOrder Int       @default(0) @db.Integer @map("sort_order")
+  /// Archived levels are hidden from pickers and filters; tasks keep them until it is deleted.
+  archivedAt DateTime? @db.Timestamptz(6) @map("archived_at")
   createdAt DateTime  @default(now()) @db.Timestamptz(6) @map("created_at")
   updatedAt DateTime  @default(now()) @db.Timestamptz(6) @map("updated_at")
   deletedAt DateTime? @db.Timestamptz(6) @map("deleted_at")

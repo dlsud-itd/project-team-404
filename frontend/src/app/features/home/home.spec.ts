@@ -259,18 +259,6 @@ describe('Home tabs', () => {
       expect(el('#panel-projects app-projects-page')).toBeTruthy();
     });
 
-    it('opens from the Organize view too, and stays there', async () => {
-      await harness.navigateByUrl('/home?tab=projects&view=organize');
-      flushProjects();
-      harness.detectChanges();
-
-      newProject().click();
-      await settle();
-
-      expect(router.url).toBe('/home?tab=projects&view=organize');
-      expect(el('[role="dialog"]')).toBeTruthy();
-    });
-
     it('sends the old /projects/new address to the Projects tab', async () => {
       await harness.navigateByUrl('/projects/new');
       flushProjects();
@@ -280,70 +268,23 @@ describe('Home tabs', () => {
     });
   });
 
-  describe('organize view', () => {
-    const viewLink = (label: string) =>
-      [...page().querySelectorAll<HTMLAnchorElement>('nav[aria-label="Project views"] a')].find(
-        (a) => a.textContent?.trim() === label,
-      )!;
-
-    async function open(url = '/home?tab=projects&view=organize'): Promise<void> {
-      await harness.navigateByUrl(url);
-      flushProjects();
-      harness.detectChanges();
-    }
-
-    it('keeps the top bar when Organize is clicked', async () => {
-      await open('/home?tab=projects');
-      const home = harness.routeDebugElement?.componentInstance;
-
-      viewLink('Organize').click();
-      await settle();
+  describe('single Projects page', () => {
+    it('has no Organize subtab or other project subtabs', async () => {
+      await harness.navigateByUrl('/home?tab=projects');
       flushProjects();
       harness.detectChanges();
 
-      expect(router.url).toBe('/home?tab=projects&view=organize');
-      expect(el('header.topbar')).toBeTruthy();
-      expect(el('#panel-projects app-project-switcher')).toBeTruthy();
-      expect(el('#panel-projects app-projects-page')).toBeNull();
-      expect(tab('projects').getAttribute('aria-selected')).toBe('true');
-      expect(harness.routeDebugElement?.componentInstance).toBe(home);
+      expect(el('nav[aria-label="Project views"]')).toBeNull();
+      expect(el('#panel-projects app-projects-page')).toBeTruthy();
     });
 
-    it('marks only Organize as the current view', async () => {
-      await open();
-
-      expect(viewLink('Organize').getAttribute('aria-current')).toBe('page');
-      expect(viewLink('All projects').hasAttribute('aria-current')).toBe(false);
-    });
-
-    it('goes back to the list with All projects', async () => {
-      await open();
-
-      viewLink('All projects').click();
-      await settle();
+    it('sends the old /projects/organize address to the Projects page', async () => {
+      await harness.navigateByUrl('/projects/organize');
       flushProjects();
       harness.detectChanges();
 
       expect(router.url).toBe('/home?tab=projects');
       expect(el('#panel-projects app-projects-page')).toBeTruthy();
-      expect(viewLink('All projects').getAttribute('aria-current')).toBe('page');
-    });
-
-    it('sends the old /projects/organize address to the same view', async () => {
-      await open('/projects/organize');
-
-      expect(router.url).toBe('/home?tab=projects&view=organize');
-      expect(el('#panel-projects app-project-switcher')).toBeTruthy();
-    });
-
-    it('forgets the view on leaving the Projects tab', async () => {
-      await open();
-
-      tab('tasks').click();
-      await settle();
-      loadTasksTab();
-
-      expect(router.url).toBe('/home?tab=tasks');
     });
   });
 

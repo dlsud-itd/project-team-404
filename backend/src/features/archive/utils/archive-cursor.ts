@@ -1,10 +1,16 @@
 import type { ArchiveCursor, ArchiveItemType } from '../types/archive.types';
 
-const archiveItemTypes: ArchiveItemType[] = ['tasks', 'projects', 'labels'];
+const archiveItemTypes: ArchiveItemType[] = [
+  'tasks',
+  'projects',
+  'labels',
+  'priorities',
+];
 const archiveItemTypeRank: Record<ArchiveItemType, number> = {
   tasks: 0,
   projects: 1,
   labels: 2,
+  priorities: 3,
 };
 
 export function encodeArchiveCursor(cursor: ArchiveCursor) {

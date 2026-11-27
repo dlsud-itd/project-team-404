@@ -116,15 +116,15 @@ describe('PreferencesSettings', () => {
     const presets = [...page.querySelectorAll<HTMLButtonElement>('.preset-option')];
     expect(
       presets.map((preset) => preset.querySelector('.preset-name')?.textContent?.trim()),
-    ).toEqual(['Midnight', 'Forest', 'Violet']);
+    ).toEqual(['Graphite', 'Midnight', 'Forest', 'Violet']);
     expect(presets[0].querySelector('.preset-preview')?.getAttribute('style')).toContain(
-      'background-color: rgb(23, 25, 30)',
+      'background-color: rgb(25, 25, 25)',
     );
     expect(document.documentElement.getAttribute(THEME_MODE_ATTRIBUTE)).toBe('dark');
 
-    presets[1].click();
+    presets[2].click();
     render();
-    expect(presets[1].getAttribute('aria-pressed')).toBe('true');
+    expect(presets[2].getAttribute('aria-pressed')).toBe('true');
     expect(rootStyle('--theme-primary')).toBe('#8ed0a4');
 
     const primary = el<HTMLInputElement>('#color-primary')!;

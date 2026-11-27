@@ -51,7 +51,7 @@ import { ToastService } from '../../services/toast.service';
       background: var(--ink);
       color: #fff;
       font-size: 0.875rem;
-      box-shadow: 0 6px 20px rgb(0 0 0 / 0.18);
+      box-shadow: var(--elevation-2);
       pointer-events: auto;
     }
     .toast.success {
@@ -79,7 +79,7 @@ import { ToastService } from '../../services/toast.service';
       background: none;
       color: inherit;
       font: inherit;
-      font-weight: 700;
+      font-weight: 500;
       cursor: pointer;
       &:hover {
         background: rgb(255 255 255 / 0.12);

@@ -27,13 +27,13 @@ import { RouterLink, type Params } from '@angular/router';
       margin-top: 0.5rem;
       color: var(--orange);
       font-size: 0.75rem;
-      font-weight: 700;
+      font-weight: 500;
       text-decoration: none;
       &:hover {
         text-decoration: underline;
       }
       &:focus-visible {
-        outline: 2px solid #7b23a8;
+        outline: 2px solid var(--theme-primary);
         outline-offset: 2px;
       }
     }

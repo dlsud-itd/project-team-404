@@ -9,11 +9,10 @@
   @if (group().tasks.length) {
     <ul class="tasks">
       @for (task of group().tasks; track task.taskId) {
-        <li class="task">
+        <li class="task" [style.--priority-color]="priorityColor(task)">
           <span
             class="priority"
             [attr.data-priority]="task.priorityId"
-            [style.--priority-color]="priorityColor(task)"
             [attr.aria-label]="priorityLabel(task) + ' priority'"
             >{{ priorityLabel(task) }}</span
           >

@@ -12,6 +12,7 @@ import { ToastService } from '../../../shared/services/toast.service';
 import { SessionService } from '../../auth/session/session.service';
 import { PRIORITY_NAMES, type ApiTaskPriority } from '../../tasks/shared/types/task.types';
 import { PrioritiesService } from '../services/priorities.service';
+import { priorityTone, type PriorityTone } from '../utils/priority-tone.util';
 import {
   NO_COLOR,
   type DeletePriorityResult,
@@ -46,10 +47,14 @@ export class PrioritiesStore {
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
 
-  /** The levels in the user's order. */
-  readonly levels = computed(() =>
+  /** Every level the server knows, archived ones included, in the user's order. */
+  readonly allLevels = computed(() =>
     [...this.list()].sort((left, right) => left.sortOrder - right.sortOrder),
   );
+  /** The levels in use, in the user's order: what pickers, filters and Settings show. */
+  readonly levels = computed(() => this.allLevels().filter((level) => !level.isArchived));
+  /** Archived levels; only the Archive page lists them. */
+  readonly archivedLevels = computed(() => this.allLevels().filter((level) => level.isArchived));
   readonly defaultLevel = computed(
     () =>
       this.levels().find((level) => level.isDefault) ?? this.levels()[0] ?? BUILT_IN_PRIORITIES[1],
@@ -92,6 +97,22 @@ export class PrioritiesStore {
 
   colorOf(id: number): string {
     return this.byId(id)?.color ?? NO_COLOR;
+  }
+
+  /** How a task on this level is colored: a tint and a left accent, plus the level's name. */
+  toneOf(id: number): PriorityTone {
+    return priorityTone(this.byId(id));
+  }
+
+  /** Marks a level archived or active here only; ArchiveService sends the request. */
+  setArchivedLocal(id: number, isArchived: boolean): void {
+    this.list.update((levels) =>
+      levels.map((level) =>
+        level.id === id
+          ? { ...level, isArchived, archivedAt: isArchived ? new Date().toISOString() : null }
+          : level,
+      ),
+    );
   }
 
   /**
@@ -161,11 +182,18 @@ export class PrioritiesStore {
    */
   reorder(orderedIds: readonly number[]): void {
     const previous = this.list();
-    const position = new Map(orderedIds.map((id, index) => [id, index]));
+    // Archived levels keep their place after the active ones, so every level gets a unique slot.
+    const ids = [
+      ...orderedIds,
+      ...this.archivedLevels()
+        .map((level) => level.id)
+        .filter((id) => !orderedIds.includes(id)),
+    ];
+    const position = new Map(ids.map((id, index) => [id, index]));
     this.list.set(
       previous.map((level) => ({ ...level, sortOrder: position.get(level.id) ?? level.sortOrder })),
     );
-    this.api.reorder(orderedIds).subscribe({
+    this.api.reorder(ids).subscribe({
       error: () => {
         this.list.set(previous);
         this.toast.error(REORDER_FAILED_MESSAGE);

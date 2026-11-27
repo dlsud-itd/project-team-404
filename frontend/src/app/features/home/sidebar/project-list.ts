@@ -1,18 +1,54 @@
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  ElementRef,
+  Injector,
+  afterNextRender,
+  computed,
+  inject,
+  signal,
+  viewChild,
+} from '@angular/core';
+import { RouterLink } from '@angular/router';
+import { ToastService } from '../../../shared/services/toast.service';
 import { ViewAllLink } from '../../../shared/components/view-all-link/view-all-link';
+import { captureFlip } from '../../../shared/utils/flip.util';
+import { ProjectsStore } from '../../projects/shared/state/projects.store';
 import { SettingsStore } from '../../settings/state/settings.store';
+import {
+  DASHBOARD_PROJECT_SORTS,
+  isDashboardProjectSort,
+  type DashboardProjectSort,
+} from '../../settings/types/user-settings.types';
 import { DashboardStore } from '../dashboard.store';
+import { sortDashboardProjects } from './sort-dashboard-projects.util';
 
+/**
+ * The dashboard's projects: only the ones starred as favorites, in the order the user picks.
+ * The order is saved with the user's settings; changing it animates the rows into place.
+ */
 @Component({
   selector: 'app-project-list',
-  imports: [ViewAllLink],
+  imports: [ViewAllLink, RouterLink],
   template: `
     <section class="card" aria-labelledby="projects-heading">
       <header class="head">
-        <h2 id="projects-heading">Projects</h2>
+        <h2 id="projects-heading">Favorite projects</h2>
+        @if (favorites().length > 1) {
+          <label class="sort">
+            <span class="visually-hidden">Sort favorite projects</span>
+            <select [value]="sort()" (change)="setSort($event)">
+              @for (option of sortOptions; track option.value) {
+                <option [value]="option.value" [selected]="option.value === sort()">
+                  {{ option.label }}
+                </option>
+              }
+            </select>
+          </label>
+        }
       </header>
 
-      <ul class="list" tabindex="0" aria-label="Projects">
+      <ul #list class="list" tabindex="0" aria-label="Favorite projects">
         <li>
           <button
             type="button"
@@ -29,32 +65,39 @@ import { DashboardStore } from '../dashboard.store';
           </button>
         </li>
 
-        @for (project of visibleProjects(); track project.id) {
-          <li class="project">
+        @for (project of visibleProjects(); track project.projectId) {
+          <li class="project" [attr.data-flip-key]="project.projectId">
             <button
               type="button"
               class="row"
-              [class.active]="store.filter().projectId === project.id"
-              [attr.aria-pressed]="store.filter().projectId === project.id"
-              (click)="toggle(project.id)"
+              [class.active]="store.filter().projectId === project.projectId"
+              [attr.aria-pressed]="store.filter().projectId === project.projectId"
+              (click)="toggle(project.projectId)"
             >
-              <span class="swatch" [style.background]="project.color ?? '#bbb'"></span>
+              <span class="dot" [style.background]="project.color ?? null"></span>
               <span class="name">{{ project.name }}</span>
-              <span class="count">{{ store.projectCounts().get(project.id) ?? 0 }}</span>
+              <span class="count">{{ store.projectCounts().get(project.projectId) ?? 0 }}</span>
             </button>
           </li>
         } @empty {
-          <li class="empty">No active projects</li>
+          <li class="empty">
+            <svg viewBox="0 0 16 16" aria-hidden="true">
+              <path d="M8 1.8l1.9 3.9 4.3.6-3.1 3 .7 4.3L8 11.6l-3.8 2 .7-4.3-3.1-3 4.3-.6z" />
+            </svg>
+            <span>
+              Star a project to pin it here.
+              <a routerLink="/home" [queryParams]="{ tab: 'projects' }">Go to Projects</a>
+            </span>
+          </li>
         }
       </ul>
       <app-view-all-link
-        [total]="store.projects().length"
+        [total]="favorites().length"
         [shown]="visibleProjects().length"
         link="/home"
         [queryParams]="{ tab: 'projects' }"
-        noun="projects"
+        noun="favorite projects"
       />
-      <p class="manage-note">Create and manage projects in the Projects tab.</p>
     </section>
   `,
   styles: `
@@ -65,6 +108,7 @@ import { DashboardStore } from '../dashboard.store';
       display: flex;
       align-items: center;
       justify-content: space-between;
+      gap: 0.5rem;
       margin-bottom: 0.625rem;
     }
     h2 {
@@ -72,10 +116,25 @@ import { DashboardStore } from '../dashboard.store';
       font-size: 0.75rem;
       font-weight: 600;
     }
+    .sort select {
+      max-width: 9.5rem;
+      padding: 0.125rem 0.25rem;
+      border: 0;
+      border-radius: 0.25rem;
+      background: transparent;
+      color: var(--ink-muted);
+      font: inherit;
+      font-size: 0.6875rem;
+      cursor: pointer;
+      transition: background-color var(--duration-fast) var(--ease-out);
+      &:hover {
+        background: var(--hover-bg);
+      }
+    }
     /* A fixed maximum height: a long list scrolls inside the card. */
     .list {
       display: grid;
-      gap: 0.375rem;
+      gap: 0.125rem;
       max-height: 16rem;
       margin: 0;
       padding: 0;
@@ -102,31 +161,36 @@ import { DashboardStore } from '../dashboard.store';
       background: none;
       color: inherit;
       font: inherit;
-      font-size: 0.6875rem;
-      font-weight: 600;
+      font-size: 0.8125rem;
+      font-weight: 400;
       text-align: left;
       cursor: pointer;
+      transition: background-color var(--duration-fast) var(--ease-out);
       &:hover {
-        background: color-mix(in srgb, var(--theme-primary) 10%, var(--theme-surface));
+        background: var(--hover-bg);
       }
       &.active {
-        background: var(--theme-primary);
-        color: #fff;
+        background: var(--active-bg);
+        color: var(--ink);
+        font-weight: 500;
       }
     }
     .all svg {
       width: 1rem;
       height: 1rem;
       fill: none;
-      stroke: var(--theme-primary);
+      stroke: currentColor;
       stroke-width: 2;
       stroke-linejoin: round;
     }
-    .swatch {
-      width: 0.75rem;
-      height: 0.75rem;
-      border-radius: 2px;
+    /* A project's color only ever shows as this dot. */
+    .dot {
+      width: 0.5rem;
+      height: 0.5rem;
+      margin: 0 0.25rem;
+      border-radius: 50%;
       flex-shrink: 0;
+      background: var(--ink-muted);
     }
     .name {
       flex: 1;
@@ -135,15 +199,37 @@ import { DashboardStore } from '../dashboard.store';
       white-space: nowrap;
     }
     .count {
-      font-weight: 700;
-    }
-    .empty,
-    .manage-note {
-      margin: 0.5rem 0 0;
       color: var(--ink-muted);
-      font-size: 0.625rem;
+      font-weight: 600;
     }
-    button:focus-visible {
+    .empty {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.5rem;
+      margin: 0.25rem 0 0;
+      padding: 0.625rem 0.5rem;
+      border-radius: 0.375rem;
+      background: var(--hover-bg);
+      color: var(--ink-muted);
+      font-size: 0.6875rem;
+      line-height: 1.4;
+      svg {
+        width: 0.875rem;
+        height: 0.875rem;
+        flex: none;
+        margin-top: 0.0625rem;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 1.3;
+        stroke-linejoin: round;
+      }
+      a {
+        color: var(--theme-primary);
+        font-weight: 600;
+      }
+    }
+    button:focus-visible,
+    select:focus-visible {
       outline: 2px solid var(--theme-primary);
       outline-offset: 1px;
     }
@@ -152,13 +238,53 @@ import { DashboardStore } from '../dashboard.store';
 })
 export class ProjectList {
   protected readonly store = inject(DashboardStore);
+  private readonly projects = inject(ProjectsStore);
   private readonly settings = inject(SettingsStore);
-  /** Active projects, capped at the user's "projects in the dashboard list" setting. */
+  private readonly toast = inject(ToastService);
+  private readonly injector = inject(Injector);
+  private readonly list = viewChild<ElementRef<HTMLElement>>('list');
+
+  protected readonly sortOptions = DASHBOARD_PROJECT_SORTS;
+  /** The order just picked, shown at once while it saves; then the saved one. */
+  private readonly pendingSort = signal<DashboardProjectSort | null>(null);
+  protected readonly sort = computed(
+    () => this.pendingSort() ?? this.settings.dashboardProjectSort(),
+  );
+
+  /** Starred, active projects; the Inbox can't be starred. */
+  protected readonly favorites = computed(() =>
+    sortDashboardProjects(
+      this.projects.active().filter((p) => p.isFavorite && !p.isInbox),
+      this.sort(),
+    ),
+  );
+  /** Capped at the user's "projects in the dashboard list" setting. */
   protected readonly visibleProjects = computed(() =>
-    this.store.projects().slice(0, this.settings.projectLimit()),
+    this.favorites().slice(0, this.settings.projectLimit()),
   );
 
   protected toggle(projectId: number): void {
     this.store.filter.update((filter) => (filter.projectId === projectId ? {} : { projectId }));
+  }
+
+  protected setSort(event: Event): void {
+    const value = (event.target as HTMLSelectElement).value;
+    if (!isDashboardProjectSort(value) || value === this.sort()) return;
+    const previous = this.sort();
+    this.animate(() => this.pendingSort.set(value));
+    this.settings.save({ dashboardProjectSort: value }).subscribe({
+      next: () => this.pendingSort.set(null),
+      error: () => {
+        this.animate(() => this.pendingSort.set(previous));
+        this.toast.error("Couldn't save the project order. Please try again.");
+      },
+    });
+  }
+
+  /** Applies an order change and slides the rows to their new places. */
+  private animate(change: () => void): void {
+    const play = captureFlip(this.list()?.nativeElement);
+    change();
+    afterNextRender(play, { injector: this.injector });
   }
 }

@@ -102,8 +102,8 @@ describe('ProjectForm', () => {
         expect(el(`#${id}`)).toBeTruthy();
         expect(el(`label[for="${id}"]`)).toBeTruthy();
       }
-      // "No color" plus the nine preset colors.
-      expect(page().querySelectorAll('input[type="radio"]')).toHaveLength(10);
+      // "No color" plus the seven preset colors.
+      expect(page().querySelectorAll('input[type="radio"]')).toHaveLength(8);
       expect(text('legend')).toContain('Color');
       expect(saveButton().textContent).toContain('Create project');
     });
@@ -140,13 +140,13 @@ describe('ProjectForm', () => {
     it('sends the chosen description and color', () => {
       type('project-name', 'Capstone');
       type('project-description', 'Final requirements');
-      pickColor('#2563EB');
+      pickColor('#0891B2');
       submit();
 
       expect(http.expectOne(URL).request.body).toEqual({
         name: 'Capstone',
         description: 'Final requirements',
-        color: '#2563EB',
+        color: '#0891B2',
       });
     });
 

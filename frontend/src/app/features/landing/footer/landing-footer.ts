@@ -24,9 +24,11 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
 
     .footer {
       overflow: hidden;
+      max-width: var(--landing-max);
+      margin: 0 auto;
       padding: 4rem var(--landing-gutter) 2rem;
-      background: linear-gradient(180deg, var(--theme-primary) 0%, var(--theme-secondary) 100%);
-      color: #fff;
+      border-top: 1px solid var(--divider);
+      color: var(--ink);
     }
 
     .brand {
@@ -37,34 +39,31 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
     .tagline {
       margin: 0 0 0.75rem;
       font-size: clamp(1.25rem, 3vw, 1.5rem);
-      font-weight: 700;
-      line-height: 1.1;
-      text-transform: uppercase;
+      font-weight: 500;
+      line-height: 1.25;
     }
 
-    .get-it {
-      color: var(--landing-orange);
-    }
-
+    .get-it,
     .done {
-      color: var(--purple);
+      color: var(--ink);
     }
 
     .text {
-      max-width: 19rem;
+      max-width: 22rem;
       margin: 0;
-      font-size: 0.8125rem;
-      font-weight: 600;
-      line-height: 1.3;
+      color: var(--ink-muted);
+      font-size: 0.9375rem;
+      line-height: 1.5;
     }
 
+    /* The name set large and nearly invisible, like a watermark at the foot of the page. */
     .wordmark {
-      margin: 2.5rem 0 0;
-      color: rgba(255, 255, 255, 0.1);
-      font-size: clamp(2.5rem, 10vw, 5rem);
-      font-weight: 800;
-      line-height: 1;
-      text-transform: uppercase;
+      margin: 3rem 0 0;
+      color: color-mix(in srgb, var(--ink) 6%, transparent);
+      font-size: clamp(3rem, 12vw, 8rem);
+      font-weight: 600;
+      line-height: 0.9;
+      letter-spacing: -0.03em;
       white-space: nowrap;
     }
   `,

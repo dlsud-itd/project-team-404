@@ -18,10 +18,16 @@ export async function deletePriorityAndReassign(
     });
     if (!current) return null;
 
+    // Tasks (and the default flag) can only move to a level that is still in use.
     const active = await transaction.priorityLevel.findMany({
-      where: { userId, deletedAt: null },
+      where: {
+        userId,
+        deletedAt: null,
+        archivedAt: null,
+        id: { not: priorityId },
+      },
     });
-    if (active.length <= 1) {
+    if (active.length === 0) {
       throw new LastPriorityError();
     }
 

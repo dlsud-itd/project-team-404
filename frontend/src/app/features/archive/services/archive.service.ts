@@ -4,6 +4,7 @@ import { Observable, Subject, map, tap } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import { ProjectOrganizationService } from '../../projects/project-organization/services/project-organization.service';
 import { ProjectsStore } from '../../projects/shared/state/projects.store';
+import { PrioritiesStore } from '../../settings/state/priorities.store';
 import { TasksStore } from '../../tasks/shared/state/tasks.store';
 import type {
   ApiArchiveResponse,
@@ -26,13 +27,18 @@ const PATH: Record<ArchiveKind, string> = {
   task: 'tasks',
   project: 'projects',
   label: 'labels',
+  priority: 'priorities',
 };
 
-/** Order inside one archivedAt instant, the same as the server's: tasks, projects, labels. */
-const KIND_RANK: Record<ArchiveKind, number> = { task: 0, project: 1, label: 2 };
+/**
+ * Order inside one archivedAt instant, the same as the server's: tasks, projects, labels,
+ * priorities.
+ */
+const KIND_RANK: Record<ArchiveKind, number> = { task: 0, project: 1, label: 2, priority: 3 };
 
 /**
- * GET /api/archive, plus archive, restore and permanent delete for tasks, projects and labels.
+ * GET /api/archive, plus archive, restore and permanent delete for tasks, projects, labels and
+ * priorities.
  * Successful calls also update the shared task and project stores, so an archived item drops
  * out of every active list without a reload.
  */
@@ -42,6 +48,7 @@ export class ArchiveService {
   private readonly tasks = inject(TasksStore);
   private readonly projects = inject(ProjectsStore);
   private readonly projectOrganization = inject(ProjectOrganizationService);
+  private readonly priorities = inject(PrioritiesStore);
   private readonly api = `${environment.apiBaseUrl}/api`;
 
   private readonly labelChanges = new Subject<LabelArchiveChange>();
@@ -86,9 +93,17 @@ export class ArchiveService {
 
   /**
    * DELETE /api/{kind}/:id. Tasks and projects are soft-deleted (a project's tasks move to the
-   * Inbox); labels are removed for good.
+   * Inbox); labels are removed for good. A priority's tasks move to `reassignTo`, which the
+   * server requires when tasks still use it.
    */
-  deletePermanently(kind: ArchiveKind, id: number): Observable<void> {
+  deletePermanently(
+    kind: ArchiveKind,
+    id: number,
+    reassignTo: number | null = null,
+  ): Observable<void> {
+    if (kind === 'priority') {
+      return this.priorities.remove(id, reassignTo).pipe(map(() => undefined));
+    }
     return this.http.delete(`${this.api}/${PATH[kind]}/${id}`).pipe(
       tap(() => {
         if (kind === 'task') this.tasks.remove(id);
@@ -107,6 +122,8 @@ export class ArchiveService {
       });
     } else if (kind === 'project') {
       this.projects.patch(id, { isArchived });
+    } else if (kind === 'priority') {
+      this.priorities.setArchivedLocal(id, isArchived);
     } else {
       this.labelChanges.next({ labelId: id, isArchived });
     }
@@ -141,16 +158,28 @@ export class ArchiveService {
         color: label.color,
         taskCount: label.taskCount ?? null,
       })),
+      ...(body.priorities?.items ?? []).map((level): ArchiveItem => ({
+        kind: 'priority',
+        id: level.id,
+        name: level.name,
+        archivedAt: level.archivedAt ?? '',
+        color: level.color,
+        taskCount: level.taskCount ?? null,
+      })),
     ].sort(newestFirst);
 
     const counts = {
       tasks: body.tasks.total,
       projects: body.projects.total,
       labels: body.labels.total,
+      priorities: body.priorities?.total ?? 0,
     };
     return {
       items,
-      counts: { ...counts, all: counts.tasks + counts.projects + counts.labels },
+      counts: {
+        ...counts,
+        all: counts.tasks + counts.projects + counts.labels + counts.priorities,
+      },
       nextCursor: body.nextCursor,
     };
   }

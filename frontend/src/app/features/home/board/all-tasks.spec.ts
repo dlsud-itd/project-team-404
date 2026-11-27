@@ -122,7 +122,9 @@ describe('AllTasks', () => {
     expect(titles().at(-1)).toBe('Gym session');
     const first = el('.task')!;
     expect(first.querySelector('.project')?.textContent?.trim()).toBe('School');
-    expect(first.querySelector('.priority')?.textContent?.trim()).toBe('High');
+    expect(first.querySelector('.priority')).toBeNull();
+    expect(first.getAttribute('title')).toBe('Priority: High');
+    expect(first.classList).toContain('priority-tint');
     expect(first.querySelector('.due')?.classList).toContain('overdue');
   });
 
@@ -189,7 +191,7 @@ describe('AllTasks', () => {
     expect(el('[role="dialog"]')).toBeNull();
   });
 
-  it('completes and deletes tasks through the API', () => {
+  it('completes tasks through the API, and offers Archive but no Delete', () => {
     const labReport = [...page.querySelectorAll<HTMLElement>('.task')].find((item) =>
       item.textContent?.includes('Submit lab report'),
     )!;
@@ -207,16 +209,9 @@ describe('AllTasks', () => {
       .querySelector<HTMLButtonElement>('button[aria-label="Actions for Submit lab report"]')!
       .click();
     render();
-    labReport.querySelector<HTMLButtonElement>('.task-menu-item.delete')!.click();
-    render();
-    expect(el('[role="alertdialog"]')).toBeTruthy();
-    el<HTMLButtonElement>('[role="alertdialog"] .confirm')!.click();
-    render();
-    const deletion = http.expectOne(`${TASKS_URL}/1`);
-    expect(deletion.request.method).toBe('DELETE');
-    deletion.flush({ message: 'Task deleted successfully' });
-    render();
-    expect(titles()).not.toContain('Submit lab report');
+    const menu = labReport.querySelector<HTMLElement>('[role="menu"]')!;
+    expect(menu.textContent).toContain('Archive');
+    expect(menu.textContent).not.toContain('Delete');
   });
 
   it('opens the edit dialog from the task context menu', () => {
@@ -228,7 +223,7 @@ describe('AllTasks', () => {
     row.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true }));
     render();
     expect(row.querySelector('[role="menu"]')).toBeTruthy();
-    row.querySelector<HTMLButtonElement>('.task-menu-item:not(.delete)')!.click();
+    row.querySelector<HTMLButtonElement>('.task-menu-item')!.click();
     render();
 
     http.expectOne(LABELS_URL).flush([]);

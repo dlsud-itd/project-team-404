@@ -14,6 +14,7 @@ import {
   SettingsStore,
   provideUserSettings,
 } from './settings.store';
+import { readableOn } from '../../../shared/utils/readable-on.util';
 
 const URL = `${environment.apiBaseUrl}/api/settings`;
 
@@ -279,5 +280,29 @@ describe('provideUserSettings', () => {
     expect(store.settings()).toEqual(DEFAULT_SETTINGS);
     expect(localStorage.getItem(SETTINGS_CACHE_KEY)).toBeNull();
     expect(rootStyle(FONT_SIZE_PROPERTY)).toBe('100%');
+  });
+});
+
+describe('readableOn', () => {
+  it('puts white text on the dark accents of the light themes', () => {
+    expect(['#6941c6', '#d9531e', '#39724f', '#176b87', '#7f5af0'].map(readableOn)).toEqual([
+      '#fff',
+      '#fff',
+      '#fff',
+      '#fff',
+      '#fff',
+    ]);
+  });
+
+  it('puts dark text on the light accents of the dark themes', () => {
+    expect(['#ff9468', '#8ed0a4', '#d3a6ff'].map(readableOn)).toEqual([
+      '#17171a',
+      '#17171a',
+      '#17171a',
+    ]);
+  });
+
+  it('falls back to white for anything that is not a six-digit hex', () => {
+    expect(readableOn('rebeccapurple')).toBe('#fff');
   });
 });
