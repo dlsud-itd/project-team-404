@@ -340,8 +340,10 @@ describe('TasksPage board view', () => {
     expect(el('app-timeline-view .empty-title')?.textContent?.trim()).toBe(
       'Nothing scheduled this week.',
     );
-    // The link back to the list clears this tab's own view parameter.
-    expect(el('app-timeline-view .undated a')?.getAttribute('href')).toBe('/?tab=tasks');
+    // The link back to the list sets this tab's own view parameter to the list.
+    expect(el('app-timeline-view .undated a')?.getAttribute('href')).toBe(
+      '/?tab=tasks&taskView=list',
+    );
   });
 
   it('shows the first real project’s board and hides the sort', async () => {
