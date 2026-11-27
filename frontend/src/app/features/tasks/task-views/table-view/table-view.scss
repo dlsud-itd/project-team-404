@@ -1,0 +1,254 @@
+:host {
+  display: block;
+  margin-top: 1.25rem;
+}
+
+.error {
+  margin: 0 0 1rem;
+  padding: 0.75rem 1rem;
+  border-left: 3px solid var(--error);
+  background: var(--theme-surface);
+  color: var(--error);
+  font-size: 0.875rem;
+}
+
+/* The table keeps its width and scrolls sideways inside this box, never the page. */
+.scroller {
+  overflow-x: auto;
+  border: 1px solid var(--orange-light);
+  border-radius: 0.75rem;
+  background: var(--theme-surface);
+  -webkit-overflow-scrolling: touch;
+
+  &:focus-visible {
+    outline: 2px solid var(--theme-primary);
+    outline-offset: 2px;
+  }
+}
+
+.table {
+  width: 100%;
+  min-width: 68rem;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 0.8125rem;
+}
+
+th,
+td {
+  padding: 0.625rem 0.75rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--orange-light) 60%, var(--theme-surface));
+  text-align: left;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: color-mix(in srgb, var(--theme-primary) 6%, var(--theme-surface));
+  color: var(--ink-muted);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+tbody tr:last-child > * {
+  border-bottom: 0;
+}
+
+/* The title stays in view while the other columns scroll past it. */
+.col-title {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  min-width: 14rem;
+  max-width: 22rem;
+  background: inherit;
+  white-space: normal;
+  box-shadow: 1px 0 0 color-mix(in srgb, var(--orange-light) 60%, var(--theme-surface));
+}
+
+thead .col-title {
+  z-index: 2;
+  background: color-mix(in srgb, var(--theme-primary) 6%, var(--theme-surface));
+}
+
+.row {
+  background: var(--theme-surface);
+  cursor: pointer;
+
+  &:hover {
+    background: color-mix(in srgb, var(--theme-primary) 9%, var(--theme-surface));
+  }
+
+  &.done .title {
+    color: var(--ink-muted);
+    text-decoration: line-through;
+  }
+}
+
+tbody th {
+  font-weight: 400;
+}
+
+.sort {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  cursor: pointer;
+
+  &:hover {
+    color: var(--ink);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--theme-primary);
+    outline-offset: 2px;
+    border-radius: 0.25rem;
+  }
+}
+
+[aria-sort='ascending'],
+[aria-sort='descending'] {
+  .sort {
+    color: var(--ink);
+  }
+}
+
+.arrow {
+  width: 0.75rem;
+  height: 0.75rem;
+  fill: currentColor;
+
+  .idle {
+    opacity: 0.35;
+  }
+}
+
+.title-cell {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.625rem;
+}
+
+.check {
+  flex: none;
+  width: 1rem;
+  height: 1rem;
+  margin: 0.125rem 0 0;
+  accent-color: var(--theme-primary);
+  cursor: pointer;
+
+  &:disabled {
+    cursor: not-allowed;
+  }
+
+  @media (pointer: coarse) {
+    width: 1.25rem;
+    height: 1.25rem;
+  }
+}
+
+.title-text {
+  display: grid;
+  gap: 0.125rem;
+  min-width: 0;
+}
+
+.title {
+  color: var(--ink);
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: none;
+  overflow-wrap: anywhere;
+
+  &:hover {
+    text-decoration: underline;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--theme-primary);
+    outline-offset: 2px;
+    border-radius: 0.25rem;
+  }
+}
+
+.not-due {
+  color: var(--ink-muted);
+  font-size: 0.75rem;
+}
+
+.priority {
+  display: inline-block;
+  padding: 0.0625rem 0.5rem;
+  border: 1px solid var(--priority-color, #6b7280);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--priority-color, #6b7280) 14%, var(--theme-surface));
+  color: color-mix(in srgb, var(--priority-color, #6b7280) 70%, var(--ink));
+  font-size: 0.6875rem;
+  font-weight: 700;
+}
+
+.labels {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  max-width: 14rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.label {
+  padding: 0 0.5rem;
+  border: 1px solid var(--label-color, var(--orange-light));
+  border-radius: 999px;
+  font-size: 0.6875rem;
+}
+
+.col-labels {
+  white-space: normal;
+}
+
+.col-recurrence {
+  max-width: 14rem;
+  white-space: normal;
+}
+
+.col-due.overdue {
+  color: var(--error);
+  font-weight: 600;
+}
+
+.none {
+  color: var(--ink-muted);
+}
+
+.status {
+  padding: 0.0625rem 0.5rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--theme-primary) 10%, var(--theme-surface));
+  color: var(--ink);
+  font-size: 0.6875rem;
+  font-weight: 700;
+
+  &[data-status='Done'] {
+    background: color-mix(in srgb, var(--success) 14%, var(--theme-surface));
+    color: var(--success);
+  }
+
+  &[data-status='Overdue'] {
+    background: color-mix(in srgb, var(--error) 14%, var(--theme-surface));
+    color: var(--error);
+  }
+}

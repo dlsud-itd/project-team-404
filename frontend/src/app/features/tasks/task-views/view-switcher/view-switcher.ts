@@ -1,24 +1,29 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { RouterLink, type Params } from '@angular/router';
+import { TASK_VIEW_OPTIONS, type TaskView } from '../types/task-view.types';
 
-/** How a page shows its tasks. */
-export type TaskView = 'list' | 'board' | 'timeline';
+export type { TaskView } from '../types/task-view.types';
 
-/** The view a query parameter names; anything else, or nothing, is the list. */
+/**
+ * The view a query parameter names on a page without a table (Home's Tasks tab); anything else,
+ * or nothing, is the list.
+ */
 export function toTaskView(value: string | null): TaskView {
   return value === 'board' || value === 'timeline' ? value : 'list';
 }
 
 /**
- * The List / Board / Timeline switch. Each option is a link that sets one query parameter, so
- * the view survives reloads and Back, and the page's other parameters (filters, tab) are kept.
+ * The List | Table | Board | Timeline switch. Each option is a link that sets one query
+ * parameter, so the view survives reloads and Back, and the page's other parameters (filters,
+ * tab) are kept. Every option names its view, List included, so picking List also wins over a
+ * view the page remembered.
  */
 @Component({
   selector: 'app-view-switcher',
   imports: [RouterLink],
   template: `
     <nav class="views" aria-label="Task views">
-      @for (option of options; track option.view) {
+      @for (option of options(); track option.view) {
         <a
           class="view"
           [routerLink]="[]"
@@ -32,16 +37,22 @@ export function toTaskView(value: string | null): TaskView {
   `,
   styles: `
     :host {
-      display: inline-block;
+      display: block;
+      max-width: 100%;
     }
     .views {
       display: inline-flex;
       gap: 0.25rem;
+      max-width: 100%;
       padding: 0.25rem;
       border-radius: 999px;
       background: color-mix(in srgb, var(--theme-primary) 10%, var(--theme-surface));
+      /* Four options can outgrow a phone; the control scrolls instead of the page. */
+      overflow-x: auto;
+      scrollbar-width: none;
     }
     .view {
+      flex: none;
       padding: 0.375rem 1rem;
       border-radius: 999px;
       color: var(--ink-muted);
@@ -58,7 +69,7 @@ export function toTaskView(value: string | null): TaskView {
       }
       &:focus-visible {
         outline: 2px solid var(--ink);
-        outline-offset: 2px;
+        outline-offset: -2px;
       }
       @media (pointer: coarse) {
         padding-block: 0.625rem;
@@ -69,17 +80,19 @@ export function toTaskView(value: string | null): TaskView {
 })
 export class ViewSwitcher {
   readonly view = input.required<TaskView>();
-  /** The query parameter that holds the view; the list is its absence. */
+  /** The query parameter that holds the view. */
   readonly param = input('view');
+  /** The views this page offers, shown in the usual order. */
+  readonly views = input<readonly TaskView[]>(TASK_VIEW_OPTIONS.map((option) => option.view));
 
-  protected readonly options: { view: TaskView; label: string }[] = [
-    { view: 'list', label: 'List' },
-    { view: 'board', label: 'Board' },
-    { view: 'timeline', label: 'Timeline' },
-  ];
-  protected readonly params = computed(() => ({
-    list: { [this.param()]: null },
-    board: { [this.param()]: 'board' },
-    timeline: { [this.param()]: 'timeline' },
-  }));
+  protected readonly options = computed(() =>
+    TASK_VIEW_OPTIONS.filter((option) => this.views().includes(option.view)),
+  );
+  /** Each view's query params, built once per param name so the links stay stable. */
+  protected readonly params = computed(
+    () =>
+      Object.fromEntries(
+        TASK_VIEW_OPTIONS.map(({ view }) => [view, { [this.param()]: view }]),
+      ) as Record<TaskView, Params>,
+  );
 }

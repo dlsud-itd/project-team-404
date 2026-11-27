@@ -1,7 +1,7 @@
 <section class="panel" aria-labelledby="all-tasks-heading">
   <header class="heading-row">
     <h2 id="all-tasks-heading" class="heading">All Tasks</h2>
-    <app-view-switcher class="views" [view]="view()" [param]="viewParam" />
+    <app-view-switcher class="views" [view]="view()" [param]="viewParam" [views]="views" />
     <button type="button" class="new" [disabled]="loading()" (click)="openNewTaskDialog()">
       + New task
     </button>

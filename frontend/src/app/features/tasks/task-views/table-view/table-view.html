@@ -1,0 +1,112 @@
+@if (error(); as message) {
+  <p class="error" role="alert">{{ message }}</p>
+}
+
+<!-- Focusable so keyboard users can scroll it sideways on a narrow screen. -->
+<div class="scroller" role="region" aria-label="Tasks table" tabindex="0">
+  <table class="table">
+    <thead>
+      <tr>
+        @for (column of columns; track column.key) {
+          <th scope="col" [class]="'col-' + column.key" [attr.aria-sort]="ariaSort(column)">
+            @if (column.sortField) {
+              <button
+                type="button"
+                class="sort"
+                [attr.aria-label]="sortLabel(column)"
+                (click)="sortBy(column)"
+              >
+                {{ column.label }}
+                <svg class="arrow" viewBox="0 0 12 12" aria-hidden="true">
+                  @switch (ariaSort(column)) {
+                    @case ('ascending') {
+                      <path d="M6 3 9.5 8h-7z" />
+                    }
+                    @case ('descending') {
+                      <path d="M6 9 2.5 4h7z" />
+                    }
+                    @default {
+                      <path class="idle" d="M6 1.5 9 5H3zM6 10.5 3 7h6z" />
+                    }
+                  }
+                </svg>
+              </button>
+            } @else {
+              {{ column.label }}
+            }
+          </th>
+        }
+      </tr>
+    </thead>
+    <tbody>
+      @for (row of rows(); track row.task.taskId) {
+        <tr class="row" [class.done]="row.done" (click)="openRow($event, row.task)">
+          <th scope="row" class="col-title">
+            <span class="title-cell">
+              <input
+                #box
+                type="checkbox"
+                class="check"
+                [checked]="row.done"
+                [disabled]="isBusy(row.task) || row.notDue !== null"
+                [attr.title]="row.notDue"
+                [attr.aria-describedby]="row.notDue ? 'table-not-due-' + row.task.taskId : null"
+                [attr.aria-label]="
+                  row.done
+                    ? 'Mark ' + row.task.title + ' incomplete'
+                    : 'Mark ' + row.task.title + ' complete'
+                "
+                (change)="toggleCompleted(row, box)"
+              />
+              <span class="title-text">
+                <a class="title" [routerLink]="editLink(row.task)">{{ row.task.title }}</a>
+                @if (row.notDue; as label) {
+                  <span class="not-due" [id]="'table-not-due-' + row.task.taskId">{{ label }}</span>
+                }
+              </span>
+            </span>
+          </th>
+          <td class="col-project">{{ row.project }}</td>
+          <td class="col-priority">
+            <span class="priority" [style.--priority-color]="row.priorityColor">{{
+              row.priority
+            }}</span>
+          </td>
+          <td class="col-labels">
+            @if (row.task.labels.length) {
+              <ul class="labels" aria-label="Labels">
+                @for (label of row.task.labels; track label.labelId) {
+                  <li class="label" [style.--label-color]="label.color">{{ label.name }}</li>
+                }
+              </ul>
+            } @else {
+              <span class="none">—</span>
+            }
+          </td>
+          <td class="col-scheduled">
+            {{ row.scheduled ?? '—' }}
+          </td>
+          <td class="col-due" [class.overdue]="row.status === 'Overdue'">
+            {{ row.due ?? '—' }}
+          </td>
+          <td class="col-deadline">
+            {{ row.deadline ?? '—' }}
+          </td>
+          <td class="col-recurrence">
+            {{ row.recurrence ?? '—' }}
+          </td>
+          <td class="col-streak">
+            @if (row.task.isRecurring) {
+              <app-streak-badge [task]="row.task" />
+            } @else {
+              <span class="none">—</span>
+            }
+          </td>
+          <td class="col-status">
+            <span class="status" [attr.data-status]="row.status">{{ row.status }}</span>
+          </td>
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>

@@ -118,6 +118,8 @@ export class TasksPage {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   protected readonly viewParam = TASK_VIEW_PARAM;
+  /** Home lists tasks across projects; the table lives on each project's page. */
+  protected readonly views: readonly TaskView[] = ['list', 'board', 'timeline'];
   /** List of every task, one project's board, or every project's timeline; the URL keeps it. */
   protected readonly view = signal<TaskView>('list');
   /** The project named in the URL, if any. */

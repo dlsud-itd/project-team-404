@@ -1,10 +1,3 @@
-import {
-  CdkDrag,
-  type CdkDragDrop,
-  CdkDragHandle,
-  CdkDragPlaceholder,
-  CdkDropList,
-} from '@angular/cdk/drag-drop';
 import { HttpErrorResponse } from '@angular/common/http';
 import {
   ChangeDetectionStrategy,
@@ -19,9 +12,9 @@ import {
   signal,
   untracked,
 } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { EMPTY, Subject, catchError, distinctUntilChanged, finalize, map, switchMap } from 'rxjs';
+import { EMPTY, Subject, catchError, finalize, switchMap } from 'rxjs';
 import { SessionService } from '../../../auth/session/session.service';
 import { mapProjectError } from '../../../projects/project-crud/mappers/project-error.mapper';
 import { ProjectService } from '../../../projects/project-crud/services/project.service';
@@ -29,7 +22,6 @@ import { ProjectsStore } from '../../../projects/shared/state/projects.store';
 import { TasksStore } from '../../shared/state/tasks.store';
 import type { Task } from '../../shared/types/task.types';
 import { ConfirmDeleteTaskDialog } from '../components/confirm-delete-dialog/confirm-delete-dialog';
-import { TaskItem } from '../components/task-item/task-item';
 import { mapTaskError } from '../mappers/task-error.mapper';
 import { TaskService } from '../services/task.service';
 import { PrioritiesStore } from '../../../settings/state/priorities.store';
@@ -55,31 +47,28 @@ import { instantToDate, userTimeZone } from '../../task-scheduling/utils/date-fo
 import { BoardView } from '../../task-views/board-view/board-view';
 import { toBoardFilter } from '../../task-views/board-view/services/task-board.service';
 import type { BoardFilter } from '../../task-views/board-view/types/task-board.types';
+import { ListView, type ListMove } from '../../task-views/list-view/list-view';
+import { TableView } from '../../task-views/table-view/table-view';
+import { TaskViewsStore } from '../../task-views/task-views.store';
 import { TimelineView } from '../../task-views/timeline-view/timeline-view';
-import {
-  ViewSwitcher,
-  toTaskView,
-  type TaskView,
-} from '../../task-views/view-switcher/view-switcher';
+import type { TaskView } from '../../task-views/types/task-view.types';
+import { ViewSwitcher } from '../../task-views/view-switcher/view-switcher';
 
 /** The tasks of one project, at /projects/:projectId/tasks. */
 @Component({
   selector: 'app-task-list',
   imports: [
     RouterLink,
-    TaskItem,
     ConfirmDeleteTaskDialog,
     TaskFilterBar,
     SortMenu,
     BoardView,
     TimelineView,
+    ListView,
+    TableView,
     ViewSwitcher,
-    CdkDropList,
-    CdkDrag,
-    CdkDragHandle,
-    CdkDragPlaceholder,
   ],
-  providers: [TaskQueryStore],
+  providers: [TaskQueryStore, TaskViewsStore],
   templateUrl: './task-list.html',
   styleUrl: './task-list.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -104,8 +93,11 @@ export class TaskList {
   private readonly reloads = new Subject<void>();
 
   protected readonly projectId = signal(0);
-  /** List, board or timeline; the URL keeps it, so links and reloads open the same view. */
-  protected readonly view = signal<TaskView>('list');
+  /** The URL's ?view=, else the last one used in this project, else the list. */
+  private readonly views = inject(TaskViewsStore);
+  protected readonly view = this.views.view;
+  /** Which data the last load filled; list and table share TasksStore. */
+  private loadedSource: ViewSource | null = null;
   /**
    * The board's or timeline's filters; a new object reloads it. Null until either first opens.
    */
@@ -136,23 +128,19 @@ export class TaskList {
   protected readonly filterError = signal<string | null>(null);
 
   constructor() {
-    // Read first, so the project's first load below already knows which view to fill.
-    this.route.queryParamMap
-      .pipe(
-        map((params): TaskView => toTaskView(params.get('view'))),
-        distinctUntilChanged(),
-        takeUntilDestroyed(),
-      )
+    // List and table share one load; switching to or from the board or timeline loads again.
+    toObservable(this.view)
+      .pipe(takeUntilDestroyed())
       .subscribe((view) => {
-        const changed = view !== this.view();
-        this.view.set(view);
-        if (changed && this.projectId() && !this.projectMissing()) this.load();
+        if (!this.projectId() || this.projectMissing()) return;
+        if (sourceOf(view) !== this.loadedSource) this.load();
       });
     // The new-task popup adds to the list's store; the board and timeline load their own copy.
     let wasCreating = false;
     effect(() => {
       const creating = this.store.creating() !== null;
-      if (wasCreating && !creating) untracked(() => this.view() !== 'list' && this.load());
+      if (wasCreating && !creating)
+        untracked(() => sourceOf(this.view()) !== 'tasks' && this.load());
       wasCreating = creating;
     });
     this.reloads
@@ -196,12 +184,15 @@ export class TaskList {
     this.actionError.set(null);
     this.projectMissing.set(!Number.isInteger(projectId) || projectId <= 0);
     if (this.projectMissing()) return;
+    // Before the load, so it fills the view this project opens on.
+    this.views.setProject(projectId);
     this.loadProject();
     this.load();
   }
 
   protected load(): void {
-    if (this.view() !== 'list') {
+    this.loadedSource = sourceOf(this.view());
+    if (this.loadedSource !== 'tasks') {
       this.boardFilter.set(toBoardFilter(toTaskListFilter(this.query.query(), this.today())));
     } else {
       this.reloads.next();
@@ -246,26 +237,12 @@ export class TaskList {
     );
   }
 
-  protected dropped(event: CdkDragDrop<unknown>): void {
-    this.moveTask(event.previousIndex, event.currentIndex);
-  }
-
-  /**
-   * Alt+Up / Alt+Down while anything in a task's row has focus: the same move as its Move buttons.
-   * Ignored at either end of the list and while reordering is off.
-   */
-  protected moveByKey(event: Event, from: number, to: number, button: 'up' | 'down'): void {
-    if (!this.canReorder() || to < 0 || to >= this.store.open().length) return;
-    event.preventDefault();
-    this.moveTask(from, to, button);
-  }
-
   /**
    * Moves an open task and saves the whole new order. The list changes at once; a failure puts
    * it back with a message, and a 409 (the list changed elsewhere) reloads it. A keyboard move
    * keeps focus on the same button of the moved task.
    */
-  protected moveTask(from: number, to: number, button?: 'up' | 'down'): void {
+  protected moveTask({ from, to, button }: ListMove): void {
     const open = this.store.open();
     const taskIds = reorderTaskIds(open, from, to);
     if (!taskIds || !this.canReorder() || this.reordering()) return;
@@ -372,4 +349,11 @@ export class TaskList {
         },
       });
   }
+}
+
+/** Where a view's tasks come from: the list and table read TasksStore; the others load their own. */
+type ViewSource = 'tasks' | 'board' | 'timeline';
+
+function sourceOf(view: TaskView): ViewSource {
+  return view === 'list' || view === 'table' ? 'tasks' : view;
 }
