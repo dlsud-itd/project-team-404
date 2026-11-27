@@ -18,7 +18,7 @@ import { ToastService } from '../../../shared/services/toast.service';
 import { ArchiveUndoService } from '../../archive/services/archive-undo.service';
 import { NameColorEditor } from '../components/name-color-editor/name-color-editor';
 import { LabelsService } from '../services/labels.service';
-import { NO_COLOR, type LabelSetting, type NameAndColor } from '../types/settings.types';
+import type { LabelSetting, NameAndColor } from '../types/settings.types';
 import { moveFocusTarget, moveItem, taskCountLabel } from '../utils/reorder.util';
 
 export const LABEL_REORDER_FAILED_MESSAGE =
@@ -65,7 +65,6 @@ export class LabelSettings {
     [...this.labels(), ...this.archived()].map((label) => ({ id: label.id, name: label.name })),
   );
   protected readonly countLabel = taskCountLabel;
-  protected readonly noColor = NO_COLOR;
 
   constructor() {
     this.load();
@@ -98,8 +97,9 @@ export class LabelSettings {
   protected create(input: NameAndColor): void {
     this.creating.set(true);
     this.createError.set(null);
+    // Labels have no color: new ones are saved with none.
     this.api
-      .create(input)
+      .create({ name: input.name, color: null })
       .pipe(
         finalize(() => this.creating.set(false)),
         takeUntilDestroyed(this.destroyRef),
@@ -110,6 +110,7 @@ export class LabelSettings {
           this.createEditor()?.reset();
           this.createOpen.set(false);
           this.announcement.set(`Label “${label.name}” created.`);
+          this.toast.info(`Label “${label.name}” created`);
         },
         error: (error: unknown) => this.createError.set(saveError(error, input.name)),
       });
@@ -130,8 +131,9 @@ export class LabelSettings {
   protected saveEdit(label: LabelSetting, input: NameAndColor): void {
     this.saving.set(true);
     this.editError.set(null);
+    // Only the name is sent, so a color saved before labels lost theirs is left as it was.
     this.api
-      .update(label.id, input)
+      .update(label.id, { name: input.name })
       .pipe(
         finalize(() => this.saving.set(false)),
         takeUntilDestroyed(this.destroyRef),
@@ -147,6 +149,11 @@ export class LabelSettings {
           );
           this.editingId.set(null);
           this.focusAfterRender(`label-${label.id}-edit`);
+          this.toast.neutral(
+            updated.name === label.name
+              ? `Label “${updated.name}” saved`
+              : `Label renamed to “${updated.name}”`,
+          );
         },
         error: (error: unknown) => this.editError.set(saveError(error, input.name)),
       });

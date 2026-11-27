@@ -1,4 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
+import { MAX_ACTIVE_PROJECTS } from '../../shared/project-limit';
 import type { ProjectError, ProjectField } from '../../shared/types/project.types';
 
 const GENERIC = 'Something went wrong. Please try again.';
@@ -27,6 +28,17 @@ function detailsField(error: HttpErrorResponse): ProjectField | undefined {
   return details
     .map((detail: { field?: unknown } | null) => detail?.field)
     .find((field): field is ProjectField => FIELDS.includes(field as ProjectField));
+}
+
+export const PROJECT_LIMIT_MESSAGE = `You can have up to ${MAX_ACTIVE_PROJECTS} active projects. Archive or delete one to add another.`;
+
+/** A 409 from creating or restoring a project while already at MAX_ACTIVE_PROJECTS. */
+export function isProjectLimitError(error: unknown): error is HttpErrorResponse {
+  return (
+    error instanceof HttpErrorResponse &&
+    error.status === 409 &&
+    (error.error as { code?: unknown } | null)?.code === 'project-limit-reached'
+  );
 }
 
 function serverMessage(error: HttpErrorResponse): string | null {
@@ -59,6 +71,11 @@ export function mapProjectError(error: unknown): ProjectError {
       return { message: "Your Inbox is read-only, so it can't be changed.", notFound: false };
     case 404:
       return { message: NOT_FOUND, notFound: true };
+    case 409:
+      if (isProjectLimitError(error)) {
+        return { message: serverMessage(error) ?? PROJECT_LIMIT_MESSAGE, notFound: false };
+      }
+      return { message: GENERIC, notFound: false };
     default:
       return { message: GENERIC, notFound: false };
   }

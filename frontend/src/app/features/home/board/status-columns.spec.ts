@@ -2,6 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { clearSettingsCache, seedSettings } from '../../settings/testing/settings-cache';
 import { DashboardStore } from '../dashboard.store';
+import { DASHBOARD_COLLAPSED_KEY } from '../dashboard-widgets.store';
 import { DASHBOARD_PROJECTS, DASHBOARD_TASKS } from '../testing/dashboard-fixture';
 import { StatusColumns } from './status-columns';
 
@@ -16,6 +17,7 @@ describe('StatusColumns', () => {
     );
 
   beforeEach(async () => {
+    localStorage.removeItem(DASHBOARD_COLLAPSED_KEY);
     vi.useFakeTimers({ toFake: ['Date'] });
     vi.setSystemTime(new Date(2026, 9, 30, 9, 0, 0));
     await TestBed.configureTestingModule({
@@ -29,7 +31,34 @@ describe('StatusColumns', () => {
     fixture.detectChanges();
   });
 
-  afterEach(() => vi.useRealTimers());
+  afterEach(() => {
+    vi.useRealTimers();
+    localStorage.removeItem(DASHBOARD_COLLAPSED_KEY);
+  });
+
+  it('collapses and expands a column from its header button', () => {
+    const toggle = () =>
+      page.querySelector<HTMLButtonElement>(
+        'section[aria-labelledby="col-overdue"] app-collapse-toggle button',
+      )!;
+    const body = () => page.querySelector<HTMLElement>('#col-body-overdue')!;
+    expect(toggle().getAttribute('aria-expanded')).toBe('true');
+    expect(toggle().getAttribute('aria-controls')).toBe('col-body-overdue');
+    expect(body().hidden).toBe(false);
+
+    toggle().click();
+    fixture.detectChanges();
+    expect(toggle().getAttribute('aria-expanded')).toBe('false');
+    expect(toggle().getAttribute('aria-label')).toBe('Show Overdue tasks');
+    expect(body().hidden).toBe(true);
+    // The other columns are untouched.
+    expect(page.querySelector<HTMLElement>('#col-body-current')!.hidden).toBe(false);
+
+    toggle().click();
+    fixture.detectChanges();
+    expect(toggle().getAttribute('aria-label')).toBe('Hide Overdue tasks');
+    expect(body().hidden).toBe(false);
+  });
 
   it('shows Current, Upcoming and Overdue columns labelled by their headings', () => {
     const headings = [...page.querySelectorAll('h2')];

@@ -1,6 +1,7 @@
 import type { RequestHandler } from 'express';
 import {
   InboxProjectMutationError,
+  ProjectLimitReachedError,
   ProjectNotFoundError,
 } from './errors/project-crud.errors';
 import type { ProjectRecord } from '../shared/models/project.model';
@@ -30,6 +31,10 @@ export function createProjectCrudController(service: ProjectCrudService): {
     }
     if (error instanceof InboxProjectMutationError) {
       res.status(403).json({ error: error.message });
+      return;
+    }
+    if (error instanceof ProjectLimitReachedError) {
+      res.status(409).json({ error: error.message, code: error.code });
       return;
     }
     next(error);

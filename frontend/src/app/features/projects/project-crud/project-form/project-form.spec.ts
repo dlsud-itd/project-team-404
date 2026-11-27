@@ -5,6 +5,7 @@ import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { environment } from '../../../../../environments/environment';
+import { ToastService } from '../../../../shared/services/toast.service';
 import type { Project } from '../../shared/types/project.types';
 import { ProjectForm } from './project-form';
 import { apiProject } from '../../testing/helpers/api-project';
@@ -47,6 +48,10 @@ describe('ProjectForm', () => {
   const text = (selector: string) => el(selector)?.textContent?.trim() ?? '';
   const messageFor = (id: string) => text(`#${id}-status`);
   const saveButton = () => el<HTMLButtonElement>('button[type="submit"]');
+  const toastList = () =>
+    TestBed.inject(ToastService)
+      .toasts()
+      .map((t) => [t.kind, t.message]);
 
   function type(id: string, value: string): void {
     const input = el<HTMLInputElement | HTMLTextAreaElement>(`#${id}`);
@@ -168,6 +173,7 @@ describe('ProjectForm', () => {
 
       expect(timesClosed).toBe(1);
       expect(router.url).toBe('/create-host');
+      expect(toastList()).toEqual([['info', 'Project “Capstone” created']]);
     });
 
     it('shows a 400 on the field it names and keeps the input', () => {
@@ -247,6 +253,7 @@ describe('ProjectForm', () => {
 
       expect(text('.form-notice')).toBe('Changes saved.');
       expect(saveButton().disabled).toBe(true);
+      expect(toastList()).toEqual([['neutral', 'Changes to “Capstone 2” saved']]);
     });
 
     it('sends null to clear the description and remove the color', async () => {

@@ -11,6 +11,20 @@
   box-shadow: var(--elevation-1);
 }
 
+/* Folded away: just the title bar, no longer stretched to fill the page. */
+:host(.collapsed) {
+  flex: 0 0 auto;
+
+  .panel {
+    min-height: 0;
+    height: auto;
+  }
+
+  .heading-row {
+    margin-bottom: 0;
+  }
+}
+
 .legend {
   margin: -0.25rem 0 0.625rem;
 }
@@ -21,6 +35,12 @@
   justify-content: space-between;
   gap: 0.75rem;
   margin-bottom: 0.75rem;
+}
+
+.heading-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
 }
 
 .heading {

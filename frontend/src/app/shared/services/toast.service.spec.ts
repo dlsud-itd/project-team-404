@@ -23,6 +23,15 @@ describe('ToastService', () => {
     expect(service.toasts()).toEqual([]);
   });
 
+  it('has neutral and danger kinds for edits and deliberate deletes', () => {
+    service.neutral('Changes saved');
+    service.danger('Deleted');
+    expect(service.toasts().map((t) => [t.kind, t.message])).toEqual([
+      ['neutral', 'Changes saved'],
+      ['danger', 'Deleted'],
+    ]);
+  });
+
   it('keeps a toast up for its own duration', () => {
     service.show('Archived', { durationMs: 5000 });
     vi.advanceTimersByTime(4999);

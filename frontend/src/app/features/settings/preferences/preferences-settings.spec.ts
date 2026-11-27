@@ -2,6 +2,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { environment } from '../../../../environments/environment';
+import { ToastService } from '../../../shared/services/toast.service';
 import {
   FONT_FAMILY_PROPERTY,
   FONT_SIZE_PROPERTY,
@@ -168,6 +169,11 @@ describe('PreferencesSettings', () => {
     render();
 
     expect(text('[role="status"].form-notice')).toBe('Preferences saved.');
+    expect(
+      TestBed.inject(ToastService)
+        .toasts()
+        .map((t) => [t.kind, t.message]),
+    ).toEqual([['neutral', 'Preferences saved']]);
     expect(el('.unsaved')).toBeNull();
     expect(rootStyle(FONT_SIZE_PROPERTY)).toBe('87.5%');
 

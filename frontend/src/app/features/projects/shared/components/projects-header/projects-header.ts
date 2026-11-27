@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { NewProjectDialog } from '../../../project-crud/components/new-project-dialog/new-project-dialog';
+import { MAX_ACTIVE_PROJECTS } from '../../project-limit';
 import { ProjectsStore } from '../../state/projects.store';
 
 /** Title and new-project popup of the Projects page. */
@@ -12,7 +13,25 @@ import { ProjectsStore } from '../../state/projects.store';
       <a class="back" routerLink="/home">← Dashboard</a>
       <div class="title-row">
         <h1>Projects</h1>
-        <button type="button" class="new" (click)="store.creating.set(true)">+ New project</button>
+        <div class="actions">
+          @if (store.loaded()) {
+            <p id="project-limit-hint" class="limit" [class.full]="store.atProjectLimit()">
+              {{ store.activeCount() }} of {{ max }} projects
+              @if (store.atProjectLimit()) {
+                <span>· archive one to add another</span>
+              }
+            </p>
+          }
+          <button
+            type="button"
+            class="new"
+            [disabled]="store.atProjectLimit()"
+            [attr.aria-describedby]="store.loaded() ? 'project-limit-hint' : null"
+            (click)="store.creating.set(true)"
+          >
+            + New project
+          </button>
+        </div>
       </div>
     </header>
 
@@ -58,8 +77,27 @@ import { ProjectsStore } from '../../state/projects.store';
       font-weight: 600;
       cursor: pointer;
       transition: filter var(--duration-fast) var(--ease-out);
-      &:hover {
+      &:hover:not(:disabled) {
         filter: brightness(1.08);
+      }
+      &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+    }
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    .limit {
+      margin: 0;
+      color: var(--ink-muted);
+      font-size: 0.8125rem;
+      font-variant-numeric: tabular-nums;
+      &.full {
+        color: var(--ink);
       }
     }
     .back,
@@ -74,4 +112,5 @@ import { ProjectsStore } from '../../state/projects.store';
 })
 export class ProjectsHeader {
   protected readonly store = inject(ProjectsStore);
+  protected readonly max = MAX_ACTIVE_PROJECTS;
 }

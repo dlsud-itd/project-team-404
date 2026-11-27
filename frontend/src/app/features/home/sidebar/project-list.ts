@@ -273,7 +273,11 @@ export class ProjectList {
     const previous = this.sort();
     this.animate(() => this.pendingSort.set(value));
     this.settings.save({ dashboardProjectSort: value }).subscribe({
-      next: () => this.pendingSort.set(null),
+      next: () => {
+        this.pendingSort.set(null);
+        const label = this.sortOptions.find((option) => option.value === value)?.label;
+        if (label) this.toast.neutral(`Favorite projects sorted by ${label.toLowerCase()}`);
+      },
       error: () => {
         this.animate(() => this.pendingSort.set(previous));
         this.toast.error("Couldn't save the project order. Please try again.");

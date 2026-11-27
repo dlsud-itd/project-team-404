@@ -1,17 +1,24 @@
 <section class="panel" aria-labelledby="all-tasks-heading">
   <header class="heading-row">
     <h2 id="all-tasks-heading" class="heading">{{ heading() }}</h2>
-    <button type="button" class="new" [disabled]="store.loading()" (click)="composing.set(true)">
-      + New task
-    </button>
+    <div class="heading-actions">
+      <button type="button" class="new" [disabled]="store.loading()" (click)="composing.set(true)">
+        + New task
+      </button>
+      <app-collapse-toggle
+        [collapsed]="widgets.isCollapsed('all-tasks')"
+        controls="all-tasks-body"
+        name="all tasks"
+        (toggled)="widgets.toggle('all-tasks')"
+      />
+    </div>
   </header>
-
-  <app-priority-legend class="legend" />
 
   @if (actionError(); as message) {
     <p class="error" role="alert">{{ message }}</p>
   }
 
+  <!-- Outside the collapsible body, so + New task works while the list is hidden. -->
   @if (composing()) {
     <app-new-task-dialog
       (created)="store.upsertTask($event); composing.set(false)"
@@ -19,105 +26,109 @@
     />
   }
 
-  <ul class="list" tabindex="0" aria-label="Tasks">
-    @for (task of visibleTasks(); track task.id) {
-      <li
-        class="task priority-tint"
-        [class.done]="task.done"
-        [style.--priority-bg]="priorities.toneOf(task.priorityId).bg"
-        [style.--priority-accent]="priorities.toneOf(task.priorityId).accent"
-        [attr.title]="'Priority: ' + priorities.toneOf(task.priorityId).name"
-        animate.enter="row-enter"
-        animate.leave="row-leave"
-        (contextmenu)="showContextMenu($event, task.id)"
-      >
-        <label class="check" [attr.title]="notDueLabel(task)">
-          <input
-            type="checkbox"
-            [checked]="task.done"
-            [disabled]="isBusy(task) || notDueLabel(task) !== null"
-            [attr.aria-describedby]="notDueLabel(task) ? 'not-due-' + task.id : null"
-            (change)="toggleTask(task)"
-          />
-          <span class="title strike-sweep">{{ task.title }}</span>
-          <span class="visually-hidden"
-            >, {{ priorities.toneOf(task.priorityId).name }} priority</span
-          >
-          @if (notDueLabel(task); as label) {
-            <span class="not-due" [id]="'not-due-' + task.id">{{ label }}</span>
+  <div id="all-tasks-body" [hidden]="widgets.isCollapsed('all-tasks')">
+    <app-priority-legend class="legend" />
+
+    <ul class="list" tabindex="0" aria-label="Tasks">
+      @for (task of visibleTasks(); track task.id) {
+        <li
+          class="task priority-tint"
+          [class.done]="task.done"
+          [style.--priority-bg]="priorities.toneOf(task.priorityId).bg"
+          [style.--priority-accent]="priorities.toneOf(task.priorityId).accent"
+          [attr.title]="'Priority: ' + priorities.toneOf(task.priorityId).name"
+          animate.enter="row-enter"
+          animate.leave="row-leave"
+          (contextmenu)="showContextMenu($event, task.id)"
+        >
+          <label class="check" [attr.title]="notDueLabel(task)">
+            <input
+              type="checkbox"
+              [checked]="task.done"
+              [disabled]="isBusy(task) || notDueLabel(task) !== null"
+              [attr.aria-describedby]="notDueLabel(task) ? 'not-due-' + task.id : null"
+              (change)="toggleTask(task)"
+            />
+            <span class="title strike-sweep">{{ task.title }}</span>
+            <span class="visually-hidden"
+              >, {{ priorities.toneOf(task.priorityId).name }} priority</span
+            >
+            @if (notDueLabel(task); as label) {
+              <span class="not-due" [id]="'not-due-' + task.id">{{ label }}</span>
+            }
+          </label>
+          @if (task.isRecurring && task.recurrence) {
+            <app-streak-badge
+              class="streak"
+              [task]="{
+                taskId: task.id,
+                projectId: task.projectId ?? 0,
+                recurrence: task.recurrence,
+                title: task.title,
+              }"
+            />
           }
-        </label>
-        @if (task.isRecurring && task.recurrence) {
-          <app-streak-badge
-            class="streak"
-            [task]="{
-              taskId: task.id,
-              projectId: task.projectId ?? 0,
-              recurrence: task.recurrence,
-              title: task.title,
-            }"
-          />
-        }
-        <!-- Seen as text too, so the priority never depends on color alone. -->
-        <span class="priority-name" aria-hidden="true">{{
-          priorities.toneOf(task.priorityId).name
-        }}</span>
-        @if (store.projectById(task.projectId); as project) {
-          <span class="project">
-            <span class="swatch" [style.background]="project.color"></span>{{ project.name }}
+          <!-- Seen as text too, so the priority never depends on color alone. -->
+          <span class="priority-name" aria-hidden="true">{{
+            priorities.toneOf(task.priorityId).name
+          }}</span>
+          @if (store.projectById(task.projectId); as project) {
+            <span class="project">
+              <span class="swatch" [style.background]="project.color"></span>{{ project.name }}
+            </span>
+          }
+          <span class="due" [class.overdue]="store.statusOf(task) === 'overdue'">
+            {{ shortDate(task.due) }}
           </span>
-        }
-        <span class="due" [class.overdue]="store.statusOf(task) === 'overdue'">
-          {{ shortDate(task.due) }}
-        </span>
-        <div class="task-actions">
-          <button
-            type="button"
-            class="task-actions-trigger"
-            [disabled]="isBusy(task)"
-            [attr.aria-label]="'Actions for ' + task.title"
-            aria-haspopup="menu"
-            [attr.aria-expanded]="openTaskMenuId() === task.id"
-            (click)="toggleTaskMenu(task.id, $event)"
-          >
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <circle cx="5" cy="12" r="1" />
-              <circle cx="12" cy="12" r="1" />
-              <circle cx="19" cy="12" r="1" />
-            </svg>
-          </button>
-          @if (openTaskMenuId() === task.id) {
-            <div class="task-menu" role="menu" [attr.aria-label]="'Actions for ' + task.title">
-              <button
-                type="button"
-                class="task-menu-item"
-                role="menuitem"
-                (click)="editTask(task, $event)"
-              >
-                Edit
-              </button>
-              <app-archive-action
-                kind="task"
-                variant="menuitem"
-                [itemId]="task.id"
-                [name]="task.title"
-                [hooks]="archiveHooks"
-              />
-            </div>
-          }
-        </div>
-      </li>
-    } @empty {
-      <li class="empty">No tasks match. Add one with “+ New Task”.</li>
-    }
-  </ul>
-  <app-view-all-link
-    [total]="store.filteredTasks().length"
-    [shown]="visibleTasks().length"
-    link="/home"
-    [queryParams]="{ tab: 'tasks' }"
-    noun="tasks"
-  />
+          <div class="task-actions">
+            <button
+              type="button"
+              class="task-actions-trigger"
+              [disabled]="isBusy(task)"
+              [attr.aria-label]="'Actions for ' + task.title"
+              aria-haspopup="menu"
+              [attr.aria-expanded]="openTaskMenuId() === task.id"
+              (click)="toggleTaskMenu(task.id, $event)"
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="5" cy="12" r="1" />
+                <circle cx="12" cy="12" r="1" />
+                <circle cx="19" cy="12" r="1" />
+              </svg>
+            </button>
+            @if (openTaskMenuId() === task.id) {
+              <div class="task-menu" role="menu" [attr.aria-label]="'Actions for ' + task.title">
+                <button
+                  type="button"
+                  class="task-menu-item"
+                  role="menuitem"
+                  (click)="editTask(task, $event)"
+                >
+                  Edit
+                </button>
+                <app-archive-action
+                  kind="task"
+                  variant="menuitem"
+                  [itemId]="task.id"
+                  [name]="task.title"
+                  [hooks]="archiveHooks"
+                />
+              </div>
+            }
+          </div>
+        </li>
+      } @empty {
+        <li class="empty">No tasks match. Add one with “+ New Task”.</li>
+      }
+    </ul>
+    <app-view-all-link
+      [total]="store.filteredTasks().length"
+      [shown]="visibleTasks().length"
+      link="/home"
+      [queryParams]="{ tab: 'tasks' }"
+      noun="tasks"
+    />
+  </div>
 </section>
 
 @if (editingTaskId(); as taskId) {

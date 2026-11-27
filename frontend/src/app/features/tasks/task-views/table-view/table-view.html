@@ -81,7 +81,7 @@
             @if (row.task.labels.length) {
               <ul class="labels" aria-label="Labels">
                 @for (label of row.task.labels; track label.labelId) {
-                  <li class="label" [style.--label-color]="label.color">{{ label.name }}</li>
+                  <li class="label">{{ label.name }}</li>
                 }
               </ul>
             } @else {

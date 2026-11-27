@@ -1,5 +1,9 @@
 import { Injectable, inject } from '@angular/core';
 import { ToastService } from '../../../shared/services/toast.service';
+import {
+  PROJECT_LIMIT_MESSAGE,
+  isProjectLimitError,
+} from '../../projects/project-crud/mappers/project-error.mapper';
 import type { ArchiveTarget } from '../types/archive.types';
 import {
   archiveFailedToast,
@@ -65,7 +69,12 @@ export class ArchiveUndoService {
       },
       error: (error: unknown) => {
         hooks.rollback?.();
-        this.toast.error(restoreFailedToast(target.kind, target.name));
+        // At the project limit the server says why; that beats a generic "couldn't restore".
+        this.toast.error(
+          isProjectLimitError(error)
+            ? PROJECT_LIMIT_MESSAGE
+            : restoreFailedToast(target.kind, target.name),
+        );
         hooks.failed?.(error);
       },
     });
@@ -74,7 +83,7 @@ export class ArchiveUndoService {
   /** Shows "… archived" with an Undo button, for screens that archive through their own service. */
   offerUndo(target: ArchiveTarget, undo: () => void): void {
     this.toast.show(archivedToast(target.kind, target.name), {
-      kind: 'info',
+      kind: 'warning',
       durationMs: UNDO_DURATION_MS,
       action: { label: 'Undo', run: undo },
     });

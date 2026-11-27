@@ -1,9 +1,14 @@
-import { ProjectNotFoundError } from '../project-crud/errors/project-crud.errors';
+import {
+  ProjectLimitReachedError,
+  ProjectNotFoundError,
+} from '../project-crud/errors/project-crud.errors';
+import { MAX_ACTIVE_PROJECTS } from '../shared/project-limit';
 import type { ProjectRecord } from '../shared/models/project.model';
 import { InboxCannotBeArchivedError } from './errors/inbox-cannot-be-archived.error';
 import type { ProjectSortOrder } from './project-organization.types';
 
 export type ProjectOrganizationDependencies = {
+  countActiveProjects(userId: string): Promise<number>;
   setProjectFavorite(
     projectId: number,
     userId: string,
@@ -60,6 +65,13 @@ export class ProjectOrganizationService {
   ) {
     if (project.isInbox && isArchived) {
       throw new InboxCannotBeArchivedError();
+    }
+    // Restoring brings a project back into the active count; archiving only frees a slot.
+    if (!isArchived && project.isArchived && !project.isInbox) {
+      const active = await this.dependencies.countActiveProjects(userId);
+      if (active >= MAX_ACTIVE_PROJECTS) {
+        throw new ProjectLimitReachedError(MAX_ACTIVE_PROJECTS);
+      }
     }
     const updated = await this.dependencies.setProjectArchived(
       project.id,

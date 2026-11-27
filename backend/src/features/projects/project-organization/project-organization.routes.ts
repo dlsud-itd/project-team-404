@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { findOwnedProject } from '../shared/db/queries/find-owned-project.query';
+import { countActiveProjects } from '../shared/db/queries/count-active-projects.query';
 import { ownedProjectMiddleware } from '../shared/middleware/owned-project.middleware';
 import { requireAuth } from '../../auth/session/middleware/require-auth.middleware';
 import type { SessionService } from '../../auth/session/session.service';
@@ -21,6 +22,7 @@ import { setSortOrderValidator } from './validators/set-sort-order.validator';
 export function createProjectOrganizationRouter(
   sessionService: SessionService,
   dependencies: ProjectOrganizationDependencies = {
+    countActiveProjects,
     setProjectFavorite,
     setProjectArchived,
     setProjectSortOrder,

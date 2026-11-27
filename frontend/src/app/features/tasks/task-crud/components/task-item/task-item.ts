@@ -64,7 +64,6 @@ import { TasksStore } from '../../../shared/state/tasks.store';
               <li
                 class="label"
                 [class.archived]="label.isArchived"
-                [style.border-color]="label.color ?? null"
                 [attr.title]="label.isArchived ? label.name + ' (archived)' : null"
               >
                 {{ label.name }}

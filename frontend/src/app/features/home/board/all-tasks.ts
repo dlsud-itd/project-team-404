@@ -19,6 +19,8 @@ import { PrioritiesStore } from '../../settings/state/priorities.store';
 import { PriorityLegend } from '../../settings/components/priority-legend/priority-legend';
 import { SettingsStore } from '../../settings/state/settings.store';
 import { DashboardStore, type Task } from '../dashboard.store';
+import { DashboardWidgetsStore } from '../dashboard-widgets.store';
+import { CollapseToggle } from '../../../shared/components/collapse-toggle/collapse-toggle';
 import { mapTaskError } from '../../tasks/task-crud/mappers/task-error.mapper';
 import { TaskService } from '../../tasks/task-crud/services/task.service';
 import { StreakBadge } from '../../tasks/task-streaks/components/streak-badge/streak-badge';
@@ -42,10 +44,12 @@ const notBlank: ValidatorFn = ({ value }) =>
     ViewAllLink,
     StreakBadge,
     ArchiveAction,
+    CollapseToggle,
   ],
   templateUrl: './all-tasks.html',
   styleUrl: './all-tasks.scss',
   host: {
+    '[class.collapsed]': "widgets.isCollapsed('all-tasks')",
     '(document:click)': 'closeTaskMenu()',
     '(document:keydown.escape)': 'closeTaskMenu()',
   },
@@ -54,6 +58,7 @@ const notBlank: ValidatorFn = ({ value }) =>
 export class AllTasks {
   protected readonly store = inject(DashboardStore);
   protected readonly priorities = inject(PrioritiesStore);
+  protected readonly widgets = inject(DashboardWidgetsStore);
   private readonly settings = inject(SettingsStore);
   /** The filtered tasks, capped at the user's "tasks per dashboard widget" setting. */
   protected readonly visibleTasks = computed(() =>

@@ -65,7 +65,6 @@
         <li
           class="label"
           [class.archived]="label.isArchived"
-          [style.--label-color]="label.color"
           [attr.title]="label.isArchived ? label.name + ' (archived)' : null"
         >
           {{ label.name }}

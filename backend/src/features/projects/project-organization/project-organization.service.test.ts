@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { ProjectRecord } from '../shared/models/project.model';
+import { ProjectLimitReachedError } from '../project-crud/errors/project-crud.errors';
 import { InboxCannotBeArchivedError } from './errors/inbox-cannot-be-archived.error';
 import {
   ProjectOrganizationService,
@@ -23,8 +24,9 @@ const project: ProjectRecord = {
   deletedAt: null,
 };
 
-function dependencies(): ProjectOrganizationDependencies {
+function dependencies() {
   return {
+    countActiveProjects: vi.fn().mockResolvedValue(0),
     setProjectFavorite: vi.fn().mockResolvedValue({ count: 1 }),
     setProjectArchived: vi
       .fn()
@@ -40,7 +42,7 @@ function dependencies(): ProjectOrganizationDependencies {
     updateProjectSortOrders: vi
       .fn()
       .mockResolvedValue([{ projectId: 7, sortOrder: 0 }]),
-  };
+  } satisfies ProjectOrganizationDependencies;
 }
 
 describe('ProjectOrganizationService', () => {
@@ -74,6 +76,35 @@ describe('ProjectOrganizationService', () => {
       service.setArchived({ ...project, isInbox: true }, 'user-123', true)
     ).rejects.toBeInstanceOf(InboxCannotBeArchivedError);
     expect(deps.setProjectArchived).toHaveBeenCalledOnce();
+  });
+
+  it('refuses to restore an archived project at the active-project limit', async () => {
+    const deps = dependencies();
+    const service = new ProjectOrganizationService(deps);
+    const archived = { ...project, isArchived: true, archivedAt: new Date() };
+
+    deps.countActiveProjects.mockResolvedValue(10);
+    await expect(
+      service.setArchived(archived, 'user-123', false)
+    ).rejects.toBeInstanceOf(ProjectLimitReachedError);
+    expect(deps.setProjectArchived).not.toHaveBeenCalled();
+
+    deps.countActiveProjects.mockResolvedValue(9);
+    await expect(
+      service.setArchived(archived, 'user-123', false)
+    ).resolves.toMatchObject({ isArchived: false });
+  });
+
+  it('never counts when archiving, or when the project is already active', async () => {
+    const deps = dependencies();
+    const service = new ProjectOrganizationService(deps);
+    deps.countActiveProjects.mockResolvedValue(10);
+
+    await service.setArchived(project, 'user-123', true);
+    await service.setArchived(project, 'user-123', false);
+
+    expect(deps.countActiveProjects).not.toHaveBeenCalled();
+    expect(deps.setProjectArchived).toHaveBeenCalledTimes(2);
   });
 
   it('updates one sort order and delegates atomic list reordering', async () => {

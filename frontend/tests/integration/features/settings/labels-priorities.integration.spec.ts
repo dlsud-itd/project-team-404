@@ -383,22 +383,22 @@ describe('Labels & Priorities integration (Settings, task form and filters + API
         'Follow-up (1 task)',
         'Ideas (0 tasks)',
       ]);
-      const swatch = el<HTMLElement>('li[data-label-id="21"] .swatch');
-      expect(swatch.style.backgroundColor).toBe('rgb(37, 99, 235)');
+      // Labels have no color, so there is no swatch.
+      expect(el('li[data-label-id="21"] .swatch')).toBeNull();
     });
 
     // FE-LPM-04
-    it('creates a label, then renames and recolors one, keeping its task count', async () => {
+    it('creates a label, then renames one, keeping its task count and stored color', async () => {
       await startSignedIn();
       await openLabels();
       await openNewLabel();
 
+      expect(el('#new-label-color')).toBeNull();
       type('#new-label-name', '  Errands ');
-      type('#new-label-color', '#16a34a');
       await submit('[role="dialog"]');
       const create = expectAuthorized(http.expectOne(LABELS_API), 'POST');
-      expect(create.request.body).toEqual({ name: 'Errands', color: '#16A34A' });
-      create.flush(label(24, 'Errands', '#16A34A', 3), status(201, 'Created'));
+      expect(create.request.body).toEqual({ name: 'Errands', color: null });
+      create.flush(label(24, 'Errands', null, 3), status(201, 'Created'));
       await settle();
 
       expect(rows('Labels')).toEqual([
@@ -411,19 +411,17 @@ describe('Labels & Priorities integration (Settings, task form and filters + API
 
       await press(el('#label-21-edit'));
       expect(el<HTMLInputElement>('#label-21-editor-name').value).toBe('Planning');
+      expect(el('#label-21-editor-color')).toBeNull();
       type('#label-21-editor-name', 'Plans');
-      type('#label-21-editor-color', '#0f766e');
       await submit('li[data-label-id="21"]');
       const update = expectAuthorized(http.expectOne(`${LABELS_API}/21`), 'PUT');
-      expect(update.request.body).toEqual({ name: 'Plans', color: '#0F766E' });
+      // Only the name: the color saved before labels lost theirs is left as it was.
+      expect(update.request.body).toEqual({ name: 'Plans' });
       // PUT answers without taskCount; the page keeps the count it had.
-      update.flush(label(21, 'Plans', '#0F766E', 0));
+      update.flush(label(21, 'Plans', '#2563EB', 0));
       await settle();
 
       expect(rows('Labels')[0]).toBe('Plans (3 tasks)');
-      expect(el<HTMLElement>('li[data-label-id="21"] .swatch').style.backgroundColor).toBe(
-        'rgb(15, 118, 110)',
-      );
     });
 
     // FE-LPM-06

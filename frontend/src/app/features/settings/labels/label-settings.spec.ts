@@ -71,15 +71,13 @@ describe('LabelSettings', () => {
 
   afterEach(() => http.verify());
 
-  it('lists active labels with a color swatch, name, task count and drag handle', () => {
+  it('lists active labels with name, task count and drag handle, and no color', () => {
     expect(text('[role="status"]')).toBe('Loading labels…');
     flushLists();
 
     expect(activeNames()).toEqual(['Planning', 'Errands', 'Reading']);
     const first = el('ul[aria-label="Labels"] li.row')!;
-    expect(first.querySelector<HTMLElement>('.swatch')!.style.backgroundColor).toBe(
-      'rgb(84, 166, 161)',
-    );
+    expect(first.querySelector('.swatch')).toBeNull();
     expect(first.querySelector('.count')?.textContent).toBe('3 tasks');
     expect(all('ul[aria-label="Labels"] .count').map((c) => c.textContent)).toEqual([
       '3 tasks',
@@ -129,24 +127,25 @@ describe('LabelSettings', () => {
     expect(save().disabled).toBe(false);
   });
 
-  it('creates a label in the modal with the chosen color', () => {
+  it('creates a label in the modal without a color', () => {
     flushLists();
     el<HTMLButtonElement>('button.action')!.click();
     render();
+    expect(el('#new-label-color')).toBeNull();
     type('#new-label-name', '  Groceries ');
-    const color = el<HTMLInputElement>('#new-label-color')!;
-    color.value = '#c44536';
-    color.dispatchEvent(new Event('input'));
     submit('#new-label-name');
 
     const req = http.expectOne(URL);
     expect(req.request.method).toBe('POST');
-    expect(req.request.body).toEqual({ name: 'Groceries', color: '#C44536' });
+    expect(req.request.body).toEqual({ name: 'Groceries', color: null });
     req.flush(label(12, 'Groceries', 3, 0), { status: 201, statusText: 'Created' });
     render();
 
     expect(activeNames()).toEqual(['Planning', 'Errands', 'Reading', 'Groceries']);
     expect(el('[role="dialog"]')).toBeNull();
+    expect(TestBed.inject(ToastService).toasts()[0]).toEqual(
+      expect.objectContaining({ kind: 'info', message: 'Label “Groceries” created' }),
+    );
   });
 
   it('shows the server’s duplicate-name error', () => {
@@ -182,11 +181,16 @@ describe('LabelSettings', () => {
 
     const req = http.expectOne(`${URL}/9`);
     expect(req.request.method).toBe('PUT');
-    expect(req.request.body).toEqual({ name: 'Chores', color: '#54A6A1' });
+    // Only the name: a color saved earlier is left untouched.
+    expect(el('#label-9-editor-color')).toBeNull();
+    expect(req.request.body).toEqual({ name: 'Chores' });
     req.flush({ id: 9, name: 'Chores', color: '#54A6A1' });
     render();
 
     expect(activeNames()).toEqual(['Planning', 'Chores', 'Reading']);
+    expect(TestBed.inject(ToastService).toasts()[0]).toEqual(
+      expect.objectContaining({ kind: 'neutral', message: 'Label renamed to “Chores”' }),
+    );
     // An older server's reply has no count; the one already shown stays.
     expect(all('ul[aria-label="Labels"] .count')[1].textContent).toBe('1 task');
   });
