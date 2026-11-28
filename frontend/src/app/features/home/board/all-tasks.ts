@@ -128,7 +128,6 @@ export class AllTasks {
         title: title.trim(),
         description: null,
         dueDate: due || null,
-        deadline: null,
         recurrence: 'none',
         recurrenceDays: [],
         recurrenceEndDate: null,

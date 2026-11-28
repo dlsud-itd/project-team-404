@@ -30,7 +30,7 @@ export class LandingSteps {
       number: '03',
       title: 'Add and organize tasks',
       description:
-        'Give tasks dates, deadlines, a priority and labels. Set routines to repeat automatically.',
+        'Give tasks start and end dates, a priority and labels. Set routines to repeat automatically.',
     },
     {
       number: '04',

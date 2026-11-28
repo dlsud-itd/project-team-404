@@ -9,7 +9,7 @@ export type SortDirection = 'asc' | 'desc';
 
 /** Fields GET /api/tasks can order by. */
 export type TaskSortField =
-  'dueDate' | 'deadline' | 'scheduledDate' | 'priority' | 'title' | 'createdAt' | 'updatedAt';
+  'dueDate' | 'scheduledDate' | 'priority' | 'title' | 'createdAt' | 'updatedAt';
 
 /** What the task list is filtered and sorted by. It lives in the URL; see task-query-params.util. */
 export interface TaskQuery {

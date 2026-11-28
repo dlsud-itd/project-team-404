@@ -12,7 +12,6 @@ export type ApiTask = {
   priority: 'low' | 'medium' | 'high';
   scheduledDate: string | null;
   dueDate: string | null;
-  deadline: string | null;
   recurrence: string | null;
   recurrenceDays: number[];
   recurrenceEndDate: string | null;
@@ -26,7 +25,6 @@ export type ApiTask = {
 /** Every field of a task response, so a change to the shape is caught. */
 export const TASK_KEYS = [
   'createdAt',
-  'deadline',
   'description',
   'doneAt',
   'dueDate',

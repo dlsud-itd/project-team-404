@@ -117,7 +117,6 @@ function apiTask(id: number, title: string, overrides: Partial<ApiTask> = {}): A
     priority: 'medium',
     scheduledDate: null,
     dueDate: null,
-    deadline: null,
     recurrence: null,
     recurrenceDays: [],
     recurrenceEndDate: null,

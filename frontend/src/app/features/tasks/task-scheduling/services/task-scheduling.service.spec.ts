@@ -8,7 +8,6 @@ import type { Task } from '../../shared/types/task.types';
 import { TaskSchedulingService } from './task-scheduling.service';
 
 const URL = `${environment.apiBaseUrl}/api/tasks/1`;
-const DEADLINE = '2026-10-05T15:59:59.999Z';
 const STUDY: Task = {
   taskId: 1,
   projectId: 10,
@@ -17,7 +16,6 @@ const STUDY: Task = {
   description: null,
   scheduledDate: null,
   dueDate: '2026-10-02',
-  deadline: null,
   recurrence: 'none',
   recurrenceDays: [],
   recurrenceEndDate: null,
@@ -69,17 +67,6 @@ describe('TaskSchedulingService', () => {
     expect(store.byId(1)?.scheduledDate).toBe('2026-10-09');
   });
 
-  it('sets the deadline', () => {
-    service.setDeadline(1, DEADLINE).subscribe();
-
-    const req = http.expectOne(`${URL}/deadline`);
-    expect(req.request.method).toBe('PUT');
-    expect(req.request.body).toEqual({ deadline: DEADLINE });
-    req.flush(asApiTask({ ...STUDY, deadline: DEADLINE }));
-
-    expect(store.byId(1)?.deadline).toBe(DEADLINE);
-  });
-
   it('sets the recurrence', () => {
     service.setRecurrence(1, 'weekly').subscribe();
 
@@ -106,16 +93,13 @@ describe('TaskSchedulingService', () => {
         .save(1, {
           scheduledDate: '2026-10-01',
           dueDate: '2026-10-09',
-          deadline: DEADLINE,
           recurrence: 'daily',
         })
         .subscribe(() => (done = true));
 
       http.expectOne(`${URL}/schedule`).flush(asApiTask({ ...STUDY, scheduledDate: '2026-10-01' }));
-      http.expectNone(`${URL}/deadline`);
-      http.expectOne(`${URL}/due-date`).flush(asApiTask({ ...STUDY, scheduledDate: '2026-10-01' }));
       http.expectNone(`${URL}/recurrence`);
-      http.expectOne(`${URL}/deadline`).flush(asApiTask({ ...STUDY, scheduledDate: '2026-10-01' }));
+      http.expectOne(`${URL}/due-date`).flush(asApiTask({ ...STUDY, scheduledDate: '2026-10-01' }));
       expect(done).toBe(false);
       http
         .expectOne(`${URL}/recurrence`)
@@ -125,10 +109,9 @@ describe('TaskSchedulingService', () => {
     });
 
     it('sends only what changed, and includes a value being cleared', () => {
-      service.save(1, { deadline: null }).subscribe();
+      service.save(1, { scheduledDate: null }).subscribe();
 
-      expect(http.expectOne(`${URL}/deadline`).request.body).toEqual({ deadline: null });
-      http.expectNone(`${URL}/schedule`);
+      expect(http.expectOne(`${URL}/schedule`).request.body).toEqual({ scheduledDate: null });
       http.expectNone(`${URL}/due-date`);
       http.expectNone(`${URL}/recurrence`);
     });
@@ -143,16 +126,16 @@ describe('TaskSchedulingService', () => {
     it('stops at a failure and keeps what already saved', () => {
       let failed = false;
       service
-        .save(1, { dueDate: '2026-10-09', deadline: DEADLINE })
+        .save(1, { scheduledDate: '2026-10-01', dueDate: '2026-10-09' })
         .subscribe({ error: () => (failed = true) });
 
-      http.expectOne(`${URL}/due-date`).flush(asApiTask({ ...STUDY, dueDate: '2026-10-09' }));
+      http.expectOne(`${URL}/schedule`).flush(asApiTask({ ...STUDY, scheduledDate: '2026-10-01' }));
       http
-        .expectOne(`${URL}/deadline`)
-        .flush({ error: 'Invalid deadline' }, { status: 400, statusText: 'Bad Request' });
+        .expectOne(`${URL}/due-date`)
+        .flush({ error: 'Invalid due date' }, { status: 400, statusText: 'Bad Request' });
 
       expect(failed).toBe(true);
-      expect(store.byId(1)).toMatchObject({ dueDate: '2026-10-09', deadline: null });
+      expect(store.byId(1)).toMatchObject({ scheduledDate: '2026-10-01', dueDate: '2026-10-02' });
     });
   });
 });

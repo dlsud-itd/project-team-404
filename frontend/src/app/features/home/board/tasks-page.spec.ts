@@ -46,7 +46,6 @@ const TASK: Task = {
   description: null,
   scheduledDate: null,
   dueDate: '2026-10-02',
-  deadline: null,
   recurrence: 'none',
   recurrenceDays: [],
   recurrenceEndDate: null,
@@ -246,7 +245,7 @@ describe('TasksPage filters and sort', () => {
     );
 
     expect(titles()).toEqual(['Later task', 'Review actual project work']);
-    expect(el('app-sort-menu .trigger')?.textContent).toContain('Due date');
+    expect(el('app-sort-menu .trigger')?.textContent).toContain('End date');
   });
 
   it('offers to clear the filters when nothing matches them', async () => {

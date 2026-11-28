@@ -57,13 +57,15 @@ describe('TaskQueryStore', () => {
   });
 
   it('clears the filters but keeps the sort', async () => {
-    const store = await open('/tasks?status=active&due=today&orderBy=deadline&orderDirection=desc');
+    const store = await open(
+      '/tasks?status=active&due=today&orderBy=scheduledDate&orderDirection=desc',
+    );
 
     store.clear();
     await harness.fixture.whenStable();
 
     expect(store.count()).toBe(0);
-    expect(router.url).toBe('/tasks?orderBy=deadline&orderDirection=desc');
+    expect(router.url).toBe('/tasks?orderBy=scheduledDate&orderDirection=desc');
   });
 
   it('follows the URL when it changes from outside, e.g. Back', async () => {

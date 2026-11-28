@@ -35,7 +35,6 @@ export async function createTask(userId: string, input: CreateTaskInput) {
         dueDate: input.dueDate
           ? new Date(`${input.dueDate}T00:00:00.000Z`)
           : null,
-        deadline: input.deadline ? new Date(input.deadline) : null,
         ...toRecurrenceData({
           recurrence: input.recurrence ?? 'none',
           recurrenceDays: input.recurrenceDays,

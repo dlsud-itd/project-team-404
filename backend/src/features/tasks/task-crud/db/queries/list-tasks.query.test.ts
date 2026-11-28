@@ -114,7 +114,7 @@ describe('listTasks query builders', () => {
     });
   });
 
-  it.each(['dueDate', 'deadline', 'scheduledDate'] as const)(
+  it.each(['dueDate', 'scheduledDate'] as const)(
     'sorts nullable %s values last in both directions',
     (orderBy) => {
       expect(buildListTasksOrderBy({ orderBy, orderDirection: 'asc' })).toEqual(

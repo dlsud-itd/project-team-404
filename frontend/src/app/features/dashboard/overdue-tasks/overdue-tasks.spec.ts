@@ -18,7 +18,7 @@ const PROJECTS_URL = `${environment.apiBaseUrl}/api/projects`;
 // Noon on Nov 6 in Manila.
 const NOW = new Date('2026-11-06T04:00:00.000Z');
 
-function task(taskId: number, deadline: string, projectId = 10): Task {
+function task(taskId: number, dueDate: string, projectId = 10): Task {
   return {
     taskId,
     projectId,
@@ -26,8 +26,7 @@ function task(taskId: number, deadline: string, projectId = 10): Task {
     title: `Task ${taskId}`,
     description: null,
     scheduledDate: null,
-    dueDate: null,
-    deadline,
+    dueDate,
     recurrence: 'none',
     recurrenceDays: [],
     recurrenceEndDate: null,
@@ -108,7 +107,7 @@ describe('OverdueTasks', () => {
   it('lists overdue tasks in the server order with their date and lateness', () => {
     create();
     respondProjects();
-    respond([task(1, '2026-10-31T15:59:59.999Z'), task(2, '2026-11-05T15:59:59.999Z')]);
+    respond([task(1, '2026-10-31'), task(2, '2026-11-05')]);
 
     expect(rows().map((row) => text(row.querySelector('.title')))).toEqual(['Task 1', 'Task 2']);
     expect(rows().map((row) => text(row.querySelector('.due')))).toEqual(['Oct 31', 'Nov 5']);
@@ -121,7 +120,7 @@ describe('OverdueTasks', () => {
   it('gives the heading a count for screen readers', () => {
     create();
     respondProjects();
-    respond([task(1, '2026-11-05T15:59:59.999Z')]);
+    respond([task(1, '2026-11-05')]);
 
     expect(text(el().querySelector('h2'))).toBe('Overdue , 1 overdue task');
     expect(el().querySelector('section')?.getAttribute('aria-labelledby')).toBe('overdue-heading');
@@ -139,7 +138,7 @@ describe('OverdueTasks', () => {
   it('links tasks to their edit page, unless their project is gone', () => {
     create();
     respondProjects();
-    respond([task(1, '2026-11-05T15:59:59.999Z', 10), task(2, '2026-11-05T15:59:59.999Z', 0)]);
+    respond([task(1, '2026-11-05', 10), task(2, '2026-11-05', 0)]);
 
     const [linked, orphan] = rows();
     expect(linked.querySelector('a.title')?.getAttribute('href')).toBe('/projects/10/tasks/1/edit');
@@ -150,7 +149,7 @@ describe('OverdueTasks', () => {
   it('colors each dot with its project color, grey when unknown', () => {
     create();
     respondProjects([project(10, '#10b981')]);
-    respond([task(1, '2026-11-05T15:59:59.999Z', 10), task(2, '2026-11-05T15:59:59.999Z', 99)]);
+    respond([task(1, '2026-11-05', 10), task(2, '2026-11-05', 99)]);
 
     const dots = rows().map((row) => (row.querySelector('.dot') as HTMLElement).style.background);
     expect(dots).toEqual(['rgb(16, 185, 129)', 'rgb(187, 187, 187)']);
@@ -162,7 +161,7 @@ describe('OverdueTasks', () => {
       .expectOne(`${PROJECTS_URL}?isArchived=false`)
       .flush('down', { status: 500, statusText: 'Server Error' });
     expect(http.expectOne(`${PROJECTS_URL}?isArchived=true`).cancelled).toBe(true);
-    respond([task(1, '2026-11-05T15:59:59.999Z')]);
+    respond([task(1, '2026-11-05')]);
 
     expect(rows()).toHaveLength(1);
     expect((rows()[0].querySelector('.dot') as HTMLElement).style.background).toBe(
@@ -189,7 +188,7 @@ describe('OverdueTasks', () => {
 
     (el().querySelector('.retry') as HTMLButtonElement).click();
     fixture.detectChanges();
-    respond([task(1, '2026-11-05T15:59:59.999Z')]);
+    respond([task(1, '2026-11-05')]);
 
     expect(el().querySelector('[role="alert"]')).toBeNull();
     expect(rows()).toHaveLength(1);
@@ -209,11 +208,7 @@ describe('OverdueTasks', () => {
   it('shows at most the saved number of tasks, oldest first, with View all for the rest', () => {
     seedSettings({ dashboardTaskLimit: 2 });
     create();
-    respond([
-      task(1, '2026-11-01T15:59:59.999Z'),
-      task(2, '2026-11-02T15:59:59.999Z'),
-      task(3, '2026-11-03T15:59:59.999Z'),
-    ]);
+    respond([task(1, '2026-11-01'), task(2, '2026-11-02'), task(3, '2026-11-03')]);
     respondProjects();
 
     expect(rows().map((row) => text(row.querySelector('.title')))).toEqual(['Task 1', 'Task 2']);
@@ -227,9 +222,7 @@ describe('OverdueTasks', () => {
   it('counts the tasks a Sprint 5 server left out of its capped list', () => {
     seedSettings({ dashboardTaskLimit: 1 });
     create();
-    http
-      .expectOne(URL)
-      .flush({ tasks: [asApiTask(task(1, '2026-11-01T15:59:59.999Z'))], total: 4 });
+    http.expectOne(URL).flush({ tasks: [asApiTask(task(1, '2026-11-01'))], total: 4 });
     fixture.detectChanges();
     respondProjects();
 
@@ -239,7 +232,7 @@ describe('OverdueTasks', () => {
 
   it('keeps the list scrollable within the card and shows no View all when it fits', () => {
     create();
-    respond([task(1, '2026-11-01T15:59:59.999Z')]);
+    respond([task(1, '2026-11-01')]);
     respondProjects();
 
     expect(el().querySelector('a.view-all')).toBeNull();

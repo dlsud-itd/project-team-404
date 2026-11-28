@@ -180,8 +180,8 @@ test, and the test fails if they differ from the seed afterwards.
 The Dashboard specs in `tests/e2e/dashboard/` (`current-upcoming.e2e.spec.ts`
 and `overdue.e2e.spec.ts`) check the Current & Upcoming and Overdue sections of
 `/dashboard` against service-role database queries. They use Harvey's
-`Filter fixture …` tasks from `supabase/seeds/006_filtering.sql`, whose due dates
-and deadlines are relative to the day the seed ran. Seeding again does not move
+`Filter fixture …` tasks from `supabase/seeds/006_filtering.sql`, whose start
+and end dates are relative to the day the seed ran. Seeding again does not move
 those dates, so **run the Dashboard specs on a database seeded the same day**:
 
 ```powershell
@@ -200,7 +200,7 @@ other user:
 
 - `organization/sort-filter.e2e.spec.ts` filters Harvey's `Filtering - Client Work`
   project (seed `006_filtering.sql`) by two priorities and a label, sorts by
-  deadline, reloads, and clears; the shown tasks are checked against a
+  end date, reloads, and clears; the shown tasks are checked against a
   service-role query. It also filters `/projects` to favorites sorted by name.
 - `settings/labels-priorities.e2e.spec.ts` creates, reorders, defaults and
   deletes an "Urgent" level, and creates, renames, reorders and deletes a label.

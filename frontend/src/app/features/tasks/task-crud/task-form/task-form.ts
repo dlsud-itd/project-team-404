@@ -14,7 +14,6 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { finalize, map, of, switchMap, tap } from 'rxjs';
-import { SessionService } from '../../../auth/session/session.service';
 import { ProjectService } from '../../../projects/project-crud/services/project.service';
 import { ProjectsStore } from '../../../projects/shared/state/projects.store';
 import { TasksStore } from '../../shared/state/tasks.store';
@@ -26,20 +25,14 @@ import {
   type TaskChanges,
   type TaskField,
 } from '../../shared/types/task.types';
-import { DeadlinePicker } from '../../task-scheduling/components/deadline-picker/deadline-picker';
-import { DueDatePicker } from '../../task-scheduling/components/due-date-picker/due-date-picker';
+import { DatePicker } from '../../task-scheduling/components/date-picker/date-picker';
 import { RecurrencePicker } from '../../task-scheduling/components/recurrence-picker/recurrence-picker';
 import {
   DEFAULT_TASK_RECURRENCE,
   type RecurrenceEnds,
   type Weekday,
 } from '../../task-scheduling/types/task-scheduling.types';
-import {
-  deadlineToInstant,
-  instantToDate,
-  userTimeZone,
-} from '../../task-scheduling/utils/date-format.util';
-import { deadlineAfterDueDateValidator } from '../../task-scheduling/validators/deadline-after-due-date.validator';
+import { endAfterStartValidator } from '../../task-scheduling/validators/end-after-start.validator';
 import { recurrenceRequiresDueDateValidator } from '../../task-scheduling/validators/recurrence-requires-due-date.validator';
 import { recurrenceRuleValidator } from '../../task-scheduling/validators/recurrence-rule.validator';
 import { StreakDetail } from '../../task-streaks/components/streak-detail/streak-detail';
@@ -62,8 +55,7 @@ type LoadState = 'loading' | 'ready' | 'not-found' | 'error';
   imports: [
     ReactiveFormsModule,
     RouterLink,
-    DueDatePicker,
-    DeadlinePicker,
+    DatePicker,
     RecurrencePicker,
     StreakDetail,
     ArchiveAction,
@@ -91,7 +83,6 @@ export class TaskForm implements OnInit {
   private readonly labelsApi = inject(LabelService);
   private readonly projects = inject(ProjectService);
   private readonly projectsStore = inject(ProjectsStore);
-  private readonly session = inject(SessionService);
   private readonly prioritiesStore = inject(PrioritiesStore);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
@@ -176,7 +167,6 @@ export class TaskForm implements OnInit {
       labelIds: [[] as number[]],
       scheduledDate: [''],
       dueDate: [''],
-      deadline: [''],
       recurrence: [DEFAULT_TASK_RECURRENCE],
       /** Weekly repeats only. */
       recurrenceDays: [[] as Weekday[]],
@@ -186,7 +176,7 @@ export class TaskForm implements OnInit {
     },
     {
       validators: [
-        deadlineAfterDueDateValidator,
+        endAfterStartValidator,
         recurrenceRequiresDueDateValidator,
         recurrenceRuleValidator,
       ],
@@ -347,17 +337,17 @@ export class TaskForm implements OnInit {
     if (server) return server;
 
     if (field === 'dueDate' && this.form.hasError('recurrenceWithoutDueDate')) {
-      return 'Repeating tasks need a due date.';
+      return 'Repeating tasks need an end date.';
     }
-    if (field === 'deadline' && this.form.hasError('deadlineBeforeDueDate')) {
-      return "The deadline can't be before the due date.";
+    if (field === 'dueDate' && this.form.hasError('endBeforeStart')) {
+      return "The end date can't be before the start date.";
     }
     if (field === 'recurrenceDays') {
       return this.form.hasError('recurrenceDaysRequired') ? 'Pick at least one day.' : null;
     }
     if (field === 'recurrenceEndDate') {
       if (this.form.hasError('recurrenceEndBeforeDueDate')) {
-        return "The end date can't be before the due date.";
+        return "Repeating can't stop before the task's end date.";
       }
       // Only once the user has tried to save, so picking "Date" doesn't flash an error.
       const endDate = this.form.controls.recurrenceEndDate;
@@ -390,21 +380,11 @@ export class TaskForm implements OnInit {
       labelIds: task.labels.map((label) => label.labelId),
       scheduledDate: task.scheduledDate ?? '',
       dueDate: task.dueDate ?? '',
-      deadline: this.deadlineDate(task),
       recurrence: task.recurrence,
       recurrenceDays: task.recurrenceDays,
       recurrenceEnds: task.recurrenceEndDate ? 'date' : 'never',
       recurrenceEndDate: task.recurrenceEndDate ?? '',
     });
-  }
-
-  private timeZone(): string {
-    return userTimeZone(this.session.currentUser()?.timezone);
-  }
-
-  /** The day the task's deadline falls on for this user, as the date input shows it. */
-  private deadlineDate(task: Task): string {
-    return task.deadline ? instantToDate(task.deadline, this.timeZone()) : '';
   }
 
   /** As the API expects them: trimmed, with empty optional fields as null. */
@@ -416,7 +396,6 @@ export class TaskForm implements OnInit {
       projectId,
       scheduledDate,
       dueDate,
-      deadline,
       recurrence,
       recurrenceDays,
       recurrenceEnds,
@@ -430,7 +409,6 @@ export class TaskForm implements OnInit {
       description: description.trim() || null,
       scheduledDate: scheduledDate || null,
       dueDate: dueDate || null,
-      deadline: deadline ? deadlineToInstant(deadline, this.timeZone()) : null,
       recurrence,
       // Hidden parts of the rule are dropped, e.g. the days after switching from weekly to daily.
       recurrenceDays: recurrence === 'weekly' ? recurrenceDays : [],
@@ -452,10 +430,6 @@ export class TaskForm implements OnInit {
     if (values.projectId !== task.projectId) details.projectId = values.projectId;
     if (values.scheduledDate !== task.scheduledDate) schedule.scheduledDate = values.scheduledDate;
     if (values.dueDate !== task.dueDate) schedule.dueDate = values.dueDate;
-    // Compared by day: a deadline set elsewhere may be any time of day, and that isn't a change.
-    if (this.form.controls.deadline.value !== this.deadlineDate(task)) {
-      schedule.deadline = values.deadline;
-    }
     // The rule is saved as a whole, so any part changing sends all of it.
     if (
       values.recurrence !== task.recurrence ||

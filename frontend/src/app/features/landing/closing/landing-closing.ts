@@ -10,7 +10,7 @@ import { RouterLink } from '@angular/router';
         <div>
           <h2 id="closing-heading" class="heading">Get your first task done today</h2>
           <p class="text">
-            Create an account, set up a project, and plan your week with deadlines and priorities.
+            Create an account, set up a project, and plan your week with dates and priorities.
           </p>
         </div>
         <div class="actions">

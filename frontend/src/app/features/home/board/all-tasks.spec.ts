@@ -197,7 +197,6 @@ describe('AllTasks', () => {
       title: 'Write essay',
       description: null,
       dueDate: '2026-10-30',
-      deadline: null,
       recurrence: 'none',
       recurrenceDays: [],
       recurrenceEndDate: null,

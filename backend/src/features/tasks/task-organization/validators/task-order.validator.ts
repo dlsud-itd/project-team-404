@@ -5,7 +5,6 @@ export const taskOrderValidator = z
     orderBy: z
       .enum([
         'dueDate',
-        'deadline',
         'scheduledDate',
         'priority',
         'title',

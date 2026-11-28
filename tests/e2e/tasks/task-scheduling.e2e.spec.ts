@@ -64,7 +64,7 @@ function weekdayFor(date: string): string {
   ][new Date(`${date}T12:00:00Z`).getUTCDay()];
 }
 
-test('creates a weekly task with relative scheduled and due dates that survive reload', async ({
+test('creates a weekly task with relative start and end dates that survive reload', async ({
   page,
 }) => {
   const title = `${e2eTaskPrefix}Schedule ${Date.now().toString(36)}`;
@@ -75,8 +75,8 @@ test('creates a weekly task with relative scheduled and due dates that survive r
   await page.getByRole('button', { name: '+ New task' }).click();
   const dialog = page.getByRole('dialog', { name: 'New task' });
   await dialog.getByLabel('Title', { exact: true }).fill(title);
-  await dialog.getByLabel(/Scheduled date/).fill(scheduledDate);
-  await dialog.getByLabel(/Due date/).fill(dueDate);
+  await dialog.getByLabel(/Start date/).fill(scheduledDate);
+  await dialog.getByLabel(/End date/).fill(dueDate);
   await dialog.getByRole('radio', { name: 'Weekly' }).check();
   await dialog.getByRole('checkbox', { name: weekdayFor(dueDate) }).check();
 

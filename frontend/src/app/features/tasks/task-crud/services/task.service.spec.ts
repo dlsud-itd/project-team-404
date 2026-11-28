@@ -18,7 +18,6 @@ const STUDY: Task = {
   description: 'Read all lessons',
   scheduledDate: null,
   dueDate: '2026-10-02',
-  deadline: '2026-10-02T15:59:59.999Z',
   recurrence: 'none',
   recurrenceDays: [],
   recurrenceEndDate: null,
@@ -163,7 +162,6 @@ describe('TaskService', () => {
       title: 'Submit documentation',
       description: null,
       dueDate: null,
-      deadline: null,
       recurrence: 'weekly',
       recurrenceDays: [],
       recurrenceEndDate: null,
@@ -179,7 +177,6 @@ describe('TaskService', () => {
       title: 'Submit documentation',
       description: null,
       dueDate: null,
-      deadline: null,
       recurrence: 'weekly',
       recurrenceDays: [],
       recurrenceEndDate: null,
@@ -271,9 +268,9 @@ describe('TaskService', () => {
     });
 
     it('skips the part with no changes', () => {
-      service.save(1, { details: {}, schedule: { deadline: null } }).subscribe();
+      service.save(1, { details: {}, schedule: { scheduledDate: null } }).subscribe();
 
-      http.expectOne(`${URL}/1/deadline`).flush(asApiTask({ ...STUDY, deadline: null }));
+      http.expectOne(`${URL}/1/schedule`).flush(asApiTask({ ...STUDY, scheduledDate: null }));
     });
 
     it('does nothing when there are no changes', () => {

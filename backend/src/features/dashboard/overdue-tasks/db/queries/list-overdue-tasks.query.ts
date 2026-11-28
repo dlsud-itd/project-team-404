@@ -7,7 +7,7 @@ export async function listOverdueTasks(userId: string, before: Date) {
       isDone: false,
       deletedAt: null,
       archivedAt: null,
-      deadline: { not: null, lt: before },
+      dueDate: { not: null, lt: before },
       OR: [
         { projectId: null },
         {
@@ -17,7 +17,7 @@ export async function listOverdueTasks(userId: string, before: Date) {
         },
       ],
     },
-    orderBy: [{ deadline: 'asc' }, { createdAt: 'desc' }, { id: 'asc' }],
+    orderBy: [{ dueDate: 'asc' }, { createdAt: 'desc' }, { id: 'asc' }],
     include: {
       priorityLevel: true,
       taskLabels: { include: { label: true } },

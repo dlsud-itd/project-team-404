@@ -16,10 +16,13 @@ export class OverdueTasksService {
   async list(userId: string) {
     const timeZone =
       (await this.dependencies.findUserTimezone(userId)) ?? 'UTC';
-    const now = this.now();
-    getDateWindow(timeZone, 0, now);
+    // A task is overdue once its end date is behind the user's today.
+    const { startDate: today } = getDateWindow(timeZone, 0, this.now());
 
-    const tasks = await this.dependencies.listOverdueTasks(userId, now);
+    const tasks = await this.dependencies.listOverdueTasks(
+      userId,
+      new Date(`${today}T00:00:00.000Z`)
+    );
     return tasks.map(toDashboardTask);
   }
 }

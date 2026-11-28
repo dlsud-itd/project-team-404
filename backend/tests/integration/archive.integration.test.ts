@@ -84,7 +84,6 @@ integrationDescribe('archive integration', () => {
     values: {
       title: string;
       dueDate?: Date | null;
-      deadline?: Date | null;
       isDone?: boolean;
       recurrence?: 'none' | 'daily' | 'weekly' | 'monthly' | null;
       archivedAt?: Date | null;
@@ -98,7 +97,6 @@ integrationDescribe('archive integration', () => {
         priorityId: await defaultPriorityIdFor(userId),
         title: values.title,
         dueDate: values.dueDate,
-        deadline: values.deadline,
         isDone: values.isDone,
         boardStatus: values.isDone ? 'done' : 'todo',
         recurrence: values.recurrence,
@@ -346,36 +344,49 @@ integrationDescribe('archive integration', () => {
       name: 'Hidden archived project',
     });
     const today = localToday(account.timezone);
+    // Tomorrow's tasks are upcoming; yesterday's have passed their end date and are overdue.
     const dueDate = new Date(`${addCalendarDays(today, 1)}T00:00:00.000Z`);
-    const overdueDeadline = new Date(Date.now() - 60_000);
+    const pastDueDate = new Date(`${addCalendarDays(today, -1)}T00:00:00.000Z`);
     const activeTask = await seedTask(account.id, activeProject.id, {
       title: 'Visible dashboard task',
       dueDate,
-      deadline: overdueDeadline,
+    });
+    const overdueTask = await seedTask(account.id, activeProject.id, {
+      title: 'Visible overdue task',
+      dueDate: pastDueDate,
     });
     const archivedTask = await seedTask(account.id, activeProject.id, {
       title: 'Archived task',
       dueDate,
-      deadline: overdueDeadline,
+    });
+    const archivedOverdueTask = await seedTask(account.id, activeProject.id, {
+      title: 'Archived overdue task',
+      dueDate: pastDueDate,
     });
     const archivedProjectTask = await seedTask(account.id, archivedProject.id, {
       title: 'Task in archived project',
       dueDate,
-      deadline: overdueDeadline,
     });
+    const archivedProjectOverdueTask = await seedTask(
+      account.id,
+      archivedProject.id,
+      { title: 'Overdue task in archived project', dueDate: pastDueDate }
+    );
     const archivedLabel = await seedLabel(account.id, 'Archived label');
     const activeLabel = await seedLabel(account.id, 'Active label');
 
-    expect(
-      (
-        await apiRequest(
-          'PUT',
-          `/api/tasks/${archivedTask.id}/archive`,
-          account.token,
-          { isArchived: true }
-        )
-      ).status
-    ).toBe(200);
+    for (const task of [archivedTask, archivedOverdueTask]) {
+      expect(
+        (
+          await apiRequest(
+            'PUT',
+            `/api/tasks/${task.id}/archive`,
+            account.token,
+            { isArchived: true }
+          )
+        ).status
+      ).toBe(200);
+    }
     expect(
       (
         await apiRequest(
@@ -403,19 +414,26 @@ integrationDescribe('archive integration', () => {
       account.token
     );
     expect(activeTasks.status).toBe(200);
-    expect(ids(activeTasks.body)).toEqual([activeTask.id]);
+    expect(ids(activeTasks.body).sort((a, b) => a - b)).toEqual(
+      [activeTask.id, overdueTask.id].sort((a, b) => a - b)
+    );
     const archivedTasks = await apiRequest(
       'GET',
       '/api/tasks?status=all&isArchived=true',
       account.token
     );
     expect(archivedTasks.status).toBe(200);
-    expect(ids(archivedTasks.body)).toEqual([archivedTask.id]);
+    expect(ids(archivedTasks.body).sort((a, b) => a - b)).toEqual(
+      [archivedTask.id, archivedOverdueTask.id].sort((a, b) => a - b)
+    );
     expect(archivedTasks.body[0]).toMatchObject({
       isArchived: true,
       archivedAt: expect.any(String),
     });
     expect(ids(archivedTasks.body)).not.toContain(archivedProjectTask.id);
+    expect(ids(archivedTasks.body)).not.toContain(
+      archivedProjectOverdueTask.id
+    );
 
     const activeLabels = await apiRequest('GET', '/api/labels', account.token);
     expect(activeLabels.status).toBe(200);
@@ -454,12 +472,16 @@ integrationDescribe('archive integration', () => {
       account.token
     );
     expect(overdue.status).toBe(200);
-    expect(dashboardTaskIds(overdue.body)).toEqual([activeTask.id]);
+    expect(dashboardTaskIds(overdue.body)).toEqual([overdueTask.id]);
     for (const response of [upcoming, overdue]) {
-      expect(dashboardTaskIds(response.body)).not.toContain(archivedTask.id);
-      expect(dashboardTaskIds(response.body)).not.toContain(
-        archivedProjectTask.id
-      );
+      for (const hidden of [
+        archivedTask,
+        archivedOverdueTask,
+        archivedProjectTask,
+        archivedProjectOverdueTask,
+      ]) {
+        expect(dashboardTaskIds(response.body)).not.toContain(hidden.id);
+      }
     }
   });
 

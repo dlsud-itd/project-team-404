@@ -33,7 +33,6 @@ const TASK: Task = {
   description: null,
   scheduledDate: null,
   dueDate: '2026-11-24',
-  deadline: null,
   recurrence: 'none',
   recurrenceDays: [],
   recurrenceEndDate: null,

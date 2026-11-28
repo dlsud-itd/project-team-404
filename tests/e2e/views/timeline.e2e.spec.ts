@@ -1,6 +1,5 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
 import { baseUrl, logIn } from '../support/auth';
-import { localDate } from '../support/dashboard';
 import { restoreSeedAccount } from '../support/database';
 import {
   activeTasks,
@@ -24,7 +23,7 @@ import {
  * supabase/seeds/013_timeline.sql. "Starts before week" and "Ends after week" span the edges of
  * the week the seed ran in, "Overdue" ended two days before it, and "Multi-day" runs from the
  * next day for four days. Each bar's expected span is worked out from its database row the way
- * the API does (scheduled or due date to the deadline's local date, or the due date), and the
+ * the API does (from the start date, or the end date alone, to the end date), and the
  * bar is checked against the day columns on screen: it starts at the left edge of its first
  * visible day and ends at the right edge of its last, cut where it leaves the window. The tasks
  * are dated relative to the day the seed ran, so the spec stops unless it ran today. Nothing is
@@ -63,9 +62,7 @@ type Span = { title: string; start: string; end: string };
 function spanOf(row: TaskRow): Span | null {
   const start = row.scheduled_date ?? row.due_date;
   if (!start) return null;
-  const end = row.deadline
-    ? localDate(new Date(row.deadline), user.timeZone)
-    : (row.due_date ?? start);
+  const end = row.due_date ?? start;
   return { title: row.title, start, end: end < start ? start : end };
 }
 

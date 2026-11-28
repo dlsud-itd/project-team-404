@@ -11,7 +11,6 @@ export function asApiTask(task: Task): ApiTask {
     priority: PRIORITY_NAMES[task.priorityId],
     scheduledDate: task.scheduledDate,
     dueDate: task.dueDate,
-    deadline: task.deadline,
     recurrence: task.recurrence,
     recurrenceDays: task.recurrenceDays,
     recurrenceEndDate: task.recurrenceEndDate,

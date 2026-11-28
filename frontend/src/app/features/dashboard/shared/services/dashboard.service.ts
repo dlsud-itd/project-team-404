@@ -36,7 +36,7 @@ export class DashboardService {
       .pipe(map(toTaskList));
   }
 
-  /** Open tasks whose deadline has passed. */
+  /** Open tasks whose end date has passed. */
   overdue(): Observable<DashboardTaskList> {
     return this.http
       .get<DashboardTasksResponse>(`${this.baseUrl}/overdue-tasks`)

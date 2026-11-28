@@ -16,7 +16,6 @@ const latestTask: TaskRecord = {
   priorityId: 1,
   scheduledDate: null,
   dueDate: null,
-  deadline: null,
   recurrence: 'none',
   recurrenceDays: [],
   recurrenceEndDate: null,

@@ -38,7 +38,6 @@ export interface ApiTask {
   priority: ApiTaskPriority | ApiTaskPriorityLevel;
   scheduledDate: string | null;
   dueDate: string | null;
-  deadline: string | null;
   recurrence: TaskRecurrence | null;
   /** 0 = Sunday … 6 = Saturday; may be missing from older servers. */
   recurrenceDays?: Weekday[];
@@ -68,12 +67,10 @@ export interface Task {
   priorityId: number;
   title: string;
   description: string | null;
-  /** YYYY-MM-DD, or null when the task is unscheduled. */
+  /** Start date, YYYY-MM-DD, or null when the task has none. */
   scheduledDate: string | null;
-  /** YYYY-MM-DD, or null when the task has no due date. */
+  /** End date (when the task is due), YYYY-MM-DD, or null when the task has none. */
   dueDate: string | null;
-  /** ISO instant, never on a day before dueDate; instantToDate gives the day to show. */
-  deadline: string | null;
   recurrence: TaskRecurrence;
   /** The weekdays a weekly task repeats on; empty for other repeats. */
   recurrenceDays: Weekday[];
@@ -98,7 +95,6 @@ export interface CreateTaskRequest {
   description: string | null;
   scheduledDate?: string | null;
   dueDate: string | null;
-  deadline: string | null;
   recurrence: TaskRecurrence;
   recurrenceDays: Weekday[];
   recurrenceEndDate: string | null;
@@ -153,7 +149,6 @@ export type TaskField =
   | 'projectId'
   | 'scheduledDate'
   | 'dueDate'
-  | 'deadline'
   | 'recurrence'
   | 'recurrenceDays'
   | 'recurrenceEndDate';

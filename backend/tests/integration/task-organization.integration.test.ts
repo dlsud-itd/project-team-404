@@ -62,7 +62,6 @@ integrationDescribe('task organization integration', () => {
       position?: number;
       dueDate?: Date | null;
       scheduledDate?: Date | null;
-      deadline?: Date | null;
       createdAt?: Date;
       updatedAt?: Date;
       deletedAt?: Date | null;
@@ -87,7 +86,6 @@ integrationDescribe('task organization integration', () => {
         title: values.title,
         dueDate: values.dueDate,
         scheduledDate: values.scheduledDate,
-        deadline: values.deadline,
         createdAt: values.createdAt,
         updatedAt: values.updatedAt,
         deletedAt: values.deletedAt,
@@ -379,7 +377,7 @@ integrationDescribe('task organization integration', () => {
     expect(secondState.map(({ position }) => position)).toEqual([1, 2, 3, 4]);
   });
 
-  it('continues to accept every existing task orderBy value', async () => {
+  it('accepts every task orderBy value', async () => {
     const account = await createAccount();
     const project = await seedProject(account.id, 'Order by compatibility');
     const tasks = await Promise.all(
@@ -389,7 +387,6 @@ integrationDescribe('task organization integration', () => {
           position: index + 1,
           dueDate: new Date(Date.UTC(2026, 0, index + 1)),
           scheduledDate: new Date(Date.UTC(2026, 1, index + 1)),
-          deadline: new Date(Date.UTC(2026, 2, index + 1)),
           createdAt: new Date(Date.UTC(2026, 3, index + 1)),
           updatedAt: new Date(Date.UTC(2026, 4, index + 1)),
         })
@@ -399,7 +396,6 @@ integrationDescribe('task organization integration', () => {
 
     for (const orderBy of [
       'dueDate',
-      'deadline',
       'scheduledDate',
       'priority',
       'title',

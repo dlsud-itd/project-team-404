@@ -47,24 +47,6 @@ function wallClock(instant: number, timeZone: string): number {
   );
 }
 
-/** How far the timezone is ahead of UTC at this instant, in milliseconds. */
-function offsetAt(instant: number, timeZone: string): number {
-  const wholeSeconds = Math.floor(instant / 1000) * 1000;
-  return wallClock(wholeSeconds, timeZone) - wholeSeconds;
-}
-
-/**
- * "2026-11-05" → the instant that day ends in the timezone. A deadline is a date to the user but
- * a timestamp to the API, so a task stays on time through the whole of the chosen day.
- */
-export function deadlineToInstant(date: string, timeZone: string): string {
-  const [year, month, day] = date.split('-').map(Number);
-  const endOfDay = Date.UTC(year, month - 1, day, 23, 59, 59, 999);
-  // Measured twice because the first guess can land on the other side of a clock change.
-  const guess = endOfDay - offsetAt(endOfDay, timeZone);
-  return new Date(endOfDay - offsetAt(guess, timeZone)).toISOString();
-}
-
 /** An API timestamp → its YYYY-MM-DD calendar date in the timezone. */
 export function instantToDate(instant: string, timeZone: string): string {
   return new Date(wallClock(Date.parse(instant), timeZone)).toISOString().slice(0, 10);

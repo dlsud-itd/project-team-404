@@ -34,7 +34,6 @@ type SeedTaskOptions = {
   position?: number;
   scheduledDate?: Date | null;
   dueDate?: Date | null;
-  deadline?: Date | null;
   isDone?: boolean;
   recurrence?: 'none' | 'daily' | 'weekly' | 'monthly' | null;
   priorityId?: number;
@@ -130,7 +129,6 @@ integrationDescribe('task timeline integration', () => {
         title: values.title,
         scheduledDate: values.scheduledDate,
         dueDate: values.dueDate,
-        deadline: values.deadline,
         isDone: values.isDone ?? false,
         boardStatus: values.isDone ? 'done' : 'todo',
         recurrence: values.recurrence ?? 'none',
@@ -160,10 +158,6 @@ integrationDescribe('task timeline integration', () => {
 
   function date(value: string): Date {
     return new Date(`${value}T00:00:00.000Z`);
-  }
-
-  function deadlineOn(dateValue: string): Date {
-    return new Date(`${dateValue}T12:00:00.000Z`);
   }
 
   function bars(body: unknown): TimelineBar[] {
@@ -196,38 +190,28 @@ integrationDescribe('task timeline integration', () => {
     return bar;
   }
 
-  it('builds bars for date fallbacks, clamps earlier deadlines, and uses due-only one-day spans', async () => {
+  it('builds bars from start to end date, falls back to either date alone, and never runs backwards', async () => {
     const account = await createAccount();
     const project = await seedProject(account.id, 'Timeline span fallbacks');
     const today = localDate(new Date(), account.timezone);
     const taskSpans = [
       {
-        title: 'Scheduled with deadline',
-        scheduledDate: date(today),
-        deadline: deadlineOn(addDays(today, 3)),
-      },
-      {
-        title: 'Due date only',
-        dueDate: date(addDays(today, 1)),
-      },
-      {
-        title: 'Scheduled date only',
-        scheduledDate: date(addDays(today, 2)),
-      },
-      {
-        title: 'Scheduled and due without deadline',
+        title: 'Start and end date',
         scheduledDate: date(today),
         dueDate: date(addDays(today, 4)),
       },
       {
-        title: 'Due date with deadline and no schedule',
+        title: 'End date only',
         dueDate: date(addDays(today, 1)),
-        deadline: deadlineOn(addDays(today, 5)),
       },
       {
-        title: 'Deadline before scheduled date',
+        title: 'Start date only',
+        scheduledDate: date(addDays(today, 2)),
+      },
+      {
+        title: 'End date before start date',
         scheduledDate: date(addDays(today, 6)),
-        deadline: deadlineOn(addDays(today, 5)),
+        dueDate: date(addDays(today, 5)),
       },
     ];
     await Promise.all(
@@ -245,29 +229,20 @@ integrationDescribe('task timeline integration', () => {
     );
 
     expect(response.status).toBe(200);
-    expect(barByTitle(response.body, 'Scheduled with deadline')).toMatchObject({
+    expect(barByTitle(response.body, 'Start and end date')).toMatchObject({
       start: today,
-      end: addDays(today, 3),
+      end: addDays(today, 4),
     });
-    expect(barByTitle(response.body, 'Due date only')).toMatchObject({
+    expect(barByTitle(response.body, 'End date only')).toMatchObject({
       start: addDays(today, 1),
       end: addDays(today, 1),
     });
-    expect(barByTitle(response.body, 'Scheduled date only')).toMatchObject({
+    expect(barByTitle(response.body, 'Start date only')).toMatchObject({
       start: addDays(today, 2),
       end: addDays(today, 2),
     });
     expect(
-      barByTitle(response.body, 'Scheduled and due without deadline')
-    ).toMatchObject({ start: today, end: addDays(today, 4) });
-    expect(
-      barByTitle(response.body, 'Due date with deadline and no schedule')
-    ).toMatchObject({
-      start: addDays(today, 1),
-      end: addDays(today, 5),
-    });
-    expect(
-      barByTitle(response.body, 'Deadline before scheduled date')
+      barByTitle(response.body, 'End date before start date')
     ).toMatchObject({
       start: addDays(today, 6),
       end: addDays(today, 6),
@@ -283,22 +258,22 @@ integrationDescribe('task timeline integration', () => {
     const leftOverlap = await seedTask(account, project.id, {
       title: 'Crosses left edge',
       scheduledDate: date(addDays(from, -2)),
-      deadline: deadlineOn(addDays(from, 1)),
+      dueDate: date(addDays(from, 1)),
     });
     const rightOverlap = await seedTask(account, project.id, {
       title: 'Crosses right edge',
       scheduledDate: date(addDays(to, -1)),
-      deadline: deadlineOn(addDays(to, 2)),
+      dueDate: date(addDays(to, 2)),
     });
     const beforeWindow = await seedTask(account, project.id, {
       title: 'Before window',
       scheduledDate: date(addDays(from, -4)),
-      deadline: deadlineOn(addDays(from, -3)),
+      dueDate: date(addDays(from, -3)),
     });
     const afterWindow = await seedTask(account, project.id, {
       title: 'After window',
       scheduledDate: date(addDays(to, 1)),
-      deadline: deadlineOn(addDays(to, 2)),
+      dueDate: date(addDays(to, 2)),
     });
 
     const response = await timelineRequest(
@@ -325,10 +300,6 @@ integrationDescribe('task timeline integration', () => {
     const undated = await seedTask(account, project.id, {
       title: 'Undated task',
     });
-    const deadlineOnly = await seedTask(account, project.id, {
-      title: 'Deadline without a start date',
-      deadline: deadlineOn(addDays(today, 1)),
-    });
 
     const response = await timelineRequest(
       { from: today, to: addDays(today, 3), projectId: String(project.id) },
@@ -337,11 +308,8 @@ integrationDescribe('task timeline integration', () => {
 
     expect(response.status).toBe(200);
     expect(bars(response.body).map(({ id }) => id)).toEqual([dated.id]);
-    expect(response.body).toMatchObject({ undatedCount: 2 });
+    expect(response.body).toMatchObject({ undatedCount: 1 });
     expect(bars(response.body).map(({ id }) => id)).not.toContain(undated.id);
-    expect(bars(response.body).map(({ id }) => id)).not.toContain(
-      deadlineOnly.id
-    );
   });
 
   it('includes completed tasks only when requested and computes isOverdue correctly', async () => {
@@ -519,46 +487,6 @@ integrationDescribe('task timeline integration', () => {
     expect(allIds).not.toContain(archivedTask.id);
     expect(allIds).not.toContain(deletedProjectTask.id);
     expect(allIds).not.toContain(deletedTask.id);
-  });
-
-  it('uses the account timezone to convert deadline instants to bar end dates', async () => {
-    const account = await createAccount();
-    const project = await seedProject(account.id, 'Timeline timezone deadline');
-    const now = new Date();
-    const deadline = new Date(
-      Date.UTC(
-        now.getUTCFullYear(),
-        now.getUTCMonth(),
-        now.getUTCDate(),
-        16,
-        30
-      )
-    );
-    if (deadline <= now) deadline.setUTCDate(deadline.getUTCDate() + 1);
-    const scheduledDate = deadline.toISOString().slice(0, 10);
-    const deadlineLocalDate = localDate(deadline, account.timezone);
-    expect(deadlineLocalDate).not.toBe(scheduledDate);
-    const task = await seedTask(account, project.id, {
-      title: 'Deadline timezone task',
-      scheduledDate: date(scheduledDate),
-      deadline,
-    });
-
-    const response = await timelineRequest(
-      {
-        from: scheduledDate,
-        to: deadlineLocalDate,
-        projectId: String(project.id),
-      },
-      account.token
-    );
-
-    expect(response.status).toBe(200);
-    expect(barByTitle(response.body, 'Deadline timezone task')).toMatchObject({
-      id: task.id,
-      start: scheduledDate,
-      end: deadlineLocalDate,
-    });
   });
 
   it('never returns another user’s tasks', async () => {

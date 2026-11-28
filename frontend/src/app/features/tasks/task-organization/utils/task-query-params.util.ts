@@ -13,7 +13,6 @@ import {
 
 export const TASK_SORT_FIELDS: readonly TaskSortField[] = [
   'dueDate',
-  'deadline',
   'scheduledDate',
   'priority',
   'title',
@@ -23,9 +22,8 @@ export const TASK_SORT_FIELDS: readonly TaskSortField[] = [
 /** The task sort menu's choices; '' keeps the list's own order. */
 export const TASK_SORT_OPTIONS: readonly SortOption[] = [
   { value: '', label: 'Default order' },
-  { value: 'dueDate', label: 'Due date' },
-  { value: 'deadline', label: 'Deadline' },
-  { value: 'scheduledDate', label: 'Scheduled' },
+  { value: 'dueDate', label: 'End date' },
+  { value: 'scheduledDate', label: 'Start date' },
   { value: 'priority', label: 'Priority' },
   { value: 'title', label: 'Title' },
   { value: 'createdAt', label: 'Created' },

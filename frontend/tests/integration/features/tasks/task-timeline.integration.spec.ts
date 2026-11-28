@@ -165,7 +165,6 @@ function apiTask(id: number, title: string, overrides: Partial<ApiTask> = {}): A
     priority: { id: 2, name: 'Medium', color: '#D59B38', sortOrder: 1 },
     scheduledDate: '2026-11-18',
     dueDate: '2026-11-19',
-    deadline: null,
     recurrence: 'none',
     recurrenceDays: [],
     recurrenceEndDate: null,

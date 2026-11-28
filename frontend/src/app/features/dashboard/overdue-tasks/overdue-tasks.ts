@@ -15,11 +15,7 @@ import { SettingsStore } from '../../settings/state/settings.store';
 import { ProjectService } from '../../projects/project-crud/services/project.service';
 import { ProjectsStore } from '../../projects/shared/state/projects.store';
 import type { Task } from '../../tasks/shared/types/task.types';
-import {
-  formatDate,
-  instantToDate,
-  userTimeZone,
-} from '../../tasks/task-scheduling/utils/date-format.util';
+import { formatDate, userTimeZone } from '../../tasks/task-scheduling/utils/date-format.util';
 import {
   DASHBOARD_NOW,
   DashboardService,
@@ -32,7 +28,7 @@ type LoadState = 'loading' | 'ready' | 'error';
 /** Dot color for tasks whose project has no color or isn't known. */
 const FALLBACK_DOT_COLOR = '#bbb';
 
-/** Open tasks whose deadline has passed, oldest first, on the dashboard. */
+/** Open tasks whose end date has passed, oldest first, on the dashboard. */
 @Component({
   selector: 'app-overdue-tasks',
   imports: [RouterLink, OverdueBadge, ViewAllLink],
@@ -51,7 +47,7 @@ export class OverdueTasks implements OnInit {
 
   protected readonly loadState = signal<LoadState>('loading');
   protected readonly error = signal<string | null>(null);
-  /** In the server's order: oldest deadline first. */
+  /** In the server's order: oldest end date first. */
   private readonly allTasks = signal<Task[]>([]);
   /** Every overdue task according to the server, including ones it left out. */
   protected readonly total = signal(0);
@@ -95,9 +91,9 @@ export class OverdueTasks implements OnInit {
     return this.projects.byId(task.projectId)?.color ?? FALLBACK_DOT_COLOR;
   }
 
-  protected deadlineLabel(task: Task): string {
-    if (!task.deadline) return '';
-    return formatDate(instantToDate(task.deadline, this.timeZone()), this.loadedAt());
+  protected endDateLabel(task: Task): string {
+    if (!task.dueDate) return '';
+    return formatDate(task.dueDate, this.loadedAt());
   }
 
   /** Tasks whose project was deleted have no page to edit them on. */

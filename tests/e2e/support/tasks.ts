@@ -18,7 +18,6 @@ export interface ApiTask {
   priority: 'high' | 'medium' | 'low';
   scheduledDate: string | null;
   dueDate: string | null;
-  deadline: string | null;
   recurrence: 'none' | 'daily' | 'weekly' | 'monthly' | null;
   recurrenceDays?: number[];
   recurrenceEndDate?: string | null;

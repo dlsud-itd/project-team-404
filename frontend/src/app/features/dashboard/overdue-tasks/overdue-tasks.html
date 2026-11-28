@@ -27,13 +27,9 @@
               <span class="title" [title]="task.title">{{ task.title }}</span>
             }
             <span class="when">
-              <span class="due">{{ deadlineLabel(task) }}</span>
-              @if (task.deadline; as deadline) {
-                <app-overdue-badge
-                  [deadline]="deadline"
-                  [now]="loadedAt()"
-                  [timeZone]="timeZone()"
-                />
+              <span class="due">{{ endDateLabel(task) }}</span>
+              @if (task.dueDate; as endDate) {
+                <app-overdue-badge [endDate]="endDate" [now]="loadedAt()" [timeZone]="timeZone()" />
               }
             </span>
           </li>

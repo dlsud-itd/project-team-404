@@ -16,7 +16,6 @@ const task: TaskRecord = {
   priorityId: 2,
   scheduledDate: null,
   dueDate: null,
-  deadline: null,
   recurrence: 'none',
   recurrenceDays: [],
   recurrenceEndDate: null,

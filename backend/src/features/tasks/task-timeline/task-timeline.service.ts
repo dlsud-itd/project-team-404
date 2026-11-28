@@ -18,10 +18,12 @@ export class TaskTimelineService {
   constructor(private readonly dependencies: TaskTimelineDependencies) {}
 
   async list(userId: string, query: TimelineQuery): Promise<TimelineResponse> {
-    const { tasks, timeZone, today } =
-      await this.dependencies.listTimelineTasks(userId, query);
+    const { tasks, today } = await this.dependencies.listTimelineTasks(
+      userId,
+      query
+    );
     const bars = tasks.flatMap((task: TimelineTaskRecord) => {
-      const bar = toTimelineTaskModel(task, timeZone, today);
+      const bar = toTimelineTaskModel(task, today);
       return bar && bar.start <= query.to && bar.end >= query.from ? [bar] : [];
     });
     const groups = new Map<string, TimelineProjectGroup>();

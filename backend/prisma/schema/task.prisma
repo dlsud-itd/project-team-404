@@ -27,7 +27,6 @@ model Task {
   priorityId    Int             @db.Integer @map("priority_id")
   scheduledDate DateTime?       @db.Date @map("scheduled_date")
   dueDate       DateTime?       @db.Date @map("due_date")
-  deadline      DateTime?       @db.Timestamptz(6) @map("deadline")
   recurrence    TaskRecurrence? @default(none) @map("recurrence")
   /// Weekdays a weekly task repeats on: 0 = Sunday … 6 = Saturday. Empty for other repeats.
   recurrenceDays    Int[]       @default([]) @db.SmallInt @map("recurrence_days")

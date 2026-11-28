@@ -54,7 +54,6 @@ integrationDescribe('Task CRUD API regression', () => {
       description: 'Chapter 1',
       priority: 'high',
       dueDate: null,
-      deadline: null,
       isDone: false,
       doneAt: null,
       labels: [],

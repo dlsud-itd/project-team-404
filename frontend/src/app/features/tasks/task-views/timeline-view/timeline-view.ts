@@ -57,8 +57,8 @@ import {
 export const TIMELINE_PROJECT_GONE = 'This project is no longer available.';
 
 /**
- * Dated tasks as a Gantt-style timeline: one bar per task from its scheduled (or due) date to its
- * deadline (or due date), grouped by project, a week or a month at a time.
+ * Dated tasks as a Gantt-style timeline: one bar per task from its start date to its
+ * end date, grouped by project, a week or a month at a time.
  *
  * - Click a bar to edit its task; right-click it to Edit or Archive.
  * - Its round checkbox marks the task done or not done.

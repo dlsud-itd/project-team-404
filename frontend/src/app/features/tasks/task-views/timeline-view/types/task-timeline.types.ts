@@ -7,9 +7,9 @@ export interface ApiTimelineBar {
   projectId: number | null;
   projectName: string | null;
   projectColor: string | null;
-  /** The scheduled date, or the due date when there is none. */
+  /** The start date, or the end date when there is none. */
   start: string;
-  /** The deadline's date, or the due date, or `start`; never before `start`. */
+  /** The end date, or `start` when there is none; never before `start`. */
   end: string;
   isDone: boolean;
   isOverdue: boolean;

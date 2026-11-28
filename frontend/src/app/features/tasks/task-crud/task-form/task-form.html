@@ -167,32 +167,22 @@
         </section>
 
         <section class="schedule" aria-labelledby="task-schedule-heading">
-          <h2 id="task-schedule-heading">Date and deadline</h2>
+          <h2 id="task-schedule-heading">Dates</h2>
           <div class="row">
-            <div class="field">
-              <label for="task-scheduled-date">Scheduled date <span>(optional)</span></label>
-              <input
-                id="task-scheduled-date"
-                type="date"
-                formControlName="scheduledDate"
-                [attr.aria-invalid]="!!fieldError('scheduledDate')"
-                aria-describedby="task-scheduled-date-status"
-                (input)="clearServerError('scheduledDate')"
-              />
-              <p id="task-scheduled-date-status" class="field-message" aria-live="polite">
-                {{ fieldError('scheduledDate') }}
-              </p>
-            </div>
-            <app-due-date-picker
+            <app-date-picker
+              fieldId="task-scheduled-date"
+              label="Start date"
+              [control]="form.controls.scheduledDate"
+              [error]="fieldError('scheduledDate')"
+              (edited)="clearServerError('scheduledDate')"
+            />
+            <app-date-picker
+              fieldId="task-due-date"
+              label="End date"
               [control]="form.controls.dueDate"
+              [min]="form.controls.scheduledDate.value"
               [error]="fieldError('dueDate')"
               (edited)="clearServerError('dueDate')"
-            />
-            <app-deadline-picker
-              [control]="form.controls.deadline"
-              [dueDate]="form.controls.dueDate.value"
-              [error]="fieldError('deadline')"
-              (edited)="clearServerError('deadline')"
             />
           </div>
           <app-recurrence-picker

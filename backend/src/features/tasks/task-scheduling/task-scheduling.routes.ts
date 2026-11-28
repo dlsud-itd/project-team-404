@@ -11,7 +11,6 @@ import type { TaskSchedulingDependencies } from './task-scheduling.service';
 import { updateTaskSchedule } from './db/queries/update-task-schedule.query';
 import { scheduleTaskDateValidator } from './validators/schedule-task-date.validator';
 import { taskDueDateValidator } from './validators/task-due-date.validator';
-import { taskDeadlineValidator } from './validators/task-deadline.validator';
 import { recurrenceRuleValidator } from './validators/recurrence-rule.validator';
 
 export function createTaskSchedulingRouter(
@@ -50,14 +49,6 @@ export function createTaskSchedulingRouter(
     requireOwnedTask,
     validateRequest(taskDueDateValidator, 'body', 'Invalid due date'),
     controller.setDueDate
-  );
-  router.put(
-    '/:taskId/deadline',
-    requireAuth(sessionService),
-    validateTaskId,
-    requireOwnedTask,
-    validateRequest(taskDeadlineValidator, 'body', 'Invalid deadline'),
-    controller.setDeadline
   );
   router.put(
     '/:taskId/recurrence',

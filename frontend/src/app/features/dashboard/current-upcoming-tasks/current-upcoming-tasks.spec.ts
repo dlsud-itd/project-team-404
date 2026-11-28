@@ -24,7 +24,6 @@ function task(taskId: number, dueDate: string): Task {
     description: null,
     scheduledDate: null,
     dueDate,
-    deadline: null,
     recurrence: 'none',
     recurrenceDays: [],
     recurrenceEndDate: null,

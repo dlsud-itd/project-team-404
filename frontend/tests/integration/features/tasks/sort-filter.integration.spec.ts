@@ -153,7 +153,6 @@ function apiTask(
     },
     scheduledDate: null,
     dueDate: null,
-    deadline: null,
     recurrence: 'none',
     recurrenceDays: [],
     recurrenceEndDate: null,
@@ -361,7 +360,7 @@ describe('Sort & filter integration (task list, projects page + API)', () => {
     await settle();
   }
 
-  /** The sort trigger's text, e.g. "Sort: Due date". */
+  /** The sort trigger's text, e.g. "Sort: End date". */
   function sortText(host = 'app-task-list'): string {
     return text(`${host} app-sort-menu .trigger`);
   }
@@ -538,7 +537,7 @@ describe('Sort & filter integration (task list, projects page + API)', () => {
         await pick('task-filter-due', 'Overdue');
         await openChip('Status');
         await pick('task-filter-status', 'Active');
-        await sortBy('Due date');
+        await sortBy('End date');
         await press(directionButton()!);
       });
       const before = expectTaskList();
@@ -571,7 +570,7 @@ describe('Sort & filter integration (task list, projects page + API)', () => {
         'Status: Active',
       ]);
       expect(text('app-task-filter-bar .count')).toBe('4 filters');
-      expect(sortText()).toBe('Sort: Due date');
+      expect(sortText()).toBe('Sort: End date');
       expect(directionButton()?.getAttribute('aria-pressed')).toBe('true');
       expect(titles()).toEqual(['Write report']);
 
@@ -640,9 +639,8 @@ describe('Sort & filter integration (task list, projects page + API)', () => {
   // Case 4
   describe('Sorting tasks', () => {
     const FIELDS = [
-      ['Due date', 'dueDate'],
-      ['Deadline', 'deadline'],
-      ['Scheduled', 'scheduledDate'],
+      ['End date', 'dueDate'],
+      ['Start date', 'scheduledDate'],
       ['Priority', 'priority'],
       ['Title', 'title'],
       ['Created', 'createdAt'],
@@ -701,7 +699,7 @@ describe('Sort & filter integration (task list, projects page + API)', () => {
       await startSignedIn();
       await openTaskList();
 
-      await changeFilters(() => sortBy('Due date'));
+      await changeFilters(() => sortBy('End date'));
       // As the server sorts by due date ascending: dated tasks first, null dates last, ties by id.
       const tie = apiTask(40, 'Also due Nov 18', LOW, { dueDate: '2026-11-18' });
       const early = apiTask(41, 'Due Nov 10', LOW, { dueDate: '2026-11-10' });

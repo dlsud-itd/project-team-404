@@ -20,7 +20,6 @@ const base: Task = {
   description: null,
   scheduledDate: null,
   dueDate: null,
-  deadline: null,
   recurrence: 'none',
   recurrenceDays: [],
   recurrenceEndDate: null,
@@ -111,9 +110,8 @@ describe('TableView', () => {
       'Project',
       'Priority',
       'Labels',
-      'Scheduled',
-      'Due',
-      'Deadline',
+      'Start date',
+      'End date',
       'Recurrence',
       'Streak',
       'Status',
@@ -123,7 +121,6 @@ describe('TableView', () => {
       false,
       true,
       false,
-      true,
       true,
       true,
       false,
@@ -143,7 +140,6 @@ describe('TableView', () => {
       'SchoolWriting',
       formatDate('2099-03-01'),
       formatDate('2099-03-02'),
-      '—',
       '—',
       '—',
       'To do',
@@ -171,11 +167,11 @@ describe('TableView', () => {
       fixture.componentInstance.sortChange.subscribe((sort) => emitted.push(sort));
       render([CHAPTER], { orderBy: 'dueDate', orderDirection: 'asc' });
 
-      expect(header('Due').getAttribute('aria-sort')).toBe('ascending');
+      expect(header('End date').getAttribute('aria-sort')).toBe('ascending');
       expect(header('Title').getAttribute('aria-sort')).toBe('none');
       expect(header('Labels').hasAttribute('aria-sort')).toBe(false);
 
-      header('Due').querySelector('button')!.click();
+      header('End date').querySelector('button')!.click();
       header('Title').querySelector('button')!.click();
 
       expect(emitted).toEqual([

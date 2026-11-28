@@ -41,7 +41,6 @@ export interface TaskScheduleChanges {
   /** YYYY-MM-DD. */
   dueDate?: string | null;
   /** ISO instant. */
-  deadline?: string | null;
   recurrence?: TaskRecurrence;
   /** Weekly repeats only; sent together with recurrence. */
   recurrenceDays?: Weekday[];

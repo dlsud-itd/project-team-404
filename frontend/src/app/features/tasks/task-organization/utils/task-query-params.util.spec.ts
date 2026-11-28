@@ -35,7 +35,7 @@ describe('taskQueryFromParams', () => {
         dueTo: '2026-11-30',
         recurring: 'false',
         status: 'active',
-        orderBy: 'deadline',
+        orderBy: 'scheduledDate',
         orderDirection: 'desc',
       }),
     ).toEqual({
@@ -47,7 +47,7 @@ describe('taskQueryFromParams', () => {
       dueTo: '2026-11-30',
       recurring: false,
       status: 'active',
-      orderBy: 'deadline',
+      orderBy: 'scheduledDate',
       orderDirection: 'desc',
     });
   });

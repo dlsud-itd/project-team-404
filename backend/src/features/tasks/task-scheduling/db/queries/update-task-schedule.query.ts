@@ -24,9 +24,6 @@ export async function updateTaskSchedule(
               : null,
           }
         : {}),
-      ...(input.deadline !== undefined
-        ? { deadline: input.deadline ? new Date(input.deadline) : null }
-        : {}),
       ...toRecurrenceData(input),
     },
   });
