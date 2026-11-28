@@ -36,6 +36,13 @@ Open the repository root folder in VS Code. Open the Command Palette with
      remain private; never put it in `frontend/.env`.
    - To use the local console mailer instead, leave `BREVO_API_KEY` and
      `BREVO_SENDER_EMAIL` blank.
+   - The backend uses the active `DATABASE_URL` and `DIRECT_URL` entries. To
+     use the hosted database, keep the local Docker override pair commented.
+     To use the local database for the app, uncomment both local override
+     entries below the hosted pair in `backend/.env`. Restart the backend after
+     changing these values. For a fully local stack, also point `SUPABASE_URL`
+     and `SUPABASE_SERVICE_ROLE_KEY` at the local values shown by
+     `supabase status`, so Auth and PostgreSQL use the same project.
 
 4. In the Command Palette, run **`🔐 Supabase: Login`** and then
    **`🔗 Supabase: Link Project`**. Follow the Supabase CLI prompts to select or
