@@ -9,14 +9,14 @@ import { overdueDuration } from '../../utils/overdue-duration.util';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class OverdueBadge {
-  /** The task's deadline, an ISO instant. */
-  readonly deadline = input.required<string>();
+  /** The task's end date, YYYY-MM-DD. */
+  readonly endDate = input.required<string>();
   /** The time to measure lateness from. */
   readonly now = input.required<Date>();
   /** The user's timezone, which decides where each day starts. */
   readonly timeZone = input.required<string>();
 
   protected readonly duration = computed(() =>
-    overdueDuration(this.deadline(), this.now(), this.timeZone()),
+    overdueDuration(this.endDate(), this.now(), this.timeZone()),
   );
 }

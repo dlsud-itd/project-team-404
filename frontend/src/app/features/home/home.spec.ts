@@ -217,7 +217,6 @@ describe('Home tabs', () => {
         priority: 'low',
         scheduledDate: null,
         dueDate: null,
-        deadline: null,
         recurrence: 'none',
         recurrenceDays: [],
         recurrenceEndDate: null,

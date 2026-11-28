@@ -14,7 +14,6 @@ const task: TaskRecord = {
   priorityId: 3,
   dueDate: new Date('2026-10-31T00:00:00.000Z'),
   scheduledDate: null,
-  deadline: null,
   recurrence: 'none',
   recurrenceDays: [],
   recurrenceEndDate: null,

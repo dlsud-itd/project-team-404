@@ -138,14 +138,6 @@ task_fixtures_data as (
     end as priority_name,
     current_date + (task_fixtures.task_number - 4) as due_date,
     current_date + (task_fixtures.task_number - 2) as scheduled_date,
-    case task_fixtures.task_number
-      when 1 then now() - interval '3 days'
-      when 2 then now() - interval '30 minutes'
-      when 3 then now() + interval '1 day'
-      when 4 then null::timestamptz
-      when 5 then now() - interval '2 hours'
-      else now() - interval '2 days'
-    end as deadline,
     task_fixtures.task_number = 6 as is_done,
     case task_fixtures.task_number % 4
       when 0 then 'none'
@@ -165,7 +157,6 @@ insert into public.tbl_task (
   priority_id,
   scheduled_date,
   due_date,
-  deadline,
   recurrence,
   is_done,
   board_status,
@@ -179,7 +170,6 @@ select
   priority.priority_id,
   task_fixtures_data.scheduled_date,
   task_fixtures_data.due_date,
-  task_fixtures_data.deadline,
   task_fixtures_data.recurrence::public.task_recurrence,
   task_fixtures_data.is_done,
   case when task_fixtures_data.is_done then 'done'::public.task_board_status

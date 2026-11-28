@@ -14,7 +14,7 @@ export interface RecurrenceRuleDetails {
 }
 
 /**
- * Due date, deadline and recurrence calls for /api/tasks. Each returns the whole task, which
+ * Start date, end date and recurrence calls for /api/tasks. Each returns the whole task, which
  * replaces the one in TasksStore. Always send the field: an empty body clears the value.
  */
 @Injectable({ providedIn: 'root' })
@@ -33,11 +33,6 @@ export class TaskSchedulingService {
     return this.put(taskId, 'due-date', { dueDate });
   }
 
-  /** PUT /api/tasks/{id}/deadline with an ISO instant, or null to clear it. */
-  setDeadline(taskId: number, deadline: string | null): Observable<Task> {
-    return this.put(taskId, 'deadline', { deadline });
-  }
-
   /** PUT /api/tasks/{id}/recurrence, with the weekdays and end date that go with it. */
   setRecurrence(
     taskId: number,
@@ -50,11 +45,9 @@ export class TaskSchedulingService {
   /** Sends each change in turn. If one fails the rest are not sent; earlier ones stay saved. */
   save(taskId: number, changes: TaskScheduleChanges): Observable<void> {
     const requests: Observable<Task>[] = [];
-    const { scheduledDate, dueDate, deadline, recurrence, recurrenceDays, recurrenceEndDate } =
-      changes;
+    const { scheduledDate, dueDate, recurrence, recurrenceDays, recurrenceEndDate } = changes;
     if (scheduledDate !== undefined) requests.push(this.setScheduledDate(taskId, scheduledDate));
     if (dueDate !== undefined) requests.push(this.setDueDate(taskId, dueDate));
-    if (deadline !== undefined) requests.push(this.setDeadline(taskId, deadline));
     if (recurrence !== undefined) {
       requests.push(
         this.setRecurrence(taskId, recurrence, {

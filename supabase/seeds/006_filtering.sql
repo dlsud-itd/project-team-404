@@ -68,23 +68,22 @@ with task_fixtures(
   priority_name,
   due_day_offset,
   scheduled_day_offset,
-  deadline_day_offset,
   recurrence,
   is_done
 ) as (
   values
-    ('Filtering - Client Work', 'Filter fixture 01: overdue low', 'Overdue task with multiple labels.', 'low', -5, -4, -4, 'none', false),
-    ('Filtering - Client Work', 'Filter fixture 02: due today medium', 'Task due today with a deadline.', 'medium', 0, -1, 1, 'daily', false),
-    ('Filtering - Client Work', 'Filter fixture 03: future high', 'Upcoming task without a deadline.', 'high', 3, 0, null, 'weekly', false),
-    ('Filtering - Client Work', 'Filter fixture 04: no date low', 'Completed recurring task with no due date.', 'low', null, null, null, 'monthly', true),
-    ('Filtering - Client Work', 'Filter fixture 05: past medium', 'Past task with multiple labels.', 'medium', -1, 1, -1, 'none', false),
-    ('Filtering - Client Work', 'Filter fixture 06: future high', 'Completed task with a future deadline.', 'high', 7, 3, 5, 'daily', true),
-    ('Filtering - Personal', 'Filter fixture 07: due today low', 'Personal task due today.', 'low', 0, null, -1, 'monthly', false),
-    ('Filtering - Personal', 'Filter fixture 08: no date medium', 'Recurring task without a due date.', 'medium', null, -2, 3, 'weekly', false),
-    ('Filtering - Personal', 'Filter fixture 09: overdue high', 'Completed task with an overdue due date.', 'high', -7, 5, null, 'none', true),
-    ('Filtering - Personal', 'Filter fixture 10: future low', 'Personal task due in the future.', 'low', 5, 2, 8, 'daily', false),
-    ('Filtering - Personal', 'Filter fixture 11: past medium', 'Past task with multiple labels.', 'medium', -2, null, null, 'none', false),
-    ('Filtering - Personal', 'Filter fixture 12: no date high', 'Recurring task without a due date.', 'high', null, 7, 2, 'monthly', false)
+    ('Filtering - Client Work', 'Filter fixture 01: overdue low', 'Overdue task with multiple labels.', 'low', -5, -4, 'none', false),
+    ('Filtering - Client Work', 'Filter fixture 02: due today medium', 'Task due today that started yesterday.', 'medium', 0, -1, 'daily', false),
+    ('Filtering - Client Work', 'Filter fixture 03: future high', 'Upcoming task that starts today.', 'high', 3, 0, 'weekly', false),
+    ('Filtering - Client Work', 'Filter fixture 04: no date low', 'Completed recurring task with no due date.', 'low', null, null, 'monthly', true),
+    ('Filtering - Client Work', 'Filter fixture 05: past medium', 'Past task with multiple labels.', 'medium', -1, 1, 'none', false),
+    ('Filtering - Client Work', 'Filter fixture 06: future high', 'Completed task that ends next week.', 'high', 7, 3, 'daily', true),
+    ('Filtering - Personal', 'Filter fixture 07: due today low', 'Personal task due today.', 'low', 0, null, 'monthly', false),
+    ('Filtering - Personal', 'Filter fixture 08: no date medium', 'Recurring task without a due date.', 'medium', null, -2, 'weekly', false),
+    ('Filtering - Personal', 'Filter fixture 09: overdue high', 'Completed task with an overdue due date.', 'high', -7, 5, 'none', true),
+    ('Filtering - Personal', 'Filter fixture 10: future low', 'Personal task due in the future.', 'low', 5, 2, 'daily', false),
+    ('Filtering - Personal', 'Filter fixture 11: past medium', 'Past task with multiple labels.', 'medium', -2, null, 'none', false),
+    ('Filtering - Personal', 'Filter fixture 12: no date high', 'Recurring task without a due date.', 'high', null, 7, 'monthly', false)
 )
 insert into public.tbl_task (
   user_id,
@@ -94,7 +93,6 @@ insert into public.tbl_task (
   priority_id,
   scheduled_date,
   due_date,
-  deadline,
   recurrence,
   is_done,
   board_status,
@@ -108,7 +106,6 @@ select
   priority.priority_id,
   (now() at time zone profile.timezone)::date + fixture.scheduled_day_offset,
   (now() at time zone profile.timezone)::date + fixture.due_day_offset,
-  now() + fixture.deadline_day_offset * interval '1 day',
   fixture.recurrence::public.task_recurrence,
   fixture.is_done,
   case when fixture.is_done then 'done'::public.task_board_status

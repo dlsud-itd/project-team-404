@@ -29,15 +29,13 @@ integrationDescribe('Task and project ordering regression', () => {
       projectId,
       title: 'First task',
       dueDate: '2026-01-03',
-      scheduledDate: '2026-02-03',
-      deadline: '2026-03-03T12:00:00.000Z',
+      scheduledDate: '2025-12-03',
     });
     const second = await createTask(api, {
       projectId,
       title: 'Second task',
       dueDate: '2026-01-01',
-      scheduledDate: '2026-02-01',
-      deadline: '2026-03-01T12:00:00.000Z',
+      scheduledDate: '2025-12-01',
     });
 
     const reorderedTasks = [second.id, first.id];
@@ -74,7 +72,6 @@ integrationDescribe('Task and project ordering regression', () => {
 
     for (const orderBy of [
       'dueDate',
-      'deadline',
       'scheduledDate',
       'priority',
       'title',

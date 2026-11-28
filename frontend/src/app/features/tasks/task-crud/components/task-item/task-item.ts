@@ -1,13 +1,8 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { SessionService } from '../../../../auth/session/session.service';
 import { PrioritiesStore } from '../../../../settings/state/priorities.store';
 import type { Task } from '../../../shared/types/task.types';
-import {
-  formatDate,
-  instantToDate,
-  userTimeZone,
-} from '../../../task-scheduling/utils/date-format.util';
+import { formatDate } from '../../../task-scheduling/utils/date-format.util';
 import { recurrenceSummary } from '../../../task-scheduling/utils/recurrence-label.util';
 import { StreakBadge } from '../../../task-streaks/components/streak-badge/streak-badge';
 import { ArchiveAction } from '../../../../archive/components/archive-action/archive-action';
@@ -39,13 +34,10 @@ import { TasksStore } from '../../../shared/state/tasks.store';
         <p class="meta">
           <span class="priority-name" aria-hidden="true">{{ tone().name }}</span>
           @if (scheduled(); as scheduled) {
-            <span class="scheduled">Scheduled {{ scheduled }}</span>
+            <span class="scheduled">Starts {{ scheduled }}</span>
           }
           @if (due(); as due) {
-            <span class="due">Due {{ due }}</span>
-          }
-          @if (deadline(); as deadline) {
-            <span class="deadline">Deadline {{ deadline }}</span>
+            <span class="due">Ends {{ due }}</span>
           }
           @if (repeats(); as repeats) {
             <span class="badge">{{ repeats }}</span>
@@ -130,9 +122,6 @@ import { TasksStore } from '../../../shared/state/tasks.store';
       margin: 0.375rem 0 0;
       color: var(--ink-muted);
       font-size: 0.75rem;
-    }
-    .deadline {
-      color: var(--error);
     }
     /* A small square in the priority color, the same mark as the row's edge, then the name. */
     .priority-name {
@@ -220,8 +209,6 @@ export class TaskItem {
     rollback: () => this.tasksStore.patch(taskId, { isArchived: false }),
   });
 
-  private readonly session = inject(SessionService);
-
   protected readonly done = computed(() => this.task().completedAt !== null);
   private readonly priorities = inject(PrioritiesStore);
   /** The tint, left accent and name of the task's priority. */
@@ -237,11 +224,5 @@ export class TaskItem {
   protected readonly scheduled = computed(() => {
     const { scheduledDate } = this.task();
     return scheduledDate ? formatDate(scheduledDate) : null;
-  });
-  protected readonly deadline = computed(() => {
-    const { deadline } = this.task();
-    if (!deadline) return null;
-    const timeZone = userTimeZone(this.session.currentUser()?.timezone);
-    return formatDate(instantToDate(deadline, timeZone));
   });
 }

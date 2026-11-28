@@ -16,9 +16,8 @@ describe('table columns', () => {
       ['Project', null],
       ['Priority', 'priority'],
       ['Labels', null],
-      ['Scheduled', 'scheduledDate'],
-      ['Due', 'dueDate'],
-      ['Deadline', 'deadline'],
+      ['Start date', 'scheduledDate'],
+      ['End date', 'dueDate'],
       ['Recurrence', null],
       ['Streak', null],
       ['Status', null],
@@ -50,8 +49,8 @@ describe('table columns', () => {
     });
 
     it('says which way the sorted column goes and none for the rest', () => {
-      const sort: TableSort = { orderBy: 'deadline', orderDirection: 'desc' };
-      expect(columnAriaSort(column('deadline'), sort)).toBe('descending');
+      const sort: TableSort = { orderBy: 'scheduledDate', orderDirection: 'desc' };
+      expect(columnAriaSort(column('scheduled'), sort)).toBe('descending');
       expect(columnAriaSort(column('title'), sort)).toBe('none');
       expect(columnAriaSort(column('title'), { orderBy: 'title', orderDirection: 'asc' })).toBe(
         'ascending',
@@ -60,12 +59,12 @@ describe('table columns', () => {
   });
 
   it('describes what the next click does', () => {
-    expect(sortButtonLabel(column('due'), DEFAULT)).toBe('Sort by Due, ascending');
+    expect(sortButtonLabel(column('due'), DEFAULT)).toBe('Sort by End date, ascending');
     expect(sortButtonLabel(column('due'), { orderBy: 'dueDate', orderDirection: 'asc' })).toBe(
-      'Sort by Due, descending',
+      'Sort by End date, descending',
     );
     expect(sortButtonLabel(column('due'), { orderBy: 'dueDate', orderDirection: 'desc' })).toBe(
-      'Sort by Due: back to default order',
+      'Sort by End date: back to default order',
     );
   });
 });

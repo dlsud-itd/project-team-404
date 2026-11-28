@@ -6,11 +6,10 @@ const GENERIC = 'Something went wrong. Please try again.';
 const NOT_FOUND = 'Task not found.';
 
 /**
- * Picks the form field a 400 message is about, e.g. "Task title cannot be empty" → title.
- * Deadline goes first: "Deadline cannot be earlier than due date" is about the deadline.
+ * Picks the form field a 400 message is about, e.g. "Task title cannot be empty" → title, and
+ * "End date cannot be before the start date" → dueDate.
  */
 function fieldFor(message: string): TaskField | undefined {
-  if (/deadline/i.test(message)) return 'deadline';
   if (/scheduled/i.test(message)) return 'scheduledDate';
   if (/recurrence/i.test(message)) return 'recurrence';
   // A whole word, so "Invalid task update" is not taken for a date.

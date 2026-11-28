@@ -7,9 +7,9 @@ const NOW = new Date('2026-11-06T04:00:00.000Z');
 describe('OverdueBadge', () => {
   let fixture: ComponentFixture<OverdueBadge>;
 
-  function render(deadline: string): string | undefined {
+  function render(endDate: string): string | undefined {
     fixture = TestBed.createComponent(OverdueBadge);
-    fixture.componentRef.setInput('deadline', deadline);
+    fixture.componentRef.setInput('endDate', endDate);
     fixture.componentRef.setInput('now', NOW);
     fixture.componentRef.setInput('timeZone', 'Asia/Manila');
     fixture.detectChanges();
@@ -17,14 +17,14 @@ describe('OverdueBadge', () => {
   }
 
   it('shows how many days late the task is', () => {
-    expect(render('2026-11-03T15:59:59.999Z')).toBe('3 days overdue');
+    expect(render('2026-11-03')).toBe('3 days overdue');
   });
 
   it('uses the singular for one day', () => {
-    expect(render('2026-11-05T15:59:59.999Z')).toBe('1 day overdue');
+    expect(render('2026-11-05')).toBe('1 day overdue');
   });
 
-  it('says the task was due earlier today', () => {
-    expect(render('2026-11-06T01:00:00.000Z')).toBe('Due earlier today');
+  it('says the task is due today on its end date', () => {
+    expect(render('2026-11-06')).toBe('Due today');
   });
 });

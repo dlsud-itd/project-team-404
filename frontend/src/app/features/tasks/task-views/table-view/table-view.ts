@@ -42,7 +42,6 @@ interface TableRow {
   priorityColor: string | null;
   scheduled: string | null;
   due: string | null;
-  deadline: string | null;
   recurrence: string | null;
   status: 'Done' | 'Overdue' | 'To do';
   /** "Available on Nov 22" while a repeat can't be completed yet. */
@@ -97,7 +96,6 @@ export class TableView {
         priorityColor: this.priorities.toneOf(task.priorityId).accent,
         scheduled: task.scheduledDate ? formatDate(task.scheduledDate) : null,
         due: task.dueDate ? formatDate(task.dueDate) : null,
-        deadline: task.deadline ? formatDate(instantToDate(task.deadline, timeZone)) : null,
         recurrence: recurrenceSummary(task.recurrence, task.recurrenceDays, task.recurrenceEndDate),
         status: done ? 'Done' : task.dueDate && task.dueDate < today ? 'Overdue' : 'To do',
         notDue: availableOn ? availableOnLabel(availableOn) : null,

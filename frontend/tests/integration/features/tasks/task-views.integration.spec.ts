@@ -128,7 +128,6 @@ function apiTask(
     },
     scheduledDate: null,
     dueDate: null,
-    deadline: null,
     recurrence: 'none',
     recurrenceDays: [],
     recurrenceEndDate: null,
@@ -372,9 +371,8 @@ describe('Task views integration (List & Table views + API)', () => {
         'Project',
         'Priority',
         'Labels',
-        'Scheduled',
-        'Due',
-        'Deadline',
+        'Start date',
+        'End date',
         'Recurrence',
         'Streak',
         'Status',
@@ -496,7 +494,7 @@ describe('Task views integration (List & Table views + API)', () => {
       expect(urlParams()).toEqual({ priorities: 'high,low', orderBy: 'dueDate', view: 'table' });
       expect(tableTitles()).toEqual(['Make slides', 'Write report']);
       expect(chips()).toContain('Priority: High, Low');
-      expect(text('app-task-list app-sort-menu .trigger')).toContain('Due date');
+      expect(text('app-task-list app-sort-menu .trigger')).toContain('End date');
       expect(header('due').getAttribute('aria-sort')).toBe('ascending');
 
       await press(viewLink('List'));
@@ -574,7 +572,7 @@ describe('Task views integration (List & Table views + API)', () => {
         expect(urlParams()).toEqual({ view: 'table', orderBy, orderDirection: 'desc' });
         // The sort menu shows the same sort.
         expect(text('app-task-list app-sort-menu .trigger')).toContain(
-          { title: 'Title', priority: 'Priority', dueDate: 'Due date' }[orderBy]!,
+          { title: 'Title', priority: 'Priority', dueDate: 'End date' }[orderBy]!,
         );
       }
 

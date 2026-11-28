@@ -205,9 +205,10 @@ begin
   where task.user_id = fixture_user_id
     and task.title like 'Filter fixture %'
     and task.deleted_at is null
-    and task.deadline is not null;
+    and task.scheduled_date is not null
+    and task.due_date is not null;
   if actual_count = 0 then
-    raise exception 'FAIL: filtering tasks have no deadlines';
+    raise exception 'FAIL: filtering tasks have no start-to-end spans';
   end if;
 
   select count(*)
@@ -216,9 +217,9 @@ begin
   where task.user_id = fixture_user_id
     and task.title like 'Filter fixture %'
     and task.deleted_at is null
-    and task.deadline is null;
+    and task.due_date is null;
   if actual_count = 0 then
-    raise exception 'FAIL: filtering tasks have no missing deadlines';
+    raise exception 'FAIL: filtering tasks have no missing end dates';
   end if;
 
   select count(*)
@@ -253,7 +254,7 @@ begin
   if actual_count = 0 then
     raise exception 'FAIL: filtering tasks have no completed tasks';
   end if;
-  raise notice 'PASS: filtering tasks cover date, deadline, recurrence, and completion states';
+  raise notice 'PASS: filtering tasks cover start date, end date, recurrence, and completion states';
 end;
 $$;
 
@@ -932,7 +933,7 @@ begin
     where profile.email = 'harvey@example.com'
       and task.title = 'Timeline fixture - Multi-day'
       and task.scheduled_date = (now() at time zone profile.timezone)::date + 1
-      and (task.deadline at time zone profile.timezone)::date
+      and task.due_date
         = (now() at time zone profile.timezone)::date + 4
       and task.deleted_at is null
   ) or not exists (
@@ -943,7 +944,6 @@ begin
       and task.title = 'Timeline fixture - Single-day'
       and task.scheduled_date is null
       and task.due_date = (now() at time zone profile.timezone)::date + 2
-      and task.deadline is null
       and task.deleted_at is null
   ) then
     raise exception 'FAIL: timeline multi-day or single-day fixture is incorrect';
@@ -958,7 +958,7 @@ begin
       and task.title = 'Timeline fixture - Starts before week'
       and task.scheduled_date < (now() at time zone profile.timezone)::date
         - extract(dow from (now() at time zone profile.timezone)::date)::integer
-      and (task.deadline at time zone profile.timezone)::date >=
+      and task.due_date >=
         (now() at time zone profile.timezone)::date
         - extract(dow from (now() at time zone profile.timezone)::date)::integer
       and task.deleted_at is null
@@ -970,7 +970,7 @@ begin
       and task.title = 'Timeline fixture - Ends after week'
       and task.scheduled_date >= (now() at time zone profile.timezone)::date
         - extract(dow from (now() at time zone profile.timezone)::date)::integer
-      and (task.deadline at time zone profile.timezone)::date >
+      and task.due_date >
         (now() at time zone profile.timezone)::date
         - extract(dow from (now() at time zone profile.timezone)::date)::integer + 6
       and task.deleted_at is null
@@ -992,7 +992,7 @@ begin
     where profile.email = 'harvey@example.com'
       and task.title = 'Timeline fixture - Overdue'
       and not task.is_done
-      and (task.deadline at time zone profile.timezone)::date
+      and task.due_date
         < (now() at time zone profile.timezone)::date
       and task.deleted_at is null
   ) or not exists (
@@ -1002,7 +1002,6 @@ begin
       and task.title = 'Timeline fixture - Undated'
       and task.scheduled_date is null
       and task.due_date is null
-      and task.deadline is null
       and task.deleted_at is null
   ) then
     raise exception 'FAIL: timeline completed, overdue, or undated fixture is incorrect';

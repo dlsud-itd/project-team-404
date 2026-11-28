@@ -11,8 +11,7 @@ const task: TaskRecord = {
   description: null,
   priorityId: 2,
   scheduledDate: null,
-  dueDate: null,
-  deadline: new Date('2026-11-05T16:29:59.000Z'),
+  dueDate: new Date('2026-11-04T00:00:00.000Z'),
   recurrence: 'none',
   recurrenceDays: [],
   recurrenceEndDate: null,
@@ -38,7 +37,7 @@ const task: TaskRecord = {
 };
 
 describe('OverdueTasksService', () => {
-  it('uses the caller timezone and the exact current instant, then maps results', async () => {
+  it('passes the start of today in the caller timezone, then maps results', async () => {
     const now = new Date('2026-11-05T16:30:00.000Z');
     const dependencies = {
       findUserTimezone: vi.fn().mockResolvedValue('Asia/Manila'),
@@ -49,11 +48,14 @@ describe('OverdueTasksService', () => {
     const result = await service.list('owner-1');
 
     expect(dependencies.findUserTimezone).toHaveBeenCalledWith('owner-1');
-    expect(dependencies.listOverdueTasks).toHaveBeenCalledWith('owner-1', now);
+    expect(dependencies.listOverdueTasks).toHaveBeenCalledWith(
+      'owner-1',
+      new Date('2026-11-06T00:00:00.000Z')
+    );
     expect(result).toEqual([
       expect.objectContaining({
         id: 21,
-        deadline: '2026-11-05T16:29:59.000Z',
+        dueDate: '2026-11-04',
       }),
     ]);
   });
@@ -68,6 +70,9 @@ describe('OverdueTasksService', () => {
 
     await service.list('owner-1');
 
-    expect(dependencies.listOverdueTasks).toHaveBeenCalledWith('owner-1', now);
+    expect(dependencies.listOverdueTasks).toHaveBeenCalledWith(
+      'owner-1',
+      new Date('2026-11-05T00:00:00.000Z')
+    );
   });
 });

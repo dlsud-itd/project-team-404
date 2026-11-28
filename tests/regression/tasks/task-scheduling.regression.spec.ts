@@ -17,9 +17,8 @@ import {
 const testSupabase = configureSupabaseTest();
 const integrationDescribe = testSupabase ? describe : describe.skip;
 
-// Friday 20 November 2026, with a deadline at the end of that day in Manila (UTC+8).
+// Friday 20 November 2026.
 const DUE = '2026-11-20';
-const DEADLINE = '2026-11-20T15:59:59.999Z';
 
 integrationDescribe('Task Scheduling API regression', () => {
   let app: App;
@@ -40,14 +39,12 @@ integrationDescribe('Task Scheduling API regression', () => {
       projectId,
       title: 'Leg day',
       dueDate: DUE,
-      deadline: DEADLINE,
       recurrence: 'weekly',
       recurrenceDays: [5],
       recurrenceEndDate: '2026-12-31',
     });
     expect(task).toMatchObject({
       dueDate: DUE,
-      deadline: DEADLINE,
       recurrence: 'weekly',
       recurrenceDays: [5],
       recurrenceEndDate: '2026-12-31',
@@ -78,8 +75,6 @@ integrationDescribe('Task Scheduling API regression', () => {
       isDone: false,
       doneAt: null,
       dueDate: '2026-11-27',
-      // The deadline keeps its distance from the due date.
-      deadline: '2026-11-27T15:59:59.999Z',
       recurrence: 'weekly',
       recurrenceDays: [5],
       recurrenceEndDate: '2026-12-31',
@@ -151,7 +146,6 @@ integrationDescribe('Task Scheduling API regression', () => {
         { scheduledDate: '2026-11-18' },
       ],
       ['due-date', { dueDate: DUE }, { dueDate: DUE }],
-      ['deadline', { deadline: DEADLINE }, { deadline: DEADLINE }],
       [
         'recurrence',
         {
@@ -170,7 +164,6 @@ integrationDescribe('Task Scheduling API regression', () => {
         { recurrence: 'none', recurrenceDays: [], recurrenceEndDate: null },
         { recurrence: 'none', recurrenceDays: [], recurrenceEndDate: null },
       ],
-      ['deadline', { deadline: null }, { deadline: null }],
       ['due-date', { dueDate: null }, { dueDate: null }],
       ['schedule', { scheduledDate: null }, { scheduledDate: null }],
     ];
@@ -207,7 +200,7 @@ integrationDescribe('Task Scheduling API regression', () => {
 
     for (const [route, body] of [
       ['due-date', { dueDate: '20/11/2026' }],
-      ['deadline', { deadline: 'tomorrow' }],
+      ['schedule', { scheduledDate: 'tomorrow' }],
       ['recurrence', { recurrence: 'hourly' }],
       ['recurrence', { recurrence: 'daily', recurrenceDays: [1] }],
       ['recurrence', { recurrence: 'weekly', recurrenceDays: [7] }],

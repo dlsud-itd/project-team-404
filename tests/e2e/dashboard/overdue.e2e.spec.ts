@@ -24,7 +24,7 @@ import {
 import { apiToken } from '../support/projects';
 import { seedAccounts } from '../support/seed-data';
 
-// Harvey's seeded fixtures have deadlines a few days before the seed date.
+// Harvey's seeded fixtures include tasks that ended a few days before the seed date.
 const [, harvey] = seedAccounts;
 
 let user: DashboardUser;
@@ -78,7 +78,7 @@ async function expectOverdueToMatch(
   ).toEqual(shown.map(({ id, title }) => ({ id, title })));
   const badges = overdueList(page).locator('li.task app-overdue-badge');
   await expect(badges).toHaveText(
-    shown.map((task) => overdueLabel(task.deadline, now, user.timeZone))
+    shown.map((task) => overdueLabel(task.endDate, now, user.timeZone))
   );
   const count = expected.length;
   await expect(
@@ -94,12 +94,10 @@ test('E2E-OVD-01: the overdue list matches a service-role query, oldest first, w
   const expected = await expectedOverdue(user.userId, now);
   expect(
     expected.length,
-    'the dashboard seed should give Harvey open tasks past their deadline'
+    'the dashboard seed should give Harvey open tasks past their end date'
   ).toBeGreaterThan(0);
-  const deadlines = expected.map((task) => Date.parse(task.deadline));
-  expect(deadlines, 'oldest deadline first').toEqual(
-    [...deadlines].sort((a, b) => a - b)
-  );
+  const endDates = expected.map((task) => task.endDate);
+  expect(endDates, 'oldest end date first').toEqual([...endDates].sort());
 
   const apiIds = await openAndCaptureIds(page);
   expect(apiIds, 'API tasks, in order').toEqual(

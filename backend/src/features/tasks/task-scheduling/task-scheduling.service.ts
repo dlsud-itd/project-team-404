@@ -12,13 +12,6 @@ export type TaskSchedulingDependencies = {
   ) => Promise<TaskRecord | null>;
 };
 
-export class InvalidTaskDeadlineError extends Error {
-  constructor() {
-    super('Deadline cannot be before the due date');
-    this.name = 'InvalidTaskDeadlineError';
-  }
-}
-
 export class TaskSchedulingService {
   constructor(private readonly dependencies: TaskSchedulingDependencies) {}
 
@@ -48,29 +41,6 @@ export class TaskSchedulingService {
       userId,
       {
         dueDate,
-      }
-    );
-    if (!updated) {
-      throw new TaskNotFoundError();
-    }
-    return toTaskModel(updated);
-  }
-
-  async setDeadline(task: TaskRecord, userId: string, deadline: string | null) {
-    this.assertTaskActive(task);
-    if (
-      deadline &&
-      task.dueDate &&
-      new Date(deadline).getTime() < task.dueDate.getTime()
-    ) {
-      throw new InvalidTaskDeadlineError();
-    }
-
-    const updated = await this.dependencies.updateTaskSchedule(
-      task.id,
-      userId,
-      {
-        deadline,
       }
     );
     if (!updated) {

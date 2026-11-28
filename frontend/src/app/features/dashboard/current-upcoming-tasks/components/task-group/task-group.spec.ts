@@ -13,7 +13,6 @@ function task(taskId: number, overrides: Partial<Task> = {}): Task {
     description: null,
     scheduledDate: null,
     dueDate: '2026-11-06',
-    deadline: null,
     recurrence: 'none',
     recurrenceDays: [],
     recurrenceEndDate: null,

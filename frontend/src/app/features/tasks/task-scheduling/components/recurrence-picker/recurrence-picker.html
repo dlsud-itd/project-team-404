@@ -59,7 +59,7 @@
             id="task-recurrence-end-date"
             class="end-date"
             type="date"
-            aria-label="End date"
+            aria-label="Repeat until"
             [formControl]="endDate()"
             [min]="dueDate() || null"
             [attr.aria-invalid]="!!endDateError()"

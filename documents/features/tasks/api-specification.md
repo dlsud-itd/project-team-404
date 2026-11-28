@@ -28,9 +28,8 @@ Task endpoints are rooted at `/api/tasks`. All task operations require a bearer 
 
 | Method | Endpoint                        | Purpose                                      |
 | ------ | ------------------------------- | -------------------------------------------- |
-| `PUT`  | `/api/tasks/:taskId/schedule`   | Set the scheduled date.                      |
-| `PUT`  | `/api/tasks/:taskId/due-date`   | Set or clear the due date.                   |
-| `PUT`  | `/api/tasks/:taskId/deadline`   | Set or clear the deadline.                   |
+| `PUT`  | `/api/tasks/:taskId/schedule`   | Set or clear the start date.                 |
+| `PUT`  | `/api/tasks/:taskId/due-date`   | Set or clear the end date.                   |
 | `PUT`  | `/api/tasks/:taskId/recurrence` | Set the recurrence rule.                     |
 | `GET`  | `/api/tasks/board`              | List tasks grouped by board status.          |
 | `PUT`  | `/api/tasks/board/reorder`      | Move a task between board columns/positions. |

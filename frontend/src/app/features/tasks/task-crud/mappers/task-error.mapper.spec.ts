@@ -13,9 +13,9 @@ describe('mapTaskError', () => {
     ['projectId is required', 'projectId'],
     ['Task must have a due date', 'dueDate'],
     ['Invalid due date', 'dueDate'],
-    ['Invalid deadline', 'deadline'],
+    ['Invalid scheduled date', 'scheduledDate'],
     ['Invalid recurrence rule', 'recurrence'],
-    ['Deadline cannot be earlier than due date', 'deadline'],
+    ['End date cannot be before the start date', 'dueDate'],
   ] as const)('keeps the 400 message "%s" and points at the %s field', (message, field) => {
     expect(mapTaskError(httpError(400, { error: message }))).toEqual({
       message,

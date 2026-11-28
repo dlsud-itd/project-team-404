@@ -27,4 +27,33 @@ describe('createTaskValidator', () => {
       createTaskValidator.parse({ title: 'Valid', unknown: true })
     ).toThrow();
   });
+
+  it('accepts an end date on or after the start date', () => {
+    expect(
+      createTaskValidator.parse({
+        title: 'Valid',
+        scheduledDate: '2026-11-20',
+        dueDate: '2026-11-20',
+      })
+    ).toMatchObject({ scheduledDate: '2026-11-20', dueDate: '2026-11-20' });
+  });
+
+  it('rejects an end date before the start date', () => {
+    expect(() =>
+      createTaskValidator.parse({
+        title: 'Valid',
+        scheduledDate: '2026-11-20',
+        dueDate: '2026-11-19',
+      })
+    ).toThrow('End date cannot be before the start date');
+  });
+
+  it('no longer accepts a deadline', () => {
+    expect(() =>
+      createTaskValidator.parse({
+        title: 'Valid',
+        deadline: '2026-11-20T15:59:59.999Z',
+      })
+    ).toThrow();
+  });
 });

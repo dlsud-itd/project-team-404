@@ -1,33 +1,45 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormControl } from '@angular/forms';
-import { DueDatePicker } from './due-date-picker';
+import { DatePicker } from './date-picker';
 
-describe('DueDatePicker', () => {
-  let fixture: ComponentFixture<DueDatePicker>;
+describe('DatePicker', () => {
+  let fixture: ComponentFixture<DatePicker>;
   let page: HTMLElement;
   let control: FormControl<string>;
 
   const input = () => page.querySelector('#task-due-date') as HTMLInputElement;
   const clear = () => page.querySelector('.clear') as HTMLButtonElement | null;
 
-  function render(value = '', error: string | null = null): void {
+  function render(value = '', error: string | null = null, min: string | null = null): void {
     control = new FormControl(value, { nonNullable: true });
     fixture.componentRef.setInput('control', control);
+    fixture.componentRef.setInput('fieldId', 'task-due-date');
+    fixture.componentRef.setInput('label', 'End date');
     fixture.componentRef.setInput('error', error);
+    fixture.componentRef.setInput('min', min);
     fixture.detectChanges();
   }
 
   beforeEach(() => {
-    fixture = TestBed.createComponent(DueDatePicker);
+    fixture = TestBed.createComponent(DatePicker);
     page = fixture.nativeElement;
   });
 
   it('labels a date input and shows the current value', () => {
     render('2026-10-02');
 
-    expect(page.querySelector('label[for="task-due-date"]')).toBeTruthy();
+    const label = page.querySelector('label[for="task-due-date"]');
+    expect(label?.textContent).toContain('End date');
     expect(input().type).toBe('date');
     expect(input().value).toBe('2026-10-02');
+  });
+
+  it('stops the picker before the minimum date when there is one', () => {
+    render();
+    expect(input().hasAttribute('min')).toBe(false);
+
+    render('', null, '2026-10-05');
+    expect(input().getAttribute('min')).toBe('2026-10-05');
   });
 
   it('updates the control and reports the edit when the user picks a date', () => {
@@ -43,10 +55,10 @@ describe('DueDatePicker', () => {
   });
 
   it('announces an error and marks the input invalid', () => {
-    render('', 'Repeating tasks need a due date.');
+    render('', 'Repeating tasks need an end date.');
 
     const status = page.querySelector('#task-due-date-status');
-    expect(status?.textContent?.trim()).toBe('Repeating tasks need a due date.');
+    expect(status?.textContent?.trim()).toBe('Repeating tasks need an end date.');
     expect(status?.getAttribute('aria-live')).toBe('polite');
     expect(input().getAttribute('aria-describedby')).toBe('task-due-date-status');
     expect(input().getAttribute('aria-invalid')).toBe('true');
@@ -61,7 +73,7 @@ describe('DueDatePicker', () => {
     fixture.detectChanges();
 
     expect(clear()?.type).toBe('button');
-    expect(clear()?.getAttribute('aria-label')).toBe('Clear due date');
+    expect(clear()?.getAttribute('aria-label')).toBe('Clear end date');
   });
 
   it('clears the date with Clear and reports the edit', () => {

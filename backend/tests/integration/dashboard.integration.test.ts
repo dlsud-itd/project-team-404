@@ -68,7 +68,6 @@ integrationDescribe('dashboard integration', () => {
     values: {
       title: string;
       dueDate?: Date | null;
-      deadline?: Date | null;
       isDone?: boolean;
       deletedAt?: Date | null;
     }
@@ -80,7 +79,6 @@ integrationDescribe('dashboard integration', () => {
         priorityId: await defaultPriorityIdFor(userId),
         title: values.title,
         dueDate: values.dueDate,
-        deadline: values.deadline,
         isDone: values.isDone,
         boardStatus: values.isDone ? 'done' : 'todo',
         deletedAt: values.deletedAt,
@@ -137,36 +135,45 @@ integrationDescribe('dashboard integration', () => {
   async function seedLimitedDashboardTasks(
     account: IntegrationAccount,
     count: number,
-    prefix: string
+    prefix: string,
+    dayOffset: number
   ): Promise<void> {
     const project = await seedProject(account.id, `${prefix} project`);
     const today = dateInTimezone(new Date(), account.timezone);
-    const dueDate = dateOnly(addDays(today, 1));
-    const deadline = new Date(Date.now() - 60_000);
+    const dueDate = dateOnly(addDays(today, dayOffset));
     await Promise.all(
       Array.from({ length: count }, (_, index) =>
         seedTask(account.id, project.id, {
           title: `${prefix} task ${index + 1}`,
           dueDate,
-          deadline,
         })
       )
     );
   }
 
   it.each([
-    ['current/upcoming', currentUpcomingPath],
-    ['overdue', '/api/dashboard/overdue-tasks'],
-  ])(
+    ['current/upcoming', currentUpcomingPath, 1],
+    ['overdue', '/api/dashboard/overdue-tasks', -1],
+  ] as const)(
     'applies each caller’s saved dashboard limit and reports totals for %s tasks',
-    async (_label, endpoint) => {
+    async (_label, endpoint, dayOffset) => {
       const smallerLimitAccount = await createAccount();
       const largerLimitAccount = await createAccount();
       await Promise.all([
         setDashboardTaskLimit(smallerLimitAccount, 2),
         setDashboardTaskLimit(largerLimitAccount, 3),
-        seedLimitedDashboardTasks(smallerLimitAccount, 5, 'Smaller limit'),
-        seedLimitedDashboardTasks(largerLimitAccount, 5, 'Larger limit'),
+        seedLimitedDashboardTasks(
+          smallerLimitAccount,
+          5,
+          'Smaller limit',
+          dayOffset
+        ),
+        seedLimitedDashboardTasks(
+          largerLimitAccount,
+          5,
+          'Larger limit',
+          dayOffset
+        ),
       ]);
 
       const [smallerDefault, largerDefault, explicitOverride] =
@@ -417,44 +424,43 @@ integrationDescribe('dashboard integration', () => {
   describe('Overdue Tasks', () => {
     const overduePath = '/api/dashboard/overdue-tasks';
 
-    it('returns deadlines earlier than now, including earlier today, but not later today or future', async () => {
+    // Accounts are in Asia/Manila, so noon UTC on 10 March is the evening of 10 March there.
+    const endedOn = (day: string) => new Date(`${day}T00:00:00.000Z`);
+
+    it('returns tasks whose end date is before today, but not today or later', async () => {
       vi.useFakeTimers({ toFake: ['Date'] });
-      const now = new Date('2026-03-10T12:00:00.000Z');
-      vi.setSystemTime(now);
+      vi.setSystemTime(new Date('2026-03-10T12:00:00.000Z'));
 
       const account = await createAccount();
-      const project = await seedProject(
-        account.id,
-        'Overdue deadline boundaries'
-      );
-      const earlierToday = await seedTask(account.id, project.id, {
-        title: 'Earlier today',
-        deadline: new Date('2026-03-10T08:00:00.000Z'),
-      });
+      const project = await seedProject(account.id, 'Overdue end dates');
       const yesterday = await seedTask(account.id, project.id, {
-        title: 'Yesterday',
-        deadline: new Date('2026-03-09T23:59:59.999Z'),
+        title: 'Ended yesterday',
+        dueDate: endedOn('2026-03-09'),
       });
-      const laterToday = await seedTask(account.id, project.id, {
-        title: 'Later today',
-        deadline: new Date('2026-03-10T12:00:00.001Z'),
+      const lastWeek = await seedTask(account.id, project.id, {
+        title: 'Ended last week',
+        dueDate: endedOn('2026-03-03'),
+      });
+      const today = await seedTask(account.id, project.id, {
+        title: 'Ends today',
+        dueDate: endedOn('2026-03-10'),
       });
       const future = await seedTask(account.id, project.id, {
-        title: 'Future',
-        deadline: new Date('2026-03-11T00:00:00.000Z'),
+        title: 'Ends tomorrow',
+        dueDate: endedOn('2026-03-11'),
       });
 
       const response = await dashboardRequest(overduePath, account.token);
 
       expect(response.status).toBe(200);
       expect(taskIds(response.body).sort((a, b) => a - b)).toEqual(
-        [earlierToday.id, yesterday.id].sort((a, b) => a - b)
+        [yesterday.id, lastWeek.id].sort((a, b) => a - b)
       );
-      expect(taskIds(response.body)).not.toContain(laterToday.id);
+      expect(taskIds(response.body)).not.toContain(today.id);
       expect(taskIds(response.body)).not.toContain(future.id);
     });
 
-    it('orders overdue tasks by oldest deadline first', async () => {
+    it('orders overdue tasks by oldest end date first', async () => {
       vi.useFakeTimers({ toFake: ['Date'] });
       vi.setSystemTime(new Date('2026-03-10T12:00:00.000Z'));
 
@@ -462,15 +468,15 @@ integrationDescribe('dashboard integration', () => {
       const project = await seedProject(account.id, 'Overdue ordering');
       const newest = await seedTask(account.id, project.id, {
         title: 'Newest overdue',
-        deadline: new Date('2026-03-10T11:00:00.000Z'),
+        dueDate: endedOn('2026-03-09'),
       });
       const oldest = await seedTask(account.id, project.id, {
         title: 'Oldest overdue',
-        deadline: new Date('2026-03-08T11:00:00.000Z'),
+        dueDate: endedOn('2026-03-07'),
       });
       const middle = await seedTask(account.id, project.id, {
         title: 'Middle overdue',
-        deadline: new Date('2026-03-09T11:00:00.000Z'),
+        dueDate: endedOn('2026-03-08'),
       });
 
       const response = await dashboardRequest(overduePath, account.token);
@@ -479,7 +485,7 @@ integrationDescribe('dashboard integration', () => {
       expect(taskIds(response.body)).toEqual([oldest.id, middle.id, newest.id]);
     });
 
-    it('excludes completed, archived-project, soft-deleted, and no-deadline tasks', async () => {
+    it('excludes completed, archived-project, soft-deleted, and undated tasks', async () => {
       vi.useFakeTimers({ toFake: ['Date'] });
       vi.setSystemTime(new Date('2026-03-10T12:00:00.000Z'));
 
@@ -495,25 +501,24 @@ integrationDescribe('dashboard integration', () => {
       );
       const visible = await seedTask(account.id, activeProject.id, {
         title: 'Visible overdue',
-        deadline: new Date('2026-03-10T11:00:00.000Z'),
+        dueDate: endedOn('2026-03-09'),
       });
       const completed = await seedTask(account.id, activeProject.id, {
         title: 'Completed overdue',
-        deadline: new Date('2026-03-10T11:00:00.000Z'),
+        dueDate: endedOn('2026-03-09'),
         isDone: true,
       });
       const archived = await seedTask(account.id, archivedProject.id, {
         title: 'Archived project overdue',
-        deadline: new Date('2026-03-10T11:00:00.000Z'),
+        dueDate: endedOn('2026-03-09'),
       });
       const deleted = await seedTask(account.id, activeProject.id, {
         title: 'Deleted overdue',
-        deadline: new Date('2026-03-10T11:00:00.000Z'),
+        dueDate: endedOn('2026-03-09'),
         deletedAt: new Date(),
       });
-      const noDeadline = await seedTask(account.id, activeProject.id, {
-        title: 'No deadline',
-        dueDate: new Date('2026-03-09T00:00:00.000Z'),
+      const undated = await seedTask(account.id, activeProject.id, {
+        title: 'No end date',
       });
 
       const response = await dashboardRequest(overduePath, account.token);
@@ -523,7 +528,7 @@ integrationDescribe('dashboard integration', () => {
       expect(taskIds(response.body)).not.toContain(completed.id);
       expect(taskIds(response.body)).not.toContain(archived.id);
       expect(taskIds(response.body)).not.toContain(deleted.id);
-      expect(taskIds(response.body)).not.toContain(noDeadline.id);
+      expect(taskIds(response.body)).not.toContain(undated.id);
     });
 
     it('returns only the caller’s overdue tasks', async () => {
@@ -539,11 +544,11 @@ integrationDescribe('dashboard integration', () => {
       );
       const ownTask = await seedTask(account.id, project.id, {
         title: 'Own overdue',
-        deadline: new Date('2026-03-10T11:00:00.000Z'),
+        dueDate: endedOn('2026-03-09'),
       });
       const foreignTask = await seedTask(otherAccount.id, otherProject.id, {
         title: 'Foreign overdue',
-        deadline: new Date('2026-03-10T11:00:00.000Z'),
+        dueDate: endedOn('2026-03-09'),
       });
 
       const response = await dashboardRequest(overduePath, account.token);
@@ -553,10 +558,12 @@ integrationDescribe('dashboard integration', () => {
       expect(taskIds(response.body)).not.toContain(foreignTask.id);
     });
 
-    it('compares the same deadline instant consistently across timezones', async () => {
+    it('measures overdue from today in each owner’s timezone', async () => {
       vi.useFakeTimers({ toFake: ['Date'] });
       const now = new Date('2026-03-10T00:30:00.000Z');
       vi.setSystemTime(now);
+      expect(dateInTimezone(now, 'Asia/Manila')).toBe('2026-03-10');
+      expect(dateInTimezone(now, 'Pacific/Honolulu')).toBe('2026-03-09');
 
       const manila = await createAccount();
       const honolulu = await createAccount();
@@ -571,24 +578,18 @@ integrationDescribe('dashboard integration', () => {
         }),
       ]);
 
-      const deadline = new Date('2026-03-10T01:00:00.000Z');
-      expect(dateInTimezone(deadline, 'Asia/Manila')).toBe('2026-03-10');
-      expect(dateInTimezone(deadline, 'Pacific/Honolulu')).toBe('2026-03-09');
-      const manilaProject = await seedProject(
-        manila.id,
-        'Manila deadline project'
-      );
+      const manilaProject = await seedProject(manila.id, 'Manila end date');
       const honoluluProject = await seedProject(
         honolulu.id,
-        'Honolulu deadline project'
+        'Honolulu end date'
       );
       const manilaTask = await seedTask(manila.id, manilaProject.id, {
-        title: 'Later today in Manila',
-        deadline,
+        title: 'Ended yesterday in Manila',
+        dueDate: endedOn('2026-03-09'),
       });
       const honoluluTask = await seedTask(honolulu.id, honoluluProject.id, {
-        title: 'Yesterday in Honolulu',
-        deadline,
+        title: 'Ends today in Honolulu',
+        dueDate: endedOn('2026-03-09'),
       });
 
       const [manilaResponse, honoluluResponse] = await Promise.all([
@@ -598,7 +599,7 @@ integrationDescribe('dashboard integration', () => {
 
       expect(manilaResponse.status).toBe(200);
       expect(honoluluResponse.status).toBe(200);
-      expect(taskIds(manilaResponse.body)).not.toContain(manilaTask.id);
+      expect(taskIds(manilaResponse.body)).toContain(manilaTask.id);
       expect(taskIds(honoluluResponse.body)).not.toContain(honoluluTask.id);
     });
 

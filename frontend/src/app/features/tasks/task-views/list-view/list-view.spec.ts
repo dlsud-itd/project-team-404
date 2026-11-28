@@ -13,7 +13,6 @@ const base: Task = {
   description: null,
   scheduledDate: null,
   dueDate: null,
-  deadline: null,
   recurrence: 'none',
   recurrenceDays: [],
   recurrenceEndDate: null,

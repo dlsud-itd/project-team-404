@@ -24,7 +24,6 @@ export type TableColumnKey =
   | 'labels'
   | 'scheduled'
   | 'due'
-  | 'deadline'
   | 'recurrence'
   | 'streak'
   | 'status';

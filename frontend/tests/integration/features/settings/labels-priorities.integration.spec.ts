@@ -154,7 +154,6 @@ function apiTask(id: number, title: string, level: ApiPriority): ApiTask {
     priority: { id: level.id, name: level.name, color: level.color, sortOrder: level.sortOrder },
     scheduledDate: null,
     dueDate: null,
-    deadline: null,
     recurrence: 'none',
     recurrenceDays: [],
     recurrenceEndDate: null,

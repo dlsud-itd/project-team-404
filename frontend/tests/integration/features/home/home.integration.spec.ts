@@ -235,7 +235,6 @@ describe('Home integration (live dashboard APIs)', () => {
       title: 'Prepare release notes',
       description: null,
       dueDate: '2026-11-02',
-      deadline: null,
       recurrence: 'none',
       recurrenceDays: [],
       recurrenceEndDate: null,

@@ -53,17 +53,16 @@ with fixture_tasks(
   project_name,
   scheduled_offset,
   due_offset,
-  deadline_offset,
   is_done
 ) as (
   values
-    ('Timeline fixture - Multi-day', 'Timeline - Work', 1, null, 4, false),
-    ('Timeline fixture - Single-day', 'Timeline - Work', null, 2, null, false),
-    ('Timeline fixture - Starts before week', 'Timeline - Personal', null, null, null, false),
-    ('Timeline fixture - Ends after week', 'Timeline - Personal', null, null, null, false),
-    ('Timeline fixture - Completed', 'Timeline - Work', null, 0, null, true),
-    ('Timeline fixture - Overdue', 'Timeline - Personal', null, -4, -2, false),
-    ('Timeline fixture - Undated', 'Timeline - Personal', null, null, null, false)
+    ('Timeline fixture - Multi-day', 'Timeline - Work', 1, 4, false),
+    ('Timeline fixture - Single-day', 'Timeline - Work', null, 2, false),
+    ('Timeline fixture - Starts before week', 'Timeline - Personal', null, null, false),
+    ('Timeline fixture - Ends after week', 'Timeline - Personal', null, null, false),
+    ('Timeline fixture - Completed', 'Timeline - Work', null, 0, true),
+    ('Timeline fixture - Overdue', 'Timeline - Personal', -4, -2, false),
+    ('Timeline fixture - Undated', 'Timeline - Personal', null, null, false)
 ),
 resolved_tasks as (
   select
@@ -84,24 +83,15 @@ resolved_tasks as (
         end
     end as scheduled_date,
     case
-      when fixture.title = 'Timeline fixture - Starts before week' then null
-      when fixture.title = 'Timeline fixture - Ends after week' then null
+      when fixture.title = 'Timeline fixture - Starts before week' then
+        (now() at time zone profile.timezone)::date
+          - extract(dow from (now() at time zone profile.timezone)::date)::integer + 2
+      when fixture.title = 'Timeline fixture - Ends after week' then
+        (now() at time zone profile.timezone)::date
+          - extract(dow from (now() at time zone profile.timezone)::date)::integer + 8
       when fixture.due_offset is null then null
       else (now() at time zone profile.timezone)::date + fixture.due_offset
-    end as due_date,
-    case
-      when fixture.title = 'Timeline fixture - Starts before week' then
-        ((now() at time zone profile.timezone)::date
-          - extract(dow from (now() at time zone profile.timezone)::date)::integer + 2
-          + time '17:00') at time zone profile.timezone
-      when fixture.title = 'Timeline fixture - Ends after week' then
-        ((now() at time zone profile.timezone)::date
-          - extract(dow from (now() at time zone profile.timezone)::date)::integer + 8
-          + time '17:00') at time zone profile.timezone
-      when fixture.deadline_offset is null then null
-      else (((now() at time zone profile.timezone)::date + fixture.deadline_offset)
-        + time '17:00') at time zone profile.timezone
-    end as deadline
+    end as due_date
   from fixture_tasks as fixture
   join public.tbl_user as profile on profile.email = 'harvey@example.com'
   join public.tbl_project as project
@@ -125,7 +115,6 @@ insert into public.tbl_task (
   priority_id,
   scheduled_date,
   due_date,
-  deadline,
   is_done,
   board_status,
   done_at,
@@ -140,7 +129,6 @@ select
   fixture.priority_id,
   fixture.scheduled_date,
   fixture.due_date,
-  fixture.deadline,
   fixture.is_done,
   case when fixture.is_done then 'done'::public.task_board_status
        else 'todo'::public.task_board_status end,
@@ -157,15 +145,15 @@ where not exists (
     and existing.deleted_at is null
 );
 
-with fixture_tasks(title, project_name, scheduled_offset, due_offset, deadline_offset) as (
+with fixture_tasks(title, project_name, scheduled_offset, due_offset) as (
   values
-    ('Timeline fixture - Multi-day', 'Timeline - Work', 1, null, 4),
-    ('Timeline fixture - Single-day', 'Timeline - Work', null, 2, null),
-    ('Timeline fixture - Starts before week', 'Timeline - Personal', null, null, null),
-    ('Timeline fixture - Ends after week', 'Timeline - Personal', null, null, null),
-    ('Timeline fixture - Completed', 'Timeline - Work', null, 0, null),
-    ('Timeline fixture - Overdue', 'Timeline - Personal', null, -4, -2),
-    ('Timeline fixture - Undated', 'Timeline - Personal', null, null, null)
+    ('Timeline fixture - Multi-day', 'Timeline - Work', 1, 4),
+    ('Timeline fixture - Single-day', 'Timeline - Work', null, 2),
+    ('Timeline fixture - Starts before week', 'Timeline - Personal', null, null),
+    ('Timeline fixture - Ends after week', 'Timeline - Personal', null, null),
+    ('Timeline fixture - Completed', 'Timeline - Work', null, 0),
+    ('Timeline fixture - Overdue', 'Timeline - Personal', -4, -2),
+    ('Timeline fixture - Undated', 'Timeline - Personal', null, null)
 ),
 resolved_tasks as (
   select
@@ -185,23 +173,15 @@ resolved_tasks as (
       end
     end as scheduled_date,
     case
-      when fixture.title in ('Timeline fixture - Starts before week', 'Timeline fixture - Ends after week') then null
+      when fixture.title = 'Timeline fixture - Starts before week' then
+        (now() at time zone profile.timezone)::date
+          - extract(dow from (now() at time zone profile.timezone)::date)::integer + 2
+      when fixture.title = 'Timeline fixture - Ends after week' then
+        (now() at time zone profile.timezone)::date
+          - extract(dow from (now() at time zone profile.timezone)::date)::integer + 8
       when fixture.due_offset is null then null
       else (now() at time zone profile.timezone)::date + fixture.due_offset
-    end as due_date,
-    case
-      when fixture.title = 'Timeline fixture - Starts before week' then
-        ((now() at time zone profile.timezone)::date
-          - extract(dow from (now() at time zone profile.timezone)::date)::integer + 2
-          + time '17:00') at time zone profile.timezone
-      when fixture.title = 'Timeline fixture - Ends after week' then
-        ((now() at time zone profile.timezone)::date
-          - extract(dow from (now() at time zone profile.timezone)::date)::integer + 8
-          + time '17:00') at time zone profile.timezone
-      when fixture.deadline_offset is null then null
-      else (((now() at time zone profile.timezone)::date + fixture.deadline_offset)
-        + time '17:00') at time zone profile.timezone
-    end as deadline
+    end as due_date
   from fixture_tasks as fixture
   join public.tbl_user as profile on profile.email = 'harvey@example.com'
   join public.tbl_project as project
@@ -213,7 +193,6 @@ update public.tbl_task as task
 set
   scheduled_date = fixture.scheduled_date,
   due_date = fixture.due_date,
-  deadline = fixture.deadline,
   is_done = fixture.is_done,
   board_status = case when fixture.is_done then 'done'::public.task_board_status
                       else 'todo'::public.task_board_status end,

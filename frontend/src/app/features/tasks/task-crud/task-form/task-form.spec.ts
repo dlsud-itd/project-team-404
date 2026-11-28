@@ -43,8 +43,6 @@ const STUDY: Task = {
   description: 'Read all lessons',
   scheduledDate: null,
   dueDate: '2026-10-02',
-  // The end of Oct 5 for a user in Asia/Manila (UTC+8).
-  deadline: '2026-10-05T15:59:59.999Z',
   recurrence: 'none',
   recurrenceDays: [],
   recurrenceEndDate: null,
@@ -203,12 +201,13 @@ describe('TaskForm', () => {
         'task-project',
         'task-scheduled-date',
         'task-due-date',
-        'task-deadline',
       ]) {
         expect(el(`#${id}`)).toBeTruthy();
         expect(el(`label[for="${id}"]`)).toBeTruthy();
       }
-      expect(text('.schedule h2')).toBe('Date and deadline');
+      expect(text('.schedule h2')).toBe('Dates');
+      expect(text('label[for="task-scheduled-date"]')).toContain('Start date');
+      expect(text('label[for="task-due-date"]')).toContain('End date');
       expect(text('legend')).toBe('Repeat');
       expect(selected('task-priority')).toBe('Medium');
       expect(selected('task-project')).toBe('Capstone');
@@ -246,7 +245,6 @@ describe('TaskForm', () => {
         description: null,
         scheduledDate: null,
         dueDate: null,
-        deadline: null,
         recurrence: 'none',
         recurrenceDays: [],
         recurrenceEndDate: null,
@@ -254,14 +252,13 @@ describe('TaskForm', () => {
       req.flush(TASK_REPLY);
     });
 
-    it("sends every field the user filled in, with the deadline in the user's timezone", () => {
+    it('sends every field the user filled in', () => {
       type('task-title', 'Gym session');
       type('task-description', 'Leg day');
       choose('task-priority', 'High');
       choose('task-project', 'Gym');
       type('task-scheduled-date', '2026-10-01');
       type('task-due-date', '2026-10-02');
-      type('task-deadline', '2026-10-03');
       repeat('Weekly');
       submit();
 
@@ -272,7 +269,6 @@ describe('TaskForm', () => {
         description: 'Leg day',
         scheduledDate: '2026-10-01',
         dueDate: '2026-10-02',
-        deadline: '2026-10-03T15:59:59.999Z',
         recurrence: 'weekly',
         // Oct 2, 2026 is a Friday: a new weekly repeat starts on the due date's weekday.
         recurrenceDays: [5],
@@ -363,7 +359,7 @@ describe('TaskForm', () => {
       });
     });
 
-    it('needs an end date once Date is chosen, no earlier than the due date', () => {
+    it("needs a repeat-until date once Date is chosen, no earlier than the task's end date", () => {
       type('task-title', 'Gym');
       type('task-due-date', '2026-10-02');
       repeat('Daily');
@@ -379,7 +375,7 @@ describe('TaskForm', () => {
 
       type('task-recurrence-end-date', '2026-10-01');
       expect(messageFor('task-recurrence-end-date')).toBe(
-        "The end date can't be before the due date.",
+        "Repeating can't stop before the task's end date.",
       );
       submit();
       http.expectNone(URL);
@@ -396,11 +392,11 @@ describe('TaskForm', () => {
       expect(router.url).toBe('/projects/10/tasks/new');
     });
 
-    it('needs a due date for a repeating task', () => {
+    it('needs an end date for a repeating task', () => {
       type('task-title', 'Study');
       repeat('Daily');
 
-      expect(messageFor('task-due-date')).toBe('Repeating tasks need a due date.');
+      expect(messageFor('task-due-date')).toBe('Repeating tasks need an end date.');
       submit();
       http.expectNone(URL);
 
@@ -410,23 +406,23 @@ describe('TaskForm', () => {
       http.expectOne(URL).flush(TASK_REPLY);
     });
 
-    it('allows a deadline on the due date', () => {
+    it('allows a one-day task that starts and ends on the same date', () => {
       type('task-title', 'Study');
+      type('task-scheduled-date', '2026-10-05');
       type('task-due-date', '2026-10-05');
-      type('task-deadline', '2026-10-05');
 
-      expect(messageFor('task-deadline')).toBe('');
+      expect(messageFor('task-due-date')).toBe('');
       submit();
       http.expectOne(URL).flush(TASK_REPLY);
     });
 
-    it('does not allow a deadline before the due date', () => {
+    it('does not allow an end date before the start date', () => {
       type('task-title', 'Study');
-      type('task-due-date', '2026-10-05');
-      type('task-deadline', '2026-10-01');
+      type('task-scheduled-date', '2026-10-05');
+      type('task-due-date', '2026-10-01');
 
-      expect(messageFor('task-deadline')).toBe("The deadline can't be before the due date.");
-      expect(el<HTMLInputElement>('#task-deadline').min).toBe('2026-10-05');
+      expect(messageFor('task-due-date')).toBe("The end date can't be before the start date.");
+      expect(el<HTMLInputElement>('#task-due-date').min).toBe('2026-10-05');
       submit();
       http.expectNone(URL);
     });
@@ -445,14 +441,14 @@ describe('TaskForm', () => {
       type('task-title', 'Study');
       type('task-due-date', '2026-10-02');
       submit();
-      fail(URL, 400, 'Deadline cannot be earlier than due date');
+      fail(URL, 400, 'End date cannot be before the start date');
 
-      expect(messageFor('task-deadline')).toBe('Deadline cannot be earlier than due date');
+      expect(messageFor('task-due-date')).toBe('End date cannot be before the start date');
       expect(value('task-title')).toBe('Study');
       expect(saveButton().disabled).toBe(false);
 
-      type('task-deadline', '2026-10-03');
-      expect(messageFor('task-deadline')).toBe('');
+      type('task-due-date', '2026-10-03');
+      expect(messageFor('task-due-date')).toBe('');
     });
 
     it('shows a recurrence error on the recurrence field', () => {
@@ -548,14 +544,15 @@ describe('TaskForm', () => {
       expect(el<HTMLTextAreaElement>('#task-description').value).toBe('Read all lessons');
       expect(selected('task-priority')).toBe('Medium');
       expect(selected('task-project')).toBe('Capstone');
+      expect(value('task-scheduled-date')).toBe('');
       expect(value('task-due-date')).toBe('2026-10-02');
-      expect(value('task-deadline')).toBe('2026-10-05');
     });
 
-    it("shows the deadline on its day in the user's timezone", async () => {
-      await open({ ...STUDY, deadline: '2026-10-05T17:00:00.000Z' });
+    it('shows the start and end dates of a task that spans several days', async () => {
+      await open({ ...STUDY, scheduledDate: '2026-09-28' });
 
-      expect(value('task-deadline')).toBe('2026-10-06');
+      expect(value('task-scheduled-date')).toBe('2026-09-28');
+      expect(value('task-due-date')).toBe('2026-10-02');
       expect(saveButton().disabled).toBe(true);
     });
 
@@ -610,8 +607,8 @@ describe('TaskForm', () => {
       req.flush({ taskId: 1, message: 'Task updated successfully' });
       harness.detectChanges();
 
+      http.expectNone(`${URL}/1/schedule`);
       http.expectNone(`${URL}/1/due-date`);
-      http.expectNone(`${URL}/1/deadline`);
       http.expectNone(`${URL}/1/recurrence`);
       expect(text('.form-notice')).toBe('Changes saved.');
       expect(saveButton().disabled).toBe(true);
@@ -619,17 +616,17 @@ describe('TaskForm', () => {
 
     it('sends a schedule change to its own endpoint only', async () => {
       await open();
-      type('task-deadline', '2026-10-09');
+      type('task-due-date', '2026-10-09');
       submit();
 
-      const req = http.expectOne(`${URL}/1/deadline`);
+      const req = http.expectOne(`${URL}/1/due-date`);
       expect(req.request.method).toBe('PUT');
-      expect(req.request.body).toEqual({ deadline: '2026-10-09T15:59:59.999Z' });
-      req.flush({ ...TASK_REPLY, deadline: '2026-10-09T15:59:59.999Z' });
+      expect(req.request.body).toEqual({ dueDate: '2026-10-09' });
+      req.flush({ ...TASK_REPLY, dueDate: '2026-10-09' });
       harness.detectChanges();
 
       expect(text('.form-notice')).toBe('Changes saved.');
-      expect(value('task-deadline')).toBe('2026-10-09');
+      expect(value('task-due-date')).toBe('2026-10-09');
     });
 
     it('changes and removes the recurrence', async () => {
@@ -688,23 +685,23 @@ describe('TaskForm', () => {
     });
 
     it('saves details first, then clears the schedule with nulls', async () => {
-      await open();
+      await open({ ...STUDY, scheduledDate: '2026-09-28' });
       type('task-description', '');
+      type('task-scheduled-date', '');
       type('task-due-date', '');
-      type('task-deadline', '');
       submit();
 
       const details = http.expectOne(`${URL}/1`);
       expect(details.request.body).toEqual({ description: null });
       details.flush({ taskId: 1, message: 'Task updated successfully' });
 
-      const dueDate = http.expectOne(`${URL}/1/due-date`);
-      expect(dueDate.request.body).toEqual({ dueDate: null });
-      dueDate.flush({ ...TASK_REPLY, dueDate: null });
+      const start = http.expectOne(`${URL}/1/schedule`);
+      expect(start.request.body).toEqual({ scheduledDate: null });
+      start.flush({ ...TASK_REPLY, scheduledDate: null });
 
-      const deadline = http.expectOne(`${URL}/1/deadline`);
-      expect(deadline.request.body).toEqual({ deadline: null });
-      deadline.flush({ ...TASK_REPLY, dueDate: null, deadline: null });
+      const end = http.expectOne(`${URL}/1/due-date`);
+      expect(end.request.body).toEqual({ dueDate: null });
+      end.flush({ ...TASK_REPLY, scheduledDate: null, dueDate: null });
       harness.detectChanges();
 
       expect(text('.form-notice')).toBe('Changes saved.');
@@ -721,39 +718,39 @@ describe('TaskForm', () => {
     it('offers only the unsaved part again when the schedule fails after the details saved', async () => {
       await open();
       type('task-title', 'Study module 5');
-      type('task-deadline', '2026-10-09');
+      type('task-due-date', '2026-10-09');
       submit();
 
       http.expectOne(`${URL}/1`).flush({ taskId: 1, message: 'Task updated successfully' });
-      fail(`${URL}/1/deadline`, 400, 'Invalid deadline');
+      fail(`${URL}/1/due-date`, 400, 'Invalid due date');
 
-      expect(messageFor('task-deadline')).toBe('Invalid deadline');
+      expect(messageFor('task-due-date')).toBe('Invalid due date');
       expect(saveButton().disabled).toBe(false);
 
       submit();
       http.expectNone(`${URL}/1`);
-      expect(http.expectOne(`${URL}/1/deadline`).request.body).toEqual({
-        deadline: '2026-10-09T15:59:59.999Z',
+      expect(http.expectOne(`${URL}/1/due-date`).request.body).toEqual({
+        dueDate: '2026-10-09',
       });
     });
 
-    it('keeps the due date of a repeating task', async () => {
+    it('keeps the end date of a repeating task', async () => {
       await open({ ...STUDY, recurrence: 'weekly', isRecurring: true });
 
       type('task-due-date', '');
 
-      expect(messageFor('task-due-date')).toBe('Repeating tasks need a due date.');
+      expect(messageFor('task-due-date')).toBe('Repeating tasks need an end date.');
       submit();
       http.expectNone(`${URL}/1/due-date`);
     });
 
     it('clears a date with its Clear button', async () => {
       await open();
-      el<HTMLButtonElement>('button[aria-label="Clear deadline"]').click();
+      el<HTMLButtonElement>('button[aria-label="Clear end date"]').click();
       harness.detectChanges();
       submit();
 
-      expect(http.expectOne(`${URL}/1/deadline`).request.body).toEqual({ deadline: null });
+      expect(http.expectOne(`${URL}/1/due-date`).request.body).toEqual({ dueDate: null });
     });
 
     it('shows "Task not found" and refreshes the list when the save returns 404', async () => {

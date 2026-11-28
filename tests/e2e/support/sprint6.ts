@@ -88,7 +88,6 @@ export type TaskRow = {
   position: number;
   scheduled_date: string | null;
   due_date: string | null;
-  deadline: string | null;
   is_done: boolean;
   done_at: string | null;
   board_status: string;
@@ -97,7 +96,7 @@ export type TaskRow = {
 };
 
 const taskColumns =
-  'task_id,project_id,title,position,scheduled_date,due_date,deadline,is_done,done_at,board_status,archived_at,deleted_at';
+  'task_id,project_id,title,position,scheduled_date,due_date,is_done,done_at,board_status,archived_at,deleted_at';
 
 /** Every task row of the projects, deleted and archived ones included, by id. */
 export async function projectTaskRows(

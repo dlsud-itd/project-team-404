@@ -20,7 +20,6 @@ export function recurringTask(
     description: null,
     scheduledDate: STREAK_TODAY,
     dueDate: STREAK_TODAY,
-    deadline: null,
     recurrence,
     recurrenceDays: [],
     recurrenceEndDate: null,

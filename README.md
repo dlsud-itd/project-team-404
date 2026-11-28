@@ -1,7 +1,7 @@
 # HabitFlow
 
 HabitFlow is a web-based habit and task tracker from Team 404. It brings tasks,
-projects, deadlines, and recurring routines together so users can organize their
+projects, start and end dates, and recurring routines together so users can organize their
 responsibilities and keep track of progress.
 
 **Live preview:** [project-team-404.vercel.app](https://project-team-404.vercel.app/)

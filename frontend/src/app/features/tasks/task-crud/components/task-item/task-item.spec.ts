@@ -13,8 +13,6 @@ const STUDY: Task = {
   description: 'Read all lessons',
   scheduledDate: null,
   dueDate: '2026-10-02',
-  // Oct 6 in Asia/Manila (UTC+8), though still Oct 5 in UTC.
-  deadline: '2026-10-05T17:00:00.000Z',
   recurrence: 'none',
   recurrenceDays: [],
   recurrenceEndDate: null,
@@ -29,7 +27,6 @@ const BARE: Task = {
   priorityId: 3,
   description: null,
   dueDate: null,
-  deadline: null,
   labels: [],
 };
 
@@ -67,17 +64,16 @@ describe('TaskItem', () => {
     expect(text('.label')).toBe('Study');
   });
 
-  it("shows the due date, and the deadline on its day in the user's timezone", () => {
+  it('shows the end date', () => {
     render(STUDY);
 
-    expect(text('.due')).toBe(`Due ${formatDate('2026-10-02')}`);
-    expect(text('.deadline')).toBe(`Deadline ${formatDate('2026-10-06')}`);
+    expect(text('.due')).toBe(`Ends ${formatDate('2026-10-02')}`);
   });
 
-  it('shows a scheduled date even when the task has no due date or deadline', () => {
+  it('shows a start date even when the task has no end date', () => {
     render({ ...BARE, scheduledDate: '2026-10-03' });
 
-    expect(text('.scheduled')).toBe(`Scheduled ${formatDate('2026-10-03')}`);
+    expect(text('.scheduled')).toBe(`Starts ${formatDate('2026-10-03')}`);
   });
 
   it('leaves out the parts a task does not have', () => {

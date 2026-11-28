@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { checkDateRange } from './date-range.validator';
 import {
   checkRecurrenceRule,
   recurrenceDaysField,
@@ -25,7 +26,6 @@ export const updateTaskValidator = z
       .regex(/^\d{4}-\d{2}-\d{2}$/)
       .nullable()
       .optional(),
-    deadline: z.string().datetime({ offset: true }).nullable().optional(),
     recurrence: taskRecurrenceField,
     recurrenceDays: recurrenceDaysField,
     recurrenceEndDate: recurrenceEndDateField,
@@ -38,4 +38,5 @@ export const updateTaskValidator = z
   .refine((value) => Object.keys(value).length > 0, {
     message: 'At least one task field must be provided',
   })
-  .superRefine(checkRecurrenceRule);
+  .superRefine(checkRecurrenceRule)
+  .superRefine(checkDateRange);

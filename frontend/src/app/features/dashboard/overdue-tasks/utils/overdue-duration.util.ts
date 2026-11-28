@@ -13,14 +13,11 @@ function daysBetween(from: string, to: string): number {
 }
 
 /**
- * How late a task with this deadline is at `now`, counted in calendar days in `timeZone`.
- * A deadline from yesterday evening is "1 day overdue" even if fewer than 24 hours have passed.
+ * How late a task that ended on `endDate` (YYYY-MM-DD) is at `now`, in calendar days in
+ * `timeZone`. A task that ended yesterday is "1 day overdue" from the first minute of today.
  */
-export function overdueDuration(deadline: string, now: Date, timeZone: string): OverdueDuration {
-  const days = Math.max(
-    0,
-    daysBetween(instantToDate(deadline, timeZone), instantToDate(now.toISOString(), timeZone)),
-  );
-  if (days === 0) return { days, label: 'Due earlier today' };
+export function overdueDuration(endDate: string, now: Date, timeZone: string): OverdueDuration {
+  const days = Math.max(0, daysBetween(endDate, instantToDate(now.toISOString(), timeZone)));
+  if (days === 0) return { days, label: 'Due today' };
   return { days, label: `${days} ${days === 1 ? 'day' : 'days'} overdue` };
 }

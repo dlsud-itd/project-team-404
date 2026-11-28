@@ -34,7 +34,7 @@ let projectState: SeedProjectState[];
 type TaskRow = {
   task_id: number;
   title: string;
-  deadline: string | null;
+  due_date: string | null;
   is_done: boolean;
   priority: { name: string } | null;
   labels: { label: { name: string } | null }[];
@@ -46,7 +46,7 @@ async function projectTasks(): Promise<TaskRow[]> {
     'tbl_task',
     new URLSearchParams({
       select:
-        'task_id,title,deadline,is_done,priority:tbl_priority_level(name),labels:tbl_task_label(label:tbl_label(name))',
+        'task_id,title,due_date,is_done,priority:tbl_priority_level(name),labels:tbl_task_label(label:tbl_label(name))',
       user_id: `eq.${userId}`,
       project_id: `eq.${projectId}`,
       deleted_at: 'is.null',
@@ -64,12 +64,12 @@ function asShown(rows: TaskRow[]): string[] {
   ].map((row) => row.title);
 }
 
-/** As GET /api/tasks orders by deadline descending: null deadlines last, then task id. */
-function byDeadlineDesc(left: TaskRow, right: TaskRow): number {
-  if (left.deadline === right.deadline) return left.task_id - right.task_id;
-  if (left.deadline === null) return 1;
-  if (right.deadline === null) return -1;
-  return Date.parse(right.deadline) - Date.parse(left.deadline);
+/** As GET /api/tasks orders by end date descending: tasks without one last, then task id. */
+function byEndDateDesc(left: TaskRow, right: TaskRow): number {
+  if (left.due_date === right.due_date) return left.task_id - right.task_id;
+  if (left.due_date === null) return 1;
+  if (right.due_date === null) return -1;
+  return right.due_date.localeCompare(left.due_date);
 }
 
 function isTaskList(response: Response): boolean {
@@ -140,7 +140,7 @@ test.afterEach(async () => {
   }
 });
 
-test('filters tasks by two priorities and a label, sorts by deadline and keeps both on reload', async ({
+test('filters tasks by two priorities and a label, sorts by end date and keeps both on reload', async ({
   page,
 }) => {
   const all = await projectTasks();
@@ -181,15 +181,15 @@ test('filters tasks by two priorities and a label, sorts by deadline and keeps b
   const sorted = page.waitForResponse(
     (response) =>
       isTaskList(response) &&
-      new URL(response.url()).searchParams.get('orderBy') === 'deadline' &&
+      new URL(response.url()).searchParams.get('orderBy') === 'dueDate' &&
       new URL(response.url()).searchParams.get('orderDirection') === 'desc'
   );
-  await sortBy(page, 'app-task-list', 'Deadline');
+  await sortBy(page, 'app-task-list', 'End date');
   await page.locator('app-task-list app-sort-menu .direction').click();
   expect((await sorted).status()).toBe(200);
-  const expectedOrder = asShown([...matching].sort(byDeadlineDesc));
+  const expectedOrder = asShown([...matching].sort(byEndDateDesc));
   await expect(taskTitles(page)).toHaveText(expectedOrder);
-  await expect(page).toHaveURL(/[?&]orderBy=deadline/);
+  await expect(page).toHaveURL(/[?&]orderBy=dueDate/);
   await expect(page).toHaveURL(/[?&]orderDirection=desc/);
 
   // A reload restores the chips and the sort menu from the URL and asks for the same list.
@@ -198,7 +198,7 @@ test('filters tasks by two priorities and a label, sorts by deadline and keeps b
   await page.reload();
   const again = new URL((await reloaded).url()).searchParams;
   expect(again.get('priorities')).toBe('high,low');
-  expect(again.get('orderBy')).toBe('deadline');
+  expect(again.get('orderBy')).toBe('dueDate');
   expect(again.get('orderDirection')).toBe('desc');
   expect(page.url()).toBe(url);
   await expect(chip(page, 'Priority')).toHaveText(/Priority: Low, High/);
@@ -207,7 +207,7 @@ test('filters tasks by two priorities and a label, sorts by deadline and keeps b
     '2 filters'
   );
   await expect(page.locator('app-task-list app-sort-menu .trigger')).toHaveText(
-    /Sort:\s*Deadline/
+    /Sort:\s*End date/
   );
   await expect(
     page.locator('app-task-list app-sort-menu .direction')
@@ -225,7 +225,7 @@ test('filters tasks by two priorities and a label, sorts by deadline and keeps b
   await expect(page).not.toHaveURL(/priorities=|labelIds=/);
   await expect(page.locator('app-task-filter-bar .count')).toHaveCount(0);
   await expect(taskTitles(page)).toHaveText(
-    asShown([...all].sort(byDeadlineDesc))
+    asShown([...all].sort(byEndDateDesc))
   );
 });
 

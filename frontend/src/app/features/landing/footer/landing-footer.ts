@@ -11,7 +11,7 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
         <span class="get-it">Get it </span><span class="done">done</span>
       </p>
       <p class="text">
-        Tasks, projects, deadlines, priorities and labels, all on one dashboard that shows what's
+        Tasks, projects, dates, priorities and labels, all on one dashboard that shows what's
         current, upcoming and overdue.
       </p>
       <p class="wordmark" aria-hidden="true">HabitFlow</p>

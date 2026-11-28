@@ -125,9 +125,6 @@ async function updateTaskInTransaction(
               : null,
           }
         : {}),
-      ...(input.deadline !== undefined
-        ? { deadline: input.deadline ? new Date(input.deadline) : null }
-        : {}),
       ...toRecurrenceData(input),
       ...(input.priority !== undefined || input.priorityId !== undefined
         ? { priorityId: priorityLevel!.id }
@@ -203,12 +200,6 @@ async function updateTaskInTransaction(
     const next = recurrenceService.createNextOccurrence(updatedTask, timezone);
     if (next) {
       const dueDate = new Date(`${next.dueDate}T00:00:00.000Z`);
-      const deadline = updatedTask.deadline
-        ? new Date(
-            dueDate.getTime() +
-              (updatedTask.deadline.getTime() - updatedTask.dueDate!.getTime())
-          )
-        : null;
       await transaction.task.create({
         data: {
           userId: updatedTask.userId,
@@ -226,7 +217,6 @@ async function updateTaskInTransaction(
             ? new Date(`${next.scheduledDate}T00:00:00.000Z`)
             : null,
           dueDate,
-          deadline,
           recurrence: updatedTask.recurrence ?? 'none',
           recurrenceDays: updatedTask.recurrenceDays ?? [],
           recurrenceEndDate: updatedTask.recurrenceEndDate,

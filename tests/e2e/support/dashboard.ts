@@ -27,13 +27,13 @@ type DashboardTaskRow = {
   task_id: number;
   title: string;
   due_date: string | null;
-  deadline: string | null;
   created_at: string;
   project: { is_archived: boolean; deleted_at: string | null } | null;
+  owner?: { timezone: string | null } | null;
 };
 
 const dashboardColumns =
-  'task_id,title,due_date,deadline,created_at,project:tbl_project(is_archived,deleted_at)';
+  'task_id,title,due_date,created_at,project:tbl_project(is_archived,deleted_at)';
 
 /** YYYY-MM-DD for `instant` in `timeZone`, the way the API and the page work out "today". */
 export function localDate(instant: Date, timeZone: string): string {
@@ -62,20 +62,14 @@ function daysBetween(from: string, to: string): number {
   );
 }
 
-/** The badge text for an overdue deadline: calendar days late in the user's timezone. */
+/** The badge text for a task that ended on `endDate`: calendar days late in the user's timezone. */
 export function overdueLabel(
-  deadline: string,
+  endDate: string,
   now: Date,
   timeZone: string
 ): string {
-  const days = Math.max(
-    0,
-    daysBetween(
-      localDate(new Date(deadline), timeZone),
-      localDate(now, timeZone)
-    )
-  );
-  if (days === 0) return 'Due earlier today';
+  const days = Math.max(0, daysBetween(endDate, localDate(now, timeZone)));
+  if (days === 0) return 'Due today';
   return `${days} ${days === 1 ? 'day' : 'days'} overdue`;
 }
 
@@ -111,7 +105,7 @@ export async function dashboardUser(email: string): Promise<DashboardUser> {
 
 /**
  * Fails with a clear message when the dashboard seed is missing or more than a day old: its
- * due dates and deadlines are relative to the day it ran, and re-seeding does not move them.
+ * start and end dates are relative to the day it ran, and re-seeding does not move them.
  */
 export async function expectFreshDashboardSeed(
   userId: string,
@@ -203,29 +197,36 @@ export function limitGroups(
   return limited;
 }
 
-export type OverdueTask = ShownTask & { deadline: string };
+/** `endDate` is YYYY-MM-DD. */
+export type OverdueTask = ShownTask & { endDate: string };
 
-/** What GET /api/dashboard/overdue-tasks should return: open tasks past their deadline, oldest first. */
+/**
+ * What GET /api/dashboard/overdue-tasks should return: open tasks whose end date is before
+ * today in the owner's timezone, oldest end date first.
+ */
 export async function expectedOverdue(
   userId: string,
   now = new Date(),
   otherUsers = false
 ): Promise<OverdueTask[]> {
   const query = new URLSearchParams({
-    select: dashboardColumns,
+    select: `${dashboardColumns},owner:tbl_user(timezone)`,
     user_id: otherUsers ? `neq.${userId}` : `eq.${userId}`,
     is_done: 'eq.false',
     deleted_at: 'is.null',
-    order: 'deadline.asc,created_at.desc,task_id.asc',
+    archived_at: 'is.null',
+    due_date: 'not.is.null',
+    order: 'due_date.asc,created_at.desc,task_id.asc',
   });
-  query.append('deadline', 'not.is.null');
-  query.append('deadline', `lt.${now.toISOString()}`);
   return (await serviceRoleRows<DashboardTaskRow>('tbl_task', query))
     .filter(inVisibleProject)
+    .filter(
+      (row) => row.due_date! < localDate(now, row.owner?.timezone ?? 'UTC')
+    )
     .map((row) => ({
       id: Number(row.task_id),
       title: row.title,
-      deadline: row.deadline!,
+      endDate: row.due_date!,
     }));
 }
 

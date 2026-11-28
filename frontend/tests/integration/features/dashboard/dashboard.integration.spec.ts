@@ -57,7 +57,6 @@ function apiTask(id: number, title: string, overrides: Partial<ApiTask> = {}): A
     priority: 'low',
     scheduledDate: null,
     dueDate: null,
-    deadline: null,
     recurrence: null,
     recurrenceDays: [],
     recurrenceEndDate: null,
@@ -78,9 +77,7 @@ const UPCOMING = [
   apiTask(4, 'Team meeting', { dueDate: '2026-11-12', projectId: null }),
 ];
 
-const OVERDUE = [
-  apiTask(20, 'Pay rent', { dueDate: '2026-11-01', deadline: '2026-11-01T15:59:59.999Z' }),
-];
+const OVERDUE = [apiTask(20, 'Pay rent', { dueDate: '2026-11-01' })];
 
 const status = (code: number, statusText = 'Error') => ({ status: code, statusText });
 

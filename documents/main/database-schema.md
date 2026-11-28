@@ -98,7 +98,6 @@ erDiagram
         varchar(1000) description
         date scheduled_date
         date due_date
-        timestamptz deadline
         task_recurrence recurrence
         smallint_array recurrence_days
         date recurrence_end_date
@@ -226,7 +225,6 @@ erDiagram
 |     | description         | varchar(1000)   |
 |     | scheduled_date      | date            |
 |     | due_date            | date            |
-|     | deadline            | timestamptz     |
 |     | recurrence          | task_recurrence |
 |     | recurrence_days     | smallint[]      |
 |     | recurrence_end_date | date            |
@@ -320,5 +318,6 @@ erDiagram
 - Added `sort_order` to `tbl_label` (Sprint 5 Labels & Priorities).
 - Added `archived_at` to `tbl_task`, `tbl_label` and `tbl_project` (Sprint 5 Archive).
 - Added the Sprint 5 filter, archive, priority and search indexes listed above.
+- Removed `tbl_task.deadline` (Sprint 7): a task has a start date (`scheduled_date`) and an end date (`due_date`). Migration `20261128120000_merge_deadline_into_due_date.sql` moved each deadline into `due_date` as its local day, keeping the later of the two, and added the `(user_id, due_date)` index that overdue and timeline queries use.
 - No task notes table: the Task Notes deliverable was removed because tasks already have a description field.
 - Brought the diagram in line with the applied migrations: `tbl_task` now has `user_id`, `scheduled_date`, `recurrence`, `recurrence_days`, `recurrence_end_date`, `is_done` and `done_at`, `deadline` is `timestamptz` and `description` is `varchar(1000)`; recurrence is stored on the task, so `tbl_recurrence_rule`, `due_time`, `completed_at` and the task `sort_order` from 1.1.0 are not in the database. `tbl_user` gains `email` and `last_login_at`, and `auth_session` and `password_reset_token` are shown.

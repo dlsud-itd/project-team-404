@@ -22,7 +22,7 @@ export class LandingFeatures {
     {
       title: 'Scheduling and organization',
       description: 'Give every task a when, a why-now and a where-it-fits.',
-      items: ['Dates and deadlines', 'Priority levels', 'Labels', 'Recurring tasks'],
+      items: ['Start and end dates', 'Priority levels', 'Labels', 'Recurring tasks'],
     },
     {
       title: 'Projects and dashboard',

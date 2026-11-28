@@ -19,7 +19,7 @@ import { environment } from '../../../../src/environments/environment';
  * priority rows of FE-ORG).
  *
  * The app runs through its real /projects/:projectId/tasks routes behind authGuard: the task list,
- * the + New task popup and the edit page with the real task form, due-date, deadline and
+ * the + New task popup and the edit page with the real task form, start and end date and
  * recurrence pickers and their validators, TaskService, TaskSchedulingService, TasksStore and
  * authInterceptor. The user is signed in by restoring a stored token and answering
  * GET /api/auth/me, whose timezone the form and task items use. Only the network is faked:
@@ -66,7 +66,6 @@ function apiTask(overrides: Partial<ApiTask> = {}): ApiTask {
     priority: 'low',
     scheduledDate: null,
     dueDate: null,
-    deadline: null,
     recurrence: null,
     recurrenceDays: [],
     recurrenceEndDate: null,
@@ -79,10 +78,9 @@ function apiTask(overrides: Partial<ApiTask> = {}): ApiTask {
   };
 }
 
-// A weekly task due Friday 20 November with a deadline that evening (Manila time).
+// A weekly task that ends Friday 20 November.
 const SCHEDULED = apiTask({
   dueDate: '2026-11-20',
-  deadline: '2026-11-20T15:59:59.999Z',
   recurrence: 'weekly',
   recurrenceDays: [1, 4],
   recurrenceEndDate: '2026-12-31',
@@ -260,7 +258,7 @@ describe('Tasks integration (Task Scheduling screens + API)', () => {
   // Case 1: the pickers' values reach the API in the backend's formats.
   describe('Sending the schedule', () => {
     // FE-SCH-01, FE-SCH-02, FE-SCH-05, FE-SCH-10
-    it('creates a task with its due date, deadline and weekly recurrence and shows it in the list', async () => {
+    it('creates a task with its start date, end date and weekly recurrence and shows it in the list', async () => {
       await startSignedIn();
       await openList();
       await openNewTask();
@@ -268,9 +266,8 @@ describe('Tasks integration (Task Scheduling screens + API)', () => {
       type('#task-title', 'Gym');
       type('#task-scheduled-date', '2026-11-18');
       type('#task-due-date', '2026-11-20');
-      type('#task-deadline', '2026-11-21');
       repeat('weekly');
-      // A new weekly repeat starts on the due date's weekday (Friday).
+      // A new weekly repeat starts on the end date's weekday (Friday).
       expect(checkedDays()).toEqual(['Friday']);
       toggleDay('Monday');
       endsOnDate();
@@ -289,8 +286,6 @@ describe('Tasks integration (Task Scheduling screens + API)', () => {
         description: null,
         scheduledDate: '2026-11-18',
         dueDate: '2026-11-20',
-        // The end of 21 November in Manila (UTC+8), as an ISO instant.
-        deadline: '2026-11-21T15:59:59.999Z',
         recurrence: 'weekly',
         recurrenceDays: [1, 5],
         recurrenceEndDate: '2026-12-31',
@@ -301,7 +296,6 @@ describe('Tasks integration (Task Scheduling screens + API)', () => {
           title: 'Gym',
           scheduledDate: '2026-11-18',
           dueDate: '2026-11-20',
-          deadline: '2026-11-21T15:59:59.999Z',
           recurrence: 'weekly',
           recurrenceDays: [1, 5],
           recurrenceEndDate: '2026-12-31',
@@ -312,9 +306,8 @@ describe('Tasks integration (Task Scheduling screens + API)', () => {
 
       expect(el('[role="dialog"]')).toBeNull();
       expect(text('app-task-item .title')).toBe('Gym');
-      expect(itemMeta()).toContain('Scheduled Nov 18');
-      expect(itemMeta()).toContain('Due Nov 20');
-      expect(itemMeta()).toContain('Deadline Nov 21');
+      expect(itemMeta()).toContain('Starts Nov 18');
+      expect(itemMeta()).toContain('Ends Nov 20');
       expect(text('app-task-item .badge')).toBe('Every week on Mon and Fri, until Dec 31');
     });
 
@@ -324,7 +317,6 @@ describe('Tasks integration (Task Scheduling screens + API)', () => {
       await openEdit();
 
       expect(el<HTMLInputElement>('#task-due-date').value).toBe('2026-11-20');
-      expect(el<HTMLInputElement>('#task-deadline').value).toBe('2026-11-20');
       expect(el<HTMLInputElement>('#task-scheduled-date').value).toBe('');
       expect(checkedDays()).toEqual(['Monday', 'Thursday']);
       expect(el<HTMLInputElement>('#task-recurrence-end-date').value).toBe('2026-12-31');
@@ -333,7 +325,6 @@ describe('Tasks integration (Task Scheduling screens + API)', () => {
 
       type('#task-scheduled-date', '2026-11-19');
       type('#task-due-date', '2026-11-23');
-      type('#task-deadline', '2026-11-25');
       repeat('daily');
       await submit();
 
@@ -346,18 +337,8 @@ describe('Tasks integration (Task Scheduling screens + API)', () => {
 
       const due = expectPut('due-date');
       expect(due.request.body).toEqual({ dueDate: '2026-11-23' });
-      http.expectNone(`${TASKS_API}/${SCHEDULED.id}/deadline`);
+      http.expectNone(`${TASKS_API}/${SCHEDULED.id}/recurrence`);
       due.flush({ ...SCHEDULED, scheduledDate: '2026-11-19', dueDate: '2026-11-23' });
-      await settle();
-
-      const deadline = expectPut('deadline');
-      expect(deadline.request.body).toEqual({ deadline: '2026-11-25T15:59:59.999Z' });
-      deadline.flush({
-        ...SCHEDULED,
-        scheduledDate: '2026-11-19',
-        dueDate: '2026-11-23',
-        deadline: '2026-11-25T15:59:59.999Z',
-      });
       await settle();
 
       const recurrence = expectPut('recurrence');
@@ -371,7 +352,6 @@ describe('Tasks integration (Task Scheduling screens + API)', () => {
         ...SCHEDULED,
         scheduledDate: '2026-11-19',
         dueDate: '2026-11-23',
-        deadline: '2026-11-25T15:59:59.999Z',
         recurrence: 'daily',
         recurrenceDays: [],
       });
@@ -380,7 +360,6 @@ describe('Tasks integration (Task Scheduling screens + API)', () => {
       expect(text('.form-notice')).toBe('Changes saved.');
       expect(el<HTMLInputElement>('#task-scheduled-date').value).toBe('2026-11-19');
       expect(el<HTMLInputElement>('#task-due-date').value).toBe('2026-11-23');
-      expect(el<HTMLInputElement>('#task-deadline').value).toBe('2026-11-25');
       expect(radio('task-recurrence', 'daily').checked).toBe(true);
       expect(el<HTMLButtonElement>('button[type="submit"]').disabled).toBe(true);
     });
@@ -389,41 +368,41 @@ describe('Tasks integration (Task Scheduling screens + API)', () => {
   // Case 2: validators stop bad schedules before they reach the API.
   describe('Validation', () => {
     // FE-SCH-03
-    it('blocks a deadline before the due date with a message and sends no request', async () => {
+    it('blocks an end date before the start date with a message and sends no request', async () => {
       await startSignedIn();
       await openList();
       await openNewTask();
 
       type('#task-title', 'Essay');
-      type('#task-due-date', '2026-11-20');
-      type('#task-deadline', '2026-11-18');
+      type('#task-scheduled-date', '2026-11-20');
+      type('#task-due-date', '2026-11-18');
 
-      expect(text('#task-deadline-status')).toBe("The deadline can't be before the due date.");
-      expect(el('#task-deadline').getAttribute('aria-invalid')).toBe('true');
-      // The calendar starts at the due date.
-      expect(el('#task-deadline').getAttribute('min')).toBe('2026-11-20');
+      expect(text('#task-due-date-status')).toBe("The end date can't be before the start date.");
+      expect(el('#task-due-date').getAttribute('aria-invalid')).toBe('true');
+      // The calendar starts at the start date.
+      expect(el('#task-due-date').getAttribute('min')).toBe('2026-11-20');
 
       await submit();
       http.expectNone(TASKS_API);
       expect(el('[role="dialog"]')).toBeTruthy();
 
       // The same day is allowed.
-      type('#task-deadline', '2026-11-20');
-      expect(text('#task-deadline-status')).toBe('');
+      type('#task-due-date', '2026-11-20');
+      expect(text('#task-due-date-status')).toBe('');
       await submit();
       http.expectOne(TASKS_API).flush(apiTask({ id: 7, title: 'Essay' }), status(201, 'Created'));
       await settle();
     });
 
     // FE-SCH-03
-    it('asks for a due date and weekdays before saving a repeating task', async () => {
+    it('asks for an end date and weekdays before saving a repeating task', async () => {
       await startSignedIn();
       await openList();
       await openNewTask();
 
       type('#task-title', 'Stretch');
       repeat('weekly');
-      expect(text('#task-due-date-status')).toBe('Repeating tasks need a due date.');
+      expect(text('#task-due-date-status')).toBe('Repeating tasks need an end date.');
       toggleDay(checkedDays()[0]);
       expect(text('#task-recurrence-days-status')).toBe('Pick at least one day.');
 
@@ -432,7 +411,7 @@ describe('Tasks integration (Task Scheduling screens + API)', () => {
     });
 
     // FE-SCH-03
-    it('blocks a recurrence end date before the due date', async () => {
+    it("blocks a repeat-until date before the task's end date", async () => {
       await startSignedIn();
       await openList();
       await openNewTask();
@@ -444,7 +423,7 @@ describe('Tasks integration (Task Scheduling screens + API)', () => {
       type('#task-recurrence-end-date', '2026-11-19');
 
       expect(text('#task-recurrence-end-date-status')).toBe(
-        "The end date can't be before the due date.",
+        "Repeating can't stop before the task's end date.",
       );
       await submit();
       http.expectNone(TASKS_API);
@@ -454,14 +433,13 @@ describe('Tasks integration (Task Scheduling screens + API)', () => {
   // Case 3: clearing sends null (or 'none'), which the backend treats as "remove".
   describe('Clearing the schedule', () => {
     // FE-SCH-02, FE-SCH-05, FE-SCH-10
-    it('sends null for a cleared due date and deadline and none for a removed recurrence', async () => {
+    it('sends null for a cleared end date and none for a removed recurrence', async () => {
       await startSignedIn();
       await openEdit();
 
-      click('button[aria-label="Clear due date"]');
-      click('button[aria-label="Clear deadline"]');
+      click('button[aria-label="Clear end date"]');
       repeat('none');
-      expect(el('button[aria-label="Clear due date"]')).toBeNull();
+      expect(el('button[aria-label="Clear end date"]')).toBeNull();
       expect(el('.ends')).toBeNull();
       expect(el('app-recurrence-picker .summary')).toBeNull();
       await submit();
@@ -469,11 +447,6 @@ describe('Tasks integration (Task Scheduling screens + API)', () => {
       const due = expectPut('due-date');
       expect(due.request.body).toEqual({ dueDate: null });
       due.flush({ ...SCHEDULED, dueDate: null });
-      await settle();
-
-      const deadline = expectPut('deadline');
-      expect(deadline.request.body).toEqual({ deadline: null });
-      deadline.flush({ ...SCHEDULED, dueDate: null, deadline: null });
       await settle();
 
       const recurrence = expectPut('recurrence');
@@ -487,20 +460,19 @@ describe('Tasks integration (Task Scheduling screens + API)', () => {
 
       expect(text('.form-notice')).toBe('Changes saved.');
       expect(el<HTMLInputElement>('#task-due-date').value).toBe('');
-      expect(el<HTMLInputElement>('#task-deadline').value).toBe('');
     });
 
     // FE-SCH-10
-    it('clears only the deadline when only the deadline changed', async () => {
+    it('clears only the start date when only the start date changed', async () => {
       await startSignedIn();
-      await openEdit();
+      await openEdit({ ...SCHEDULED, scheduledDate: '2026-11-18' });
 
-      click('button[aria-label="Clear deadline"]');
+      click('button[aria-label="Clear start date"]');
       await submit();
 
-      const deadline = expectPut('deadline');
-      expect(deadline.request.body).toEqual({ deadline: null });
-      deadline.flush({ ...SCHEDULED, deadline: null });
+      const start = expectPut('schedule');
+      expect(start.request.body).toEqual({ scheduledDate: null });
+      start.flush({ ...SCHEDULED, scheduledDate: null });
       await settle();
 
       http.expectNone(`${TASKS_API}/${SCHEDULED.id}/due-date`);
@@ -542,44 +514,41 @@ describe('Tasks integration (Task Scheduling screens + API)', () => {
     });
   });
 
-  // Case 5: dates show in the session user's timezone.
+  // Case 5: start and end dates are calendar days, so they read the same in every timezone.
   describe('Timezone', () => {
-    // A deadline at 20:00 UTC on 20 November is already 21 November in Manila (UTC+8).
-    const LATE = apiTask({ dueDate: '2026-11-20', deadline: '2026-11-20T20:00:00.000Z' });
+    const SPAN = apiTask({ scheduledDate: '2026-11-18', dueDate: '2026-11-20' });
 
     // FE-SCH-07
-    it.each([
-      ['Asia/Manila', 'Nov 21', '2026-11-21'],
-      ['Europe/London', 'Nov 20', '2026-11-20'],
-    ])('shows the deadline for a %s user as %s', async (timezone, shown, inputValue) => {
-      await startSignedIn({ ...USER, timezone });
-      await openList([LATE]);
+    it.each(['Asia/Manila', 'Europe/London', 'Pacific/Honolulu'])(
+      'shows the same start and end dates for a %s user',
+      async (timezone) => {
+        await startSignedIn({ ...USER, timezone });
+        await openList([SPAN]);
 
-      expect(itemMeta()).toContain('Due Nov 20');
-      expect(itemMeta()).toContain(`Deadline ${shown}`);
+        expect(itemMeta()).toContain('Starts Nov 18');
+        expect(itemMeta()).toContain('Ends Nov 20');
 
-      await openEdit(LATE);
-      expect(el<HTMLInputElement>('#task-deadline').value).toBe(inputValue);
-    });
+        await openEdit(SPAN);
+        expect(el<HTMLInputElement>('#task-scheduled-date').value).toBe('2026-11-18');
+        expect(el<HTMLInputElement>('#task-due-date').value).toBe('2026-11-20');
+      },
+    );
 
     // FE-SCH-07
-    it.each([
-      ['Asia/Manila', '2026-11-20T15:59:59.999Z'],
-      ['Europe/London', '2026-11-20T23:59:59.999Z'],
-    ])('sends a %s deadline as the end of that day there', async (timezone, instant) => {
-      await startSignedIn({ ...USER, timezone });
+    it('sends the end date as the calendar day picked', async () => {
+      await startSignedIn({ ...USER, timezone: 'Pacific/Honolulu' });
       await openList();
       await openNewTask();
 
       type('#task-title', 'Submit');
-      type('#task-deadline', '2026-11-20');
+      type('#task-due-date', '2026-11-20');
       await submit();
 
       const req = http.expectOne(TASKS_API);
-      expect(req.request.body.deadline).toBe(instant);
-      req.flush(apiTask({ id: 9, title: 'Submit', deadline: instant }), status(201, 'Created'));
+      expect(req.request.body.dueDate).toBe('2026-11-20');
+      req.flush(apiTask({ id: 9, title: 'Submit', dueDate: '2026-11-20' }), status(201, 'Created'));
       await settle();
-      expect(itemMeta()).toContain('Deadline Nov 20');
+      expect(itemMeta()).toContain('Ends Nov 20');
     });
   });
 
@@ -598,27 +567,27 @@ describe('Tasks integration (Task Scheduling screens + API)', () => {
       await startSignedIn();
       await openEdit();
 
-      type('#task-deadline', '2026-11-22');
+      type('#task-scheduled-date', '2026-11-18');
       await submit();
 
-      // Body from validate-request.middleware.ts with the deadline route's message.
-      expectPut('deadline').flush(
+      // Body from validate-request.middleware.ts with the schedule route's message.
+      expectPut('schedule').flush(
         {
-          error: 'Invalid deadline',
-          details: [{ field: 'deadline', message: 'Invalid ISO datetime' }],
+          error: 'Invalid scheduled date',
+          details: [{ field: 'scheduledDate', message: 'Invalid string' }],
         },
         status(400, 'Bad Request'),
       );
       await settle();
 
-      expect(text('#task-deadline-status')).toBe('Invalid deadline');
-      expect(el('#task-deadline').getAttribute('aria-invalid')).toBe('true');
-      expect(el<HTMLInputElement>('#task-deadline').value).toBe('2026-11-22');
+      expect(text('#task-scheduled-date-status')).toBe('Invalid scheduled date');
+      expect(el('#task-scheduled-date').getAttribute('aria-invalid')).toBe('true');
+      expect(el<HTMLInputElement>('#task-scheduled-date').value).toBe('2026-11-18');
       expect(el('.form-notice')).toBeNull();
 
       // Editing the field clears the server's message.
-      type('#task-deadline', '2026-11-23');
-      expect(text('#task-deadline-status')).toBe('');
+      type('#task-scheduled-date', '2026-11-17');
+      expect(text('#task-scheduled-date-status')).toBe('');
     });
 
     // FE-SCH-06
@@ -626,24 +595,24 @@ describe('Tasks integration (Task Scheduling screens + API)', () => {
       await startSignedIn();
       await openEdit();
 
+      type('#task-scheduled-date', '2026-11-18');
       type('#task-due-date', '2026-11-23');
-      type('#task-deadline', '2026-11-24');
       await submit();
 
-      expectPut('due-date').flush({ ...SCHEDULED, dueDate: '2026-11-23' });
+      expectPut('schedule').flush({ ...SCHEDULED, scheduledDate: '2026-11-18' });
       await settle();
-      expectPut('deadline').flush({ error: 'Internal server error' }, status(500));
+      expectPut('due-date').flush({ error: 'Internal server error' }, status(500));
       await settle();
 
       expect(text('.form-error')).toBe('Something went wrong. Please try again.');
       http.expectNone(`${TASKS_API}/${SCHEDULED.id}/recurrence`);
 
-      // Only the deadline is left to save.
+      // Only the end date is left to save.
       await submit();
-      const retry = expectPut('deadline');
-      expect(retry.request.body).toEqual({ deadline: '2026-11-24T15:59:59.999Z' });
-      http.expectNone(`${TASKS_API}/${SCHEDULED.id}/due-date`);
-      retry.flush({ ...SCHEDULED, dueDate: '2026-11-23', deadline: '2026-11-24T15:59:59.999Z' });
+      const retry = expectPut('due-date');
+      expect(retry.request.body).toEqual({ dueDate: '2026-11-23' });
+      http.expectNone(`${TASKS_API}/${SCHEDULED.id}/schedule`);
+      retry.flush({ ...SCHEDULED, scheduledDate: '2026-11-18', dueDate: '2026-11-23' });
       await settle();
       expect(text('.form-notice')).toBe('Changes saved.');
     });
@@ -653,7 +622,7 @@ describe('Tasks integration (Task Scheduling screens + API)', () => {
       await startSignedIn();
       await openEdit();
 
-      // Still on or before the saved deadline (20 November), so the form is valid.
+      // The task has no start date, so any end date is valid.
       type('#task-due-date', '2026-11-19');
       await submit();
       expectPut('due-date').flush({ error: 'Task not found' }, status(404, 'Not Found'));

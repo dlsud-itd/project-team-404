@@ -1,17 +1,25 @@
 import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 
-/** The task form's due date field. The form owns the control and the error message. */
+/**
+ * One of the task form's date fields: the start date or the end date. The form owns the control
+ * and the error message.
+ */
 @Component({
-  selector: 'app-due-date-picker',
+  selector: 'app-date-picker',
   imports: [ReactiveFormsModule],
-  templateUrl: './due-date-picker.html',
-  styleUrl: './due-date-picker.scss',
+  templateUrl: './date-picker.html',
+  styleUrl: './date-picker.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class DueDatePicker {
+export class DatePicker {
   /** Holds a YYYY-MM-DD date, or an empty string. */
   readonly control = input.required<FormControl<string>>();
+  /** The input's id; its status message uses `<fieldId>-status`. */
+  readonly fieldId = input.required<string>();
+  readonly label = input.required<string>();
+  /** YYYY-MM-DD; the browser's picker won't offer earlier days. */
+  readonly min = input<string | null>(null);
   readonly error = input<string | null>(null);
   /** The user changed the date. */
   readonly edited = output();

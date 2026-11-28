@@ -1,0 +1,23 @@
+<div class="label-row">
+  <label [for]="fieldId()">{{ label() }} <span>(optional)</span></label>
+  @if (control().value) {
+    <button
+      type="button"
+      class="clear"
+      [attr.aria-label]="'Clear ' + label().toLowerCase()"
+      (click)="clear()"
+    >
+      Clear
+    </button>
+  }
+</div>
+<input
+  [id]="fieldId()"
+  type="date"
+  [formControl]="control()"
+  [attr.min]="min() || null"
+  [attr.aria-invalid]="!!error()"
+  [attr.aria-describedby]="fieldId() + '-status'"
+  (input)="edited.emit()"
+/>
+<p [id]="fieldId() + '-status'" class="field-message" aria-live="polite">{{ error() }}</p>

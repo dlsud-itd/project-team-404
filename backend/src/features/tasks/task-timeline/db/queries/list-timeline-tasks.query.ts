@@ -28,7 +28,6 @@ export async function listTimelineTasks(
       projectId: true,
       scheduledDate: true,
       dueDate: true,
-      deadline: true,
       isDone: true,
       project: { select: { name: true, color: true } },
       priorityLevel: { select: { name: true } },
@@ -44,7 +43,6 @@ export function buildTimelineTasksWhere(
 ): Prisma.TaskWhereInput {
   const from = toDate(query.from);
   const to = toDate(query.to);
-  const broadDeadlineFrom = new Date(from.getTime() - 86_400_000);
   const and: Prisma.TaskWhereInput[] = [
     {
       OR: [
@@ -67,7 +65,6 @@ export function buildTimelineTasksWhere(
               OR: [
                 { scheduledDate: { gte: from } },
                 { dueDate: { gte: from } },
-                { deadline: { gte: broadDeadlineFrom } },
               ],
             },
           ],

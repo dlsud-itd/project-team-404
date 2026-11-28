@@ -72,7 +72,6 @@ integrationDescribe('tasks integration', () => {
       position?: number;
       scheduledDate?: Date;
       dueDate?: Date;
-      deadline?: Date;
       recurrence?: 'none' | 'daily' | 'weekly' | 'monthly' | null;
       createdAt?: Date;
       updatedAt?: Date;
@@ -92,7 +91,6 @@ integrationDescribe('tasks integration', () => {
         boardStatus: values.isDone ? 'done' : 'todo',
         scheduledDate: values.scheduledDate,
         dueDate: values.dueDate,
-        deadline: values.deadline,
         recurrence: values.recurrence,
         createdAt: values.createdAt,
         updatedAt: values.updatedAt,
@@ -549,8 +547,8 @@ integrationDescribe('tasks integration', () => {
       },
       {
         method: 'PUT',
-        path: '/api/tasks/1/deadline',
-        body: { deadline: '2026-03-10T12:00:00.000Z' },
+        path: '/api/tasks/1/schedule',
+        body: { scheduledDate: '2026-03-10' },
       },
       {
         method: 'PUT',
@@ -590,7 +588,7 @@ integrationDescribe('tasks integration', () => {
   });
 
   describe('Task Scheduling', () => {
-    it('sets, changes, and clears due dates and deadlines through their routes', async () => {
+    it('sets, changes, and clears start and end dates through their routes', async () => {
       const account = await createAccount();
       const project = await seedProject(account.id, 'Scheduling date project');
       const task = await seedTask(account.id, project.id, {
@@ -598,84 +596,96 @@ integrationDescribe('tasks integration', () => {
         dueDate: new Date('2026-03-10T00:00:00.000Z'),
       });
 
-      const dueDateValues = [
-        { value: '2026-03-12', expected: new Date('2026-03-12T00:00:00.000Z') },
-        { value: '2026-03-18', expected: new Date('2026-03-18T00:00:00.000Z') },
-        { value: null, expected: null },
+      const dateRoutes = [
+        { path: 'schedule', field: 'scheduledDate' },
+        { path: 'due-date', field: 'dueDate' },
       ] as const;
-      for (const { value, expected } of dueDateValues) {
-        const response = await taskRequest(
-          'PUT',
-          `/api/tasks/${task.id}/due-date`,
-          account.token,
-          { dueDate: value }
-        );
-        expect(response.status).toBe(200);
-        expect(
-          (await prisma.task.findUniqueOrThrow({ where: { id: task.id } }))
-            .dueDate
-        ).toEqual(expected);
-      }
-
-      const deadlineValues = [
-        {
-          value: '2026-03-20T12:30:00.000Z',
-          expected: new Date('2026-03-20T12:30:00.000Z'),
-        },
-        {
-          value: '2026-03-22T18:45:00.000Z',
-          expected: new Date('2026-03-22T18:45:00.000Z'),
-        },
-        { value: null, expected: null },
-      ] as const;
-      for (const { value, expected } of deadlineValues) {
-        const response = await taskRequest(
-          'PUT',
-          `/api/tasks/${task.id}/deadline`,
-          account.token,
-          { deadline: value }
-        );
-        expect(response.status).toBe(200);
-        expect(
-          (await prisma.task.findUniqueOrThrow({ where: { id: task.id } }))
-            .deadline
-        ).toEqual(expected);
+      for (const { path, field } of dateRoutes) {
+        for (const { value, expected } of [
+          {
+            value: '2026-03-12',
+            expected: new Date('2026-03-12T00:00:00.000Z'),
+          },
+          {
+            value: '2026-03-18',
+            expected: new Date('2026-03-18T00:00:00.000Z'),
+          },
+          { value: null, expected: null },
+        ]) {
+          const response = await taskRequest(
+            'PUT',
+            `/api/tasks/${task.id}/${path}`,
+            account.token,
+            { [field]: value }
+          );
+          expect(response.status).toBe(200);
+          expect(
+            (await prisma.task.findUniqueOrThrow({ where: { id: task.id } }))[
+              field
+            ]
+          ).toEqual(expected);
+        }
       }
     });
 
-    it('rejects a deadline before the due date without changing either value', async () => {
+    it('rejects a new task whose end date is before its start date', async () => {
       const account = await createAccount();
-      const project = await seedProject(
-        account.id,
-        'Deadline validation project'
-      );
-      const task = await seedTask(account.id, project.id, {
-        title: 'Keep valid deadline',
-        dueDate: new Date('2026-03-20T00:00:00.000Z'),
-      });
-      await taskRequest(
-        'PUT',
-        `/api/tasks/${task.id}/deadline`,
-        account.token,
-        {
-          deadline: '2026-03-21T12:00:00.000Z',
-        }
-      );
-      const before = await prisma.task.findUniqueOrThrow({
-        where: { id: task.id },
+      const project = await seedProject(account.id, 'Date range project');
+      const countBefore = await prisma.task.count({
+        where: { userId: account.id },
       });
 
-      const invalid = await taskRequest(
-        'PUT',
-        `/api/tasks/${task.id}/deadline`,
-        account.token,
-        { deadline: '2026-03-19T23:59:59.000Z' }
-      );
+      const invalid = await taskRequest('POST', '/api/tasks', account.token, {
+        title: 'Ends before it starts',
+        projectId: project.id,
+        scheduledDate: '2026-03-20',
+        dueDate: '2026-03-19',
+      });
 
       expect(invalid.status).toBe(400);
-      expect(
-        await prisma.task.findUniqueOrThrow({ where: { id: task.id } })
-      ).toEqual(before);
+      expect(await prisma.task.count({ where: { userId: account.id } })).toBe(
+        countBefore
+      );
+
+      const sameDay = await taskRequest('POST', '/api/tasks', account.token, {
+        title: 'One-day task',
+        projectId: project.id,
+        scheduledDate: '2026-03-20',
+        dueDate: '2026-03-20',
+      });
+      expect(sameDay.status).toBe(201);
+    });
+
+    it('no longer accepts a deadline', async () => {
+      const account = await createAccount();
+      const project = await seedProject(account.id, 'Removed deadline project');
+      const task = await seedTask(account.id, project.id, {
+        title: 'Start and end only',
+        dueDate: new Date('2026-03-20T00:00:00.000Z'),
+      });
+
+      const route = await taskRequest(
+        'PUT',
+        `/api/tasks/${task.id}/deadline`,
+        account.token,
+        { deadline: '2026-03-21T12:00:00.000Z' }
+      );
+      expect(route.status).toBe(404);
+
+      const create = await taskRequest('POST', '/api/tasks', account.token, {
+        title: 'With a deadline',
+        projectId: project.id,
+        deadline: '2026-03-21T12:00:00.000Z',
+      });
+      expect(create.status).toBe(400);
+
+      const read = await taskRequest(
+        'GET',
+        `/api/tasks/${task.id}`,
+        account.token
+      );
+      expect(read.status).toBe(200);
+      expect(read.body).not.toHaveProperty('deadline');
     });
 
     it('persists daily, weekday-based weekly, and monthly rules and rejects invalid recurrence input', async () => {
@@ -917,82 +927,6 @@ integrationDescribe('tasks integration', () => {
       ).toBe(1);
     });
 
-    it('uses the owner timezone when interpreting a 23:30 deadline in current/upcoming tasks', async () => {
-      const manila = await createAccount();
-      const honolulu = await createAccount();
-      const timeZone = 'Pacific/Honolulu';
-      const currentHonoluluDay = new Intl.DateTimeFormat('en-CA', {
-        timeZone,
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-      }).format(new Date());
-      const nowInHonolulu = new Intl.DateTimeFormat('en-US', {
-        timeZone,
-        hour: '2-digit',
-        minute: '2-digit',
-        hourCycle: 'h23',
-      }).format(new Date());
-      const deadlineDay =
-        nowInHonolulu < '23:30'
-          ? currentHonoluluDay
-          : addCalendarDays(currentHonoluluDay, 1);
-      const deadline = new Date(`${deadlineDay}T23:30:00-10:00`);
-      const manilaDeadlineDay = new Intl.DateTimeFormat('en-CA', {
-        timeZone: 'Asia/Manila',
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-      }).format(deadline);
-      const honoluluDeadlineDay = new Intl.DateTimeFormat('en-CA', {
-        timeZone,
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-      }).format(deadline);
-      expect(manilaDeadlineDay).toBe(addCalendarDays(honoluluDeadlineDay, 1));
-
-      for (const [account, timezone] of [
-        [manila, 'Asia/Manila'],
-        [honolulu, timeZone],
-      ] as const) {
-        await prisma.user.update({
-          where: { id: account.id },
-          data: { timezone },
-        });
-        const project = await seedProject(
-          account.id,
-          'Timezone boundary project'
-        );
-        const task = await seedTask(account.id, project.id, {
-          title: 'Local 23:30 deadline',
-          dueDate: new Date(`${manilaDeadlineDay}T00:00:00.000Z`),
-        });
-        const setDeadline = await taskRequest(
-          'PUT',
-          `/api/tasks/${task.id}/deadline`,
-          account.token,
-          { deadline: deadline.toISOString() }
-        );
-        expect(setDeadline.status).toBe(200);
-
-        const dashboard = await taskRequest(
-          'GET',
-          '/api/dashboard/current-upcoming-tasks?days=30',
-          account.token
-        );
-        expect(dashboard.status).toBe(200);
-        expect(dashboard.body.tasks).toEqual(
-          expect.arrayContaining([
-            expect.objectContaining({
-              id: task.id,
-              deadline: deadline.toISOString(),
-            }),
-          ])
-        );
-      }
-    });
-
     it('hides another user’s scheduled task and requires authentication for scheduling and completion', async () => {
       const account = await createAccount();
       const otherAccount = await createAccount();
@@ -1010,10 +944,7 @@ integrationDescribe('tasks integration', () => {
 
       for (const [path, body] of [
         [`/api/tasks/${task.id}/due-date`, { dueDate: '2026-03-12' }],
-        [
-          `/api/tasks/${task.id}/deadline`,
-          { deadline: '2026-03-12T12:00:00.000Z' },
-        ],
+        [`/api/tasks/${task.id}/schedule`, { scheduledDate: '2026-03-12' }],
         [`/api/tasks/${task.id}/recurrence`, { recurrence: 'daily' }],
         [`/api/tasks/${task.id}`, { isDone: true }],
       ] as const) {
@@ -1026,7 +957,7 @@ integrationDescribe('tasks integration', () => {
 
       for (const path of [
         `/api/tasks/${task.id}/due-date`,
-        `/api/tasks/${task.id}/deadline`,
+        `/api/tasks/${task.id}/schedule`,
         `/api/tasks/${task.id}/recurrence`,
         `/api/tasks/${task.id}`,
       ]) {
@@ -1464,7 +1395,6 @@ integrationDescribe('tasks integration', () => {
           title: 'delta',
           priority: priority('high'),
           dueDate: null,
-          deadline: null,
           scheduledDate: null,
           position: 40,
           createdAt: date('2026-01-03'),
@@ -1474,7 +1404,6 @@ integrationDescribe('tasks integration', () => {
           title: 'alpha',
           priority: priority('low'),
           dueDate: date('2026-03-04'),
-          deadline: date('2026-03-04'),
           scheduledDate: date('2026-03-04'),
           position: 10,
           createdAt: date('2026-01-01'),
@@ -1484,7 +1413,6 @@ integrationDescribe('tasks integration', () => {
           title: 'alpha',
           priority: priority('medium'),
           dueDate: date('2026-03-01'),
-          deadline: date('2026-03-01'),
           scheduledDate: date('2026-03-01'),
           position: 30,
           createdAt: date('2026-01-02'),
@@ -1494,7 +1422,6 @@ integrationDescribe('tasks integration', () => {
           title: 'charlie',
           priority: priority('high'),
           dueDate: date('2026-03-01'),
-          deadline: date('2026-03-03'),
           scheduledDate: date('2026-03-02'),
           position: 10,
           createdAt: date('2026-01-01'),
@@ -1504,7 +1431,6 @@ integrationDescribe('tasks integration', () => {
           title: 'bravo',
           priority: priority('low'),
           dueDate: date('2026-03-02'),
-          deadline: date('2026-03-02'),
           scheduledDate: date('2026-03-02'),
           position: 20,
           createdAt: date('2026-01-02'),
@@ -1518,7 +1444,6 @@ integrationDescribe('tasks integration', () => {
             title: row.title,
             priorityId: row.priority.id,
             dueDate: row.dueDate ?? undefined,
-            deadline: row.deadline ?? undefined,
             scheduledDate: row.scheduledDate ?? undefined,
             position: row.position,
             createdAt: row.createdAt,
@@ -1528,7 +1453,6 @@ integrationDescribe('tasks integration', () => {
       );
       const orderFields = [
         'dueDate',
-        'deadline',
         'scheduledDate',
         'priority',
         'title',
@@ -1570,9 +1494,7 @@ integrationDescribe('tasks integration', () => {
               );
               if (difference === 0) return first.task.id - second.task.id;
               const hasNullDate =
-                orderBy === 'dueDate' ||
-                orderBy === 'deadline' ||
-                orderBy === 'scheduledDate';
+                orderBy === 'dueDate' || orderBy === 'scheduledDate';
               const firstValue = valueFor(first, orderBy);
               const secondValue = valueFor(second, orderBy);
               return hasNullDate &&

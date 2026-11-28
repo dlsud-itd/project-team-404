@@ -38,13 +38,11 @@ integrationDescribe('Sprint 5 archive regression', () => {
     }).format(new Date());
     const scheduledDate = today;
     const dueDate = addDays(today, 1);
-    const deadline = new Date(`${dueDate}T15:00:00.000Z`).toISOString();
     const task = await createTask(api, {
       projectId,
       title: 'Restored task retains dates',
       scheduledDate,
       dueDate,
-      deadline,
     });
     const labelResponse = await api.post('/api/labels', {
       name: 'Restored task label',
@@ -126,7 +124,6 @@ integrationDescribe('Sprint 5 archive regression', () => {
     expect(taskAfter.body).toMatchObject({
       scheduledDate,
       dueDate,
-      deadline,
       labels: [{ id: labelId, name: 'Restored task label' }],
     });
   });

@@ -36,6 +36,13 @@ Open the repository root folder in VS Code. Open the Command Palette with
      remain private; never put it in `frontend/.env`.
    - To use the local console mailer instead, leave `BREVO_API_KEY` and
      `BREVO_SENDER_EMAIL` blank.
+   - The backend uses the active `DATABASE_URL` and `DIRECT_URL` entries. To
+     use the hosted database, keep the local Docker override pair commented.
+     To use the local database for the app, uncomment both local override
+     entries below the hosted pair in `backend/.env`. Restart the backend after
+     changing these values. For a fully local stack, also point `SUPABASE_URL`
+     and `SUPABASE_SERVICE_ROLE_KEY` at the local values shown by
+     `supabase status`, so Auth and PostgreSQL use the same project.
 
 4. In the Command Palette, run **`🔐 Supabase: Login`** and then
    **`🔗 Supabase: Link Project`**. Follow the Supabase CLI prompts to select or
@@ -180,8 +187,8 @@ test, and the test fails if they differ from the seed afterwards.
 The Dashboard specs in `tests/e2e/dashboard/` (`current-upcoming.e2e.spec.ts`
 and `overdue.e2e.spec.ts`) check the Current & Upcoming and Overdue sections of
 `/dashboard` against service-role database queries. They use Harvey's
-`Filter fixture …` tasks from `supabase/seeds/006_filtering.sql`, whose due dates
-and deadlines are relative to the day the seed ran. Seeding again does not move
+`Filter fixture …` tasks from `supabase/seeds/006_filtering.sql`, whose start
+and end dates are relative to the day the seed ran. Seeding again does not move
 those dates, so **run the Dashboard specs on a database seeded the same day**:
 
 ```powershell
@@ -200,7 +207,7 @@ other user:
 
 - `organization/sort-filter.e2e.spec.ts` filters Harvey's `Filtering - Client Work`
   project (seed `006_filtering.sql`) by two priorities and a label, sorts by
-  deadline, reloads, and clears; the shown tasks are checked against a
+  end date, reloads, and clears; the shown tasks are checked against a
   service-role query. It also filters `/projects` to favorites sorted by name.
 - `settings/labels-priorities.e2e.spec.ts` creates, reorders, defaults and
   deletes an "Urgent" level, and creates, renames, reorders and deletes a label.

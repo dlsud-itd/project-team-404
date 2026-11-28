@@ -103,7 +103,6 @@ function apiTask(id: number, title: string, overrides: Partial<ApiTask> = {}): A
     priority: 'medium',
     scheduledDate: null,
     dueDate: null,
-    deadline: null,
     recurrence: 'none',
     recurrenceDays: [],
     recurrenceEndDate: null,
@@ -115,7 +114,7 @@ function apiTask(id: number, title: string, overrides: Partial<ApiTask> = {}): A
   } as ApiTask;
 }
 
-// Six open tasks due today through Tuesday, and five past their deadline.
+// Six open tasks due today through Tuesday, and five past their end date.
 const UPCOMING = [
   apiTask(1, 'Pay bills', { dueDate: '2026-11-14' }),
   apiTask(2, 'Call mom', { dueDate: '2026-11-14' }),
@@ -127,7 +126,6 @@ const UPCOMING = [
 const OVERDUE = [1, 2, 3, 4, 5].map((day) =>
   apiTask(20 + day, `Late task ${day}`, {
     dueDate: `2026-11-0${day}`,
-    deadline: `2026-11-0${day}T15:59:59.999Z`,
   }),
 );
 

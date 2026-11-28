@@ -25,10 +25,9 @@ export type TimelineTask = {
 
 export function toTimelineTaskModel(
   task: TimelineTaskRecord,
-  timeZone: string,
   today: string
 ): TimelineTask | null {
-  const span = getTaskSpan(task, timeZone);
+  const span = getTaskSpan(task);
   if (!span) return null;
 
   return {

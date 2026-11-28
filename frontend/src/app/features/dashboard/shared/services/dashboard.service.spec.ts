@@ -16,7 +16,6 @@ const STUDY: Task = {
   description: null,
   scheduledDate: null,
   dueDate: '2026-11-06',
-  deadline: null,
   recurrence: 'none',
   recurrenceDays: [],
   recurrenceEndDate: null,

@@ -118,11 +118,7 @@ export function buildListTasksOrderBy(
   if (orderBy === 'position') {
     return [{ isDone: 'asc' }, { position: direction }, { id: 'asc' }];
   }
-  if (
-    orderBy === 'dueDate' ||
-    orderBy === 'deadline' ||
-    orderBy === 'scheduledDate'
-  ) {
+  if (orderBy === 'dueDate' || orderBy === 'scheduledDate') {
     return [{ [orderBy]: { sort: direction, nulls: 'last' } }, { id: 'asc' }];
   }
   return [{ [orderBy]: direction }, { id: 'asc' }];

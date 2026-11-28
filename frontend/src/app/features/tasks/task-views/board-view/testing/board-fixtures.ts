@@ -18,7 +18,6 @@ export function boardTask(taskId: number, title: string, changes: Partial<Task> 
     description: null,
     scheduledDate: null,
     dueDate: null,
-    deadline: null,
     recurrence: 'none',
     recurrenceDays: [],
     recurrenceEndDate: null,

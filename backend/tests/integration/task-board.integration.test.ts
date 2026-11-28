@@ -21,7 +21,6 @@ type SeedTask = {
   doneAt?: Date | null;
   dueDate?: Date | null;
   scheduledDate?: Date | null;
-  deadline?: Date | null;
   recurrence?: 'none' | 'daily' | 'weekly' | 'monthly';
   recurrenceSeriesId?: string | null;
   priorityId?: number;
@@ -137,7 +136,6 @@ integrationDescribe('task board integration', () => {
                   : null,
             dueDate: value.dueDate,
             scheduledDate: value.scheduledDate,
-            deadline: value.deadline,
             recurrence: value.recurrence ?? 'none',
             recurrenceDays: [],
             recurrenceSeriesId:
